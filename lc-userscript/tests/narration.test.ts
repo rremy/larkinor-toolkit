@@ -37,6 +37,11 @@ describe('findMonsterMentions', () => {
     expect(m.map(x => x.name)).toEqual(['Vasszűz']);
   });
 
+  it('captures the monster from "Egy X mászkál a közelben! Megtámadod?!"', () => {
+    const m = findMonsterMentions('Egy Vasszűz mászkál a közelben! Megtámadod?!');
+    expect(m.map(x => x.name)).toEqual(['Vasszűz']);
+  });
+
   it('captures multi-word monster names', () => {
     const m = findMonsterMentions('Valami Goblin felderítőcsapat csámborog a közelben!');
     expect(m[0].name).toBe('Goblin felderítőcsapat');
