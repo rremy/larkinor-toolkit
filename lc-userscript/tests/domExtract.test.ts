@@ -188,6 +188,17 @@ describe('extractFreeMove', () => {
     expect(state.narration).toBe('Egy macska fut át az úton.');
   });
 
+  it('preserves <br> line breaks in the narration as newlines', () => {
+    const html = FREEMOVE_HTML.replace(
+      /<font face="Comic sans MS"[\s\S]*?<\/font>/,
+      '<font face="Comic sans MS" size="2.5">\n\nKoncentrálsz, majd elmondod a gyógyvarázst...<br>Regenerálódott némi életpontod!\n</font>'
+    );
+    const state = extractFreeMove(makeDoc(html));
+    expect(state.narration).toBe(
+      'Koncentrálsz, majd elmondod a gyógyvarázst...\nRegenerálódott némi életpontod!'
+    );
+  });
+
   it('returns empty narration when no Comic Sans MS block is present', () => {
     const html = FREEMOVE_HTML.replace(
       /<font face="Comic sans MS"[\s\S]*?<\/font>/,

@@ -121,7 +121,16 @@ function parsePlayerName(doc: Document): string {
 }
 
 function extractNarration(doc: Document): string {
-  return doc.querySelector('font[face="Comic sans MS"]')?.textContent?.trim() ?? '';
+  const el = doc.querySelector('font[face="Comic sans MS"]');
+  if (!el) return '';
+  // The narration uses <br> for line breaks; textContent would drop them, so
+  // convert <br> to newlines first, then read the text (stripping <b> etc.).
+  const tmp = doc.createElement('div');
+  tmp.innerHTML = el.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+  return (tmp.textContent ?? '')
+    .replace(/[ \t]+\n/g, '\n')   // trim trailing spaces before a break
+    .replace(/\n{3,}/g, '\n\n')   // collapse runs of blank lines
+    .trim();
 }
 
 function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {

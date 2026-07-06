@@ -173,8 +173,8 @@
 .lc-navpad-btn:active { background: var(--accent-dim); border-color: var(--accent); }
 .lc-navpad-centre { background: var(--panel-2); border-radius: 50%; border: 1px solid var(--border); }
 
-/* NarrationPanel */
-.lc-narration { font-size: 15px; line-height: 1.6; color: var(--text); min-height: 60px; }
+/* NarrationPanel — preserve <br>-derived newlines, collapse other whitespace */
+.lc-narration { font-size: 15px; line-height: 1.6; color: var(--text); min-height: 60px; white-space: pre-line; }
 
 /* MonsterCard */
 .lc-mc-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; padding-right: 36px; }
