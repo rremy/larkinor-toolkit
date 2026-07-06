@@ -163,3 +163,11 @@
 .lc-stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
 .lc-stat-bar-fill--hp { background: var(--bad); }
 .lc-stat-bar-fill--mp { background: var(--mp); }
+
+/* NavPad */
+.lc-navpad { display: flex; justify-content: center; }
+.lc-navpad-grid { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 6px; }
+.lc-navpad-cell { width: 64px; height: 64px; }
+.lc-navpad-btn { width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+.lc-navpad-btn:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-centre { background: var(--panel-2); border-radius: 50%; border: 1px solid var(--border); }
