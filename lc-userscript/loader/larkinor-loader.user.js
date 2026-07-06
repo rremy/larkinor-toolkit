@@ -10,15 +10,15 @@
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @connect      YOUR_DOMAIN_HERE
+// @connect      example.invalid
 // @run-at       document-end
 // ==/UserScript==
 
 (function () {
   'use strict';
 
-  // Replace with your actual hosting URL before installing
-  const SCRIPT_URL = 'https://YOUR_DOMAIN_HERE/larkinor-ui.user.js';
+  // Where the built main script is hosted.
+  const SCRIPT_URL = 'https://example.invalid/larkinor/larkinor-ui.user.js';
 
   GM_xmlhttpRequest({
     method: 'GET',

@@ -6,8 +6,8 @@ import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import baseStyles from '@/styles/base.css?raw';
 
-// Deployment constant — replace before shipping.
-const MONSTERS_JSON_URL = 'https://YOUR_DOMAIN_HERE/monsters.json';
+// Deployment constant — where monsters.json is hosted.
+const MONSTERS_JSON_URL = 'https://example.invalid/larkinor/monsters.json';
 
 // Discriminated union so the extracted state stays paired with — and
 // narrowable by — the page type that produced it, instead of collapsing to
