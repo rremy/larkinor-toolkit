@@ -187,3 +187,9 @@
 .lc-mc-drops h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px; }
 .lc-mc-drops ul { list-style: none; padding: 0; margin: 0; font-size: 14px; }
 .lc-mc-drops li { padding: 3px 0; border-bottom: 1px dashed var(--border); }
+
+/* Battle page */
+.lc-battle-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lc-battle-monster-name { font-size: 20px; font-weight: bold; color: var(--text); }
+.lc-battle-hp { font-size: 14px; color: var(--bad); }
+.lc-battle-level-badge { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 3px; }
