@@ -174,3 +174,16 @@
 
 /* NarrationPanel */
 .lc-narration { font-size: 15px; line-height: 1.6; color: var(--text); min-height: 60px; }
+
+/* MonsterCard */
+.lc-mc-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; padding-right: 36px; }
+.lc-mc-img { width: 72px; height: 72px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; flex-shrink: 0; }
+.lc-mc-name { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
+.lc-mc-level { font-size: 13px; color: var(--muted); }
+.lc-mc-location { font-size: 13px; color: var(--muted); }
+.lc-mc-stats { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; font-size: 14px; margin: 0 0 14px; }
+.lc-mc-stats dt { color: var(--muted); }
+.lc-mc-stats dd { margin: 0; }
+.lc-mc-drops h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px; }
+.lc-mc-drops ul { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+.lc-mc-drops li { padding: 3px 0; border-bottom: 1px dashed var(--border); }
