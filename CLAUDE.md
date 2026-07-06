@@ -133,3 +133,6 @@ reloading.
 - **Minification is optional** but the source must always be human-readable
 - Follow the existing dark-theme CSS variable system when adding UI elements
 - **All comments and identifiers must be in English**
+- **Temporary files** (screenshots, scratch scripts, debug output, Playwright
+  artifacts, etc.) go in the repo-root `.tmp/` folder, which is git-ignored.
+  Never leave them in the repo root or commit them.
