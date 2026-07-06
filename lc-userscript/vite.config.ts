@@ -25,6 +25,9 @@ export default defineConfig({
         connect: ['l2.larkinor.hu'],
         'run-at': 'document-end',
       },
+      build: {
+        fileName: 'larkinor-ui.user.js',
+      },
     }),
   ],
   test: {
