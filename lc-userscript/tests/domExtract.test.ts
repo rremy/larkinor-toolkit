@@ -26,10 +26,12 @@ const FREEMOVE_HTML = `
       </tr>
       <tr><td><a href="?dir=south">D</a></td></tr>
     </table>
-    <select name="action">
-      <option value="eat">kajálsz</option>
-      <option value="look">körülnézel</option>
-    </select>
+    <form>
+      <select name="action">
+        <option value="eat">kajálsz</option>
+        <option value="look">körülnézel</option>
+      </select>
+    </form>
     <input type="submit" name="go" value="OK">
     <div class="stext">Egy macska fut át az úton.</div>
   </div>
@@ -81,6 +83,21 @@ describe('extractFreeMove', () => {
     const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
     expect(state.narration).toContain('macska');
   });
+
+  it('triggering a select-driven action sets the value and submits its form', () => {
+    const doc = makeDoc(FREEMOVE_HTML);
+    const state = extractFreeMove(doc);
+    const select = doc.querySelector<HTMLSelectElement>('select[name="action"]')!;
+    const form = select.closest('form')!;
+    const submitSpy = vi.fn();
+    form.submit = submitSpy;
+
+    const action = state.actions.find(a => a.label === 'kajálsz');
+    action?.trigger();
+
+    expect(select.value).toBe('eat');
+    expect(submitSpy).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('extractBattle', () => {
@@ -102,6 +119,20 @@ describe('extractBattle', () => {
     const state = extractBattle(makeDoc(BATTLE_HTML));
     expect(state.actions.map(a => a.label)).toContain('megtámadod');
     expect(state.actions.map(a => a.label)).toContain('elmenekülsz');
+  });
+
+  it('triggering a link-driven action clicks the original anchor', () => {
+    const doc = makeDoc(BATTLE_HTML);
+    const state = extractBattle(doc);
+    const anchor = Array.from(doc.querySelectorAll('a'))
+      .find(a => a.textContent?.trim() === 'megtámadod')!;
+    const clickSpy = vi.fn();
+    anchor.click = clickSpy;
+
+    const action = state.actions.find(a => a.label === 'megtámadod');
+    action?.trigger();
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -7,8 +7,6 @@ export interface Action {
 
 export interface FreeMoveState {
   playerName: string;
-  level: number;
-  maxLevel: number;
   gold: number;
   hp: number;
   hpMax: number;
@@ -41,19 +39,21 @@ function parseGold(text: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-function parsePlayerName(text: string): { name: string; level: number; maxLevel: number } {
-  // Format: "Remy [3/5/300]" — name [currentXP/level/maxXP] (approximate)
+function parsePlayerName(text: string): string {
+  // Format: "Remy [3/5/300]" — name followed by a bracketed stat group whose
+  // exact meaning (currentXP/level/maxXP?) is unconfirmed, so only the name
+  // is extracted here.
   // Note: no `^` anchor — `doc.body.textContent` concatenates all text nodes,
   // so the name is typically preceded by whitespace/newlines from HTML indentation,
   // not positioned at the very start of the string.
   const m = text.match(/([A-Za-záéíóöőúüűÁÉÍÓÖŐÚÜŰ][\w ]+?)\s*\[/);
-  return { name: m?.[1]?.trim() ?? 'Unknown', level: 1, maxLevel: 100 };
+  return m?.[1]?.trim() ?? 'Unknown';
 }
 
 export function extractFreeMove(doc: Document): FreeMoveState {
   const allText = doc.body.textContent ?? '';
 
-  const { name, level, maxLevel } = parsePlayerName(allText);
+  const name = parsePlayerName(allText);
   const gold = parseGold(allText);
   const [hp, hpMax] = parseStatLine(allText, 'Életpont');
   const [mp, mpMax] = parseStatLine(allText, 'Varázspont');
@@ -75,7 +75,10 @@ export function extractFreeMove(doc: Document): FreeMoveState {
       if (dir && !availableDirections.includes(dir)) availableDirections.push(dir);
     }
   });
-  // Also check by link text (É/D/K/Ny)
+  // Also check by link text (É/D/K/Ny): some game screens render direction
+  // links without a `dir=` query param (e.g. plain anchors inside the
+  // `table.irany` layout), so this pass catches those; the dedup guard above
+  // makes it safe to run both passes even when a link matches in both.
   doc.querySelectorAll<HTMLAnchorElement>('table.irany a').forEach(a => {
     const dir = dirMap[a.textContent?.trim() ?? ''];
     if (dir && !availableDirections.includes(dir)) availableDirections.push(dir);
@@ -91,8 +94,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
           label: opt.text.trim(),
           trigger: () => {
             select.value = opt.value;
-            const form = select.closest('form');
-            form ? form.submit() : select.form?.submit();
+            select.closest('form')?.submit();
           },
         });
       }
@@ -103,7 +105,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
   const narrationEl = doc.querySelector('.stext, textarea[name="stext"], .szoveg');
   const narration = narrationEl?.textContent?.trim() ?? '';
 
-  return { playerName: name, level, maxLevel, gold, hp, hpMax, mp, mpMax, locationImageUrl, availableDirections, actions, narration };
+  return { playerName: name, gold, hp, hpMax, mp, mpMax, locationImageUrl, availableDirections, actions, narration };
 }
 
 export function extractBattle(doc: Document): BattleState {
