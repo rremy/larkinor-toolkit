@@ -22,7 +22,7 @@ const FREEMOVE_HTML = `
   </form>
   <b>
     <a title="karakterlap"><font color="blue">Remy </font></a>&nbsp;&nbsp;<font color="darkblue" align="left">[994/800]</font><br>
-    Pénz: 1&nbsp;979&nbsp;&nbsp;&nbsp;&nbsp;<img src="./Larkinor_files/bizt_van.gif" border="0" width="12" height="12" title=" Van biztositasod :-)">&nbsp;<br>
+    Pénz: 1&nbsp;979&nbsp;&nbsp;&nbsp;&nbsp;<img src="/2/ikon/bizt_van.gif" border="0" width="12" height="12" title=" Van biztosításod :-)"><img src="/2/ikon/durex2.gif" border="0" width="32" height="12" title="Varázsburok! ;-)">&nbsp;<br>
     Életpont: 303 / 214 <br>
     Varázspont: 286 / 182
   </b>
@@ -207,6 +207,14 @@ describe('extractFreeMove', () => {
     const html = FREEMOVE_HTML.replace(/<input[^>]*tamadas\.gif[^>]*>/, '');
     const state = extractFreeMove(makeDoc(html));
     expect(state.attack).toBeNull();
+  });
+
+  it('extracts player status icons from the stat block', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    expect(state.statusIcons).toEqual([
+      { iconUrl: 'https://l2.larkinor.hu/2/ikon/bizt_van.gif', label: 'Van biztosításod :-)' },
+      { iconUrl: 'https://l2.larkinor.hu/2/ikon/durex2.gif', label: 'Varázsburok! ;-)' },
+    ]);
   });
 
   it('extracts narration from the Comic Sans MS font block', () => {

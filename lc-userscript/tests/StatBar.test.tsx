@@ -24,4 +24,20 @@ describe('StatBar', () => {
     const hpFill = container.querySelector<HTMLElement>('.lc-stat-bar-fill--hp');
     expect(hpFill?.style.width).toBe('50%');
   });
+
+  it('renders status icons next to the gold', () => {
+    const { container } = render(
+      <StatBar
+        hp={100} hpMax={100} mp={50} mpMax={100} gold={92}
+        statusIcons={[
+          { iconUrl: 'https://l2.larkinor.hu/2/ikon/bizt_van.gif', label: 'Van biztosításod :-)' },
+          { iconUrl: 'https://l2.larkinor.hu/2/ikon/durex2.gif', label: 'Varázsburok! ;-)' },
+        ]}
+      />
+    );
+    const icons = container.querySelectorAll('.lc-stat-gold .lc-status-icon');
+    expect(icons.length).toBe(2);
+    expect(icons[0].getAttribute('src')).toBe('https://l2.larkinor.hu/2/ikon/bizt_van.gif');
+    expect(icons[0].getAttribute('title')).toBe('Van biztosításod :-)');
+  });
 });

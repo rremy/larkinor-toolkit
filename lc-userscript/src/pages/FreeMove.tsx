@@ -21,7 +21,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         <img class="lc-hero-img" src={state.locationImageUrl} alt={state.locationName} />
       )}
 
-      <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} />
+      <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} />
 
       <NavPad directions={state.directions} attack={state.attack} />
 

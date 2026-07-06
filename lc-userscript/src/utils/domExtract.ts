@@ -30,6 +30,12 @@ export interface BuildingOption {
   trigger: () => void;
 }
 
+/** A player status indicator shown next to the money (insurance, curse, ...). */
+export interface StatusIcon {
+  iconUrl: string;
+  label: string;
+}
+
 export interface FreeMoveState {
   playerName: string;
   gold: number;
@@ -43,6 +49,8 @@ export interface FreeMoveState {
   buildings: BuildingOption[];
   /** The "engage the nearby monster" button, shown only during an encounter. */
   attack: BuildingOption | null;
+  /** Player status indicators (insurance, curse, magic shield, ...). */
+  statusIcons: StatusIcon[];
   actions: Action[];
   narration: string;
 }
@@ -123,6 +131,20 @@ function parseGold(text: string): number {
 function parsePlayerName(doc: Document): string {
   const nameEl = doc.querySelector('a[title="karakterlap"]') ?? doc.querySelector('font[color="blue"]');
   return nameEl?.textContent?.trim() ?? '';
+}
+
+/**
+ * Player status indicators (insurance, curse, magic shield, ...) — the small
+ * images that sit inside the stat block next to the money. Read from the <b>
+ * that wraps the character-sheet link.
+ */
+function extractStatusIcons(doc: Document): StatusIcon[] {
+  const block = doc.querySelector('a[title="karakterlap"]')?.closest('b');
+  if (!block) return [];
+  return Array.from(block.querySelectorAll<HTMLImageElement>('img')).map(img => ({
+    iconUrl: absolutizeGameUrl(img.getAttribute('src') ?? ''),
+    label: img.getAttribute('title')?.trim() ?? '',
+  }));
 }
 
 function extractNarration(doc: Document): string {
@@ -248,6 +270,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     directions: extractDirections(doc),
     buildings: extractBuildings(doc),
     attack: extractAttack(doc),
+    statusIcons: extractStatusIcons(doc),
     actions: extractFreeMoveActions(doc),
     narration: extractNarration(doc),
   };

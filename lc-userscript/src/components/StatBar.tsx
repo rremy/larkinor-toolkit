@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import type { StatusIcon } from '@/utils/domExtract';
 
 export interface StatBarProps {
   hp: number;
@@ -6,6 +7,7 @@ export interface StatBarProps {
   mp: number;
   mpMax: number;
   gold?: number;
+  statusIcons?: StatusIcon[];
 }
 
 function Bar({ value, max, className }: { value: number; max: number; className: string }) {
@@ -20,7 +22,7 @@ function Bar({ value, max, className }: { value: number; max: number; className:
   );
 }
 
-export function StatBar({ hp, hpMax, mp, mpMax, gold }: StatBarProps) {
+export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons }: StatBarProps) {
   return (
     <div class="lc-stat-bar lc-section">
       <div class="lc-stat-row">
@@ -37,6 +39,13 @@ export function StatBar({ hp, hpMax, mp, mpMax, gold }: StatBarProps) {
         <div class="lc-stat-row lc-stat-gold">
           <span class="lc-stat-label">💰</span>
           <span class="lc-stat-value">{gold}</span>
+          {statusIcons && statusIcons.length > 0 && (
+            <span class="lc-status-icons">
+              {statusIcons.map((icon, i) => (
+                <img key={i} class="lc-status-icon" src={icon.iconUrl} title={icon.label} alt={icon.label} />
+              ))}
+            </span>
+          )}
         </div>
       )}
     </div>

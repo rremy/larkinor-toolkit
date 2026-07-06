@@ -164,6 +164,9 @@
 .lc-stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
 .lc-stat-bar-fill--hp { background: var(--bad); }
 .lc-stat-bar-fill--mp { background: var(--mp); }
+.lc-stat-gold .lc-stat-value { min-width: auto; text-align: left; }
+.lc-status-icons { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+.lc-status-icon { height: 14px; width: auto; display: block; }
 
 /* NavPad */
 .lc-navpad { display: flex; justify-content: center; }
