@@ -41,6 +41,8 @@ export interface FreeMoveState {
   locationName: string;
   directions: DirectionOption[];
   buildings: BuildingOption[];
+  /** The "engage the nearby monster" button, shown only during an encounter. */
+  attack: BuildingOption | null;
   actions: Action[];
   narration: string;
 }
@@ -65,6 +67,9 @@ const DIRECTION_BY_BASENAME: Record<string, Direction> = {
   kelet: 'east',
   nyugat: 'west',
 };
+
+/** Image basename of the free-move "engage the monster" button. */
+const ATTACK_BASENAME = 'tamadas';
 
 const BATTLE_ACTION_BASENAMES = ['balk', 'jobbk', 'menekul', 'fold', 'lev', 'viz', 'tuz'] as const;
 
@@ -181,7 +186,7 @@ function extractBuildings(doc: Document): BuildingOption[] {
   doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
     const src = input.getAttribute('src') ?? '';
     const name = basename(src);
-    if (name === 'ok' || name in DIRECTION_BY_BASENAME) return;
+    if (name === 'ok' || name === ATTACK_BASENAME || name in DIRECTION_BY_BASENAME) return;
 
     const label = input.getAttribute('title')?.trim();
     if (!label) return; // skip decorative / unlabelled icons
@@ -193,6 +198,20 @@ function extractBuildings(doc: Document): BuildingOption[] {
     });
   });
   return buildings;
+}
+
+/**
+ * The "engage the nearby monster" button (tamadas.gif), present only when a
+ * monster is on the current tile. Returns null when there is no encounter.
+ */
+function extractAttack(doc: Document): BuildingOption | null {
+  const input = doc.querySelector<HTMLInputElement>(`input[type="image"][src*="${ATTACK_BASENAME}.gif"]`);
+  if (!input) return null;
+  return {
+    label: input.getAttribute('title')?.trim() || 'Támadás',
+    iconUrl: absolutizeGameUrl(input.getAttribute('src') ?? ''),
+    trigger: () => input.click(),
+  };
 }
 
 function extractFreeMoveActions(doc: Document): Action[] {
@@ -228,6 +247,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     locationName,
     directions: extractDirections(doc),
     buildings: extractBuildings(doc),
+    attack: extractAttack(doc),
     actions: extractFreeMoveActions(doc),
     narration: extractNarration(doc),
   };

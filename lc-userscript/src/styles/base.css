@@ -172,6 +172,9 @@
 .lc-navpad-btn { width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
 .lc-navpad-btn:active { background: var(--accent-dim); border-color: var(--accent); }
 .lc-navpad-centre { background: var(--panel-2); border-radius: 50%; border: 1px solid var(--border); }
+.lc-navpad-attack { width: 64px; height: 64px; padding: 0; border-radius: 50%; border: 1px solid var(--bad); background: var(--panel); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.lc-navpad-attack:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-attack-icon { width: 100%; height: 100%; object-fit: cover; }
 
 /* NarrationPanel — preserve <br>-derived newlines, collapse other whitespace */
 .lc-narration { font-size: 15px; line-height: 1.6; color: var(--text); min-height: 60px; white-space: pre-line; }

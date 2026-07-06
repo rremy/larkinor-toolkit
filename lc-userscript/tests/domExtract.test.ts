@@ -34,6 +34,7 @@ const FREEMOVE_HTML = `
   <input type="image" src="/ikon/fegyverbolt.gif" width="30" height="30" border="0" title="fegyverbolt">
   <input type="image" src="/ikon/templom.gif" width="30" height="30" border="0" title="templom">
   <input type="image" src="/ikon/ikon.gif" width="30" height="30" border="0">
+  <input type="image" src="/2/ikon/tamadas.gif" width="25" height="25" border="0" title="Támadás!!!">
   <form name="specTevUrlap">
     <div align="center">
       <select name="tevFajta">
@@ -181,6 +182,31 @@ describe('extractFreeMove', () => {
     state.buildings.find(b => b.label === 'templom')?.trigger();
 
     expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('extracts the attack (engage-monster) button separately from buildings', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    expect(state.attack).not.toBeNull();
+    expect(state.attack?.label).toBe('Támadás!!!');
+    expect(state.attack?.iconUrl).toBe('https://l2.larkinor.hu/2/ikon/tamadas.gif');
+    // must NOT also appear among the building icons
+    expect(state.buildings.map(b => b.label)).not.toContain('Támadás!!!');
+  });
+
+  it('attack trigger clicks the original tamadas input', () => {
+    const doc = makeDoc(FREEMOVE_HTML);
+    const state = extractFreeMove(doc);
+    const atk = doc.querySelector<HTMLInputElement>('input[src*="tamadas.gif"]')!;
+    const clickSpy = vi.fn();
+    atk.click = clickSpy;
+    state.attack?.trigger();
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('attack is null when there is no encounter (no tamadas button)', () => {
+    const html = FREEMOVE_HTML.replace(/<input[^>]*tamadas\.gif[^>]*>/, '');
+    const state = extractFreeMove(makeDoc(html));
+    expect(state.attack).toBeNull();
   });
 
   it('extracts narration from the Comic Sans MS font block', () => {

@@ -1,8 +1,10 @@
 import { h } from 'preact';
-import type { Direction, DirectionOption } from '@/utils/domExtract';
+import type { Direction, DirectionOption, BuildingOption } from '@/utils/domExtract';
 
 export interface NavPadProps {
   directions: DirectionOption[];
+  /** Monster-engage action, rendered icon-only in the centre of the D-pad. */
+  attack?: BuildingOption | null;
 }
 
 const DIR_LABELS: Record<Direction, string> = {
@@ -25,7 +27,7 @@ function DirCell({ dir, option }: { dir: Direction; option: DirectionOption | un
   );
 }
 
-export function NavPad({ directions }: NavPadProps) {
+export function NavPad({ directions, attack }: NavPadProps) {
   const find = (d: Direction) => directions.find(opt => opt.dir === d);
   return (
     <div class="lc-navpad lc-section">
@@ -34,9 +36,15 @@ export function NavPad({ directions }: NavPadProps) {
         <div class="lc-navpad-cell" />
         <DirCell dir="north" option={find('north')} />
         <div class="lc-navpad-cell" />
-        {/* Row 2: west, centre, east */}
+        {/* Row 2: west, centre (attack when in an encounter), east */}
         <DirCell dir="west" option={find('west')} />
-        <div class="lc-navpad-cell lc-navpad-centre" />
+        {attack ? (
+          <button class="lc-navpad-attack" aria-label={attack.label} onClick={() => attack.trigger()}>
+            <img class="lc-navpad-attack-icon" src={attack.iconUrl} alt="" />
+          </button>
+        ) : (
+          <div class="lc-navpad-cell lc-navpad-centre" />
+        )}
         <DirCell dir="east" option={find('east')} />
         {/* Row 3: empty, south, empty */}
         <div class="lc-navpad-cell" />

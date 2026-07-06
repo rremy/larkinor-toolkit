@@ -23,7 +23,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
 
       <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} />
 
-      <NavPad directions={state.directions} />
+      <NavPad directions={state.directions} attack={state.attack} />
 
       {state.buildings.length > 0 && (
         <div class="lc-section lc-buildings">

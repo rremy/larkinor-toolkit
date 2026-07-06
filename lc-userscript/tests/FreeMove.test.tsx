@@ -20,6 +20,7 @@ function buildState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
     locationName: 'Városközpont',
     directions: [{ dir: 'north', label: 'Észak', trigger: vi.fn() }],
     buildings: [{ label: 'fegyverbolt', iconUrl: 'https://l2.larkinor.hu/ikon/fegyverbolt.gif', trigger: vi.fn() }],
+    attack: null,
     actions: [{ label: 'Körülnéz', trigger: vi.fn() }],
     narration: 'Valami Vérszomjas moszkitóraj csámborog a közelben!',
     ...overrides,

@@ -52,4 +52,25 @@ describe('NavPad', () => {
     expect(screen.getByRole('button', { name: 'east' }).textContent).toBe('K');
     expect(screen.getByRole('button', { name: 'west' }).textContent).toBe('Ny');
   });
+
+  it('renders the attack button (icon only) in the centre and triggers it on click', () => {
+    const attack = { label: 'Támadás!!!', iconUrl: 'https://l2.larkinor.hu/2/ikon/tamadas.gif', trigger: vi.fn() };
+    const { container } = render(<NavPad directions={[makeOption('north', 'Észak')]} attack={attack} />);
+
+    const btn = screen.getByRole('button', { name: 'Támadás!!!' });
+    expect(btn).toBeTruthy();
+    // icon only — no visible text label
+    expect(btn.textContent).toBe('');
+    expect(container.querySelector('.lc-navpad-attack-icon')?.getAttribute('src'))
+      .toBe('https://l2.larkinor.hu/2/ikon/tamadas.gif');
+
+    fireEvent.click(btn);
+    expect(attack.trigger).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a plain centre cell when there is no attack', () => {
+    const { container } = render(<NavPad directions={[makeOption('north', 'Észak')]} />);
+    expect(container.querySelector('.lc-navpad-attack')).toBeNull();
+    expect(container.querySelector('.lc-navpad-centre')).not.toBeNull();
+  });
 });
