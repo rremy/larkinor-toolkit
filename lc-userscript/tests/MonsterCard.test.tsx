@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
-import { MonsterCard } from '../src/components/MonsterCard';
+import { MonsterCard, monsterImageUrl } from '../src/components/MonsterCard';
 import type { Monster } from '../src/data/monsters';
 
 const MONSTER: Monster = {
@@ -17,7 +17,28 @@ const MONSTER: Monster = {
   drops: [{ qty: 1, name: 'szúnyogszárny', id: 51 }],
 };
 
+describe('monsterImageUrl', () => {
+  it('maps the DB /pic/szornyk path to the live /szornyk URL', () => {
+    expect(monsterImageUrl('/pic/szornyk/moszkitoraj_k.gif'))
+      .toBe('https://l2.larkinor.hu/szornyk/moszkitoraj_k.gif');
+  });
+
+  it('leaves absolute URLs untouched', () => {
+    expect(monsterImageUrl('https://x/y.gif')).toBe('https://x/y.gif');
+  });
+
+  it('returns empty string for empty input', () => {
+    expect(monsterImageUrl('')).toBe('');
+  });
+});
+
 describe('MonsterCard', () => {
+  it('renders the monster image with the mapped live URL', () => {
+    const { container } = render(<MonsterCard monster={MONSTER} onClose={vi.fn()} />);
+    const img = container.querySelector('.lc-mc-img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('https://l2.larkinor.hu/szornyk/moszkitoraj_k.gif');
+  });
+
   it('returns null when monster is null', () => {
     const { container } = render(<MonsterCard monster={null} onClose={vi.fn()} />);
     expect(container.innerHTML).toBe('');

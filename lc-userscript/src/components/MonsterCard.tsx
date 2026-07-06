@@ -8,12 +8,21 @@ export interface MonsterCardProps {
 
 const ASSET_BASE = 'https://l2.larkinor.hu';
 
+/**
+ * Resolves a monster's DB image path to its live URL. The database stores
+ * paths like `/pic/szornyk/NAME_k.gif`, but the live server serves them
+ * without the `/pic` segment (`https://l2.larkinor.hu/szornyk/NAME_k.gif`).
+ */
+export function monsterImageUrl(image: string): string {
+  if (!image) return '';
+  if (image.startsWith('http')) return image;
+  return `${ASSET_BASE}${image.replace(/^\/pic\//, '/')}`;
+}
+
 export function MonsterCard({ monster, onClose }: MonsterCardProps) {
   if (!monster) return null;
 
-  const imgUrl = monster.image.startsWith('http')
-    ? monster.image
-    : `${ASSET_BASE}${monster.image}`;
+  const imgUrl = monsterImageUrl(monster.image);
 
   function handleBackdropClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('lc-drawer-backdrop')) {
