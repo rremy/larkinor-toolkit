@@ -25,6 +25,17 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
 
       <NavPad directions={state.directions} />
 
+      {state.buildings.length > 0 && (
+        <div class="lc-section lc-buildings">
+          {state.buildings.map((b, i) => (
+            <button key={i} class="lc-building-btn" title={b.label} onClick={() => b.trigger()}>
+              {b.iconUrl && <img class="lc-building-icon" src={b.iconUrl} alt="" />}
+              <span class="lc-building-label">{b.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {state.actions.length > 0 && (
         <div class="lc-section">
           {state.actions.map((action, i) => (

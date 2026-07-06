@@ -31,6 +31,9 @@ const FREEMOVE_HTML = `
   </div>
   <input type="image" src="./Larkinor_files/eszak.gif" width="25" height="25" border="0" title="északra nyomulsz - harcos-negyed">
   <input type="image" src="./Larkinor_files/nyugat.gif" width="25" height="25" border="0" title="nyugatra nyomulsz - harcos-negyed">
+  <input type="image" src="/ikon/fegyverbolt.gif" width="30" height="30" border="0" title="fegyverbolt">
+  <input type="image" src="/ikon/templom.gif" width="30" height="30" border="0" title="templom">
+  <input type="image" src="/ikon/ikon.gif" width="30" height="30" border="0">
   <form name="specTevUrlap">
     <div align="center">
       <select name="tevFajta">
@@ -152,6 +155,31 @@ describe('extractFreeMove', () => {
     );
     const state = extractFreeMove(makeDoc(html));
     expect(state.actions).toEqual([]);
+  });
+
+  it('extracts building/utility icons, excluding nav and the ok submit', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    // fegyverbolt + templom are buildings; eszak/nyugat (nav), ok (submit),
+    // and the title-less ikon.gif must be excluded.
+    expect(state.buildings.map(b => b.label)).toEqual(['fegyverbolt', 'templom']);
+  });
+
+  it('absolutizes building icon URLs to the game origin', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    const fegyver = state.buildings.find(b => b.label === 'fegyverbolt');
+    expect(fegyver?.iconUrl).toBe('https://l2.larkinor.hu/ikon/fegyverbolt.gif');
+  });
+
+  it('a building trigger clicks the original image input', () => {
+    const doc = makeDoc(FREEMOVE_HTML);
+    const state = extractFreeMove(doc);
+    const templomInput = doc.querySelector<HTMLInputElement>('input[src*="templom.gif"]')!;
+    const clickSpy = vi.fn();
+    templomInput.click = clickSpy;
+
+    state.buildings.find(b => b.label === 'templom')?.trigger();
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
   it('extracts narration from the Comic Sans MS font block', () => {

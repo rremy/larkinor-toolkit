@@ -58,12 +58,13 @@
   width: 100%;
 }
 
-/* Hero image (location / monster) */
+/* Hero image (location / monster) — show the whole image, never crop */
 .lc-hero-img {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  max-height: 42vh;
+  object-fit: contain;
   display: block;
+  background: var(--panel-2);
   border-bottom: 2px solid var(--border);
 }
 
@@ -193,3 +194,41 @@
 .lc-battle-monster-name { font-size: 20px; font-weight: bold; color: var(--text); }
 .lc-battle-hp { font-size: 14px; color: var(--bad); }
 .lc-battle-level-badge { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 3px; }
+
+/* Buildings / places row (shop, church, rest, settings, ...) */
+.lc-buildings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.lc-building-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 84px;
+  padding: 8px 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.lc-building-btn:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.lc-building-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.lc-building-label {
+  text-align: center;
+  line-height: 1.2;
+  color: var(--muted);
+  word-break: break-word;
+}

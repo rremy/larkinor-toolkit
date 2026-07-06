@@ -19,6 +19,7 @@ function buildState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
     locationImageUrl: 'https://l2.larkinor.hu/tajk/12.gif',
     locationName: 'Városközpont',
     directions: [{ dir: 'north', label: 'Észak', trigger: vi.fn() }],
+    buildings: [{ label: 'fegyverbolt', iconUrl: 'https://l2.larkinor.hu/ikon/fegyverbolt.gif', trigger: vi.fn() }],
     actions: [{ label: 'Körülnéz', trigger: vi.fn() }],
     narration: 'Egy Vérszomjas moszkitóraj van a közelben!',
     ...overrides,
@@ -45,6 +46,16 @@ describe('FreeMove', () => {
     const state = buildState();
     const { container } = render(<FreeMove state={state} db={null} />);
     expect(container.querySelector('.lc-navpad-btn')).not.toBeNull();
+  });
+
+  it('renders a building button and triggers it on click', () => {
+    const state = buildState();
+    const { container } = render(<FreeMove state={state} db={null} />);
+    const btn = container.querySelector('.lc-building-btn') as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('fegyverbolt');
+    fireEvent.click(btn);
+    expect(state.buildings[0].trigger).toHaveBeenCalled();
   });
 
   it('opens the MonsterCard when a monster link in the narration is clicked, and closes it', () => {

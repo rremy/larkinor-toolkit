@@ -23,6 +23,13 @@ export interface DirectionOption {
   trigger: () => void;
 }
 
+/** A building entrance or utility icon (shop, church, rest, settings, ...). */
+export interface BuildingOption {
+  label: string;
+  iconUrl: string;
+  trigger: () => void;
+}
+
 export interface FreeMoveState {
   playerName: string;
   gold: number;
@@ -33,6 +40,7 @@ export interface FreeMoveState {
   locationImageUrl: string;
   locationName: string;
   directions: DirectionOption[];
+  buildings: BuildingOption[];
   actions: Action[];
   narration: string;
 }
@@ -78,14 +86,17 @@ function basename(src: string): string {
 
 /**
  * Resolves a possibly-relative game asset URL to an absolute one.
- * Already-absolute URLs are returned as-is; `/tajk/...` (location images)
- * and `/pic/szornyk/...` (monster images) paths are prefixed with the game
- * origin. Anything else is returned unchanged (best-effort).
+ * Already-absolute URLs are returned as-is; root-relative paths (`/tajk/...`
+ * location images, `/pic/szornyk/...` monster images, `/ikon/...` building
+ * icons) are prefixed with the game origin. Offline-saved pages rewrite srcs
+ * to `./Something_files/...`; for those we fall back to matching a known
+ * marker substring. Anything else is returned unchanged (best-effort).
  */
 function absolutizeGameUrl(src: string): string {
   if (!src) return '';
   if (src.startsWith('http')) return src;
-  for (const marker of ['/tajk/', '/pic/szornyk/']) {
+  if (src.startsWith('/')) return `${GAME_ORIGIN}${src}`;
+  for (const marker of ['/tajk/', '/pic/szornyk/', '/ikon/']) {
     const idx = src.indexOf(marker);
     if (idx !== -1) return `${GAME_ORIGIN}${src.slice(idx)}`;
   }
@@ -146,6 +157,33 @@ function extractDirections(doc: Document): DirectionOption[] {
   return directions;
 }
 
+/**
+ * Building-entrance and utility icons on the free-move screen. These are the
+ * `<input type="image">` controls that are neither the D-pad directions
+ * (eszak/del/kelet/nyugat) nor the tevFajta submit button (ok.gif). Each keeps
+ * its game icon so the row stays visually recognisable; the trigger clicks the
+ * original control so the game's own onclick (svEnterBuilding / svRest / ...)
+ * fires natively.
+ */
+function extractBuildings(doc: Document): BuildingOption[] {
+  const buildings: BuildingOption[] = [];
+  doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
+    const src = input.getAttribute('src') ?? '';
+    const name = basename(src);
+    if (name === 'ok' || name in DIRECTION_BY_BASENAME) return;
+
+    const label = input.getAttribute('title')?.trim();
+    if (!label) return; // skip decorative / unlabelled icons
+
+    buildings.push({
+      label,
+      iconUrl: absolutizeGameUrl(src),
+      trigger: () => input.click(),
+    });
+  });
+  return buildings;
+}
+
 function extractFreeMoveActions(doc: Document): Action[] {
   const select = doc.querySelector<HTMLSelectElement>('select[name="tevFajta"]');
   const okButton =
@@ -178,6 +216,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     locationImageUrl,
     locationName,
     directions: extractDirections(doc),
+    buildings: extractBuildings(doc),
     actions: extractFreeMoveActions(doc),
     narration: extractNarration(doc),
   };
