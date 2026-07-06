@@ -14,6 +14,7 @@
   --accent-dim: rgba(212, 162, 89, 0.18);
   --bad: #c46161;
   --good: #6fb56f;
+  --mp: #4a7acc;
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -161,4 +162,4 @@
 .lc-stat-bar-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
 .lc-stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
 .lc-stat-bar-fill--hp { background: var(--bad); }
-.lc-stat-bar-fill--mp { background: #4a7acc; }
+.lc-stat-bar-fill--mp { background: var(--mp); }
