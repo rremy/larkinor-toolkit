@@ -18,6 +18,10 @@ const ENCOUNTER_PATTERNS: RegExp[] = [
   /Megpróbálsz elmenekülni\s+([^.!?]+?)\s+elől/g,
   // "<Monster> nem hagy békén, követ!"
   /(?:^|[.!?])\s*([^.!?]+?)\s+nem hagy békén, követ!/g,
+  // "Egy <Monster> van a közelben! Megtámadod vagy gyáván lapítasz?!"
+  /Egy\s+([^.!?]+?)\s+van a közelben!/g,
+  // "<Monster> megijed tőled! Megpróbál elmenekülni..."
+  /(?:^|[.!?])\s*([^.!?]+?)\s+megijed tőled!/g,
 ];
 
 export interface MonsterMention {
