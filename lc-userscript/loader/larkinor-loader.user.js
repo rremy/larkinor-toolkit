@@ -7,6 +7,9 @@
 // @match        https://larkinor.hu/*
 // @match        https://l2.larkinor.hu/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @connect      YOUR_DOMAIN_HERE
 // @run-at       document-end
 // ==/UserScript==

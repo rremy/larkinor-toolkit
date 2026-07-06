@@ -1,5 +1,4 @@
 const CACHE_KEY = 'lc_monsters_cache';
-const CACHE_VERSION_KEY = 'lc_monsters_version';
 
 export interface MonsterDrop {
   qty: number;

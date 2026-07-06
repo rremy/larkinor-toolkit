@@ -22,7 +22,7 @@ export default defineConfig({
           'GM_setValue',
           'GM_xmlhttpRequest',
         ],
-        connect: ['l2.larkinor.hu'],
+        connect: ['l2.larkinor.hu', 'YOUR_DOMAIN_HERE'],
         'run-at': 'document-end',
       },
       build: {

@@ -148,7 +148,9 @@ function extractDirections(doc: Document): DirectionOption[] {
 
 function extractFreeMoveActions(doc: Document): Action[] {
   const select = doc.querySelector<HTMLSelectElement>('select[name="tevFajta"]');
-  const okButton = doc.querySelector<HTMLInputElement>('input[type="image"][src*="ok.gif"]');
+  const okButton =
+    doc.querySelector<HTMLInputElement>('form[name="specTevUrlap"] input[type="image"][src*="ok.gif"]') ??
+    doc.querySelector<HTMLInputElement>('input[type="image"][src*="ok.gif"]');
   if (!select || !okButton) return [];
 
   return Array.from(select.options)
