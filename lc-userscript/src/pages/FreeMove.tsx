@@ -36,6 +36,8 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         </div>
       )}
 
+      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} />
+
       {state.actions.length > 0 && (
         <div class="lc-section">
           {state.actions.map((action, i) => (
@@ -45,8 +47,6 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
           ))}
         </div>
       )}
-
-      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} />
 
       <MonsterCard monster={selectedMonster} onClose={() => setSelectedMonster(null)} />
     </div>
