@@ -14,10 +14,10 @@ describe('NarrationPanel', () => {
     expect(screen.getByText(/macska fut/)).toBeTruthy();
   });
 
-  it('renders monster names as tappable spans', () => {
+  it('renders the encountered monster name as a tappable span', () => {
     const db = buildMonsterDatabase(MONSTERS);
     const { container } = render(
-      <NarrationPanel text="Egy Vérszomjas moszkitóraj van a közelben!" db={db} onMonsterClick={vi.fn()} />
+      <NarrationPanel text="Valami Vérszomjas moszkitóraj csámborog a közelben!" db={db} onMonsterClick={vi.fn()} />
     );
     const link = container.querySelector('.lc-monster-link');
     expect(link).not.toBeNull();
@@ -28,10 +28,19 @@ describe('NarrationPanel', () => {
     const db = buildMonsterDatabase(MONSTERS);
     const handler = vi.fn();
     const { container } = render(
-      <NarrationPanel text="Egy Vérszomjas moszkitóraj van a közelben!" db={db} onMonsterClick={handler} />
+      <NarrationPanel text="Vérszomjas moszkitóraj feléd indul!" db={db} onMonsterClick={handler} />
     );
     fireEvent.click(container.querySelector('.lc-monster-link')!);
     expect(handler).toHaveBeenCalledWith(MONSTERS[0]);
+  });
+
+  it('leaves an encounter name plain when it is not in the database', () => {
+    const db = buildMonsterDatabase(MONSTERS);
+    const { container } = render(
+      <NarrationPanel text="Valami Ismeretlen szörny csámborog a közelben!" db={db} onMonsterClick={vi.fn()} />
+    );
+    expect(container.querySelector('.lc-monster-link')).toBeNull();
+    expect(container.querySelector('.lc-narration')?.textContent).toContain('Ismeretlen szörny');
   });
 
   it('renders plain text when db is null', () => {

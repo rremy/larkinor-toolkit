@@ -22,12 +22,7 @@ export interface Monster {
 
 export interface MonsterDatabase {
   byName: Map<string, Monster>;
-  pattern: RegExp;
   getByName(name: string): Monster | undefined;
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function buildMonsterDatabase(monsters: Monster[]): MonsterDatabase {
@@ -36,13 +31,8 @@ export function buildMonsterDatabase(monsters: Monster[]): MonsterDatabase {
     byName.set(m.name.toLowerCase(), m);
   }
 
-  // Sort longest-first to prevent partial matches
-  const sorted = [...byName.keys()].sort((a, b) => b.length - a.length);
-  const pattern = new RegExp(`(${sorted.map(escapeRegex).join('|')})`, 'gi');
-
   return {
     byName,
-    pattern,
     getByName(name: string): Monster | undefined {
       return byName.get(name.toLowerCase());
     },

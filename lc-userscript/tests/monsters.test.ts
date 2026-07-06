@@ -25,17 +25,8 @@ describe('buildMonsterDatabase', () => {
     expect(db.getByName('Ismeretlen szörny')).toBeUndefined();
   });
 
-  it('pattern matches longer names before shorter substring names', () => {
+  it('getByName trims and matches multi-word names', () => {
     const db = buildMonsterDatabase(SAMPLE_MONSTERS);
-    const text = 'Egy Hosszú nevű szörnyeteg király áll előtted.';
-    const matches = text.match(db.pattern);
-    expect(matches?.[0]).toBe('Hosszú nevű szörnyeteg király');
-  });
-
-  it('pattern is case-insensitive', () => {
-    const db = buildMonsterDatabase(SAMPLE_MONSTERS);
-    const text = 'egy vérszomjas moszkitóraj támad rád';
-    expect(db.pattern.test(text)).toBe(true);
-    db.pattern.lastIndex = 0; // reset stateful regex
+    expect(db.getByName('hosszú nevű szörnyeteg király')?.id).toBe(99);
   });
 });

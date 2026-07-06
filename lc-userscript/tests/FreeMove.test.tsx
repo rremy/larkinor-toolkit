@@ -21,7 +21,7 @@ function buildState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
     directions: [{ dir: 'north', label: 'Észak', trigger: vi.fn() }],
     buildings: [{ label: 'fegyverbolt', iconUrl: 'https://l2.larkinor.hu/ikon/fegyverbolt.gif', trigger: vi.fn() }],
     actions: [{ label: 'Körülnéz', trigger: vi.fn() }],
-    narration: 'Egy Vérszomjas moszkitóraj van a közelben!',
+    narration: 'Valami Vérszomjas moszkitóraj csámborog a közelben!',
     ...overrides,
   };
 }
