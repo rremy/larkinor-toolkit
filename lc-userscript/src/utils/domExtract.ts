@@ -127,8 +127,10 @@ function extractNarration(doc: Document): string {
 function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {
   const text = doc.body.textContent ?? '';
   const gold = parseGold(text);
-  const [hp, hpMax] = parseStatPair(text, 'Életpont');
-  const [mp, mpMax] = parseStatPair(text, 'Varázspont');
+  // The game prints these as "max / current" (e.g. "Életpont: 303 / 214") on
+  // both the free-move and battle screens, so the first number is the max.
+  const [hpMax, hp] = parseStatPair(text, 'Életpont');
+  const [mpMax, mp] = parseStatPair(text, 'Varázspont');
   return { gold, hp, hpMax, mp, mpMax };
 }
 
@@ -250,12 +252,7 @@ function extractBattleActions(doc: Document): Action[] {
 }
 
 export function extractBattle(doc: Document): BattleState {
-  // The battle screen renders the player's stats as "max / current" — the
-  // REVERSE of the free-move screen's "current / max". Swap on the way in so
-  // the rest of the app always sees {current, max}.
-  const text = doc.body.textContent ?? '';
-  const [hpMax, hp] = parseStatPair(text, 'Életpont');
-  const [mpMax, mp] = parseStatPair(text, 'Varázspont');
+  const { hp, hpMax, mp, mpMax } = extractStats(doc);
   const { monsterName, monsterHp, monsterImageUrl } = extractMonster(doc);
 
   return {

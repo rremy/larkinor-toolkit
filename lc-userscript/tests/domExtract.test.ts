@@ -23,8 +23,8 @@ const FREEMOVE_HTML = `
   <b>
     <a title="karakterlap"><font color="blue">Remy </font></a>&nbsp;&nbsp;<font color="darkblue" align="left">[994/800]</font><br>
     Pénz: 1&nbsp;979&nbsp;&nbsp;&nbsp;&nbsp;<img src="./Larkinor_files/bizt_van.gif" border="0" width="12" height="12" title=" Van biztositasod :-)">&nbsp;<br>
-    Életpont: 284 / 284 <br>
-    Varázspont: 275 / 275
+    Életpont: 303 / 214 <br>
+    Varázspont: 286 / 182
   </b>
   <div>
     <img src="https://l2.larkinor.hu/tajk/53.gif" width="145" height="125" title="harcos-negyed">
@@ -83,10 +83,11 @@ describe('extractFreeMove', () => {
     const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
     expect(state.playerName).toBe('Remy');
     expect(state.gold).toBe(1979);
-    expect(state.hp).toBe(284);
-    expect(state.hpMax).toBe(284);
-    expect(state.mp).toBe(275);
-    expect(state.mpMax).toBe(275);
+    // Game prints "max / current" (303 / 214) — extractor must normalise to {current, max}
+    expect(state.hp).toBe(214);
+    expect(state.hpMax).toBe(303);
+    expect(state.mp).toBe(182);
+    expect(state.mpMax).toBe(286);
   });
 
   it('parses the location image URL and district name', () => {
