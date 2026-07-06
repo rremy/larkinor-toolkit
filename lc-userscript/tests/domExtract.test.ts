@@ -57,8 +57,8 @@ const BATTLE_HTML = `
   <b>
     <a title="karakterlap"><font color="blue">Remy </font></a>&nbsp;&nbsp;<font color="darkblue" align="left">[988/800]</font><br>
     Pénz: 1&nbsp;979<br>
-    Életpont: 284 / 284 <br>
-    Varázspont: 275 / 275
+    Életpont: 303 / 260 <br>
+    Varázspont: 286 / 228
   </b>
   <div>
     <img src="/pic/szornyk/unikorn_k.gif" width="125" height="145" border="0" title="Unikorn, életpontja: 148">
@@ -215,12 +215,14 @@ describe('extractBattle', () => {
     expect(state.monsterName).toBe('');
   });
 
-  it('parses player HP and MP in battle', () => {
+  it('parses player HP and MP in battle, reversing the "max / current" order', () => {
+    // The battle screen renders "Életpont: max / current" (303 / 260) — the
+    // reverse of the free-move screen — so the extractor must swap them.
     const state = extractBattle(makeDoc(BATTLE_HTML));
-    expect(state.hp).toBe(284);
-    expect(state.hpMax).toBe(284);
-    expect(state.mp).toBe(275);
-    expect(state.mpMax).toBe(275);
+    expect(state.hp).toBe(260);
+    expect(state.hpMax).toBe(303);
+    expect(state.mp).toBe(228);
+    expect(state.mpMax).toBe(286);
   });
 
   it('collects the known combat action buttons with their titles', () => {

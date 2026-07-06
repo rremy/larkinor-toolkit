@@ -250,7 +250,12 @@ function extractBattleActions(doc: Document): Action[] {
 }
 
 export function extractBattle(doc: Document): BattleState {
-  const { hp, hpMax, mp, mpMax } = extractStats(doc);
+  // The battle screen renders the player's stats as "max / current" — the
+  // REVERSE of the free-move screen's "current / max". Swap on the way in so
+  // the rest of the app always sees {current, max}.
+  const text = doc.body.textContent ?? '';
+  const [hpMax, hp] = parseStatPair(text, 'Életpont');
+  const [mpMax, mp] = parseStatPair(text, 'Varázspont');
   const { monsterName, monsterHp, monsterImageUrl } = extractMonster(doc);
 
   return {
