@@ -6,32 +6,29 @@ export enum PageType {
   Unknown = 'Unknown',
 }
 
+/**
+ * Canonical page-type discriminator. Every Larkinor page carries
+ * `<form name="urlap">` with a hidden `oldalTipus` field — read its value
+ * rather than inferring the page type from incidental markup.
+ *
+ * See docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md.
+ */
 export function detectPage(doc: Document): PageType {
-  // FreeMove: directional navigation table present
-  // The game uses a table with direction links (É/K/D/Ny = N/E/S/W in Hungarian)
-  if (
-    doc.querySelector('table.irany') !== null ||
-    doc.querySelector('a[href*="dir=north"], a[href*="dir=south"], a[href*="dir=east"], a[href*="dir=west"]') !== null
-  ) {
-    return PageType.FreeMove;
-  }
+  const oldalTipus = doc.querySelector<HTMLInputElement>('input[name="oldalTipus"]')?.value;
 
-  // Battle: monster image from /pic/szornyk/ path
-  if (doc.querySelector('img[src*="/pic/szornyk/"]') !== null) {
-    return PageType.Battle;
+  switch (oldalTipus) {
+    case 'otVilag':
+      return PageType.FreeMove;
+    case 'otHarc':
+      return PageType.Battle;
+    case 'otTemplom':
+      return PageType.Church;
+    case 'otVegyesbolt':
+    case 'otFegyverbolt':
+    case 'otPiac':
+      return PageType.Shop;
+    default:
+      console.warn(`[Larkinor UI] Unrecognised oldalTipus "${oldalTipus ?? '(missing)'}" — rendering skipped`);
+      return PageType.Unknown;
   }
-
-  // Shop: Vétel/Eladás (buy/sell) column headers
-  const allText = doc.body?.textContent ?? '';
-  if (allText.includes('Vétel') && allText.includes('Eladás')) {
-    return PageType.Shop;
-  }
-
-  // Church: healing/mana shop — "Mágikus tárgy" + "Negatív hatások"
-  if (allText.includes('Mágikus tárgy') && allText.includes('Negatív hatások')) {
-    return PageType.Church;
-  }
-
-  console.warn('[Larkinor UI] Unrecognised page type — rendering skipped');
-  return PageType.Unknown;
 }

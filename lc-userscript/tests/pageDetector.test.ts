@@ -1,53 +1,65 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { detectPage, PageType } from '../src/utils/pageDetector';
 
-function makeDoc(bodyHtml: string): Document {
-  return new JSDOM(`<html><body>${bodyHtml}</body></html>`).window.document;
+// Sanitized reconstruction of the real page's shared form. Every Larkinor
+// page carries <form name="urlap"> with a hidden oldalTipus field — that is
+// the canonical page-type discriminator (see docs/superpowers/specs/
+// 2026-07-06-larkinor-real-dom-reference.md). No real session token/login
+// name is used here.
+function makeDoc(oldalTipus?: string): Document {
+  const hidden =
+    oldalTipus !== undefined
+      ? `<input type="hidden" name="oldalTipus" value="${oldalTipus}">`
+      : '';
+  return new JSDOM(
+    `<html><body>
+      <form name="urlap" method="post" action="https://l2.larkinor.hu/cgi-bin/larkinor">
+        ${hidden}
+        <input type="hidden" name="loginname" value="test">
+        <input type="hidden" name="kulcs" value="TESTKEY">
+      </form>
+    </body></html>`
+  ).window.document;
 }
 
 describe('detectPage', () => {
-  it('returns FreeMove when compass navigation is present', () => {
-    // Game compass: a table with directional links (N/S/E/W)
-    const doc = makeDoc(`
-      <table class="irany">
-        <tr><td><a href="?dir=north">É</a></td></tr>
-        <tr><td><a href="?dir=west">Ny</a></td><td><a href="?dir=east">K</a></td></tr>
-        <tr><td><a href="?dir=south">D</a></td></tr>
-      </table>
-      <select name="action"><option value="eat">kajálsz</option></select>
-    `);
-    expect(detectPage(doc)).toBe(PageType.FreeMove);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('returns Battle when a monster image is present in the main panel', () => {
-    const doc = makeDoc(`
-      <img src="/pic/szornyk/moszkitoraj_k.gif" alt="szörny">
-      <a href="?action=attack">megtámadod</a>
-    `);
-    expect(detectPage(doc)).toBe(PageType.Battle);
+  it('returns FreeMove for oldalTipus=otVilag', () => {
+    expect(detectPage(makeDoc('otVilag'))).toBe(PageType.FreeMove);
   });
 
-  it('returns Shop when buy/sell headers are present', () => {
-    const doc = makeDoc(`
-      <td>Vétel</td>
-      <td>Eladás</td>
-      <select name="item_buy"></select>
-    `);
-    expect(detectPage(doc)).toBe(PageType.Shop);
+  it('returns Battle for oldalTipus=otHarc', () => {
+    expect(detectPage(makeDoc('otHarc'))).toBe(PageType.Battle);
   });
 
-  it('returns Church when a healing/mana shop form is present', () => {
-    const doc = makeDoc(`
-      <td>Mágikus tárgy</td>
-      <td>Negatív hatások:</td>
-      <select name="magic_item"></select>
-    `);
-    expect(detectPage(doc)).toBe(PageType.Church);
+  it('returns Church for oldalTipus=otTemplom', () => {
+    expect(detectPage(makeDoc('otTemplom'))).toBe(PageType.Church);
   });
 
-  it('returns Unknown and does not throw for unrecognised pages', () => {
-    const doc = makeDoc(`<p>Valami ismeretlen oldal</p>`);
+  it('returns Shop for oldalTipus=otVegyesbolt', () => {
+    expect(detectPage(makeDoc('otVegyesbolt'))).toBe(PageType.Shop);
+  });
+
+  it('returns Shop for oldalTipus=otFegyverbolt', () => {
+    expect(detectPage(makeDoc('otFegyverbolt'))).toBe(PageType.Shop);
+  });
+
+  it('returns Shop for oldalTipus=otPiac', () => {
+    expect(detectPage(makeDoc('otPiac'))).toBe(PageType.Shop);
+  });
+
+  it('returns Unknown and warns for an unrecognised value (e.g. otKocsma)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(detectPage(makeDoc('otKocsma'))).toBe(PageType.Unknown);
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('returns Unknown without throwing when the oldalTipus field is missing', () => {
+    const doc = makeDoc(undefined);
     expect(() => detectPage(doc)).not.toThrow();
     expect(detectPage(doc)).toBe(PageType.Unknown);
   });

@@ -1,6 +1,24 @@
+// Extraction utilities for the real Larkinor DOM. The game renders as
+// absolutely-positioned <div>s driven by a single shared
+// `<form name="urlap">`; every on-screen control is an
+// `<input type="image">` (or the tevFajta select + ok.gif button) whose
+// inline onclick sets hidden fields and calls `document.urlap.submit()`.
+//
+// Extraction strategy: never reconstruct/parse those onclick strings —
+// locate the original control (by image basename or title) and invoke
+// `element.click()`, letting the game's own onclick fire natively.
+//
+// See docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md.
+
 export type Direction = 'north' | 'south' | 'east' | 'west';
 
 export interface Action {
+  label: string;
+  trigger: () => void;
+}
+
+export interface DirectionOption {
+  dir: Direction;
   label: string;
   trigger: () => void;
 }
@@ -13,13 +31,15 @@ export interface FreeMoveState {
   mp: number;
   mpMax: number;
   locationImageUrl: string;
-  availableDirections: Direction[];
+  locationName: string;
+  directions: DirectionOption[];
   actions: Action[];
   narration: string;
 }
 
 export interface BattleState {
   monsterName: string;
+  monsterHp: number | null;
   monsterImageUrl: string;
   narration: string;
   actions: Action[];
@@ -29,125 +49,180 @@ export interface BattleState {
   mpMax: number;
 }
 
-function parseStatLine(text: string, label: string): [number, number] {
+const GAME_ORIGIN = 'https://l2.larkinor.hu';
+
+const DIRECTION_BY_BASENAME: Record<string, Direction> = {
+  eszak: 'north',
+  del: 'south',
+  kelet: 'east',
+  nyugat: 'west',
+};
+
+const BATTLE_ACTION_BASENAMES = ['balk', 'jobbk', 'menekul', 'fold', 'lev', 'viz', 'tuz'] as const;
+
+const BATTLE_ACTION_FALLBACK_LABELS: Record<string, string> = {
+  balk: 'Bal kezes támadás',
+  jobbk: 'Jobb kezes támadás',
+  menekul: 'Menekülés',
+  fold: 'Föld varázslat',
+  lev: 'Levegő varázslat',
+  viz: 'Víz varázslat',
+  tuz: 'Tűz varázslat',
+};
+
+/** Filename (without extension, lowercased) of an image `src` attribute. */
+function basename(src: string): string {
+  const file = src.split('/').pop() ?? src;
+  return file.replace(/\.gif$/i, '').toLowerCase();
+}
+
+/**
+ * Resolves a possibly-relative game asset URL to an absolute one.
+ * Already-absolute URLs are returned as-is; `/tajk/...` (location images)
+ * and `/pic/szornyk/...` (monster images) paths are prefixed with the game
+ * origin. Anything else is returned unchanged (best-effort).
+ */
+function absolutizeGameUrl(src: string): string {
+  if (!src) return '';
+  if (src.startsWith('http')) return src;
+  for (const marker of ['/tajk/', '/pic/szornyk/']) {
+    const idx = src.indexOf(marker);
+    if (idx !== -1) return `${GAME_ORIGIN}${src.slice(idx)}`;
+  }
+  return src;
+}
+
+function parseStatPair(text: string, label: string): [number, number] {
   const m = text.match(new RegExp(`${label}[:\\s]+(\\d+)\\s*/\\s*(\\d+)`));
   return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : [0, 0];
 }
 
 function parseGold(text: string): number {
-  const m = text.match(/Pénz[:\s]+(\d+)/);
-  return m ? parseInt(m[1], 10) : 0;
+  const m = text.match(/Pénz:\s*([\d\s]+)/);
+  if (!m) return 0;
+  const digits = m[1].replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) : 0;
 }
 
-function parsePlayerName(text: string): string {
-  // Format: "Remy [3/5/300]" — name followed by a bracketed stat group whose
-  // exact meaning (currentXP/level/maxXP?) is unconfirmed, so only the name
-  // is extracted here.
-  // Note: no `^` anchor — `doc.body.textContent` concatenates all text nodes,
-  // so the name is typically preceded by whitespace/newlines from HTML indentation,
-  // not positioned at the very start of the string.
-  const m = text.match(/([A-Za-záéíóöőúüűÁÉÍÓÖŐÚÜŰ][\w ]+?)\s*\[/);
-  return m?.[1]?.trim() ?? 'Unknown';
+function parsePlayerName(doc: Document): string {
+  const nameEl = doc.querySelector('a[title="karakterlap"]') ?? doc.querySelector('font[color="blue"]');
+  return nameEl?.textContent?.trim() ?? '';
+}
+
+function extractNarration(doc: Document): string {
+  return doc.querySelector('font[face="Comic sans MS"]')?.textContent?.trim() ?? '';
+}
+
+function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {
+  const text = doc.body.textContent ?? '';
+  const gold = parseGold(text);
+  const [hp, hpMax] = parseStatPair(text, 'Életpont');
+  const [mp, mpMax] = parseStatPair(text, 'Varázspont');
+  return { gold, hp, hpMax, mp, mpMax };
+}
+
+function extractLocation(doc: Document): { locationImageUrl: string; locationName: string } {
+  const img =
+    doc.querySelector<HTMLImageElement>('img[src*="/tajk/"]') ??
+    Array.from(doc.querySelectorAll<HTMLImageElement>('img[width="145"]')).find(i => i.hasAttribute('title')) ??
+    null;
+
+  const src = img?.getAttribute('src') ?? '';
+  const locationName = img?.getAttribute('title') ?? '';
+  return { locationImageUrl: absolutizeGameUrl(src), locationName };
+}
+
+function extractDirections(doc: Document): DirectionOption[] {
+  const directions: DirectionOption[] = [];
+  doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
+    const dir = DIRECTION_BY_BASENAME[basename(input.getAttribute('src') ?? '')];
+    if (!dir) return;
+    directions.push({
+      dir,
+      label: input.getAttribute('title') ?? '',
+      trigger: () => input.click(),
+    });
+  });
+  return directions;
+}
+
+function extractFreeMoveActions(doc: Document): Action[] {
+  const select = doc.querySelector<HTMLSelectElement>('select[name="tevFajta"]');
+  const okButton = doc.querySelector<HTMLInputElement>('input[type="image"][src*="ok.gif"]');
+  if (!select || !okButton) return [];
+
+  return Array.from(select.options)
+    .filter(opt => opt.value)
+    .map(opt => ({
+      label: opt.text.trim(),
+      trigger: () => {
+        select.value = opt.value;
+        okButton.click();
+      },
+    }));
 }
 
 export function extractFreeMove(doc: Document): FreeMoveState {
-  const allText = doc.body.textContent ?? '';
+  const { gold, hp, hpMax, mp, mpMax } = extractStats(doc);
+  const { locationImageUrl, locationName } = extractLocation(doc);
 
-  const name = parsePlayerName(allText);
-  const gold = parseGold(allText);
-  const [hp, hpMax] = parseStatLine(allText, 'Életpont');
-  const [mp, mpMax] = parseStatLine(allText, 'Varázspont');
-
-  // Location image: first img pointing to l2.larkinor.hu or /tajk/
-  const locImg = doc.querySelector<HTMLImageElement>('img[src*="l2.larkinor.hu"], img[src*="/tajk/"]');
-  const locationImageUrl = locImg?.src ?? '';
-
-  // Directions: look for links with dir= parameter
-  const dirMap: Record<string, Direction> = {
-    north: 'north', south: 'south', east: 'east', west: 'west',
-    'É': 'north', 'D': 'south', 'K': 'east', 'Ny': 'west',
+  return {
+    playerName: parsePlayerName(doc),
+    gold,
+    hp,
+    hpMax,
+    mp,
+    mpMax,
+    locationImageUrl,
+    locationName,
+    directions: extractDirections(doc),
+    actions: extractFreeMoveActions(doc),
+    narration: extractNarration(doc),
   };
-  const availableDirections: Direction[] = [];
-  doc.querySelectorAll<HTMLAnchorElement>('a[href*="dir="]').forEach(a => {
-    const m = a.href.match(/dir=(\w+)/);
-    if (m) {
-      const dir = dirMap[m[1]];
-      if (dir && !availableDirections.includes(dir)) availableDirections.push(dir);
-    }
-  });
-  // Also check by link text (É/D/K/Ny): some game screens render direction
-  // links without a `dir=` query param (e.g. plain anchors inside the
-  // `table.irany` layout), so this pass catches those; the dedup guard above
-  // makes it safe to run both passes even when a link matches in both.
-  doc.querySelectorAll<HTMLAnchorElement>('table.irany a').forEach(a => {
-    const dir = dirMap[a.textContent?.trim() ?? ''];
-    if (dir && !availableDirections.includes(dir)) availableDirections.push(dir);
-  });
+}
 
-  // Actions: from <select name="action"> or similar
+function extractMonster(doc: Document): { monsterName: string; monsterHp: number | null; monsterImageUrl: string } {
+  const img = doc.querySelector<HTMLImageElement>('img[title*="letpontja"]');
+  const title = img?.getAttribute('title') ?? '';
+
+  const monsterName = title.split(',')[0]?.trim() ?? '';
+  const hpMatch = title.match(/letpontja:\s*(\d+)/);
+  const monsterHp = hpMatch ? parseInt(hpMatch[1], 10) : null;
+  const monsterImageUrl = absolutizeGameUrl(img?.getAttribute('src') ?? '');
+
+  return { monsterName, monsterHp, monsterImageUrl };
+}
+
+function extractBattleActions(doc: Document): Action[] {
   const actions: Action[] = [];
-  const select = doc.querySelector<HTMLSelectElement>('select[name="action"]');
-  if (select) {
-    Array.from(select.options).forEach(opt => {
-      if (opt.value) {
-        actions.push({
-          label: opt.text.trim(),
-          trigger: () => {
-            select.value = opt.value;
-            select.closest('form')?.submit();
-          },
-        });
-      }
+  doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
+    const name = basename(input.getAttribute('src') ?? '');
+    if (!(BATTLE_ACTION_BASENAMES as readonly string[]).includes(name)) return;
+
+    const title = input.getAttribute('title')?.trim();
+    actions.push({
+      label: title || BATTLE_ACTION_FALLBACK_LABELS[name] || name,
+      trigger: () => input.click(),
     });
-  }
-
-  // Narration: look for .stext or the text area below the game panel
-  const narrationEl = doc.querySelector('.stext, textarea[name="stext"], .szoveg');
-  const narration = narrationEl?.textContent?.trim() ?? '';
-
-  return { playerName: name, gold, hp, hpMax, mp, mpMax, locationImageUrl, availableDirections, actions, narration };
+  });
+  return actions;
 }
 
 export function extractBattle(doc: Document): BattleState {
-  const allText = doc.body.textContent ?? '';
+  const { hp, hpMax, mp, mpMax } = extractStats(doc);
+  const { monsterName, monsterHp, monsterImageUrl } = extractMonster(doc);
 
-  const [hp, hpMax] = parseStatLine(allText, 'Életpont');
-  const [mp, mpMax] = parseStatLine(allText, 'Varázspont');
-
-  // Monster image
-  const monsterImg = doc.querySelector<HTMLImageElement>('img[src*="/pic/szornyk/"]');
-  const monsterImageUrl = monsterImg
-    ? (monsterImg.src.startsWith('http') ? monsterImg.src : `https://l2.larkinor.hu${monsterImg.getAttribute('src')}`)
-    : '';
-
-  // Monster name: the text node near the monster image (often in a sibling table
-  // cell, or a sibling div right after the image within the same container).
-  const monsterName = monsterImg?.closest('td')?.nextElementSibling?.textContent?.trim()
-    ?? monsterImg?.nextElementSibling?.textContent?.trim()
-    ?? monsterImg?.alt
-    ?? 'Ismeretlen szörny';
-
-  // Narration
-  const narrationEl = doc.querySelector('.stext, textarea[name="stext"], .szoveg');
-  const narration = narrationEl?.textContent?.trim() ?? '';
-
-  // Actions: combat action links
-  const actions: Action[] = [];
-  doc.querySelectorAll<HTMLAnchorElement>('a[href*="action="]').forEach(a => {
-    const label = a.textContent?.trim() ?? '';
-    if (label) {
-      actions.push({ label, trigger: () => a.click() });
-    }
-  });
-  // Also check submit buttons
-  doc.querySelectorAll<HTMLInputElement>('input[type="submit"]').forEach(btn => {
-    const label = btn.value?.trim() ?? '';
-    if (label) {
-      actions.push({ label, trigger: () => btn.click() });
-    }
-  });
-
-  return { monsterName, monsterImageUrl, narration, actions, hp, hpMax, mp, mpMax };
+  return {
+    monsterName,
+    monsterHp,
+    monsterImageUrl,
+    narration: extractNarration(doc),
+    actions: extractBattleActions(doc),
+    hp,
+    hpMax,
+    mp,
+    mpMax,
+  };
 }
 
 export function hideOriginalDOM(doc: Document): void {
