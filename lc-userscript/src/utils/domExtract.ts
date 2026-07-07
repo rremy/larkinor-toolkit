@@ -374,6 +374,147 @@ export function extractLogin(doc: Document): LoginState {
   return { savedUsername, error, submit };
 }
 
+/** A single layered image in the dungeon's composed cell picture. */
+export interface DungeonTile {
+  imageUrl: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  z: number;
+}
+
+/** One selectable answer of a dungeon question. */
+export interface DungeonAnswer {
+  label: string;
+  /** Clicks the original radio, firing its onclick (sets urlap.par1). */
+  select: () => void;
+}
+
+/** A movement-blocking multiple-choice question shown in some dungeon cells. */
+export interface DungeonQuestion {
+  prompt: string;
+  answers: DungeonAnswer[];
+  /** Clicks the original "Válasz" button (native submit). */
+  submit: () => void;
+}
+
+export interface DungeonState {
+  playerName: string;
+  gold: number;
+  hp: number;
+  hpMax: number;
+  mp: number;
+  mpMax: number;
+  statusIcons: StatusIcon[];
+  /** Layered tiles of the composed cell image (floor, doors, walls, corridors, figure, enemy). */
+  tiles: DungeonTile[];
+  directions: DirectionOption[];
+  buildings: BuildingOption[];
+  actions: Action[];
+  narration: string;
+  question: DungeonQuestion | null;
+}
+
+/** Composed-cell tile images, matched by their src path segment. */
+const DUNGEON_TILE_RE = /\/(talaj|ajto|fal|folyoso|labirintus|ellenfel)\//;
+
+/** Reads a numeric CSS property (px or unit-less) from an inline style string. */
+function parseStyleNumber(style: string, prop: string): number {
+  const m = style.match(new RegExp(`${prop}\\s*:\\s*(-?\\d+)`));
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function extractDungeonTiles(doc: Document): DungeonTile[] {
+  const raw = Array.from(doc.querySelectorAll<HTMLImageElement>('img'))
+    .filter(img => DUNGEON_TILE_RE.test(img.getAttribute('src') ?? ''))
+    .map(img => {
+      const style = img.parentElement?.getAttribute('style') ?? '';
+      return {
+        imageUrl: absolutizeGameUrl(img.getAttribute('src') ?? ''),
+        left: parseStyleNumber(style, 'left'),
+        top: parseStyleNumber(style, 'top'),
+        width: parseStyleNumber(style, 'width'),
+        height: parseStyleNumber(style, 'height'),
+        z: parseStyleNumber(style, 'z-index'),
+      };
+    });
+
+  if (raw.length === 0) return [];
+
+  // Normalise offsets so the composite box starts at (0, 0).
+  const minLeft = Math.min(...raw.map(t => t.left));
+  const minTop = Math.min(...raw.map(t => t.top));
+  return raw.map(t => ({ ...t, left: t.left - minLeft, top: t.top - minTop }));
+}
+
+/** Text following a radio up to the next <br>/input — its answer label. */
+function answerLabelAfter(radio: Element): string {
+  let text = '';
+  let node = radio.nextSibling;
+  while (node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = (node as Element).tagName;
+      if (tag === 'BR' || tag === 'INPUT') break;
+    }
+    if (node.nodeType === Node.TEXT_NODE) text += node.textContent ?? '';
+    node = node.nextSibling;
+  }
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/** Text of the question block up to the first answer radio — the prompt. */
+function questionPromptBefore(block: Element, firstRadio: Element): string {
+  let text = '';
+  for (const node of Array.from(block.childNodes)) {
+    if (node === firstRadio) break;
+    if (node.nodeType === Node.ELEMENT_NODE && (node as Element).contains(firstRadio)) break;
+    text += `${node.textContent ?? ''} `;
+  }
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function extractDungeonQuestion(doc: Document): DungeonQuestion | null {
+  const radios = Array.from(doc.querySelectorAll<HTMLInputElement>('input[name="valasz"]'));
+  if (radios.length === 0) return null;
+
+  const block = radios[0].closest('font[face="Comic sans MS"]') ?? radios[0].parentElement;
+  const prompt = block ? questionPromptBefore(block, radios[0]) : '';
+
+  const answers: DungeonAnswer[] = radios.map(radio => ({
+    label: answerLabelAfter(radio),
+    trigger: radio,
+  })).map(({ label, trigger }) => ({ label, select: () => trigger.click() }));
+
+  const valaszButton = Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="button"]'))
+    .find(b => (b.value ?? '').trim() === 'Válasz');
+
+  return { prompt, answers, submit: () => valaszButton?.click() };
+}
+
+export function extractDungeon(doc: Document): DungeonState {
+  const { gold, hp, hpMax, mp, mpMax } = extractStats(doc);
+  const question = extractDungeonQuestion(doc);
+
+  return {
+    playerName: parsePlayerName(doc),
+    gold,
+    hp,
+    hpMax,
+    mp,
+    mpMax,
+    statusIcons: extractStatusIcons(doc),
+    tiles: extractDungeonTiles(doc),
+    directions: extractDirections(doc),
+    buildings: extractBuildings(doc),
+    actions: extractFreeMoveActions(doc),
+    // The prompt already carries the movement/question text, so suppress the
+    // duplicate narration while a question is active.
+    narration: question ? '' : extractNarration(doc),
+    question,
+  };
+}
+
 export function hideOriginalDOM(doc: Document): void {
   const offscreen = doc.createElement('div');
   offscreen.id = 'lc-offscreen';

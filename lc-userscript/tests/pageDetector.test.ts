@@ -44,6 +44,10 @@ describe('detectPage', () => {
     expect(detectPage(makeDoc('otLogin'))).toBe(PageType.Login);
   });
 
+  it('returns Dungeon for oldalTipus=otLabirintus', () => {
+    expect(detectPage(makeDoc('otLabirintus'))).toBe(PageType.Dungeon);
+  });
+
   it('returns Shop for oldalTipus=otVegyesbolt', () => {
     expect(detectPage(makeDoc('otVegyesbolt'))).toBe(PageType.Shop);
   });

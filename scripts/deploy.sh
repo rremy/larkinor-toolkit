@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${REPO_ROOT}/.env"
 DIST_DIR="${REPO_ROOT}/lc-userscript/dist"
+STATIC_DIR="${REPO_ROOT}/lc-userscript/static"
 
 # --- Configuration (from .env) -----------------------------------------------
 if [[ ! -f "${ENV_FILE}" ]]; then
@@ -41,7 +42,9 @@ fi
 
 # --- Deploy ------------------------------------------------------------------
 echo "Deploying ${DIST_DIR}/ -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}"
-
 scp -r "${DIST_DIR}/." "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/"
+
+echo "Deploying ${STATIC_DIR}/ -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}"
+scp -r "${STATIC_DIR}/." "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/static/"
 
 echo "Done."

@@ -4,6 +4,7 @@ export enum PageType {
   Shop = 'Shop',
   Church = 'Church',
   Login = 'Login',
+  Dungeon = 'Dungeon',
   Unknown = 'Unknown',
 }
 
@@ -26,6 +27,8 @@ export function detectPage(doc: Document): PageType {
       return PageType.Church;
     case 'otLogin':
       return PageType.Login;
+    case 'otLabirintus':
+      return PageType.Dungeon;
     case 'otVegyesbolt':
     case 'otFegyverbolt':
     case 'otPiac':

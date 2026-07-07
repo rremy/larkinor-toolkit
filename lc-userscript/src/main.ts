@@ -1,14 +1,21 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, extractBattle, extractLogin, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState } from '@/utils/domExtract';
+import { extractFreeMove, extractBattle, extractLogin, extractDungeon, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { loadMonsters, type MonsterDatabase } from '@/data/monsters';
 import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
+import { Dungeon } from '@/pages/Dungeon';
 import baseStyles from '@/styles/base.css?raw';
 
-// Deployment constant — where monsters.json is hosted.
-const MONSTERS_JSON_URL = 'https://example.invalid/larkinor/monsters.json';
+// Static DB assets live under the relative path `static/db/` in both dev and
+// production — only the origin differs. In `npm run dev` the folder is served
+// by the Vite dev server (see the lc-static-assets plugin in vite.config.ts),
+// so we resolve against this module's own URL; in the production build the
+// dead dev branch is stripped and we fetch from the deployment host.
+const MONSTERS_JSON_URL = import.meta.env.DEV
+  ? new URL('/static/db/monsters.json', import.meta.url).href
+  : 'https://example.invalid/larkinor/static/db/monsters.json';
 
 // Discriminated union so the extracted state stays paired with — and
 // narrowable by — the page type that produced it, instead of collapsing to
@@ -17,7 +24,8 @@ const MONSTERS_JSON_URL = 'https://example.invalid/larkinor/monsters.json';
 type PageState =
   | { pageType: PageType.FreeMove; state: FreeMoveState }
   | { pageType: PageType.Battle; state: BattleState }
-  | { pageType: PageType.Login; state: LoginState };
+  | { pageType: PageType.Login; state: LoginState }
+  | { pageType: PageType.Dungeon; state: DungeonState };
 
 /**
  * The game page ships no viewport meta, so mobile browsers assume a ~980px
@@ -44,6 +52,8 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractBattle(doc) };
     case PageType.Login:
       return { pageType, state: extractLogin(doc) };
+    case PageType.Dungeon:
+      return { pageType, state: extractDungeon(doc) };
     default:
       return null; // v1 leaves other pages untouched
   }
@@ -79,13 +89,16 @@ function boot(): void {
       case PageType.Login:
         render(h(Login, { state: pageState.state }), root);
         break;
+      case PageType.Dungeon:
+        render(h(Dungeon, { state: pageState.state }), root);
+        break;
     }
   };
 
-  renderPage(); // immediate render (db=null; the login screen never needs it)
+  renderPage(); // immediate render (db=null; login/dungeon never need it)
 
-  // The login screen has no monster references, so skip the network fetch.
-  if (pageState.pageType === PageType.Login) return;
+  // The login and dungeon screens have no monster references, so skip the fetch.
+  if (pageState.pageType === PageType.Login || pageState.pageType === PageType.Dungeon) return;
 
   loadMonsters(MONSTERS_JSON_URL)
     .then((loaded) => {

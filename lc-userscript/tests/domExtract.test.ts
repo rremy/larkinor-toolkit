@@ -4,6 +4,7 @@ import {
   extractFreeMove,
   extractBattle,
   extractLogin,
+  extractDungeon,
   LOGIN_USERNAME_KEY,
   hideOriginalDOM,
 } from '../src/utils/domExtract';
@@ -396,6 +397,193 @@ describe('extractLogin', () => {
     expect(GM_setValue).toHaveBeenCalledWith(LOGIN_USERNAME_KEY, 'Hero');
     // extracting again reflects the newly-saved username
     expect(extractLogin(makeDoc(LOGIN_HTML)).savedUsername).toBe('Hero');
+  });
+});
+
+// Dungeon (Labirintus): shared urlap form + a composed cell of layered tiles
+// (each img wrapped in an absolutely-positioned div), standard direction image
+// inputs (walls are plain imgs, not inputs), utility inputs, tevFajta actions,
+// and the Comic Sans narration. Style strings reproduce the real page's mixed
+// px/unit-less formatting. An enemy (ellenfel_j) sits on the east edge.
+const DUNGEON_HTML = `
+  <form name="urlap" method="post" action="/../cgi-bin/larkinor">
+    <input type="hidden" name="oldalTipus" value="otLabirintus">
+    <input type="hidden" name="loginname" value="remy">
+    <input type="hidden" name="kulcs" value="TESTKEY">
+    <input type="hidden" name="par1" value="">
+    <input type="hidden" name="Submit" value="semmi">
+  </form>
+  <b>
+    <a title="karakterlap"><font color="blue">Remy </font></a>&nbsp;&nbsp;<font color="darkblue">[1569/800]</font><br>
+    Pénz: 42&nbsp;&nbsp;<img src="/2/ikon/bizt_van.gif" width="12" height="12" title=" Van biztosításod :-)">&nbsp;<br>
+    Életpont: 303 / 303 <br>
+    Varázspont: 286 / 286
+  </b>
+  <div style="position:absolute; width:150; height:150; z-index:3; left: 65; top: 190px; border: 0px none">
+    <img src="/labirintus/1/talaj/talaj3.gif" width="150" height="150">
+  </div>
+  <div style="position:absolute; width:50px; height:50; z-index:4; left: 165px; top: 240px; border: 0px none">
+    <img src="/labirintus/ellenfel/ellenfel_j.gif" width="50" height="50">
+  </div>
+  <div style="position:absolute; width:50; height:150; z-index:5; left: 65; top: 190px; border: 0px none">
+    <img src="/labirintus/1/folyoso/foly_b_2.gif" width="50" height="150" title="Folyosó">
+  </div>
+  <div style="position:absolute; width:150; height:50; z-index:5; left: 65; top: 190px; border: 0px none">
+    <img src="/labirintus/1/ajto/ajto_f_1.gif" width="150" height="50" title="Ajtó, bronzkulcs nyitja">
+  </div>
+  <div style="position:absolute; width:50; height:150; z-index:5; left: 165; top: 190px; border: 0px none">
+    <img src="/labirintus/1/folyoso/foly_j_4.gif" width="50" height="150" title="Folyosó">
+  </div>
+  <div style="position:absolute; width:150; height:50; z-index:5; left: 65; top: 290px; border: 0px none">
+    <img src="/labirintus/1/ajto/ajto_l_4.gif" width="150" height="50" title="Ajtó, csőkulcs nyitja">
+  </div>
+  <div style="position:absolute; width:35; height:35; z-index:6; left: 125; top: 245px; border: 0px none">
+    <img src="/labirintus/figura_jobb.gif" width="35" height="35" title="Félve körbenézel">
+  </div>
+  <input type="image" src="/2/ikon/klap.gif" title="Beállítások">
+  <input type="image" src="/2/ikon/pihen.gif" title="Pihensz egy kicsit">
+  <input type="image" src="/2/ikon/sc_gyogyvarazs.gif" title="elmondasz egy gyógyvarázst">
+  <input type="image" src="./Lab_files/eszak.gif" title="Északi folyosón mész tovább">
+  <img src="/ikon/nyugat.gif" width="25" height="25" title="Erre nem lehet menni">
+  <input type="image" src="./Lab_files/kelet.gif" title="Keleti folyosón mész tovább">
+  <input type="image" src="./Lab_files/del.gif" title="Kinyitod az ajtót és belépsz">
+  <input type="image" src="/2/ikon/labikibe.gif" title="Kimész a labirintusból">
+  <form name="specTevUrlap">
+    <select name="tevFajta">
+      <option value="kajal">kajálsz</option>
+      <option value="imadkozas">imádkozol</option>
+    </select>
+    <input type="image" src="./Lab_files/ok.gif">
+  </form>
+  <div>
+    <font face="Comic sans MS" size="2.5">Továbbjöttél keletre.</font>
+  </div>
+`;
+
+describe('extractDungeon', () => {
+  it('reuses the FreeMove stat parsing (name, gold, hp/mp normalised)', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    expect(s.playerName).toBe('Remy');
+    expect(s.gold).toBe(42);
+    expect(s.hp).toBe(303);
+    expect(s.hpMax).toBe(303);
+    expect(s.mp).toBe(286);
+  });
+
+  it('collects the composed cell tiles with offsets normalised to the cell origin', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    const floor = s.tiles.find(t => t.imageUrl.includes('talaj3.gif'));
+    expect(floor).toBeDefined();
+    expect(floor).toMatchObject({ left: 0, top: 0, width: 150, height: 150, z: 3 });
+    // south door was at top:290 -> normalised to 100 (origin top 190)
+    const southDoor = s.tiles.find(t => t.imageUrl.includes('ajto_l_4.gif'));
+    expect(southDoor).toMatchObject({ left: 0, top: 100, width: 150, height: 50, z: 5 });
+    // enemy tile on the east edge (left:165 -> 100, top:240 -> 50)
+    const enemy = s.tiles.find(t => t.imageUrl.includes('ellenfel_j.gif'));
+    expect(enemy).toMatchObject({ left: 100, top: 50, width: 50, height: 50, z: 4 });
+  });
+
+  it('absolutizes tile image URLs to the game origin', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    const floor = s.tiles.find(t => t.imageUrl.includes('talaj3.gif'));
+    expect(floor?.imageUrl).toBe('https://l2.larkinor.hu/labirintus/1/talaj/talaj3.gif');
+  });
+
+  it('extracts only the open directions (walls have no input)', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    const dirs = s.directions.map(d => d.dir).sort();
+    expect(dirs).toEqual(['east', 'north', 'south']);
+    expect(dirs).not.toContain('west'); // west is a plain img (blocked)
+  });
+
+  it('extracts utility controls as buildings (rest, heal, settings, exit)', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    const labels = s.buildings.map(b => b.label);
+    expect(labels).toContain('Kimész a labirintusból');
+    expect(labels).toContain('Pihensz egy kicsit');
+  });
+
+  it('extracts tevFajta actions', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    expect(s.actions.map(a => a.label)).toEqual(['kajálsz', 'imádkozol']);
+  });
+
+  it('extracts narration and has no question on a plain cell', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_HTML));
+    expect(s.narration).toBe('Továbbjöttél keletre.');
+    expect(s.question).toBeNull();
+  });
+});
+
+// A question cell: prompt + answer labels live inside the Comic Sans block,
+// interleaved with radios (name="valasz", onclick sets par1=index). A separate
+// "Válasz" button submits.
+const DUNGEON_QUESTION_HTML = `
+  <form name="urlap" method="post" action="/../cgi-bin/larkinor">
+    <input type="hidden" name="oldalTipus" value="otLabirintus">
+    <input type="hidden" name="par1" value="">
+    <input type="hidden" name="Submit" value="semmi">
+  </form>
+  <b>
+    <a title="karakterlap"><font color="blue">Remy </font></a><br>
+    Pénz: 42<br>
+    Életpont: 303 / 303 <br>
+    Varázspont: 286 / 286
+  </b>
+  <div>
+    <font face="Comic sans MS" size="2">Továbbjöttél délre.<br>Előtted rácsos kapu áll, felette felirat:"Kortyolj a megfelelőből és továbbjutsz!".<br>
+      <input type="radio" name="valasz" onclick="document.urlap.par1.value=0;">Megiszod a büdös zöld folyadékot<br>
+      <input type="radio" name="valasz" onclick="document.urlap.par1.value=1;">Megiszod az édes szagú fekete folyadékot<br>
+      <input type="radio" name="valasz" onclick="document.urlap.par1.value=2;">Megiszod a szagtalan sárga folyadékot<br>
+    </font>
+  </div>
+  <font><input type="button" value="Válasz" onclick="if (document.urlap.par1.value) document.urlap.Submit.value='svValasz'; document.urlap.submit();"></font>
+`;
+
+describe('extractDungeon — question', () => {
+  it('returns a question with a prompt that excludes the answer labels', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_QUESTION_HTML));
+    expect(s.question).not.toBeNull();
+    expect(s.question!.prompt).toContain('Kortyolj a megfelelőből');
+    expect(s.question!.prompt).not.toContain('büdös zöld');
+  });
+
+  it('extracts each answer label', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_QUESTION_HTML));
+    expect(s.question!.answers.map(a => a.label)).toEqual([
+      'Megiszod a büdös zöld folyadékot',
+      'Megiszod az édes szagú fekete folyadékot',
+      'Megiszod a szagtalan sárga folyadékot',
+    ]);
+  });
+
+  it('answer.select() clicks the matching original radio', () => {
+    const doc = makeDoc(DUNGEON_QUESTION_HTML);
+    const s = extractDungeon(doc);
+    const radio = doc.querySelectorAll<HTMLInputElement>('input[name="valasz"]')[1];
+    const clickSpy = vi.fn();
+    radio.click = clickSpy;
+
+    s.question!.answers[1].select();
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('question.submit() clicks the original Válasz button', () => {
+    const doc = makeDoc(DUNGEON_QUESTION_HTML);
+    const s = extractDungeon(doc);
+    const btn = Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="button"]')).find(b => b.value === 'Válasz')!;
+    const clickSpy = vi.fn();
+    btn.click = clickSpy;
+
+    s.question!.submit();
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears narration while a question is active (prompt carries the text)', () => {
+    const s = extractDungeon(makeDoc(DUNGEON_QUESTION_HTML));
+    expect(s.narration).toBe('');
   });
 });
 
