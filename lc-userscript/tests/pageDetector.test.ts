@@ -40,6 +40,10 @@ describe('detectPage', () => {
     expect(detectPage(makeDoc('otTemplom'))).toBe(PageType.Church);
   });
 
+  it('returns Login for oldalTipus=otLogin', () => {
+    expect(detectPage(makeDoc('otLogin'))).toBe(PageType.Login);
+  });
+
   it('returns Shop for oldalTipus=otVegyesbolt', () => {
     expect(detectPage(makeDoc('otVegyesbolt'))).toBe(PageType.Shop);
   });

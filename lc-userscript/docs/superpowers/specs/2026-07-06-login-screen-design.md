@@ -32,12 +32,11 @@ ISO-8859-2), consistent with the real-DOM reference doc:
 - Detect the login page and render a mobile login card.
 - Username + password fields and the "Belépés" submit action.
 - Remember the **username only** (pre-fill on return via `GM_setValue`).
+- Surface the game's login error/status message on a failed attempt.
 
 **Out of scope (v1)**
 - News feed, menu links, registration/activation/guest-browse.
 - Password persistence (rely on the browser's own password manager).
-- Surfacing login failures — the game simply re-serves the login page on
-  failure; the error markup has not been identified. Can be added later.
 
 ## Design
 
@@ -63,12 +62,22 @@ New `LoginState` and `extractLogin`:
 export interface LoginState {
   /** Previously-saved username (GM storage), used to pre-fill the field. */
   savedUsername: string;
+  /** Login error/status message on a failed attempt, or '' if none. */
+  error: string;
   /** Fills the original hidden inputs, persists the username, submits. */
   submit: (username: string, password: string) => void;
 }
 
 export function extractLogin(doc: Document): LoginState;
 ```
+
+**Login error message.** On a failed attempt the game re-serves the login page
+(`otLogin`) with a status message in a `font[face="Comic sans MS"]` coloured
+`#003366` (the "Login:/Jelszó:" label row uses colour `000000`; the news feed
+does not use that font). Observed text:
+`"Hiányzik a karakter, vagy rossz adatokat adtál meg!"`. `extractLogin` reads
+that element's text into `error` (`''` when absent), and `Login.tsx` renders it
+as a `role="alert"` banner above the fields.
 
 Behaviour of `submit(username, password)`:
 1. Set `input[name="loginname"].value = username` and

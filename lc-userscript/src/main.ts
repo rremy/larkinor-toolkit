@@ -1,9 +1,10 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, extractBattle, hideOriginalDOM, type FreeMoveState, type BattleState } from '@/utils/domExtract';
+import { extractFreeMove, extractBattle, extractLogin, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState } from '@/utils/domExtract';
 import { loadMonsters, type MonsterDatabase } from '@/data/monsters';
 import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
+import { Login } from '@/pages/Login';
 import baseStyles from '@/styles/base.css?raw';
 
 // Deployment constant — where monsters.json is hosted.
@@ -15,7 +16,8 @@ const MONSTERS_JSON_URL = 'https://example.invalid/larkinor/monsters.json';
 // otherwise infer from a plain ternary.
 type PageState =
   | { pageType: PageType.FreeMove; state: FreeMoveState }
-  | { pageType: PageType.Battle; state: BattleState };
+  | { pageType: PageType.Battle; state: BattleState }
+  | { pageType: PageType.Login; state: LoginState };
 
 /**
  * The game page ships no viewport meta, so mobile browsers assume a ~980px
@@ -33,24 +35,30 @@ function ensureMobileViewport(doc: Document): void {
   meta.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
-function boot(): void {
-  const pageType = detectPage(document);
-  if (pageType !== PageType.FreeMove && pageType !== PageType.Battle) {
-    return; // v1 renders only FreeMove + Battle; leave other pages untouched
+/** Extracts the page state for a page type we render, or null to skip it. */
+function extractPageState(pageType: PageType, doc: Document): PageState | null {
+  switch (pageType) {
+    case PageType.FreeMove:
+      return { pageType, state: extractFreeMove(doc) };
+    case PageType.Battle:
+      return { pageType, state: extractBattle(doc) };
+    case PageType.Login:
+      return { pageType, state: extractLogin(doc) };
+    default:
+      return null; // v1 leaves other pages untouched
   }
+}
 
-  ensureMobileViewport(document);
-
+function boot(): void {
   // Extract state from the live game DOM before it gets moved off-screen.
   // The extractors query `document` globally, so they would still find the
   // moved nodes even after hideOriginalDOM() — but extracting once up front
   // and reusing the snapshot for both renders avoids any dependency on that
   // ordering and avoids doing the extraction work twice.
-  const pageState: PageState =
-    pageType === PageType.FreeMove
-      ? { pageType, state: extractFreeMove(document) }
-      : { pageType, state: extractBattle(document) };
+  const pageState = extractPageState(detectPage(document), document);
+  if (!pageState) return;
 
+  ensureMobileViewport(document);
   GM_addStyle(baseStyles);
   hideOriginalDOM(document);
 
@@ -61,14 +69,24 @@ function boot(): void {
   let db: MonsterDatabase | null = null;
 
   const renderPage = () => {
-    if (pageState.pageType === PageType.FreeMove) {
-      render(h(FreeMove, { state: pageState.state, db }), root);
-    } else {
-      render(h(Battle, { state: pageState.state, db }), root);
+    switch (pageState.pageType) {
+      case PageType.FreeMove:
+        render(h(FreeMove, { state: pageState.state, db }), root);
+        break;
+      case PageType.Battle:
+        render(h(Battle, { state: pageState.state, db }), root);
+        break;
+      case PageType.Login:
+        render(h(Login, { state: pageState.state }), root);
+        break;
     }
   };
 
-  renderPage(); // immediate render with db=null
+  renderPage(); // immediate render (db=null; the login screen never needs it)
+
+  // The login screen has no monster references, so skip the network fetch.
+  if (pageState.pageType === PageType.Login) return;
+
   loadMonsters(MONSTERS_JSON_URL)
     .then((loaded) => {
       db = loaded;

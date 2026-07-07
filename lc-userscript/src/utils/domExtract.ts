@@ -55,6 +55,21 @@ export interface FreeMoveState {
   narration: string;
 }
 
+export interface LoginState {
+  /** Previously-saved username (GM storage), used to pre-fill the field. */
+  savedUsername: string;
+  /**
+   * Login status/error message the game prints on a failed attempt (e.g.
+   * "Hiányzik a karakter, vagy rossz adatokat adtál meg!"), or '' if none.
+   */
+  error: string;
+  /**
+   * Fills the original hidden login inputs, persists the username, and submits
+   * by clicking the game's native "Belépés" button so its own POST fires.
+   */
+  submit: (username: string, password: string) => void;
+}
+
 export interface BattleState {
   monsterName: string;
   monsterHp: number | null;
@@ -318,6 +333,45 @@ export function extractBattle(doc: Document): BattleState {
     mp,
     mpMax,
   };
+}
+
+/** GM storage key under which the last-used login name is remembered. */
+export const LOGIN_USERNAME_KEY = 'lc-login-username';
+
+/**
+ * The login page uses an unnamed <form> (not name="urlap") holding a text
+ * `loginname`, a password `loginpassw`, and an image `Submit` button. We never
+ * reconstruct the POST: submit() fills the original inputs and clicks the
+ * native button so the game's own form handling runs unchanged. The username
+ * (only) is remembered via GM storage to pre-fill on the next visit.
+ */
+export function extractLogin(doc: Document): LoginState {
+  const savedUsername = GM_getValue(LOGIN_USERNAME_KEY, '') ?? '';
+
+  // On a failed attempt the game re-serves the login page with a status
+  // message in a Comic Sans font coloured #003366 (the "Login:/Jelszó:" label
+  // row uses colour 000000). Absent on a clean page.
+  const error =
+    doc.querySelector('font[face="Comic sans MS"][color="#003366"]')?.textContent?.trim() ?? '';
+
+  const submit = (username: string, password: string): void => {
+    const nameInput = doc.querySelector<HTMLInputElement>('input[name="loginname"]');
+    const passwInput = doc.querySelector<HTMLInputElement>('input[name="loginpassw"]');
+    if (nameInput) nameInput.value = username;
+    if (passwInput) passwInput.value = password;
+
+    GM_setValue(LOGIN_USERNAME_KEY, username);
+
+    const submitBtn = doc.querySelector<HTMLInputElement>('input[name="Submit"]');
+    if (submitBtn) {
+      submitBtn.click();
+    } else {
+      // Fall back to submitting the enclosing form if the button is missing.
+      (nameInput?.form ?? doc.querySelector('form'))?.submit();
+    }
+  };
+
+  return { savedUsername, error, submit };
 }
 
 export function hideOriginalDOM(doc: Document): void {

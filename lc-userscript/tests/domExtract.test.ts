@@ -3,6 +3,8 @@ import { JSDOM } from 'jsdom';
 import {
   extractFreeMove,
   extractBattle,
+  extractLogin,
+  LOGIN_USERNAME_KEY,
   hideOriginalDOM,
 } from '../src/utils/domExtract';
 
@@ -307,6 +309,93 @@ describe('extractBattle', () => {
   it('extracts narration from the Comic Sans MS font block', () => {
     const state = extractBattle(makeDoc(BATTLE_HTML));
     expect(state.narration).toBe('A lezúzandó szörnyeteg egy Unikorn...');
+  });
+});
+
+// The login page uses an UNNAMED form (not name="urlap") with plain text /
+// password inputs and an image Submit button. Placeholder credentials only.
+const LOGIN_HTML = `
+  <form method="post" action="/../cgi-bin/larkinor">
+    <input type="hidden" name="oldalTipus" value="otLogin">
+    <td align="center">
+      <font face="Comic sans MS" size="1" color="000000">
+        Login: <input type="text" style="width: 120px;" name="loginname" maxlength="18">
+        Jelszó: <input type="password" style="width: 120px;" name="loginpassw" maxlength="18">
+      </font>
+    </td>
+    <input type="image" name="Submit" value="Belépés" src="http://common.larkinor.hu/img/belepek.gif" title="Belépés">
+  </form>
+`;
+
+// The failed-login page re-serves otLogin with a status message in a
+// `font[face="Comic sans MS"][color="#003366"]` (the label row uses color
+// "000000"). Real message text observed live.
+const LOGIN_ERROR_HTML = `
+  <form method="post" action="/../cgi-bin/larkinor">
+    <input type="hidden" name="oldalTipus" value="otLogin">
+    <td align="center">
+      <font face="Comic sans MS" size="1" color="000000">
+        Login: <input type="text" name="loginname" maxlength="18">
+        Jelszó: <input type="password" name="loginpassw" maxlength="18">
+      </font>
+    </td>
+    <td align="center">
+      <font face="Comic sans MS" size="2" color="#003366">
+        Hiányzik a karakter, vagy rossz adatokat adtál meg!
+      </font>
+    </td>
+    <input type="image" name="Submit" value="Belépés" src="belepek.gif" title="Belépés">
+  </form>
+`;
+
+describe('extractLogin', () => {
+  it('extracts the login error/status message when present', () => {
+    const state = extractLogin(makeDoc(LOGIN_ERROR_HTML));
+    expect(state.error).toBe('Hiányzik a karakter, vagy rossz adatokat adtál meg!');
+  });
+
+  it('returns an empty error on a clean login page (no status font)', () => {
+    const state = extractLogin(makeDoc(LOGIN_HTML));
+    expect(state.error).toBe('');
+  });
+
+  it('returns the previously-saved username from GM storage', () => {
+    GM_setValue(LOGIN_USERNAME_KEY, 'Remy');
+    const state = extractLogin(makeDoc(LOGIN_HTML));
+    expect(state.savedUsername).toBe('Remy');
+  });
+
+  it('returns an empty savedUsername when nothing was stored', () => {
+    // A distinct key-less read: clear by storing empty, then extract.
+    GM_setValue(LOGIN_USERNAME_KEY, '');
+    const state = extractLogin(makeDoc(LOGIN_HTML));
+    expect(state.savedUsername).toBe('');
+  });
+
+  it('submit() writes both values onto the original inputs and clicks Submit', () => {
+    const doc = makeDoc(LOGIN_HTML);
+    const state = extractLogin(doc);
+    const submitBtn = doc.querySelector<HTMLInputElement>('input[name="Submit"]')!;
+    const clickSpy = vi.fn();
+    submitBtn.click = clickSpy;
+
+    state.submit('Hero', 'secret');
+
+    expect(doc.querySelector<HTMLInputElement>('input[name="loginname"]')!.value).toBe('Hero');
+    expect(doc.querySelector<HTMLInputElement>('input[name="loginpassw"]')!.value).toBe('secret');
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('submit() persists the username (only) via GM_setValue', () => {
+    const doc = makeDoc(LOGIN_HTML);
+    const state = extractLogin(doc);
+    doc.querySelector<HTMLInputElement>('input[name="Submit"]')!.click = vi.fn();
+
+    state.submit('Hero', 'secret');
+
+    expect(GM_setValue).toHaveBeenCalledWith(LOGIN_USERNAME_KEY, 'Hero');
+    // extracting again reflects the newly-saved username
+    expect(extractLogin(makeDoc(LOGIN_HTML)).savedUsername).toBe('Hero');
   });
 });
 

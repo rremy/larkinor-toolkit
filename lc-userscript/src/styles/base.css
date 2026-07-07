@@ -238,3 +238,69 @@
   color: var(--muted);
   word-break: break-word;
 }
+
+/* Login page — centered card */
+.lc-login {
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+}
+.lc-login-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.lc-login-title {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.lc-login-error {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(196, 97, 97, 0.12);
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  color: var(--bad);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
+.lc-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lc-login-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.lc-login-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px; /* >=16px so mobile browsers don't zoom on focus */
+  border-radius: 6px;
+}
+.lc-login-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.lc-login-submit {
+  margin-top: 4px;
+  margin-bottom: 0;
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
