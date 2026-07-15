@@ -14,6 +14,7 @@ function buildState(overrides: Partial<DungeonState> = {}): DungeonState {
     buildings: [],
     actions: [],
     narration: 'Továbbjöttél keletre.',
+    narrationLinks: [],
     question: null,
     ...overrides,
   };

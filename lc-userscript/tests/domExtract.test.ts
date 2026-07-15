@@ -70,7 +70,7 @@ const BATTLE_HTML = `
   <input type="image" src="./Csata!_files/balk.gif" width="45" height="45" border="0" title="Támadsz a bal kezedben lévő mágikus fűvágcsóval">
   <input type="image" src="./Csata!_files/jobbk.gif" width="45" height="45" border="0" title="Támadsz a jobb kezedben lévő mérgezett tőrrel">
   <input type="image" src="./Csata!_files/menekul.gif" width="30" height="25" border="0" title="próbálsz menekülni">
-  <input type="image" src="./Csata!_files/fold.gif" width="35" height="35" border="0">
+  <input type="image" src="/2/ikon/fold.gif" width="35" height="35" border="0">
   <form name="specTevUrlap">
     <select name="tevFajta">
       <option value="ongyilok">öngyilkos leszel</option>
@@ -246,6 +246,53 @@ describe('extractFreeMove', () => {
   });
 });
 
+// A FreeMove cell whose narration contains a game action link (an <a> with a
+// javascript: href that drives the shared form). Placeholder submit value.
+const FREEMOVE_LINK_HTML = `
+  <form name="urlap" method="post" action="https://l2.larkinor.hu/cgi-bin/larkinor">
+    <input type="hidden" name="oldalTipus" value="otVilag">
+    <input type="hidden" name="Submit" value="semmi">
+  </form>
+  <b>
+    <a title="karakterlap"><font color="blue">Remy </font></a><br>
+    Pénz: 1<br>
+    Életpont: 10 / 10 <br>
+    Varázspont: 5 / 5
+  </b>
+  <div>
+    <font face="Comic sans MS" size="2.5"><a href="javascript:document.urlap.Submit.value='svLeghajo'; document.urlap.submit();">A Parszi léghajó megszerzése</a><br>Aktuális küldetés: (25)</font>
+  </div>
+`;
+
+describe('narration links (extractFreeMove)', () => {
+  it('extracts anchor(s) from the narration block with their text', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_LINK_HTML));
+    expect(state.narrationLinks.map(l => l.text)).toEqual(['A Parszi léghajó megszerzése']);
+  });
+
+  it('a link trigger clicks the original anchor (native javascript: submit)', () => {
+    const doc = makeDoc(FREEMOVE_LINK_HTML);
+    const state = extractFreeMove(doc);
+    const anchor = doc.querySelector<HTMLAnchorElement>('font[face="Comic sans MS"] a')!;
+    const clickSpy = vi.fn();
+    anchor.click = clickSpy;
+
+    state.narrationLinks[0].trigger();
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the link words inline in the narration text', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_LINK_HTML));
+    expect(state.narration).toContain('A Parszi léghajó megszerzése');
+  });
+
+  it('returns no links when the narration has no anchors', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    expect(state.narrationLinks).toEqual([]);
+  });
+});
+
 describe('extractBattle', () => {
   it('parses monster name, hp and image URL from the életpontja title', () => {
     const state = extractBattle(makeDoc(BATTLE_HTML));
@@ -310,6 +357,24 @@ describe('extractBattle', () => {
   it('extracts narration from the Comic Sans MS font block', () => {
     const state = extractBattle(makeDoc(BATTLE_HTML));
     expect(state.narration).toBe('A lezúzandó szörnyeteg egy Unikorn...');
+  });
+
+  it('tags actions with a kind: balk/jobbk=attack, menekul=flee, spells=spell', () => {
+    const state = extractBattle(makeDoc(BATTLE_HTML));
+    const balk = state.actions.find(a => a.label.includes('bal kezedben'));
+    const jobbk = state.actions.find(a => a.label.includes('jobb kezedben'));
+    const menekul = state.actions.find(a => a.label.includes('menekülni'));
+    const fold = state.actions.find(a => a.label.toLowerCase().includes('föld'));
+    expect(balk?.kind).toBe('attack');
+    expect(jobbk?.kind).toBe('attack');
+    expect(menekul?.kind).toBe('flee');
+    expect(fold?.kind).toBe('spell');
+  });
+
+  it('includes the absolutized original icon URL for each battle action', () => {
+    const state = extractBattle(makeDoc(BATTLE_HTML));
+    const fold = state.actions.find(a => a.label.toLowerCase().includes('föld'));
+    expect(fold?.iconUrl).toBe('https://l2.larkinor.hu/2/ikon/fold.gif');
   });
 });
 

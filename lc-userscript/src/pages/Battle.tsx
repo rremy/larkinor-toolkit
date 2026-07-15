@@ -16,6 +16,12 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
 
   const dbMonster = db?.getByName(state.monsterName) ?? null;
 
+  // The two weapon attacks share a row; the elemental spells sit in an icon row
+  // below them; anything else (flee, untagged) stays stacked full-width.
+  const attacks = state.actions.filter(a => a.kind === 'attack');
+  const spells = state.actions.filter(a => a.kind === 'spell');
+  const otherActions = state.actions.filter(a => a.kind !== 'attack' && a.kind !== 'spell');
+
   return (
     <div class="lc-page">
       {state.monsterImageUrl && (
@@ -43,14 +49,42 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
         )}
       </div>
 
-      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} />
+      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
 
       <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} />
 
       {state.actions.length > 0 && (
         <div class="lc-section">
-          {state.actions.map((action, i) => (
-            <button key={i} class="lc-btn" onClick={() => action.trigger()}>
+          {attacks.length > 0 && (
+            <div class="lc-battle-attacks">
+              {attacks.map((action, i) => (
+                <button key={`atk${i}`} class="lc-btn lc-battle-attack" onClick={() => action.trigger()}>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {spells.length > 0 && (
+            <div class="lc-battle-spells">
+              {spells.map((action, i) => (
+                <button
+                  key={`sp${i}`}
+                  class="lc-btn lc-battle-spell"
+                  title={action.label}
+                  aria-label={action.label}
+                  onClick={() => action.trigger()}
+                >
+                  {action.iconUrl ? (
+                    <img class="lc-battle-spell-icon" src={action.iconUrl} alt={action.label} />
+                  ) : (
+                    action.label
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          {otherActions.map((action, i) => (
+            <button key={`act${i}`} class="lc-btn" onClick={() => action.trigger()}>
               {action.label}
             </button>
           ))}

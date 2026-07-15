@@ -108,6 +108,17 @@
   font-weight: 600;
 }
 
+/* Action/quest link embedded in narration text */
+.lc-narration-link {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+.lc-narration-link:active {
+  color: var(--text);
+}
+
 /* Bottom drawer overlay */
 .lc-drawer-backdrop {
   position: fixed;
@@ -195,7 +206,34 @@
 .lc-mc-drops ul { list-style: none; padding: 0; margin: 0; font-size: 14px; }
 .lc-mc-drops li { padding: 3px 0; border-bottom: 1px dashed var(--border); }
 
-/* Battle page */
+/* Battle page — the two weapon attacks sit side by side in one row */
+.lc-battle-attacks {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lc-battle-attacks .lc-btn {
+  flex: 1;
+  margin-bottom: 0;
+}
+/* The elemental spells sit in a single icon row below the attacks */
+.lc-battle-spells {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lc-battle-spells .lc-btn {
+  flex: 1;
+  margin-bottom: 0;
+  padding: 8px;
+}
+.lc-battle-spell-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  object-fit: contain;
+}
 .lc-battle-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .lc-battle-monster-name { font-size: 20px; font-weight: bold; color: var(--text); }
 .lc-battle-hp { font-size: 14px; color: var(--bad); }

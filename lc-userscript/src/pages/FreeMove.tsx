@@ -36,7 +36,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         </div>
       )}
 
-      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} />
+      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
 
       {state.actions.length > 0 && (
         <div class="lc-section">

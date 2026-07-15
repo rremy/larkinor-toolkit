@@ -38,7 +38,7 @@ export function Dungeon({ state }: DungeonProps): JSX.Element {
             </div>
           )}
 
-          <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
+          <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} links={state.narrationLinks} />
 
           {state.actions.length > 0 && (
             <div class="lc-section">

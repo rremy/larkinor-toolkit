@@ -24,6 +24,7 @@ function buildState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
     statusIcons: [],
     actions: [{ label: 'Körülnéz', trigger: vi.fn() }],
     narration: 'Valami Vérszomjas moszkitóraj csámborog a közelben!',
+    narrationLinks: [],
     ...overrides,
   };
 }

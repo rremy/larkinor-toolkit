@@ -12,9 +12,16 @@
 
 export type Direction = 'north' | 'south' | 'east' | 'west';
 
+/** Battle actions are classed so the UI can group them (e.g. attacks in a row). */
+export type BattleActionKind = 'attack' | 'flee' | 'spell';
+
 export interface Action {
   label: string;
   trigger: () => void;
+  /** Set for battle actions; groups weapon attacks / flee / spells in the UI. */
+  kind?: BattleActionKind;
+  /** Original game icon for the control (absolute URL); set for battle actions. */
+  iconUrl?: string;
 }
 
 export interface DirectionOption {
@@ -27,6 +34,14 @@ export interface DirectionOption {
 export interface BuildingOption {
   label: string;
   iconUrl: string;
+  trigger: () => void;
+}
+
+/** A clickable link embedded in the narration (e.g. a quest/action anchor). */
+export interface NarrationLink {
+  /** The anchor's visible text (used to locate it inline in the narration). */
+  text: string;
+  /** Clicks the original anchor so its native (javascript:) handler runs. */
   trigger: () => void;
 }
 
@@ -53,6 +68,7 @@ export interface FreeMoveState {
   statusIcons: StatusIcon[];
   actions: Action[];
   narration: string;
+  narrationLinks: NarrationLink[];
 }
 
 export interface LoginState {
@@ -75,6 +91,7 @@ export interface BattleState {
   monsterHp: number | null;
   monsterImageUrl: string;
   narration: string;
+  narrationLinks: NarrationLink[];
   actions: Action[];
   hp: number;
   hpMax: number;
@@ -173,6 +190,21 @@ function extractNarration(doc: Document): string {
     .replace(/[ \t]+\n/g, '\n')   // trim trailing spaces before a break
     .replace(/\n{3,}/g, '\n\n')   // collapse runs of blank lines
     .trim();
+}
+
+/**
+ * Clickable anchors inside the narration block. Their href is typically a
+ * `javascript:` that drives the shared game form; rather than reproduce it we
+ * click the original anchor so its native handler runs (proxy-DOM pattern).
+ * The visible text lets the renderer splice the link back inline.
+ */
+function extractNarrationLinks(doc: Document): NarrationLink[] {
+  const block = doc.querySelector('font[face="Comic sans MS"]');
+  if (!block) return [];
+  return Array.from(block.querySelectorAll<HTMLAnchorElement>('a'))
+    .map(a => ({ anchor: a, text: (a.textContent ?? '').trim() }))
+    .filter(({ text }) => text.length > 0)
+    .map(({ anchor, text }) => ({ text, trigger: () => anchor.click() }));
 }
 
 function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {
@@ -288,6 +320,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     statusIcons: extractStatusIcons(doc),
     actions: extractFreeMoveActions(doc),
     narration: extractNarration(doc),
+    narrationLinks: extractNarrationLinks(doc),
   };
 }
 
@@ -303,6 +336,13 @@ function extractMonster(doc: Document): { monsterName: string; monsterHp: number
   return { monsterName, monsterHp, monsterImageUrl };
 }
 
+/** Classes a battle control by its image basename. */
+function battleActionKind(name: string): BattleActionKind {
+  if (name === 'balk' || name === 'jobbk') return 'attack';
+  if (name === 'menekul') return 'flee';
+  return 'spell';
+}
+
 function extractBattleActions(doc: Document): Action[] {
   const actions: Action[] = [];
   doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
@@ -313,6 +353,8 @@ function extractBattleActions(doc: Document): Action[] {
     actions.push({
       label: title || BATTLE_ACTION_FALLBACK_LABELS[name] || name,
       trigger: () => input.click(),
+      kind: battleActionKind(name),
+      iconUrl: absolutizeGameUrl(input.getAttribute('src') ?? ''),
     });
   });
   return actions;
@@ -327,6 +369,7 @@ export function extractBattle(doc: Document): BattleState {
     monsterHp,
     monsterImageUrl,
     narration: extractNarration(doc),
+    narrationLinks: extractNarrationLinks(doc),
     actions: extractBattleActions(doc),
     hp,
     hpMax,
@@ -413,6 +456,7 @@ export interface DungeonState {
   buildings: BuildingOption[];
   actions: Action[];
   narration: string;
+  narrationLinks: NarrationLink[];
   question: DungeonQuestion | null;
 }
 
@@ -511,6 +555,7 @@ export function extractDungeon(doc: Document): DungeonState {
     // The prompt already carries the movement/question text, so suppress the
     // duplicate narration while a question is active.
     narration: question ? '' : extractNarration(doc),
+    narrationLinks: question ? [] : extractNarrationLinks(doc),
     question,
   };
 }

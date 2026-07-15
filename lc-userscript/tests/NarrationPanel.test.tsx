@@ -53,4 +53,45 @@ describe('NarrationPanel', () => {
     const { container } = render(<NarrationPanel text="" db={db} onMonsterClick={vi.fn()} />);
     expect(container.querySelector('.lc-narration')?.textContent).toBe('');
   });
+
+  it('renders a narration link inline and triggers it on tap (db null)', () => {
+    const trigger = vi.fn();
+    const { container } = render(
+      <NarrationPanel
+        text="Kattints: A Parszi léghajó megszerzése most elérhető!"
+        db={null}
+        onMonsterClick={vi.fn()}
+        links={[{ text: 'A Parszi léghajó megszerzése', trigger }]}
+      />
+    );
+    const link = container.querySelector('.lc-narration-link');
+    expect(link?.textContent).toBe('A Parszi léghajó megszerzése');
+    fireEvent.click(link!);
+    expect(trigger).toHaveBeenCalledTimes(1);
+    // surrounding words remain
+    expect(container.querySelector('.lc-narration')?.textContent).toContain('most elérhető!');
+  });
+
+  it('renders both a monster mention and a narration link in the same text', () => {
+    const db = buildMonsterDatabase(MONSTERS);
+    const trigger = vi.fn();
+    const { container } = render(
+      <NarrationPanel
+        text="Valami Vérszomjas moszkitóraj csámborog a közelben! A Parszi léghajó megszerzése vár!"
+        db={db}
+        onMonsterClick={vi.fn()}
+        links={[{ text: 'A Parszi léghajó megszerzése', trigger }]}
+      />
+    );
+    expect(container.querySelector('.lc-monster-link')?.textContent).toBe('Vérszomjas moszkitóraj');
+    expect(container.querySelector('.lc-narration-link')?.textContent).toBe('A Parszi léghajó megszerzése');
+  });
+
+  it('ignores a link whose text is not present in the narration', () => {
+    const { container } = render(
+      <NarrationPanel text="Semmi különös." db={null} onMonsterClick={vi.fn()} links={[{ text: 'Nincs ilyen', trigger: vi.fn() }]} />
+    );
+    expect(container.querySelector('.lc-narration-link')).toBeNull();
+    expect(container.querySelector('.lc-narration')?.textContent).toBe('Semmi különös.');
+  });
 });
