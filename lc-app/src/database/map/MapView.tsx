@@ -102,8 +102,7 @@ export function MapView(props: MapViewProps): VNode {
                         {(['N', 'S', 'E', 'W'] as const).map((dir) => {
                           const blocker = blockers[dir];
                           if (!blocker) return null;
-                          const b = blocker as unknown as { title?: string; icon?: string };
-                          return <div key={dir} class={`blocker ${dir}`} title={b.title ?? b.icon} />;
+                          return <div key={dir} class={`blocker ${dir}`} title={blocker.title ?? blocker.icon} />;
                         })}
                       </td>
                     );

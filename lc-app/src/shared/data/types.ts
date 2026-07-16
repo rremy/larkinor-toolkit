@@ -80,7 +80,7 @@ export interface MapCell {
   buildings: Building[];
   clanHouses: Building[];
   exits: Record<string, string>;
-  blockers: Record<string, string>;
+  blockers: Record<string, { icon: string; title: string }>;
   firstCoords: [number, number];
 }
 

@@ -59,14 +59,11 @@ export function CellDetail(props: CellDetailProps): VNode {
         <div>
           <strong>Lezárt kijáratok:</strong>
           <ul class="list">
-            {blockerEntries.map(([dir, blocker]) => {
-              const b = blocker as unknown as { title?: string; icon?: string };
-              return (
-                <li key={dir}>
-                  <strong>{dir}</strong>: {b.title ?? b.icon ?? String(blocker)}
-                </li>
-              );
-            })}
+            {blockerEntries.map(([dir, blocker]) => (
+              <li key={dir}>
+                <strong>{dir}</strong>: {blocker.title ?? blocker.icon}
+              </li>
+            ))}
           </ul>
         </div>
       )}
