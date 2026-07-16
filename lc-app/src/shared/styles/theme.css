@@ -8,6 +8,7 @@
   --panel: #25201b;
   --panel-2: #2f2922;
   --border: #3d342a;
+  --row-border: #2a241e;
   --text: #e8dcc5;
   --muted: #9d8e75;
   --accent: #d4a259;
@@ -499,6 +500,9 @@
   display: flex;
   flex-direction: column;
 }
+
+.lc-db, .lc-db *, .lc-db *::before, .lc-db *::after { box-sizing: border-box; }
+
 .lc-db header.top {
   padding: 12px 18px;
   background: var(--panel);
@@ -579,7 +583,7 @@
 .lc-db .db-view th.sorted { color: var(--accent); }
 .lc-db .db-view th.sorted::after { content: ' \25BC'; font-size: 10px; }
 .lc-db .db-view th.sorted.asc::after { content: ' \25B2'; }
-.lc-db .db-view td { padding: 6px 10px; border-bottom: 1px solid #2a241e; white-space: nowrap; }
+.lc-db .db-view td { padding: 6px 10px; border-bottom: 1px solid var(--row-border); white-space: nowrap; }
 .lc-db .db-view tr.row:hover { background: var(--panel-2); cursor: pointer; }
 .lc-db .db-view tr.row.selected { background: var(--accent-dim); }
 .lc-db .db-view td.right { text-align: right; font-variant-numeric: tabular-nums; }
@@ -642,7 +646,7 @@
 .lc-db aside.db-detail .stats dt { color: var(--muted); }
 .lc-db aside.db-detail .stats dd { margin: 0; }
 .lc-db aside.db-detail ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
-.lc-db aside.db-detail ul li { padding: 3px 0; border-bottom: 1px dashed #2a241e; }
+.lc-db aside.db-detail ul li { padding: 3px 0; border-bottom: 1px dashed var(--row-border); }
 .lc-db aside.db-detail a.ref { color: var(--accent); cursor: pointer; text-decoration: none; }
 .lc-db aside.db-detail a.ref:hover { text-decoration: underline; }
 .lc-db aside.db-detail .qty { color: var(--muted); font-variant-numeric: tabular-nums; }
