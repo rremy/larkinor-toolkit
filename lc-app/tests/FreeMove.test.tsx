@@ -164,4 +164,15 @@ describe('FreeMove', () => {
     fireEvent.click(screen.getByRole('button', { name: /bezár|close|×/i }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('opens the database overlay from the Adatbázis button, and closes it', () => {
+    const { container } = render(<FreeMove state={buildState()} db={null} />);
+    expect(container.querySelector('.lc-db-overlay')).toBeNull();
+
+    fireEvent.click(screen.getByText('Adatbázis'));
+    expect(document.querySelector('.lc-db-overlay')).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText('Bezárás'));
+    expect(document.querySelector('.lc-db-overlay')).toBeNull();
+  });
 });

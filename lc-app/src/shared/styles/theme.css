@@ -722,3 +722,41 @@
 .lc-db .map-view .cell-detail ul.list { margin: 4px 0 8px; padding-left: 18px; }
 .lc-db .map-view .cell-detail ul.list li { padding: 1px 0; display: list-item; }
 .lc-db .map-view .cell-detail img.terrain { display: block; margin: 8px auto; max-width: 100%; border: 1px solid var(--border); border-radius: 2px; }
+
+/* ===== In-game DB overlay =====
+   Full-screen overlay hosting the ported DatabaseApp over the live game.
+   `.lc-db` (mounted inside) already carries its own theme via the rules
+   above, so this only needs the overlay chrome itself. */
+.lc-db-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  overflow: auto;
+}
+
+.lc-db-overlay-close {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10000;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lc-db-overlay-close:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.lc-db-overlay-body {
+  min-height: 100%;
+}

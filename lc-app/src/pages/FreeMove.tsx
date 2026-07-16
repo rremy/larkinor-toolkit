@@ -8,6 +8,7 @@ import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { HotkeyRow } from '@/components/HotkeyRow';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 
@@ -18,6 +19,7 @@ export interface FreeMoveProps {
 
 export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const [dbOpen, setDbOpen] = useState(false);
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   const { hotkeyActions, buttonActions } = partitionHotkeys(state.actions, enabled);
@@ -46,6 +48,10 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         </div>
       )}
 
+      <div class="lc-section">
+        <button class="lc-btn" onClick={() => setDbOpen(true)}>Adatbázis</button>
+      </div>
+
       <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
 
       {buttonActions.length > 0 && (
@@ -63,6 +69,8 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
       {configOpen && (
         <ConfigDrawer enabled={enabled} onToggle={toggleHotkey} onClose={closeConfig} />
       )}
+
+      <DatabaseOverlay open={dbOpen} onClose={() => setDbOpen(false)} />
     </div>
   );
 }
