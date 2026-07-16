@@ -147,20 +147,19 @@ npm run serve       # Simple HTTP server for dist/ (http://localhost:9000)
 - Both configs: `static/db/` is the source; Vite copies it as configured per build target.
 
 **Production deploy** (host `https://example.invalid/larkinor/`):
-1. Run `npm run build` in lc-app (produces `dist/larkinor-ui.user.js` and `dist/db/`)
-2. Upload `dist/larkinor-ui.user.js` → `/larkinor/larkinor-ui.user.js`
-3. Upload `dist/db/` → `/larkinor/` (all files; data at `/larkinor/static/db/`, HTML at `/larkinor/index.html`)
-4. Userscript data URL is baked in `main.ts` (`MONSTERS_JSON_URL`); `@connect` host is in `vite.config.ts`
-5. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS
+Run `make deploy` in lc-app (or `bash ../scripts/deploy.sh` directly). This:
+1. Builds the userscript and standalone DB
+2. Uploads `dist/larkinor-ui.user.js` → `/larkinor/larkinor-ui.user.js`
+3. Uploads `dist/db/` → `/larkinor/db/` (standalone DB site at `/larkinor/db/index.html`)
+4. Uploads `static/db/` → `/larkinor/static/db/` (data for both userscript and standalone DB)
+Userscript data URL is baked in `main.ts` (`DATA_BASE_URL`); `@connect` host is in `vite.config.ts`. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS.
 
 **Local device testing** via userscript loader:
 ```bash
 cd lc-app
-npm run build
-# Serve dist/ with CORS on a LAN IP (e.g., 192.168.1.x:9000)
-npx serve dist --cors -l 9000
-# Print and install the loader from the URL shown, pointing to your LAN server
+./serve.sh    # Builds, serves on port 9912 (or PORT=9000 ./serve.sh); prints loader URL
 ```
+Install the printed loader into ViolentMonkey (one-time). After code changes, re-run `serve.sh` — the loader fetches the fresh script on next page load.
 
 **Console-injection testing** (no ViolentMonkey; debug on the live game via DevTools):
 1. Serve `dist/` with CORS on `127.0.0.1` (loopback is exempt from mixed-content blocking)
