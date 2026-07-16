@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "dev:db": "vite --config vite.config.db.ts",
+    "build": "npm run build:userscript && npm run build:db",
+    "build:userscript": "vite build",
+    "build:db": "vite build --config vite.config.db.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "serve": "python3 -m http.server 9000 --directory dist"
