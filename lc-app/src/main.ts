@@ -6,7 +6,7 @@ import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
 import { Dungeon } from '@/pages/Dungeon';
-import baseStyles from '@/styles/base.css?raw';
+import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Static DB assets live under the relative path `static/db/` in both dev and
 // production — only the origin differs. In `npm run dev` the folder is served
