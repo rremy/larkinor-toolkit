@@ -4,25 +4,35 @@ import type { DataLoader } from '@/shared/data';
 import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
+import { MapView } from './map/MapView';
 
 export interface DatabaseAppProps {
   loader: DataLoader;
 }
 
-const TABS: EntityTab[] = ['weapons', 'armors', 'items', 'monsters'];
+type Tab = EntityTab | 'map';
+
+const EXPLORER_TABS: EntityTab[] = ['weapons', 'armors', 'items', 'monsters'];
+const TABS: Tab[] = [...EXPLORER_TABS, 'map'];
+const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép' };
 
 interface Route {
-  tab: EntityTab;
+  tab: Tab;
   id: number | null;
+}
+
+function isTab(value: string): value is Tab {
+  return (TABS as string[]).includes(value);
 }
 
 function parseHash(): Route {
   const m = (location.hash || '').match(/^#([a-z]+)(?:\/(-?\d+))?$/);
-  if (!m || !TABS.includes(m[1] as EntityTab)) return { tab: 'weapons', id: null };
-  return { tab: m[1] as EntityTab, id: m[2] != null ? Number(m[2]) : null };
+  if (!m || !isTab(m[1])) return { tab: 'weapons', id: null };
+  const tab = m[1] as Tab;
+  return { tab, id: tab !== 'map' && m[2] != null ? Number(m[2]) : null };
 }
 
-function hashFor(tab: EntityTab, id: number | null): string {
+function hashFor(tab: Tab, id: number | null): string {
   return id != null ? `#${tab}/${id}` : `#${tab}`;
 }
 
@@ -39,7 +49,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function navigate(tab: EntityTab, id: number | null) {
+  function navigate(tab: Tab, id: number | null) {
     const next = hashFor(tab, id);
     if (location.hash !== next) location.hash = next;
     else setRoute({ tab, id });
@@ -76,18 +86,22 @@ export function DatabaseApp(props: DatabaseAppProps) {
               class={`tab${t === route.tab ? ' active' : ''}`}
               onClick={() => navigate(t, null)}
             >
-              {TAB_LABEL[t]}
+              {TAB_LABELS[t]}
             </div>
           ))}
         </div>
       </header>
-      <ExplorerView
-        loader={loader}
-        tab={route.tab}
-        selectedId={route.id}
-        onSelect={onSelect}
-        onJump={onJump}
-      />
+      {route.tab === 'map' ? (
+        <MapView loader={loader} />
+      ) : (
+        <ExplorerView
+          loader={loader}
+          tab={route.tab}
+          selectedId={route.id}
+          onSelect={onSelect}
+          onJump={onJump}
+        />
+      )}
     </div>
   );
 }

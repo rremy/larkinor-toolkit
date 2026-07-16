@@ -16,6 +16,12 @@
   --bad: #c46161;
   --good: #6fb56f;
   --mp: #4a7acc;
+  --sea: #2c4a6e;
+  /* District tints (Térkép / map view) */
+  --varos: #c8b27a;  --magus: #6d8db6;  --harcos: #b65d4a;
+  --kezdo: #d6c075;  --sotet: #5e4378;  --szikla: #7d6a55;
+  --erdo: #4f7a3e;   --mocsar: #5a6a3a; --temeto: #38322f;
+  --demon: #861a48;  --unexplored: #221b16;
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -653,3 +659,53 @@
 .lc-db aside.db-detail .empty { color: var(--muted); font-style: italic; padding: 4px 0; }
 .lc-db aside.db-detail .monster-thumb { vertical-align: middle; height: 32px; margin-right: 6px; border: 1px solid var(--border); border-radius: 3px; }
 .lc-db aside.db-detail .placeholder { color: var(--muted); padding: 60px 0; text-align: center; font-style: italic; }
+
+/* ================================================================
+   ===== Map =====
+   Ported from lc-database/explorer.html (MAP module) / map.html.
+   Scoped under `.lc-db`; district tint variables come from :root above.
+   ================================================================ */
+.lc-db .map-view { padding: 20px; font-family: Georgia, 'Times New Roman', serif; color: var(--text); }
+.lc-db .map-view .map-stats { color: var(--muted); font-size: 13px; margin: 0 auto 14px; max-width: 1280px; }
+.lc-db .map-view .map-layout { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.lc-db .map-view .map-wrap { background: var(--sea); padding: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: auto; box-shadow: 0 0 30px rgba(0, 0, 0, 0.4) inset; }
+.lc-db .map-view table.map-grid { border-collapse: separate; border-spacing: 2px; margin: 0 auto; width: auto; }
+.lc-db .map-view table.map-grid th, .lc-db .map-view table.map-grid td { padding: 0; }
+.lc-db .map-view table.map-grid th { color: var(--text); font-weight: normal; font-size: 11px; text-align: center; min-width: 88px; padding-bottom: 4px; background: transparent; border: 0; cursor: default; position: static; }
+.lc-db .map-view table.map-grid th.rh { text-align: right; padding-right: 6px; min-width: 24px; }
+.lc-db .map-view td.cell { width: 88px; height: 96px; background: var(--unexplored); border: 1px solid var(--border); border-radius: 3px; vertical-align: top; cursor: pointer; position: relative; transition: outline 0.1s; }
+.lc-db .map-view td.cell.unexplored { background: var(--sea); border: 1px solid #2a3e58; }
+.lc-db .map-view td.cell.unexplored::after { content: "≈"; position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, 0.18); font-size: 24px; }
+.lc-db .map-view td.cell:hover { outline: 2px solid var(--accent); z-index: 2; }
+.lc-db .map-view td.cell.selected { outline: 2px solid var(--accent); z-index: 2; }
+.lc-db .map-view td.cell .inner { height: 100%; padding: 12px 8px 4px; display: flex; flex-direction: column; justify-content: space-between; }
+.lc-db .map-view .row-id { font-size: 9px; color: rgba(0, 0, 0, 0.5); font-family: monospace; text-align: right; }
+.lc-db .map-view .label { font-size: 10px; line-height: 1.1; color: rgba(0, 0, 0, 0.78); font-weight: bold; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18); text-align: center; }
+.lc-db .map-view .pois { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; }
+.lc-db .map-view .poi { font-size: 13px; line-height: 1; width: 18px; height: 18px; border-radius: 50%; background: rgba(0, 0, 0, 0.45); color: #fff; display: grid; place-items: center; cursor: help; }
+.lc-db .map-view .poi.clan { background: rgba(212, 162, 89, 0.85); color: #1a1410; font-weight: bold; font-size: 11px; }
+/* District backgrounds */
+.lc-db .map-view td.cell.varos  { background: var(--varos); }
+.lc-db .map-view td.cell.magus  { background: var(--magus); }
+.lc-db .map-view td.cell.harcos { background: var(--harcos); }
+.lc-db .map-view td.cell.kezdo  { background: var(--kezdo); }
+.lc-db .map-view td.cell.sotet  { background: var(--sotet); }
+.lc-db .map-view td.cell.szikla { background: var(--szikla); }
+.lc-db .map-view td.cell.erdo   { background: var(--erdo); }
+.lc-db .map-view td.cell.mocsar { background: var(--mocsar); }
+.lc-db .map-view td.cell.temeto { background: var(--temeto); color: #ddd; }
+.lc-db .map-view td.cell.demon  { background: var(--demon); }
+.lc-db .map-view td.cell.hub    { box-shadow: 0 0 0 2px var(--accent) inset; }
+.lc-db .map-view td.cell .blocker { position: absolute; background: var(--sea); border: 1px solid #1c3654; z-index: 1; display: grid; place-items: center; font-size: 9px; color: rgba(255, 255, 255, 0.85); pointer-events: none; }
+.lc-db .map-view td.cell .blocker.N { top: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell .blocker.S { bottom: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell .blocker.W { left: -4px; top: 8%; bottom: 8%; width: 6px; }
+.lc-db .map-view td.cell .blocker.E { right: -4px; top: 8%; bottom: 8%; width: 6px; }
+/* Cell detail */
+.lc-db .map-view .cell-detail { margin-top: 12px; padding: 12px; background: rgba(0, 0, 0, 0.25); border-radius: 4px; min-height: 100px; font-size: 12px; line-height: 1.5; }
+.lc-db .map-view .cell-detail .placeholder { color: var(--muted); font-style: italic; }
+.lc-db .map-view .cell-detail h3 { margin: 0 0 4px; color: var(--accent); font-size: 15px; }
+.lc-db .map-view .cell-detail .meta { color: var(--muted); margin-bottom: 8px; font-size: 11px; }
+.lc-db .map-view .cell-detail ul.list { margin: 4px 0 8px; padding-left: 18px; }
+.lc-db .map-view .cell-detail ul.list li { padding: 1px 0; display: list-item; }
+.lc-db .map-view .cell-detail img.terrain { display: block; margin: 8px auto; max-width: 100%; border: 1px solid var(--border); border-radius: 2px; }
