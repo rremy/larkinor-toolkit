@@ -34,7 +34,7 @@ export function DatabaseOverlay({ open, onClose }: DatabaseOverlayProps) {
     <div class="lc-db-overlay">
       <button class="lc-db-overlay-close" aria-label="Bezárás" onClick={onClose}>✕</button>
       <div class="lc-db-overlay-body">
-        <DatabaseApp loader={loader} />
+        <DatabaseApp loader={loader} routing="memory" />
       </div>
     </div>
   );

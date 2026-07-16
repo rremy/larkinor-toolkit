@@ -8,6 +8,15 @@ import { MapView } from './map/MapView';
 
 export interface DatabaseAppProps {
   loader: DataLoader;
+  /**
+   * `'hash'` (default) routes through the global `location.hash` — used by the
+   * standalone DB page so links/back-button/reload behave as a real page.
+   * `'memory'` keeps the route in component state only — used when this
+   * component is mounted as an overlay on the live game page, so it never
+   * touches the game's browser history or leaves a stray `#tab/id` fragment
+   * on the game URL after closing.
+   */
+  routing?: 'hash' | 'memory';
 }
 
 type Tab = EntityTab | 'map';
@@ -25,9 +34,11 @@ function isTab(value: string): value is Tab {
   return (TABS as string[]).includes(value);
 }
 
+const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null };
+
 function parseHash(): Route {
   const m = (location.hash || '').match(/^#([a-z]+)(?:\/(-?\d+))?$/);
-  if (!m || !isTab(m[1])) return { tab: 'weapons', id: null };
+  if (!m || !isTab(m[1])) return DEFAULT_ROUTE;
   const tab = m[1] as Tab;
   return { tab, id: tab !== 'map' && m[2] != null ? Number(m[2]) : null };
 }
@@ -37,19 +48,21 @@ function hashFor(tab: Tab, id: number | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader } = props;
-  const [route, setRoute] = useState<Route>(() => parseHash());
+  const { loader, routing = 'hash' } = props;
+  const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
 
   useEffect(() => {
+    if (routing !== 'hash') return;
     const onHashChange = () => setRoute(parseHash());
     window.addEventListener('hashchange', onHashChange);
     // Ensure the address bar reflects the initial (possibly defaulted) route.
     if (!location.hash) navigate(route.tab, route.id);
     return () => window.removeEventListener('hashchange', onHashChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [routing]);
 
   function navigate(tab: Tab, id: number | null) {
+    if (routing !== 'hash') { setRoute({ tab, id }); return; }
     const next = hashFor(tab, id);
     if (location.hash !== next) location.hash = next;
     else setRoute({ tab, id });
