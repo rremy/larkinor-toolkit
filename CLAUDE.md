@@ -6,30 +6,56 @@ Support tooling for [Larkinor](https://larkinor.hu), a Hungarian browser-based t
 
 ```
 lcenter/
-├── lc-database/          # Offline database explorer (plain HTML + JSON)
-│   ├── explorer.html     # Main entry point — item/weapon/armor/monster browser
-│   ├── map.html          # Interactive map viewer
-│   ├── map-data.json     # Map cell data (districts, shops, monsters)
-│   ├── map.md            # Map documentation and exploration notes
-│   ├── item-shops.json   # Item shop inventory data
-│   ├── weapon-shops.json # Weapon shop inventory data
-│   └── db/
-│       ├── items.json
-│       ├── weapons.json
-│       ├── armors.json
-│       └── monsters.json
-├── lc-app/        # Vite + Preact + TS ViolentMonkey userscript
+├── lc-database/          # LEGACY — offline database explorer (plain HTML + JSON)
+│   │                     # Pending deletion after manual testing
+│   ├── explorer.html     # (archived)
+│   ├── map.html          # (archived)
+│   └── db/               # (archived)
+├── lc-app/        # Vite + Preact + TS — unified userscript + standalone DB
 │   ├── src/
-│   │   ├── main.ts               # Entry: detect page → proxy DOM → mount Preact
-│   │   ├── pages/                # FreeMove.tsx, Battle.tsx
-│   │   ├── components/           # StatBar, NavPad, NarrationPanel, MonsterCard
-│   │   ├── data/monsters.ts      # Monster type, DB (fetch + GM_setValue cache)
-│   │   ├── utils/                # pageDetector, domExtract, narration
-│   │   └── styles/base.css       # Dark-medieval theme, lc- prefixed
-│   ├── tests/                    # Vitest + @testing-library/preact (jsdom)
-│   ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader
-│   ├── serve.sh                  # Build + LAN-serve for local device testing
-│   └── vite.config.ts
+│   │   ├── main.ts                       # Userscript entry: detect page → proxy DOM → mount Preact
+│   │   ├── pages/                        # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx
+│   │   ├── components/                   # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
+│   │   ├── hooks/                        # useHotkeyConfig
+│   │   ├── utils/                        # pageDetector, domExtract, narration, hotkeys, config
+│   │   ├── shared/
+│   │   │   ├── data/
+│   │   │   │   ├── types.ts              # Weapon, Armor, Item, Monster, MapCell, Shop (typed models)
+│   │   │   │   ├── monsters.ts           # Monster DB + retrieval
+│   │   │   │   ├── source.ts             # DataSource (gmSource for GM, httpSource for fetch)
+│   │   │   │   ├── loader.ts             # createDataLoader(source, baseUrl)
+│   │   │   │   └── index.ts              # Exports
+│   │   │   └── styles/
+│   │   │       └── theme.css             # Single shared dark-medieval theme (variables + scopes)
+│   │   └── database/                     # Standalone DB components
+│   │       ├── main.tsx                  # DB entry: hash-routed tabs
+│   │       ├── DatabaseApp.tsx           # Tab routing (Fegyverek, Vértek, Tárgyak, Szörnyek, Térkép)
+│   │       ├── explorer/
+│   │       │   ├── DataTable.tsx         # Sortable/filterable table with detail panel
+│   │       │   ├── FilterBar.tsx         # Filter input + preset toggles
+│   │       │   ├── DetailPanel.tsx       # Full item/weapon/armor/monster details
+│   │       │   ├── ExplorerView.tsx      # Unified explorer layout
+│   │       │   ├── columns.ts            # ColumnDef[] per tab
+│   │       │   ├── filters.ts            # FilterDef[] and filtering logic
+│   │       │   └── labels.ts             # UI text (Hungarian)
+│   │       └── map/
+│   │           ├── MapView.tsx           # Clickable districts map
+│   │           ├── CellDetail.tsx        # Map cell info + monsters
+│   │           └── mapMeta.ts            # District & shop metadata
+│   ├── static/db/
+│   │   ├── monsters.json                 # Game data (single source of truth)
+│   │   ├── weapons.json
+│   │   ├── armors.json
+│   │   ├── items.json
+│   │   ├── map-data.json
+│   │   ├── item-shops.json
+│   │   └── weapon-shops.json
+│   ├── tests/                            # Vitest + @testing-library/preact (jsdom)
+│   ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader (fetches + evals main script)
+│   ├── vite.config.ts                    # Userscript build config (vite-plugin-monkey)
+│   ├── vite.config.db.ts                 # Standalone DB build config
+│   ├── package.json
+│   └── tsconfig.json
 └── screenshots/          # Game screenshots for reference
 ```
 
@@ -52,15 +78,32 @@ A self-contained, zero-dependency HTML+JS database explorer. No build step, no s
 
 ## Module 2 — lc-app
 
-A mobile-first UI replacement for Larkinor, built with **Vite + vite-plugin-monkey + Preact + TypeScript**. Targets Firefox for Android with ViolentMonkey. Ships as a single bundled `.user.js`.
+A unified Vite + Preact + TypeScript project for both **in-game UI replacement** (userscript) and **standalone database explorer**. Targets Firefox for Android via ViolentMonkey; standalone DB opens in any browser.
 
 ### Architecture
 
-- **Two-script pattern**: a tiny hand-written **loader** (`loader/larkinor-loader.user.js`) is the only thing installed in ViolentMonkey; it `GM_xmlhttpRequest`-fetches and `eval`s the built **main script** from the server on every page load (cache-busted with `?v=`). Update the game UI by re-uploading the built file — no reinstall.
+#### Shared data layer (`src/shared/data/`)
+- **TypeScript models** (`types.ts`): `Weapon`, `Armor`, `Item`, `Monster`, `MapCell`, `Shop` with full typing.
+- **DataSource abstraction** (`source.ts`): `gmSource` (runs in userscript, uses `GM_xmlhttpRequest`) and `httpSource` (runs standalone, uses `fetch`). DB components must use `DataSource`, never call GM_* directly, so the same code runs in-game and standalone.
+- **Data loader** (`loader.ts`): `createDataLoader(source, baseUrl)` → `DataLoader` with methods like `fetchMonsters()`, `fetchWeapons()`, etc. Cached via `GM_setValue` in-game, HTTP caching standalone.
+- **Data single source of truth**: `static/db/*.json` (monsters, weapons, armors, items, map-data, item-shops, weapon-shops), deployed to `/larkinor/static/db/` on the production host.
+
+#### Shared theme (`src/shared/styles/theme.css`)
+- Single dark-medieval CSS variables sheet; **never add hardcoded hex/rgba in rule bodies** — use `:root` variables and `.lc-db` scopes.
+- `.lc-db` classes scope explorer/map styles; userscript components use `lc-` classes.
+
+#### In-game userscript (`src/main.ts`, `src/pages/`, `src/components/`)
+- **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
-- **Proxy-DOM pattern** (`main.ts`): on a page we handle, extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy it), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. Extraction happens *before* `hideOriginalDOM`.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. v1 renders only FreeMove + Battle; other pages are left untouched.
-- All injected classes/IDs use the `lc-` prefix; colors via the CSS variables in `base.css` (same dark-medieval palette as lc-database).
+- **Proxy-DOM pattern**: on a page we handle (FreeMove, Battle, Dungeon, Login), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. v1 renders FreeMove, Battle, Dungeon, Login.
+- **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
+
+#### Standalone database (`src/database/`, built separately)
+- **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map).
+- **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab.
+- **Map viewer** (`map/`): clickable districts with cell details and resident monsters.
+- Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)
 
@@ -78,45 +121,62 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
 
 ## Development workflow
 
-### lc-database
-
-```bash
-# Serve locally (Python 3)
-python3 -m http.server 8080 --directory lc-database
-
-# Or Node
-npx serve lc-database
-```
-
-Open `http://localhost:8080/explorer.html` in a browser. No build step needed.
-
-When adding new data: edit the relevant JSON under `lc-database/db/` and update `explorer.html` if new columns/tabs are needed.
-
 ### lc-app
 
 ```bash
 cd lc-app
 npm install
+
+# Development
+npm run dev          # Vite dev server for userscript (http://localhost:5173)
+npm run dev:db      # Standalone DB dev server (http://localhost:5173/db)
 npm test            # Vitest (jsdom); GM_* are mocked in tests/setup.ts
-npm run build       # → dist/larkinor-ui.user.js (build wipes dist/ first)
-npx tsc --noEmit    # type-check
+npm test:watch      # Vitest in watch mode
+npx tsc --noEmit    # Type-check
+npm run build       # Full build: npm run build:userscript && npm run build:db
+npm run serve       # Simple HTTP server for dist/ (http://localhost:9000)
 ```
 
-**Deploy** (production host `https://example.invalid/larkinor/`): upload both
-`dist/larkinor-ui.user.js` and `dist/monsters.json` there. The monsters URL is
-baked into the build (`MONSTERS_JSON_URL` in `main.ts`); `@connect` for the host
-is in `vite.config.ts`. `npm run build` wipes `dist/`, so re-copy `monsters.json`
-(from `lc-database/db/monsters.json`) after each build. Static serving over HTTPS
-is enough — `GM_xmlhttpRequest` bypasses CORS, so no CORS headers needed.
+**Build order** (important): `npm run build` runs `build:userscript` first (which wipes `dist/`), then `build:db`. Both artifacts are written to `dist/`:
+- `dist/larkinor-ui.user.js` — userscript (run via ViolentMonkey loader)
+- `dist/db/index.html` — standalone database viewer
 
-**Local device testing**: `./serve.sh` builds, copies `monsters.json`, bakes the
-LAN URL, serves `dist/` with CORS, and prints a ready-to-install loader.
+**Data paths**:
+- Dev userscript: data served from `/static/db/` (publicDir in `vite.config.ts`)
+- Dev standalone DB: data served from `/db/` (publicDir in `vite.config.db.ts` at root)
+- Both configs: `static/db/` is the source; Vite copies it as configured per build target.
 
-**Console-injection testing** (no ViolentMonkey, e.g. via Playwright/DevTools on
-the live game): serve `dist/` with CORS on `127.0.0.1` (loopback is exempt from
-mixed-content blocking), then paste GM_* shims + `eval(fetch(...))`. Reloading
-the game logs the session out (POST-driven), so re-inject in place rather than
-reloading.
+**Production deploy** (host `https://example.invalid/larkinor/`):
+1. Run `npm run build` in lc-app (produces `dist/larkinor-ui.user.js` and `dist/db/`)
+2. Upload `dist/larkinor-ui.user.js` → `/larkinor/larkinor-ui.user.js`
+3. Upload `dist/db/` → `/larkinor/` (all files; data at `/larkinor/static/db/`, HTML at `/larkinor/index.html`)
+4. Userscript data URL is baked in `main.ts` (`MONSTERS_JSON_URL`); `@connect` host is in `vite.config.ts`
+5. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS
+
+**Local device testing** via userscript loader:
+```bash
+cd lc-app
+npm run build
+# Serve dist/ with CORS on a LAN IP (e.g., 192.168.1.x:9000)
+npx serve dist --cors -l 9000
+# Print and install the loader from the URL shown, pointing to your LAN server
+```
+
+**Console-injection testing** (no ViolentMonkey; debug on the live game via DevTools):
+1. Serve `dist/` with CORS on `127.0.0.1` (loopback is exempt from mixed-content blocking)
+2. Paste GM_* shims (from `tests/setup.ts`) + the eval fetch line into the console
+3. Re-inject in place rather than reloading (reloading logs out the game session)
+
+### lc-database (LEGACY)
+
+The original standalone database explorer is archived under `lc-database/` pending manual testing and deletion. Do not use for new work — all database functionality is now in `lc-app/src/database/`.
+
+For reference (if needed):
+```bash
+# Serve archived lc-database locally (Python 3)
+python3 -m http.server 8080 --directory lc-database
+# Open http://localhost:8080/explorer.html in a browser
+```
 
 ## Game context
 
