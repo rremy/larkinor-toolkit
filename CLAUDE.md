@@ -18,7 +18,7 @@ lcenter/
 │       ├── weapons.json
 │       ├── armors.json
 │       └── monsters.json
-├── lc-userscript/        # Vite + Preact + TS ViolentMonkey userscript
+├── lc-app/        # Vite + Preact + TS ViolentMonkey userscript
 │   ├── src/
 │   │   ├── main.ts               # Entry: detect page → proxy DOM → mount Preact
 │   │   ├── pages/                # FreeMove.tsx, Battle.tsx
@@ -50,7 +50,7 @@ A self-contained, zero-dependency HTML+JS database explorer. No build step, no s
 - Hungarian language throughout (game is Hungarian)
 - Map coordinates: `imageId = row*10 + col`, row 0 = north, col 0 = west
 
-## Module 2 — lc-userscript
+## Module 2 — lc-app
 
 A mobile-first UI replacement for Larkinor, built with **Vite + vite-plugin-monkey + Preact + TypeScript**. Targets Firefox for Android with ViolentMonkey. Ships as a single bundled `.user.js`.
 
@@ -92,10 +92,10 @@ Open `http://localhost:8080/explorer.html` in a browser. No build step needed.
 
 When adding new data: edit the relevant JSON under `lc-database/db/` and update `explorer.html` if new columns/tabs are needed.
 
-### lc-userscript
+### lc-app
 
 ```bash
-cd lc-userscript
+cd lc-app
 npm install
 npm test            # Vitest (jsdom); GM_* are mocked in tests/setup.ts
 npm run build       # → dist/larkinor-ui.user.js (build wipes dist/ first)

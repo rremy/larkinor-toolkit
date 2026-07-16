@@ -1,4 +1,4 @@
-# lc-userscript build / deploy
+# lc-app build / deploy
 #
 #   make build   — build the userscript bundle into dist/
 #   make deploy  — build, then ship dist/ + static/ to the server
