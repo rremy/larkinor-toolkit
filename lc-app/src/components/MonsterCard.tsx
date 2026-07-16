@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import type { Monster } from '@/data/monsters';
+import type { Monster } from '@/shared/data/monsters';
 
 export interface MonsterCardProps {
   monster: Monster | null;

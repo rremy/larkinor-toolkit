@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { MonsterCard, monsterImageUrl } from '../src/components/MonsterCard';
-import type { Monster } from '../src/data/monsters';
+import type { Monster } from '../src/shared/data/monsters';
 
 const MONSTER: Monster = {
   id: 1,

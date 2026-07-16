@@ -1,7 +1,7 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { BattleState } from '@/utils/domExtract';
-import type { MonsterDatabase, Monster } from '@/data/monsters';
+import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { StatBar } from '@/components/StatBar';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';

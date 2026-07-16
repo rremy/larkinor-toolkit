@@ -1,7 +1,7 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
-import { loadMonsters, type MonsterDatabase } from '@/data/monsters';
+import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
@@ -13,9 +13,9 @@ import baseStyles from '@/styles/base.css?raw';
 // by the Vite dev server (see the lc-static-assets plugin in vite.config.ts),
 // so we resolve against this module's own URL; in the production build the
 // dead dev branch is stripped and we fetch from the deployment host.
-const MONSTERS_JSON_URL = import.meta.env.DEV
-  ? new URL('/static/db/monsters.json', import.meta.url).href
-  : 'https://example.invalid/larkinor/static/db/monsters.json';
+const DATA_BASE_URL = import.meta.env.DEV
+  ? new URL('/static/db', import.meta.url).href
+  : 'https://example.invalid/larkinor/static/db';
 
 // Discriminated union so the extracted state stays paired with — and
 // narrowable by — the page type that produced it, instead of collapsing to
@@ -100,7 +100,7 @@ function boot(): void {
   // The login and dungeon screens have no monster references, so skip the fetch.
   if (pageState.pageType === PageType.Login || pageState.pageType === PageType.Dungeon) return;
 
-  loadMonsters(MONSTERS_JSON_URL)
+  createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()
     .then((loaded) => {
       db = loaded;
       renderPage();

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { FreeMove } from '../src/pages/FreeMove';
-import { buildMonsterDatabase, type Monster } from '../src/data/monsters';
+import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import { getEnabledHotkeys, setEnabledHotkeys } from '../src/utils/config';
 

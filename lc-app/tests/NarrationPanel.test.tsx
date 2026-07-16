@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { NarrationPanel } from '../src/components/NarrationPanel';
-import { buildMonsterDatabase, type Monster } from '../src/data/monsters';
+import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 
 const MONSTERS: Monster[] = [
   { id: 1, name: 'Vérszomjas moszkitóraj', image: '/pic/szornyk/moszkitoraj_k.gif', level: 1, hp: 6, mp: 4, attackType: 'Szúró', debuff: 'fertőzés', magicWeapon: false, location: 'Larkinor', drops: [] },

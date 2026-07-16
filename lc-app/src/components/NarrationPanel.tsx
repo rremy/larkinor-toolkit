@@ -1,6 +1,6 @@
 import { h, Fragment } from 'preact';
 import type { ComponentChildren } from 'preact';
-import type { MonsterDatabase, Monster } from '@/data/monsters';
+import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { NarrationLink } from '@/utils/domExtract';
 import { findMonsterMentions } from '@/utils/narration';
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { Battle } from '../src/pages/Battle';
-import { buildMonsterDatabase, type Monster } from '../src/data/monsters';
+import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 import type { BattleState } from '../src/utils/domExtract';
 
 const MONSTERS: Monster[] = [

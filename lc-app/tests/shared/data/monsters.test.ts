@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMonsterDatabase, type Monster } from '../src/data/monsters';
+import { buildMonsterDatabase, type Monster } from '@/shared/data/monsters';
 
 const SAMPLE_MONSTERS: Monster[] = [
   { id: 1, name: 'Vérszomjas moszkitóraj', image: '/pic/szornyk/moszkitoraj_k.gif', level: 1, hp: 6, mp: 4, attackType: 'Szúró/Vágó', debuff: 'fertőzés', magicWeapon: false, location: 'Larkinor', drops: [{ qty: 1, name: 'szúnyogszárny', id: 51 }] },

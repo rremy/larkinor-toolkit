@@ -1,7 +1,7 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { FreeMoveState } from '@/utils/domExtract';
-import type { MonsterDatabase, Monster } from '@/data/monsters';
+import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { StatBar } from '@/components/StatBar';
 import { NavPad } from '@/components/NavPad';
 import { NarrationPanel } from '@/components/NarrationPanel';
