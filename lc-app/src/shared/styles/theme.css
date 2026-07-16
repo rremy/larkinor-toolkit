@@ -482,3 +482,170 @@
   border-color: var(--border);
   cursor: not-allowed;
 }
+
+/* ================================================================
+   ===== DB explorer =====
+   Ported from lc-database/explorer.html. Scoped under `.lc-db` so
+   these global-ish selectors (body/header/.badge/table) never leak
+   onto the live game page when this stylesheet is injected by the
+   userscript. Palette variables come from :root above.
+   ================================================================ */
+.lc-db {
+  margin: 0;
+  font: 14px/1.4 -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.lc-db header.top {
+  padding: 12px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.lc-db header.top h1 { font-size: 17px; margin: 0; color: var(--accent); }
+.lc-db .tabs { display: flex; gap: 4px; }
+.lc-db .tab {
+  padding: 6px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 13px;
+}
+.lc-db .tab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.lc-db .counts { padding: 8px 18px; color: var(--muted); font-size: 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
+
+/* ---- Filters ---- */
+.lc-db .filters {
+  padding: 10px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.lc-db .field { display: flex; flex-direction: column; gap: 3px; }
+.lc-db .field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.lc-db .field input, .lc-db .field select {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: 3px;
+  font: inherit;
+  min-width: 70px;
+}
+.lc-db .field input:focus, .lc-db .field select:focus { outline: none; border-color: var(--accent); }
+.lc-db .field.range { flex-direction: row; align-items: center; gap: 6px; }
+.lc-db .field.range input { width: 75px; }
+.lc-db .field.search input { width: 220px; }
+.lc-db button.clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.lc-db button.clear:hover { color: var(--text); border-color: var(--accent); }
+
+/* ---- Table + detail layout ---- */
+.lc-db .db-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.lc-db .db-view .layout { display: flex; flex: 1; min-height: 0; }
+.lc-db .table-wrap { flex: 1; overflow: auto; }
+.lc-db table.db { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lc-db .db-view th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--muted);
+}
+.lc-db .db-view th:hover { color: var(--accent); }
+.lc-db .db-view th.sorted { color: var(--accent); }
+.lc-db .db-view th.sorted::after { content: ' \25BC'; font-size: 10px; }
+.lc-db .db-view th.sorted.asc::after { content: ' \25B2'; }
+.lc-db .db-view td { padding: 6px 10px; border-bottom: 1px solid #2a241e; white-space: nowrap; }
+.lc-db .db-view tr.row:hover { background: var(--panel-2); cursor: pointer; }
+.lc-db .db-view tr.row.selected { background: var(--accent-dim); }
+.lc-db .db-view td.right { text-align: right; font-variant-numeric: tabular-nums; }
+.lc-db .db-view td.center { text-align: center; }
+.lc-db .db-view td.name { font-weight: 500; color: var(--accent); }
+.lc-db .db-view td.dim { color: var(--muted); }
+.lc-db .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 11px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.lc-db .badge.yes { color: var(--good); border-color: var(--good); }
+.lc-db .badge.no  { color: var(--bad); border-color: var(--bad); }
+
+/* ---- Detail panel ---- */
+.lc-db aside.db-detail {
+  flex: 1 1 25%;
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  overflow: auto;
+  padding: 14px 16px;
+  position: relative;
+  display: none;
+}
+.lc-db .db-view.has-selection aside.db-detail { display: block; }
+.lc-db .db-view.has-selection .table-wrap { flex: 1 1 75%; }
+.lc-db aside.db-detail h2 { margin: 0 0 4px 0; font-size: 18px; color: var(--accent); padding-right: 28px; }
+.lc-db aside.db-detail .close-detail {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 24px;
+  height: 24px;
+  line-height: 20px;
+  padding: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.lc-db aside.db-detail .close-detail:hover { color: var(--accent); border-color: var(--accent); }
+.lc-db aside.db-detail .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.lc-db aside.db-detail h3 {
+  margin: 14px 0 6px 0;
+  font-size: 13px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lc-db aside.db-detail .stats { display: grid; grid-template-columns: 130px 1fr; gap: 3px 12px; font-size: 13px; }
+.lc-db aside.db-detail .stats dt { color: var(--muted); }
+.lc-db aside.db-detail .stats dd { margin: 0; }
+.lc-db aside.db-detail ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+.lc-db aside.db-detail ul li { padding: 3px 0; border-bottom: 1px dashed #2a241e; }
+.lc-db aside.db-detail a.ref { color: var(--accent); cursor: pointer; text-decoration: none; }
+.lc-db aside.db-detail a.ref:hover { text-decoration: underline; }
+.lc-db aside.db-detail .qty { color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-db aside.db-detail .empty { color: var(--muted); font-style: italic; padding: 4px 0; }
+.lc-db aside.db-detail .monster-thumb { vertical-align: middle; height: 32px; margin-right: 6px; border: 1px solid var(--border); border-radius: 3px; }
+.lc-db aside.db-detail .placeholder { color: var(--muted); padding: 60px 0; text-align: center; font-style: italic; }
