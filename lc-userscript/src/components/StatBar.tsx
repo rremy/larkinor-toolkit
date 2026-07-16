@@ -8,6 +8,8 @@ export interface StatBarProps {
   mpMax: number;
   gold?: number;
   statusIcons?: StatusIcon[];
+  /** When set, renders a gear button (opens the local config). Free-move only. */
+  onConfig?: () => void;
 }
 
 function Bar({ value, max, className }: { value: number; max: number; className: string }) {
@@ -22,7 +24,7 @@ function Bar({ value, max, className }: { value: number; max: number; className:
   );
 }
 
-export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons }: StatBarProps) {
+export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons, onConfig }: StatBarProps) {
   return (
     <div class="lc-stat-bar lc-section">
       <div class="lc-stat-row">
@@ -35,16 +37,19 @@ export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons }: StatBarProp
         <Bar value={mp} max={mpMax} className="lc-stat-bar-fill--mp" />
         <span class="lc-stat-value">{mp} / {mpMax}</span>
       </div>
-      {gold !== undefined && (
+      {(gold !== undefined || onConfig) && (
         <div class="lc-stat-row lc-stat-gold">
-          <span class="lc-stat-label">💰</span>
-          <span class="lc-stat-value">{gold}</span>
+          {gold !== undefined && <span class="lc-stat-label">💰</span>}
+          {gold !== undefined && <span class="lc-stat-value">{gold}</span>}
           {statusIcons && statusIcons.length > 0 && (
             <span class="lc-status-icons">
               {statusIcons.map((icon, i) => (
                 <img key={i} class="lc-status-icon" src={icon.iconUrl} title={icon.label} alt={icon.label} />
               ))}
             </span>
+          )}
+          {onConfig && (
+            <button class="lc-statbar-gear" aria-label="Beállítások" onClick={() => onConfig()}>⚙</button>
           )}
         </div>
       )}

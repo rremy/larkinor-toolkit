@@ -22,6 +22,8 @@ export interface Action {
   kind?: BattleActionKind;
   /** Original game icon for the control (absolute URL); set for battle actions. */
   iconUrl?: string;
+  /** The tevFajta <option> value; set for free-move actions (hotkey matching). */
+  actionKey?: string;
 }
 
 export interface DirectionOption {
@@ -64,6 +66,10 @@ export interface FreeMoveState {
   buildings: BuildingOption[];
   /** The "engage the nearby monster" button, shown only during an encounter. */
   attack: BuildingOption | null;
+  /** Game settings (klap) icon — rendered in the NavPad top-left corner. */
+  settingsButton: BuildingOption | null;
+  /** Rest (pihen) icon — rendered in the NavPad top-right corner. */
+  restButton: BuildingOption | null;
   /** Player status indicators (insurance, curse, magic shield, ...). */
   statusIcons: StatusIcon[];
   actions: Action[];
@@ -250,12 +256,31 @@ function extractDirections(doc: Document): DirectionOption[] {
  * original control so the game's own onclick (svEnterBuilding / svRest / ...)
  * fires natively.
  */
-function extractBuildings(doc: Document): BuildingOption[] {
+/** Image basename of the game settings icon (rendered in a NavPad corner). */
+const SETTINGS_BASENAME = 'klap';
+/** Image basename of the rest icon (rendered in a NavPad corner). */
+const REST_BASENAME = 'pihen';
+
+/** Controls that are never "place" buildings on any screen. */
+function isBaseNonBuilding(name: string): boolean {
+  return name === 'ok' || name === ATTACK_BASENAME || name in DIRECTION_BY_BASENAME;
+}
+
+/**
+ * Controls lifted out of the buildings row on screens with a NavPad (free-move
+ * and dungeon): settings/rest go to the NavPad corners, and `sc_*` are the
+ * game's own hotkey shortcut buttons (superseded by our local hotkey config).
+ */
+function isCornerOrShortcut(name: string): boolean {
+  return name === SETTINGS_BASENAME || name === REST_BASENAME || name.startsWith('sc_');
+}
+
+function extractBuildings(doc: Document, excludeExtra: (name: string) => boolean = () => false): BuildingOption[] {
   const buildings: BuildingOption[] = [];
   doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
     const src = input.getAttribute('src') ?? '';
     const name = basename(src);
-    if (name === 'ok' || name === ATTACK_BASENAME || name in DIRECTION_BY_BASENAME) return;
+    if (isBaseNonBuilding(name) || excludeExtra(name)) return;
 
     const label = input.getAttribute('title')?.trim();
     if (!label) return; // skip decorative / unlabelled icons
@@ -267,6 +292,20 @@ function extractBuildings(doc: Document): BuildingOption[] {
     });
   });
   return buildings;
+}
+
+/** Finds a titled image input by basename and returns it as a BuildingOption. */
+function extractImageControl(doc: Document, wantName: string): BuildingOption | null {
+  for (const input of Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="image"]'))) {
+    const src = input.getAttribute('src') ?? '';
+    if (basename(src) !== wantName) continue;
+    return {
+      label: input.getAttribute('title')?.trim() || wantName,
+      iconUrl: absolutizeGameUrl(src),
+      trigger: () => input.click(),
+    };
+  }
+  return null;
 }
 
 /**
@@ -294,6 +333,7 @@ function extractFreeMoveActions(doc: Document): Action[] {
     .filter(opt => opt.value)
     .map(opt => ({
       label: opt.text.trim(),
+      actionKey: opt.value,
       trigger: () => {
         select.value = opt.value;
         okButton.click();
@@ -315,8 +355,10 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     locationImageUrl,
     locationName,
     directions: extractDirections(doc),
-    buildings: extractBuildings(doc),
+    buildings: extractBuildings(doc, isCornerOrShortcut),
     attack: extractAttack(doc),
+    settingsButton: extractImageControl(doc, SETTINGS_BASENAME),
+    restButton: extractImageControl(doc, REST_BASENAME),
     statusIcons: extractStatusIcons(doc),
     actions: extractFreeMoveActions(doc),
     narration: extractNarration(doc),
@@ -454,6 +496,10 @@ export interface DungeonState {
   tiles: DungeonTile[];
   directions: DirectionOption[];
   buildings: BuildingOption[];
+  /** Game settings (klap) icon — rendered in the NavPad top-left corner. */
+  settingsButton: BuildingOption | null;
+  /** Rest (pihen) icon — rendered in the NavPad top-right corner. */
+  restButton: BuildingOption | null;
   actions: Action[];
   narration: string;
   narrationLinks: NarrationLink[];
@@ -550,7 +596,9 @@ export function extractDungeon(doc: Document): DungeonState {
     statusIcons: extractStatusIcons(doc),
     tiles: extractDungeonTiles(doc),
     directions: extractDirections(doc),
-    buildings: extractBuildings(doc),
+    buildings: extractBuildings(doc, isCornerOrShortcut),
+    settingsButton: extractImageControl(doc, SETTINGS_BASENAME),
+    restButton: extractImageControl(doc, REST_BASENAME),
     actions: extractFreeMoveActions(doc),
     // The prompt already carries the movement/question text, so suppress the
     // duplicate narration while a question is active.

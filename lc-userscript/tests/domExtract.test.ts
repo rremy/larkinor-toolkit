@@ -138,6 +138,11 @@ describe('extractFreeMove', () => {
     expect(state.actions.map(a => a.label)).toEqual(['kajálsz', 'imádkozol']);
   });
 
+  it('exposes the tevFajta option value as actionKey', () => {
+    const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
+    expect(state.actions.map(a => a.actionKey)).toEqual(['kajal', 'imadkozas']);
+  });
+
   it('triggering an action sets the select value and clicks the ok button', () => {
     const doc = makeDoc(FREEMOVE_HTML);
     const state = extractFreeMove(doc);
@@ -290,6 +295,51 @@ describe('narration links (extractFreeMove)', () => {
   it('returns no links when the narration has no anchors', () => {
     const state = extractFreeMove(makeDoc(FREEMOVE_HTML));
     expect(state.narrationLinks).toEqual([]);
+  });
+});
+
+// Free-move utility image-inputs: the settings (klap) and rest (pihen) icons
+// plus a game shortcut button (sc_*). These should be pulled out / dropped so
+// the buildings row keeps only real place-buildings.
+const FREEMOVE_UTILITY_HTML = `
+  <form name="urlap"><input type="hidden" name="oldalTipus" value="otVilag"></form>
+  <b>
+    <a title="karakterlap"><font color="blue">Remy </font></a><br>
+    Pénz: 1<br>
+    Életpont: 10 / 10 <br>
+    Varázspont: 5 / 5
+  </b>
+  <input type="image" src="/ikon/vegyesbolt.gif" title="vegyesbolt">
+  <input type="image" src="/2/ikon/klap.gif" title="Beállítások">
+  <input type="image" src="/2/ikon/pihen.gif" title="Pihensz egy kicsit">
+  <input type="image" src="/2/ikon/sc_gyogyvarazs.gif" title="elmondasz egy gyógyvarázst">
+`;
+
+describe('extractFreeMove — utility buttons', () => {
+  it('extracts the settings (klap) and rest (pihen) buttons separately', () => {
+    const s = extractFreeMove(makeDoc(FREEMOVE_UTILITY_HTML));
+    expect(s.settingsButton?.label).toBe('Beállítások');
+    expect(s.settingsButton?.iconUrl).toBe('https://l2.larkinor.hu/2/ikon/klap.gif');
+    expect(s.restButton?.label).toBe('Pihensz egy kicsit');
+  });
+
+  it('keeps place-buildings but drops settings, rest, and sc_ shortcut buttons from the row', () => {
+    const s = extractFreeMove(makeDoc(FREEMOVE_UTILITY_HTML));
+    const labels = s.buildings.map(b => b.label);
+    expect(labels).toContain('vegyesbolt');
+    expect(labels).not.toContain('Beállítások');
+    expect(labels).not.toContain('Pihensz egy kicsit');
+    expect(labels).not.toContain('elmondasz egy gyógyvarázst');
+  });
+
+  it('a settings-button trigger clicks the original klap input', () => {
+    const doc = makeDoc(FREEMOVE_UTILITY_HTML);
+    const s = extractFreeMove(doc);
+    const klap = doc.querySelector<HTMLInputElement>('input[src*="klap.gif"]')!;
+    const spy = vi.fn();
+    klap.click = spy;
+    s.settingsButton?.trigger();
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -561,11 +611,15 @@ describe('extractDungeon', () => {
     expect(dirs).not.toContain('west'); // west is a plain img (blocked)
   });
 
-  it('extracts utility controls as buildings (rest, heal, settings, exit)', () => {
+  it('lifts settings/rest to corner fields, drops sc_ shortcuts, keeps exit as a building', () => {
     const s = extractDungeon(makeDoc(DUNGEON_HTML));
     const labels = s.buildings.map(b => b.label);
-    expect(labels).toContain('Kimész a labirintusból');
-    expect(labels).toContain('Pihensz egy kicsit');
+    expect(labels).toContain('Kimész a labirintusból'); // exit stays in the row
+    expect(labels).not.toContain('Pihensz egy kicsit'); // -> restButton corner
+    expect(labels).not.toContain('Beállítások'); // -> settingsButton corner
+    expect(labels).not.toContain('elmondasz egy gyógyvarázst'); // sc_ dropped
+    expect(s.settingsButton?.label).toBe('Beállítások');
+    expect(s.restButton?.label).toBe('Pihensz egy kicsit');
   });
 
   it('extracts tevFajta actions', () => {

@@ -58,6 +58,24 @@
   width: 100%;
 }
 
+/* Hero: image/cell with the stat bar floated over its bottom edge to save space */
+.lc-hero {
+  position: relative;
+}
+.lc-hero > .lc-stat-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(37, 32, 27, 0.6); /* --panel at 60% opacity */
+  border-bottom: none;
+}
+/* White text for readability over the image */
+.lc-hero > .lc-stat-bar,
+.lc-hero > .lc-stat-bar .lc-stat-value {
+  color: #fff;
+}
+
 /* Hero image (location / monster) — show the whole image, never crop */
 .lc-hero-img {
   width: 100%;
@@ -168,6 +186,58 @@
 
 /* StatBar */
 .lc-stat-bar { display: flex; flex-direction: column; gap: 8px; }
+.lc-statbar-gear {
+  margin-left: auto;   /* float to the right end of the gold/status row */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.lc-statbar-gear:active { color: var(--accent); border-color: var(--accent); }
+
+/* Free-move hotkey icon row (enabled + available quick actions) */
+.lc-hotkeys { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.lc-hotkey {
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lc-hotkey:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-hotkey-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* Config drawer */
+.lc-config-title { margin: 0 0 12px; padding-right: 36px; font-size: 16px; color: var(--accent); }
+.lc-config-hotkeys { display: flex; flex-direction: column; gap: 6px; }
+.lc-config-hotkey {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.lc-config-hotkey--on { border-color: var(--accent); background: var(--accent-dim); }
+.lc-config-hotkey-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.lc-config-hotkey-label { flex: 1; }
+.lc-config-hotkey-check { color: var(--accent); font-weight: bold; width: 16px; text-align: center; }
 .lc-stat-row { display: flex; align-items: center; gap: 10px; }
 .lc-stat-label { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
 .lc-stat-value { font-size: 13px; color: var(--muted); min-width: 80px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
@@ -180,7 +250,23 @@
 .lc-status-icon { height: 14px; width: auto; display: block; }
 
 /* NavPad */
-.lc-navpad { display: flex; justify-content: center; }
+.lc-navpad { display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
+/* Utility icons floated in the top corners, level with the north button */
+.lc-navpad-corner {
+  position: absolute;
+  top: 12px;
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lc-navpad-corner--left { left: 16px; }
+.lc-navpad-corner--right { right: 16px; }
+.lc-navpad-corner:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-corner-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
 .lc-navpad-grid { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 6px; }
 .lc-navpad-cell { width: 64px; height: 64px; }
 .lc-navpad-btn { width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }

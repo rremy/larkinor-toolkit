@@ -73,4 +73,26 @@ describe('NavPad', () => {
     expect(container.querySelector('.lc-navpad-attack')).toBeNull();
     expect(container.querySelector('.lc-navpad-centre')).not.toBeNull();
   });
+
+  it('renders corner buttons when provided and triggers them on click', () => {
+    const settings = { label: 'Beállítások', iconUrl: 'https://x/klap.gif', trigger: vi.fn() };
+    const rest = { label: 'Pihensz egy kicsit', iconUrl: 'https://x/pihen.gif', trigger: vi.fn() };
+    const { container } = render(<NavPad directions={[]} cornerLeft={settings} cornerRight={rest} />);
+
+    const left = container.querySelector('.lc-navpad-corner--left') as HTMLButtonElement;
+    const right = container.querySelector('.lc-navpad-corner--right') as HTMLButtonElement;
+    expect(left).not.toBeNull();
+    expect(right).not.toBeNull();
+    expect(left.querySelector('img')?.getAttribute('src')).toBe('https://x/klap.gif');
+
+    fireEvent.click(left);
+    expect(settings.trigger).toHaveBeenCalledTimes(1);
+    fireEvent.click(right);
+    expect(rest.trigger).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no corner buttons when none are provided', () => {
+    const { container } = render(<NavPad directions={[makeOption('north', 'Észak')]} />);
+    expect(container.querySelector('.lc-navpad-corner')).toBeNull();
+  });
 });

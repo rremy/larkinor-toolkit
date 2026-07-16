@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/preact';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/preact';
 import { StatBar } from '../src/components/StatBar';
 
 describe('StatBar', () => {
@@ -39,5 +39,19 @@ describe('StatBar', () => {
     expect(icons.length).toBe(2);
     expect(icons[0].getAttribute('src')).toBe('https://l2.larkinor.hu/2/ikon/bizt_van.gif');
     expect(icons[0].getAttribute('title')).toBe('Van biztosításod :-)');
+  });
+
+  it('renders the config gear inside the gold/status row when onConfig is provided, and calls it on click', () => {
+    const onConfig = vi.fn();
+    const { container } = render(<StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} onConfig={onConfig} />);
+    const gear = container.querySelector('.lc-stat-gold .lc-statbar-gear') as HTMLButtonElement;
+    expect(gear).not.toBeNull();
+    fireEvent.click(gear);
+    expect(onConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no gear button when onConfig is omitted', () => {
+    const { container } = render(<StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} />);
+    expect(container.querySelector('.lc-statbar-gear')).toBeNull();
   });
 });
