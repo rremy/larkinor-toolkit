@@ -8,6 +8,7 @@ import { FILTERS, applyFilters, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
 import { DetailPanel } from './DetailPanel';
+import { buildLookups, type DetailLookups } from './lookups';
 
 type Row = Record<string, unknown>;
 type Entity = Weapon | Armor | Item | Monster;
@@ -37,6 +38,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterState, setFilterState] = useState<FilterState>({});
+  const [lookups, setLookups] = useState<DetailLookups | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +49,18 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
       .catch(() => { if (!cancelled) { setRows([]); setLoading(false); } });
     return () => { cancelled = true; };
   }, [loader, tab]);
+
+  // Cross-dataset lookups (reverse-crafting + monster-by-id) for the detail
+  // panel. Loaded once; the loader caches, so this is cheap after first fetch.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([loader.loadWeapons(), loader.loadArmors(), loader.loadItems(), loader.loadMonsters()])
+      .then(([w, a, i, mdb]) => {
+        if (!cancelled) setLookups(buildLookups(w, a, i, [...mdb.byName.values()]));
+      })
+      .catch(() => { /* detail enrichment stays unavailable */ });
+    return () => { cancelled = true; };
+  }, [loader]);
 
   const visible = applyFilters(rows, FILTERS[tab], filterState);
   const selected = selectedId != null
@@ -78,6 +92,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
           entity={selected as Entity | null}
           onClose={() => onSelect(null)}
           onJump={onJump}
+          lookups={lookups ?? undefined}
         />
       </div>
     </div>

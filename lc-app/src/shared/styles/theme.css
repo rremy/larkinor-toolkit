@@ -673,7 +673,8 @@
 .lc-db aside.db-detail a.ref:hover { text-decoration: underline; }
 .lc-db aside.db-detail .qty { color: var(--muted); font-variant-numeric: tabular-nums; }
 .lc-db aside.db-detail .empty { color: var(--muted); font-style: italic; padding: 4px 0; }
-.lc-db aside.db-detail .monster-thumb { vertical-align: middle; height: 80px; margin-left: 8px; border: 1px solid var(--border); border-radius: 3px; }
+.lc-db aside.db-detail .detail-img { vertical-align: middle; height: 80px; margin-left: 8px; border: 1px solid var(--border); border-radius: 3px; }
+.lc-db aside.db-detail .monster-thumb { vertical-align: middle; height: 32px; margin-right: 6px; border: 1px solid var(--border); border-radius: 3px; }
 .lc-db aside.db-detail .placeholder { color: var(--muted); padding: 60px 0; text-align: center; font-style: italic; }
 
 /* ================================================================

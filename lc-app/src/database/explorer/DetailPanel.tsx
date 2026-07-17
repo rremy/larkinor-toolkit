@@ -4,6 +4,7 @@ import type { Monster } from '@/shared/data/monsters';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import type { EntityTab } from './columns';
 import { DETAIL_FIELDS } from './labels';
+import { OWNER_TYPE_LABEL, sortUsedIn, type DetailLookups } from './lookups';
 
 type Entity = Weapon | Armor | Item | Monster;
 
@@ -12,6 +13,8 @@ interface DetailPanelProps {
   entity: Entity | null;
   onClose: () => void;
   onJump: (tab: EntityTab, id: number) => void;
+  /** Cross-dataset lookups for the usedIn / droppedBy sections (once loaded). */
+  lookups?: DetailLookups;
 }
 
 /** Render a stat value: booleans as badges, numbers Hungarian-localised. */
@@ -26,7 +29,7 @@ function renderValue(value: unknown): VNode | string {
 }
 
 export function DetailPanel(props: DetailPanelProps): VNode | null {
-  const { tab, entity, onClose, onJump } = props;
+  const { tab, entity, onClose, onJump, lookups } = props;
   if (!entity) {
     return (
       <aside class="db-detail">
@@ -53,6 +56,17 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
     ? (rec.drops as { name: string; qty: number; id: number }[])
     : [];
 
+  // Reverse-crafting index and monster-enriched drops (once lookups load).
+  const usedIn = lookups && tab !== 'monsters'
+    ? sortUsedIn(lookups.usedIn.get(Number(rec.id)) ?? [])
+    : [];
+  const enrichedDrops = lookups
+    ? droppedBy
+      .map((d) => ({ ...d, m: lookups.monstersById.get(d.monsterId) }))
+      .filter((d): d is typeof d & { m: Monster } => Boolean(d.m))
+      .sort((a, b) => a.m.level - b.m.level)
+    : null;
+
   return (
     <aside class="db-detail">
       <button type="button" class="close-detail" title="Bezárás" onClick={onClose}>×</button>
@@ -60,7 +74,7 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
       <div class="meta">
         {tab} · ID {String(rec.id)}
         {image && (
-          <img class="monster-thumb" src={monsterImageUrl(image)} alt="" />
+          <img class="detail-img" src={monsterImageUrl(image)} alt="" />
         )}
       </div>
 
@@ -104,11 +118,34 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
         </div>
       )}
 
+      {usedIn.length > 0 && (
+        <div>
+          <h3>Mire használható ({usedIn.length})</h3>
+          <ul>
+            {usedIn.map((u, i) => (
+              <li key={i}>
+                <span class="qty">{u.qty}× </span>
+                <a class="ref" onClick={() => onJump(u.ownerType, u.ownerId)}>{u.ownerName}</a>
+                <span class="qty"> · {OWNER_TYPE_LABEL[u.ownerType]}
+                  {u.ownerLevel != null ? ` · szint ${u.ownerLevel}` : ''}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {droppedBy.length > 0 && (
         <div>
           <h3>Dobják ({droppedBy.length} szörny)</h3>
           <ul>
-            {droppedBy.map((d, i) => (
+            {(enrichedDrops ?? []).map((d, i) => (
+              <li key={i}>
+                <img class="monster-thumb" src={monsterImageUrl(d.m.image)} alt="" />
+                <a class="ref" onClick={() => onJump('monsters', d.monsterId)}>{d.m.name}</a>
+                <span class="qty"> · szint {d.m.level} · ÉP {d.m.hp.toLocaleString('hu')} · {d.qty}× dobja</span>
+              </li>
+            ))}
+            {enrichedDrops == null && droppedBy.map((d, i) => (
               <li key={i}>
                 <a class="ref" onClick={() => onJump('monsters', d.monsterId)}>szörny #{d.monsterId}</a>
                 <span class="qty"> · {d.qty}× dobja</span>
