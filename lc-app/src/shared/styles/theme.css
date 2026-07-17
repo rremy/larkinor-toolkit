@@ -38,6 +38,8 @@
   --legend-active-bg: rgba(212, 162, 89, 0.32);
   --swatch-border: rgba(0, 0, 0, 0.5);
   --cell-match-glow: rgba(212, 162, 89, 0.6);
+  --cell-focus-glow: rgba(212, 162, 89, 0.85);
+  --cell-focus-glow-strong: rgba(212, 162, 89, 1);
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -753,6 +755,12 @@
 .lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
 .lc-db .map-view.filter-active td.cell.match { outline: 2px solid var(--accent); z-index: 2; box-shadow: 0 0 12px var(--cell-match-glow); }
 .lc-db .map-view.filter-active td.cell.match .poi.matched { transform: scale(1.35); box-shadow: 0 0 0 2px var(--accent); }
+/* Focused cell flash (deep link #map/<cell> or a shop location link) */
+.lc-db .map-view td.cell.focused { outline: 3px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 18px var(--cell-focus-glow); animation: lc-cellPulse 1.2s ease-out 3; z-index: 3; }
+@keyframes lc-cellPulse {
+  0%, 100% { box-shadow: 0 0 18px var(--cell-focus-glow); }
+  50% { box-shadow: 0 0 28px var(--cell-focus-glow-strong); }
+}
 
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.

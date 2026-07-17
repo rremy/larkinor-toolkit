@@ -52,10 +52,14 @@ describe('MapView', () => {
     expect(screen.getByText(/Thorgard/)).toBeTruthy();
   });
 
-  it('pre-selects the cell passed via initialCellId', async () => {
-    render(<MapView loader={makeLoader()} initialCellId="44" />);
+  it('selects and flashes the cell passed via targetCellId', async () => {
+    const { container } = render(<MapView loader={makeLoader()} targetCellId="44" />);
     // Cell 44's detail (a városközpont tile) shows without any click.
     await waitFor(() => expect(screen.getByText(/Szaiva/)).toBeTruthy());
+    // The target cell carries the focus-pulse class (applied post-commit).
+    await waitFor(() =>
+      expect(container.querySelector('td.cell.focused[data-id="44"]')).toBeTruthy(),
+    );
   });
 
   it('highlights matching cells when a POI filter is active', async () => {

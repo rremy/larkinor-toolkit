@@ -1,5 +1,5 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, MapCell } from '@/shared/data';
 import {
   DISTRICT_CLASS, DISTRICT_SHORT, POI_EMOJI, POI_LABEL,
@@ -13,9 +13,15 @@ const HUB_ID = '44';
 
 interface MapViewProps {
   loader: DataLoader;
-  /** Cell id to pre-select on mount (set when opened via a shop location link). */
-  initialCellId?: string | null;
+  /**
+   * Cell id to select, scroll to and flash — set from the `#map/<cell>` route
+   * (deep link or a shop's location link). Re-focuses whenever it changes.
+   */
+  targetCellId?: string | null;
 }
+
+/** How long the target cell keeps its focus-pulse highlight (ms). */
+const FOCUS_MS = 3800;
 
 /** Does a cell contain a POI matching the active `data-poi` filter? */
 function cellMatchesFilter(cell: MapCell, poi: string): boolean {
@@ -28,11 +34,13 @@ function cellMatchesFilter(cell: MapCell, poi: string): boolean {
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
-  const { loader, initialCellId = null } = props;
+  const { loader, targetCellId = null } = props;
   const [cells, setCells] = useState<MapCell[] | null>(null);
   const [owners, setOwners] = useState<ShopOwners>({});
-  const [selectedId, setSelectedId] = useState<string | null>(initialCellId);
+  const [selectedId, setSelectedId] = useState<string | null>(targetCellId);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const gridRef = useRef<HTMLTableElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +52,20 @@ export function MapView(props: MapViewProps): VNode {
       });
     return () => { cancelled = true; };
   }, [loader]);
+
+  // Focus the routed target cell: select it, scroll it into view and flash the
+  // pulse highlight for a few seconds (ported from the legacy `focusCell`).
+  useEffect(() => {
+    if (!targetCellId || !cells) return;
+    setSelectedId(targetCellId);
+    setFocusedId(targetCellId);
+    const raf = requestAnimationFrame(() => {
+      const td = gridRef.current?.querySelector(`td.cell[data-id="${targetCellId}"]`);
+      td?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+    });
+    const timer = setTimeout(() => setFocusedId(null), FOCUS_MS);
+    return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
+  }, [targetCellId, cells]);
 
   if (!cells) {
     return (
@@ -71,7 +93,7 @@ export function MapView(props: MapViewProps): VNode {
       </div>
       <div class="map-layout">
         <div class="map-wrap">
-          <table class="map-grid">
+          <table class="map-grid" ref={gridRef}>
             <thead>
               <tr>
                 <th />
@@ -89,6 +111,7 @@ export function MapView(props: MapViewProps): VNode {
                       return (
                         <td
                           key={c}
+                          data-id={id}
                           class="cell unexplored"
                           onClick={() => setSelectedId(id)}
                         />
@@ -99,11 +122,13 @@ export function MapView(props: MapViewProps): VNode {
                     const classes = ['cell', districtClass];
                     if (id === HUB_ID) classes.push('hub');
                     if (id === selectedId) classes.push('selected');
+                    if (id === focusedId) classes.push('focused');
                     if (matches) classes.push('match');
                     const blockers = cell.blockers ?? {};
                     return (
                       <td
                         key={c}
+                        data-id={id}
                         class={classes.filter(Boolean).join(' ')}
                         onClick={() => setSelectedId(id)}
                       >

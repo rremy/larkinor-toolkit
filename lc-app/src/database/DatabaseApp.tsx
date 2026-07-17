@@ -27,57 +27,62 @@ const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép' };
 
 interface Route {
   tab: Tab;
+  /** Selected entity id on explorer tabs (null on the map tab). */
   id: number | null;
+  /** Selected/target cell id on the map tab (null on explorer tabs). */
+  cell: string | null;
 }
 
 function isTab(value: string): value is Tab {
   return (TABS as string[]).includes(value);
 }
 
-const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null };
+const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null, cell: null };
+
+/** Build a route from a tab + raw `#tab/param` segment (param is per-tab). */
+function routeFor(tab: Tab, param: string | null): Route {
+  if (tab === 'map') return { tab, id: null, cell: param };
+  return { tab, id: param != null ? Number(param) : null, cell: null };
+}
 
 function parseHash(): Route {
   const m = (location.hash || '').match(/^#([a-z]+)(?:\/(-?\d+))?$/);
   if (!m || !isTab(m[1])) return DEFAULT_ROUTE;
-  const tab = m[1] as Tab;
-  return { tab, id: tab !== 'map' && m[2] != null ? Number(m[2]) : null };
+  return routeFor(m[1] as Tab, m[2] ?? null);
 }
 
-function hashFor(tab: Tab, id: number | null): string {
-  return id != null ? `#${tab}/${id}` : `#${tab}`;
+function hashFor(tab: Tab, param: string | null): string {
+  return param != null ? `#${tab}/${param}` : `#${tab}`;
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
   const { loader, routing = 'hash' } = props;
   const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
-  // Cell to pre-select when the map opens via a shop's "…a térképen" link.
-  const [mapCellId, setMapCellId] = useState<string | null>(null);
 
   useEffect(() => {
     if (routing !== 'hash') return;
     const onHashChange = () => setRoute(parseHash());
     window.addEventListener('hashchange', onHashChange);
     // Ensure the address bar reflects the initial (possibly defaulted) route.
-    if (!location.hash) navigate(route.tab, route.id);
+    if (!location.hash) navigate(route.tab, null);
     return () => window.removeEventListener('hashchange', onHashChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routing]);
 
-  function navigate(tab: Tab, id: number | null) {
-    if (routing !== 'hash') { setRoute({ tab, id }); return; }
-    const next = hashFor(tab, id);
+  function navigate(tab: Tab, param: string | null) {
+    if (routing !== 'hash') { setRoute(routeFor(tab, param)); return; }
+    const next = hashFor(tab, param);
     if (location.hash !== next) location.hash = next;
-    else setRoute({ tab, id });
+    else setRoute(routeFor(tab, param));
   }
 
   function onSelect(id: number | null) {
-    navigate(route.tab, id);
+    navigate(route.tab, id != null ? String(id) : null);
   }
 
-  /** Open the map with a specific cell pre-selected (shop location links). */
+  /** Open the map with a specific cell selected (shop location links). */
   function showCell(cellId: string) {
-    setMapCellId(cellId);
-    navigate('map', null);
+    navigate('map', cellId);
   }
 
   /**
@@ -87,13 +92,13 @@ export function DatabaseApp(props: DatabaseAppProps) {
    * `jumpToEntry`). The loader caches responses, so repeat lookups are cheap.
    */
   async function onJump(tab: EntityTab, id: number) {
-    if (tab === 'monsters') { navigate('monsters', id); return; }
+    if (tab === 'monsters') { navigate('monsters', String(id)); return; }
     const [weapons, armors, items] = await Promise.all([
       loader.loadWeapons(), loader.loadArmors(), loader.loadItems(),
     ]);
-    if (weapons.some((w) => w.id === id)) navigate('weapons', id);
-    else if (armors.some((a) => a.id === id)) navigate('armors', id);
-    else if (items.some((it) => it.id === id)) navigate('items', id);
+    if (weapons.some((w) => w.id === id)) navigate('weapons', String(id));
+    else if (armors.some((a) => a.id === id)) navigate('armors', String(id));
+    else if (items.some((it) => it.id === id)) navigate('items', String(id));
   }
 
   return (
@@ -105,7 +110,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
             <div
               key={t}
               class={`tab${t === route.tab ? ' active' : ''}`}
-              onClick={() => { setMapCellId(null); navigate(t, null); }}
+              onClick={() => navigate(t, null)}
             >
               {TAB_LABELS[t]}
             </div>
@@ -113,7 +118,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         </div>
       </header>
       {route.tab === 'map' ? (
-        <MapView loader={loader} initialCellId={mapCellId} />
+        <MapView loader={loader} targetCellId={route.cell} />
       ) : (
         <ExplorerView
           loader={loader}
