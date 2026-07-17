@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import weapons from '../../../../lc-database/db/weapons.json';
+import weapons from '../../../static/db/weapons.json';
 import type { Weapon } from '@/shared/data/types';
 
 describe('data types', () => {
