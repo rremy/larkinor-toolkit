@@ -168,8 +168,8 @@ export function MapView(props: MapViewProps): VNode {
           </table>
         </div>
         <div class="map-side">
-          <Legend activeFilter={activeFilter} onToggleFilter={toggleFilter} />
           <CellDetail cell={selectedCell} owners={selectedId != null ? owners[selectedId] : undefined} />
+          <Legend activeFilter={activeFilter} onToggleFilter={toggleFilter} />
         </div>
       </div>
     </div>
