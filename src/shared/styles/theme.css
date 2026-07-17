@@ -840,6 +840,10 @@
   .lc-db .table-wrap { height: calc(100vh - 210px); height: calc(100dvh - 210px); }
   .lc-db .db-view td, .lc-db .db-view th { padding: 8px 10px; }
   .lc-db aside.db-detail { position: fixed; inset: 0; width: 100%; height: 100%; border-left: 0; padding: 16px; z-index: 50; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* Inside the in-game overlay, the full-screen detail must sit ABOVE the
+     overlay's own close button (z-index 10000) so the ✕ on top closes the
+     detail first — not the whole DB viewer. */
+  .lc-db-overlay .lc-db aside.db-detail { z-index: 10001; }
   .lc-db .db-view.has-selection .table-wrap { display: none; }
   .lc-db aside.db-detail .close-detail { top: 14px; right: 14px; width: 36px; height: 36px; line-height: 32px; font-size: 22px; }
   .lc-db aside.db-detail h2 { font-size: 17px; padding-right: 44px; }
