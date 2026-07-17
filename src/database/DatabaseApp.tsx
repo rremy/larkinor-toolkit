@@ -17,6 +17,11 @@ export interface DatabaseAppProps {
    * on the game URL after closing.
    */
   routing?: 'hash' | 'memory';
+  /**
+   * Entity id to open on mount (weapon/armor/item) — resolved to its tab. Used
+   * when the overlay is opened from a monster's dropped-item link.
+   */
+  initialItemId?: number;
 }
 
 type Tab = EntityTab | 'map';
@@ -56,7 +61,7 @@ function hashFor(tab: Tab, param: string | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash' } = props;
+  const { loader, routing = 'hash', initialItemId } = props;
   const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
 
   useEffect(() => {
@@ -86,20 +91,37 @@ export function DatabaseApp(props: DatabaseAppProps) {
   }
 
   /**
-   * Resolve a cross-reference jump. Monster references navigate directly;
-   * entity references (recipe/drops) may point at a weapon, armor or item, so
-   * search all three loaded datasets for the id (mirrors the legacy
-   * `jumpToEntry`). The loader caches responses, so repeat lookups are cheap.
+   * Which explorer tab owns a given entity id? A weapon/armor/item id is unique
+   * to one dataset, so search all three (mirrors the legacy `jumpToEntry`). The
+   * loader caches responses, so repeat lookups are cheap.
    */
-  async function onJump(tab: EntityTab, id: number) {
-    if (tab === 'monsters') { navigate('monsters', String(id)); return; }
+  async function resolveEntityTab(id: number): Promise<EntityTab | null> {
     const [weapons, armors, items] = await Promise.all([
       loader.loadWeapons(), loader.loadArmors(), loader.loadItems(),
     ]);
-    if (weapons.some((w) => w.id === id)) navigate('weapons', String(id));
-    else if (armors.some((a) => a.id === id)) navigate('armors', String(id));
-    else if (items.some((it) => it.id === id)) navigate('items', String(id));
+    if (weapons.some((w) => w.id === id)) return 'weapons';
+    if (armors.some((a) => a.id === id)) return 'armors';
+    if (items.some((it) => it.id === id)) return 'items';
+    return null;
   }
+
+  /** Resolve a cross-reference jump. Monsters navigate directly; others resolve. */
+  async function onJump(tab: EntityTab, id: number) {
+    if (tab === 'monsters') { navigate('monsters', String(id)); return; }
+    const resolved = await resolveEntityTab(id);
+    if (resolved) navigate(resolved, String(id));
+  }
+
+  // Opened on a specific dropped item: resolve its tab and jump there.
+  useEffect(() => {
+    if (initialItemId == null) return;
+    let cancelled = false;
+    resolveEntityTab(initialItemId).then((tab) => {
+      if (!cancelled && tab) navigate(tab, String(initialItemId));
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialItemId]);
 
   return (
     <div class="lc-db">

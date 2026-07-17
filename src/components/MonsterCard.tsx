@@ -4,6 +4,8 @@ import type { Monster } from '@/shared/data/monsters';
 export interface MonsterCardProps {
   monster: Monster | null;
   onClose: () => void;
+  /** When set, drops with a real id become links that open the DB on that entity. */
+  onItemClick?: (id: number) => void;
 }
 
 const ASSET_BASE = 'https://l2.larkinor.hu';
@@ -19,7 +21,7 @@ export function monsterImageUrl(image: string): string {
   return `${ASSET_BASE}${image.replace(/^\/pic\//, '/')}`;
 }
 
-export function MonsterCard({ monster, onClose }: MonsterCardProps) {
+export function MonsterCard({ monster, onClose, onItemClick }: MonsterCardProps) {
   if (!monster) return null;
 
   const imgUrl = monsterImageUrl(monster.image);
@@ -62,7 +64,12 @@ export function MonsterCard({ monster, onClose }: MonsterCardProps) {
             <h3>Zsákmány</h3>
             <ul>
               {monster.drops.map((drop, i) => (
-                <li key={i}>{drop.qty}× {drop.name}</li>
+                <li key={i}>
+                  {drop.qty}×{' '}
+                  {onItemClick && drop.id > 0
+                    ? <button type="button" class="lc-mc-drop-link" onClick={() => onItemClick(drop.id)}>{drop.name}</button>
+                    : drop.name}
+                </li>
               ))}
             </ul>
           </div>

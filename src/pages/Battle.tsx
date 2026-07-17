@@ -5,6 +5,7 @@ import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { StatBar } from '@/components/StatBar';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 
 export interface BattleProps {
   state: BattleState;
@@ -13,6 +14,8 @@ export interface BattleProps {
 
 export function Battle({ state, db }: BattleProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const [dbOpen, setDbOpen] = useState(false);
+  const [dbItemId, setDbItemId] = useState<number | null>(null);
 
   const dbMonster = db?.getByName(state.monsterName) ?? null;
 
@@ -91,7 +94,13 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
         </div>
       )}
 
-      <MonsterCard monster={selectedMonster} onClose={() => setSelectedMonster(null)} />
+      <MonsterCard
+        monster={selectedMonster}
+        onClose={() => setSelectedMonster(null)}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
+      />
+
+      <DatabaseOverlay open={dbOpen} initialItemId={dbItemId ?? undefined} onClose={() => setDbOpen(false)} />
     </div>
   );
 }

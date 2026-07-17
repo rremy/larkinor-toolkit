@@ -71,4 +71,18 @@ describe('MonsterCard', () => {
     fireEvent.click(container.querySelector('.lc-drawer-backdrop')!);
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('renders drops as links that call onItemClick with the item id', () => {
+    const onItemClick = vi.fn();
+    render(<MonsterCard monster={MONSTER} onClose={vi.fn()} onItemClick={onItemClick} />);
+    fireEvent.click(screen.getByRole('button', { name: 'szúnyogszárny' }));
+    expect(onItemClick).toHaveBeenCalledWith(51);
+  });
+
+  it('keeps a currency drop (id 0) as plain text, not a link', () => {
+    const m: Monster = { ...MONSTER, drops: [{ qty: 2, name: 'ezüst', id: 0 }] };
+    render(<MonsterCard monster={m} onClose={vi.fn()} onItemClick={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'ezüst' })).toBeNull();
+    expect(screen.getByText(/ezüst/)).toBeTruthy();
+  });
 });

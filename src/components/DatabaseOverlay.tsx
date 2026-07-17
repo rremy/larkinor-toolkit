@@ -14,6 +14,8 @@ const DATA_BASE_URL = import.meta.env.DEV
 export interface DatabaseOverlayProps {
   open: boolean;
   onClose: () => void;
+  /** Entity id to open on (weapon/armor/item) — e.g. a monster's dropped item. */
+  initialItemId?: number;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface DatabaseOverlayProps {
  * explorer/map styles already scoped under `.lc-db` in theme.css apply here
  * without any extra wiring.
  */
-export function DatabaseOverlay({ open, onClose }: DatabaseOverlayProps) {
+export function DatabaseOverlay({ open, onClose, initialItemId }: DatabaseOverlayProps) {
   // The loader must not be rebuilt on every render, but it also must not be
   // created (and start GM_xmlhttpRequest calls) while the overlay is closed —
   // so the hook is called unconditionally and only used once open.
@@ -34,7 +36,7 @@ export function DatabaseOverlay({ open, onClose }: DatabaseOverlayProps) {
     <div class="lc-db-overlay">
       <button class="lc-db-overlay-close" aria-label="Bezárás" onClick={onClose}>✕</button>
       <div class="lc-db-overlay-body">
-        <DatabaseApp loader={loader} routing="memory" />
+        <DatabaseApp loader={loader} routing="memory" initialItemId={initialItemId} />
       </div>
     </div>
   );
