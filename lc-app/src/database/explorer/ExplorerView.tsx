@@ -19,6 +19,8 @@ interface ExplorerViewProps {
   selectedId: number | null;
   onSelect: (id: number | null) => void;
   onJump: (tab: EntityTab, id: number) => void;
+  /** Open the map focused on a shop's cell (from the detail panel). */
+  onShowCell: (cellId: string) => void;
 }
 
 async function loadRows(loader: DataLoader, tab: EntityTab): Promise<Row[]> {
@@ -34,7 +36,7 @@ async function loadRows(loader: DataLoader, tab: EntityTab): Promise<Row[]> {
 }
 
 export function ExplorerView(props: ExplorerViewProps): VNode {
-  const { loader, tab, selectedId, onSelect, onJump } = props;
+  const { loader, tab, selectedId, onSelect, onJump, onShowCell } = props;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterState, setFilterState] = useState<FilterState>({});
@@ -92,6 +94,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
           entity={selected as Entity | null}
           onClose={() => onSelect(null)}
           onJump={onJump}
+          onShowCell={onShowCell}
           lookups={lookups ?? undefined}
         />
       </div>

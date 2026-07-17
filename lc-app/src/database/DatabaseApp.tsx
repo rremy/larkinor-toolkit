@@ -50,6 +50,8 @@ function hashFor(tab: Tab, id: number | null): string {
 export function DatabaseApp(props: DatabaseAppProps) {
   const { loader, routing = 'hash' } = props;
   const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
+  // Cell to pre-select when the map opens via a shop's "…a térképen" link.
+  const [mapCellId, setMapCellId] = useState<string | null>(null);
 
   useEffect(() => {
     if (routing !== 'hash') return;
@@ -70,6 +72,12 @@ export function DatabaseApp(props: DatabaseAppProps) {
 
   function onSelect(id: number | null) {
     navigate(route.tab, id);
+  }
+
+  /** Open the map with a specific cell pre-selected (shop location links). */
+  function showCell(cellId: string) {
+    setMapCellId(cellId);
+    navigate('map', null);
   }
 
   /**
@@ -97,7 +105,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
             <div
               key={t}
               class={`tab${t === route.tab ? ' active' : ''}`}
-              onClick={() => navigate(t, null)}
+              onClick={() => { setMapCellId(null); navigate(t, null); }}
             >
               {TAB_LABELS[t]}
             </div>
@@ -105,7 +113,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         </div>
       </header>
       {route.tab === 'map' ? (
-        <MapView loader={loader} />
+        <MapView loader={loader} initialCellId={mapCellId} />
       ) : (
         <ExplorerView
           loader={loader}
@@ -113,6 +121,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
           selectedId={route.id}
           onSelect={onSelect}
           onJump={onJump}
+          onShowCell={showCell}
         />
       )}
     </div>

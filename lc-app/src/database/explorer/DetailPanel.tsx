@@ -13,6 +13,8 @@ interface DetailPanelProps {
   entity: Entity | null;
   onClose: () => void;
   onJump: (tab: EntityTab, id: number) => void;
+  /** Open the map focused on a shop's cell. */
+  onShowCell: (cellId: string) => void;
   /** Cross-dataset lookups for the usedIn / droppedBy sections (once loaded). */
   lookups?: DetailLookups;
 }
@@ -29,7 +31,7 @@ function renderValue(value: unknown): VNode | string {
 }
 
 export function DetailPanel(props: DetailPanelProps): VNode | null {
-  const { tab, entity, onClose, onJump, lookups } = props;
+  const { tab, entity, onClose, onJump, onShowCell, lookups } = props;
   if (!entity) {
     return (
       <aside class="db-detail">
@@ -95,7 +97,8 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
           <ul>
             {shops.map((s, i) => (
               <li key={i}>
-                <span class="qty">{s.price.toLocaleString('hu')} ezüst</span> · {s.owner} · mező {s.cellId} a térképen
+                <span class="qty">{s.price.toLocaleString('hu')} ezüst</span> · {s.owner} · {' '}
+                <a class="ref" onClick={() => onShowCell(s.cellId)}>mező {s.cellId} a térképen</a>
               </li>
             ))}
           </ul>

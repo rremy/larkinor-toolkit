@@ -13,6 +13,8 @@ const HUB_ID = '44';
 
 interface MapViewProps {
   loader: DataLoader;
+  /** Cell id to pre-select on mount (set when opened via a shop location link). */
+  initialCellId?: string | null;
 }
 
 /** Does a cell contain a POI matching the active `data-poi` filter? */
@@ -26,10 +28,10 @@ function cellMatchesFilter(cell: MapCell, poi: string): boolean {
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
-  const { loader } = props;
+  const { loader, initialCellId = null } = props;
   const [cells, setCells] = useState<MapCell[] | null>(null);
   const [owners, setOwners] = useState<ShopOwners>({});
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialCellId);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   useEffect(() => {

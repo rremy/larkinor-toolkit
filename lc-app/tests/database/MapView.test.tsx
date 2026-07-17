@@ -52,6 +52,12 @@ describe('MapView', () => {
     expect(screen.getByText(/Thorgard/)).toBeTruthy();
   });
 
+  it('pre-selects the cell passed via initialCellId', async () => {
+    render(<MapView loader={makeLoader()} initialCellId="44" />);
+    // Cell 44's detail (a városközpont tile) shows without any click.
+    await waitFor(() => expect(screen.getByText(/Szaiva/)).toBeTruthy());
+  });
+
   it('highlights matching cells when a POI filter is active', async () => {
     const { container } = render(<MapView loader={makeLoader()} />);
     await screen.findByText('Negyedek');
