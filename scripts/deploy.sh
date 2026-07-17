@@ -2,7 +2,7 @@
 #
 # deploy.sh — Deploy the built userscript to the Larkinor server.
 #
-# Copies everything from lc-app/dist to the remote server via scp.
+# Copies everything from dist/ to the remote server via scp.
 # Connection details are read from a git-ignored .env at the repo root
 # (copy .env.example to .env and fill it in).
 
@@ -12,8 +12,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${REPO_ROOT}/.env"
-DIST_DIR="${REPO_ROOT}/lc-app/dist"
-STATIC_DIR="${REPO_ROOT}/lc-app/static"
+DIST_DIR="${REPO_ROOT}/dist"
+STATIC_DIR="${REPO_ROOT}/static"
 
 # --- Configuration (from .env) -----------------------------------------------
 if [[ ! -f "${ENV_FILE}" ]]; then

@@ -18,4 +18,4 @@ build:
 	npm run build
 
 deploy: build
-	bash ../scripts/deploy.sh
+	bash scripts/deploy.sh

@@ -16,7 +16,7 @@ cd "$(dirname "$0")"
 
 PORT="${PORT:-9912}"
 DIST="dist"
-MONSTERS_SRC="../lc-database/db/monsters.json"
+MONSTERS_SRC="static/db/monsters.json"
 
 # --- Detect a reachable LAN IP (falls back to localhost) ---------------------
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true)"
