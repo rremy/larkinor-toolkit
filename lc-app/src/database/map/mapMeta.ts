@@ -23,24 +23,17 @@ export const DISTRICT_SHORT: Record<string, string> = {
 export const POI_EMOJI: Record<string, string> = {
   'palota.gif': '🏰', 'vegyesbolt.gif': '🛒', 'erod.gif': '🛡️', 'fegyverbolt.gif': '⚔️',
   'ekszeresz.gif': '💎', 'templom.gif': '⛪', 'magustorony.gif': '🔮', 'kocsma.gif': '🍺',
-  'piac.gif': '🏪', 'kaszino.gif': '🎲', 'arena.gif': '⚔︎', 'kikoto.gif': '⚓', 'sajathaz.gif': '🏠',
+  'piac.gif': '🏪', 'kaszino.gif': '🎲', 'arena.gif': '⚔︎', 'kikoto.gif': '⚓',
 };
 
 export const POI_LABEL: Record<string, string> = {
   'palota.gif': 'palota', 'vegyesbolt.gif': 'vegyesbolt', 'erod.gif': 'erőd', 'fegyverbolt.gif': 'fegyverbolt',
   'ekszeresz.gif': 'ékszerész', 'templom.gif': 'templom', 'magustorony.gif': 'mágustorony', 'kocsma.gif': 'kocsma',
-  'piac.gif': 'piac', 'kaszino.gif': 'kaszinó', 'arena.gif': 'aréna', 'kikoto.gif': 'kikötő', 'sajathaz.gif': 'sajátház',
+  'piac.gif': 'piac', 'kaszino.gif': 'kaszinó', 'arena.gif': 'aréna', 'kikoto.gif': 'kikötő',
 };
 
 /** `data-poi` value used for clan-house markers (they have no icon file). */
 export const CLAN_POI = 'klanhaz';
-
-/**
- * Building icons intentionally hidden from the map (grid markers, cell detail
- * and legend). `sajathaz.gif` (the player's own house) is not a fixed point of
- * interest, so it's suppressed.
- */
-export const HIDDEN_POI = new Set<string>(['sajathaz.gif']);
 
 /**
  * District colour legend, in display order. `cls` is the swatch/cell CSS

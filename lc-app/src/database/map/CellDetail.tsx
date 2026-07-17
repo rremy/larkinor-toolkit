@@ -1,6 +1,6 @@
 import { h, type VNode } from 'preact';
 import type { MapCell } from '@/shared/data';
-import { parseId, POI_EMOJI, POI_LABEL, HIDDEN_POI } from './mapMeta';
+import { parseId, POI_EMOJI, POI_LABEL } from './mapMeta';
 
 const TERRAIN_BASE = 'https://l2.larkinor.hu';
 
@@ -27,7 +27,6 @@ export function CellDetail(props: CellDetailProps): VNode {
   }
 
   const { row, col } = parseId(cell.imageId);
-  const buildings = cell.buildings.filter((b) => !HIDDEN_POI.has(b.icon));
   const blockerEntries = Object.entries(cell.blockers ?? {});
 
   return (
@@ -37,11 +36,11 @@ export function CellDetail(props: CellDetailProps): VNode {
       </h3>
       <div class="meta">row {row} · col {col}</div>
       <img class="terrain" src={`${TERRAIN_BASE}${cell.imageSrc}`} alt="" loading="lazy" />
-      {buildings.length > 0 && (
+      {cell.buildings.length > 0 && (
         <div>
           <strong>Helyek:</strong>
           <ul class="list">
-            {buildings.map((b) => {
+            {cell.buildings.map((b) => {
               const owner = owners[b.icon];
               return (
                 <li key={b.icon + b.name}>

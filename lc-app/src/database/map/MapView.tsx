@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, MapCell } from '@/shared/data';
 import {
   DISTRICT_CLASS, DISTRICT_SHORT, POI_EMOJI, POI_LABEL,
-  CLAN_POI, HIDDEN_POI, buildShopOwners, type ShopOwners,
+  CLAN_POI, buildShopOwners, type ShopOwners,
 } from './mapMeta';
 import { CellDetail } from './CellDetail';
 import { Legend } from './Legend';
@@ -108,7 +108,7 @@ export function MapView(props: MapViewProps): VNode {
                         <div class="inner">
                           <div class="label">{DISTRICT_SHORT[cell.district] ?? cell.district}</div>
                           <div class="pois">
-                            {cell.buildings.filter((b) => !HIDDEN_POI.has(b.icon)).map((b) => (
+                            {cell.buildings.map((b) => (
                               <span
                                 key={b.icon + b.name}
                                 class={`poi${activeFilter === b.icon ? ' matched' : ''}`}

@@ -1305,10 +1305,6 @@
       "district": "harcos-negyed",
       "buildings": [
         {
-          "name": "saját házad",
-          "icon": "sajathaz.gif"
-        },
-        {
           "name": "fegyverbolt",
           "icon": "fegyverbolt.gif"
         },

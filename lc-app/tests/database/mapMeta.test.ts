@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseId, DISTRICT_SHORT, buildShopOwners,
-  DISTRICT_SWATCHES, POI_LEGEND, CLAN_POI, HIDDEN_POI,
+  DISTRICT_SWATCHES, POI_LEGEND, CLAN_POI, POI_EMOJI, POI_LABEL,
 } from '@/database/map/mapMeta';
 
 describe('parseId', () => {
@@ -39,8 +39,9 @@ describe('legend data', () => {
     expect(POI_LEGEND.some((p) => p.poi === 'fegyverbolt.gif')).toBe(true);
   });
 
-  it('hides the home (sajátház) POI from the map and legend', () => {
-    expect(HIDDEN_POI.has('sajathaz.gif')).toBe(true);
+  it('has no home (sajátház) POI anywhere', () => {
     expect(POI_LEGEND.some((p) => p.poi === 'sajathaz.gif')).toBe(false);
+    expect(POI_EMOJI['sajathaz.gif']).toBeUndefined();
+    expect(POI_LABEL['sajathaz.gif']).toBeUndefined();
   });
 });
