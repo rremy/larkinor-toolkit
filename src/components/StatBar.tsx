@@ -10,6 +10,19 @@ export interface StatBarProps {
   statusIcons?: StatusIcon[];
   /** When set, renders a gear button (opens the local config). Free-move only. */
   onConfig?: () => void;
+  /** When set, renders a database button (opens the DB overlay). Free-move only. */
+  onDatabase?: () => void;
+}
+
+/** Simple stacked-cylinder database glyph, tinted via currentColor. */
+function DbIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <ellipse cx="12" cy="5" rx="8" ry="3" />
+      <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+      <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+    </svg>
+  );
 }
 
 function Bar({ value, max, className }: { value: number; max: number; className: string }) {
@@ -24,7 +37,7 @@ function Bar({ value, max, className }: { value: number; max: number; className:
   );
 }
 
-export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons, onConfig }: StatBarProps) {
+export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons, onConfig, onDatabase }: StatBarProps) {
   return (
     <div class="lc-stat-bar lc-section">
       <div class="lc-stat-row">
@@ -37,7 +50,7 @@ export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons, onConfig }: S
         <Bar value={mp} max={mpMax} className="lc-stat-bar-fill--mp" />
         <span class="lc-stat-value">{mp} / {mpMax}</span>
       </div>
-      {(gold !== undefined || onConfig) && (
+      {(gold !== undefined || onConfig || onDatabase) && (
         <div class="lc-stat-row lc-stat-gold">
           {gold !== undefined && <span class="lc-stat-label">💰</span>}
           {gold !== undefined && <span class="lc-stat-value">{gold}</span>}
@@ -48,8 +61,15 @@ export function StatBar({ hp, hpMax, mp, mpMax, gold, statusIcons, onConfig }: S
               ))}
             </span>
           )}
-          {onConfig && (
-            <button class="lc-statbar-gear" aria-label="Beállítások" onClick={() => onConfig()}>⚙</button>
+          {(onDatabase || onConfig) && (
+            <span class="lc-statbar-btns">
+              {onDatabase && (
+                <button class="lc-statbar-btn lc-statbar-db" aria-label="Adatbázis" onClick={() => onDatabase()}><DbIcon /></button>
+              )}
+              {onConfig && (
+                <button class="lc-statbar-btn lc-statbar-gear" aria-label="Beállítások" onClick={() => onConfig()}>⚙</button>
+              )}
+            </span>
           )}
         </div>
       )}

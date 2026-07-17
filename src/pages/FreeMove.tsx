@@ -30,7 +30,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         {state.locationImageUrl && (
           <img class="lc-hero-img" src={state.locationImageUrl} alt={state.locationName} />
         )}
-        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} />
+        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => setDbOpen(true)} />
       </div>
 
       <NavPad directions={state.directions} attack={state.attack} cornerLeft={state.settingsButton} cornerRight={state.restButton}>
@@ -47,10 +47,6 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
           ))}
         </div>
       )}
-
-      <div class="lc-section">
-        <button class="lc-btn" onClick={() => setDbOpen(true)}>Adatbázis</button>
-      </div>
 
       <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
 

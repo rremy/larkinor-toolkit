@@ -211,8 +211,13 @@
 
 /* StatBar */
 .lc-stat-bar { display: flex; flex-direction: column; gap: 8px; }
-.lc-statbar-gear {
-  margin-left: auto;   /* float to the right end of the gold/status row */
+.lc-statbar-btns {
+  margin-left: auto;   /* float the button group to the right end of the row */
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.lc-statbar-btn {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -224,8 +229,11 @@
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
 }
-.lc-statbar-gear:active { color: var(--accent); border-color: var(--accent); }
+.lc-statbar-btn:active { color: var(--accent); border-color: var(--accent); }
+.lc-statbar-db svg { display: block; }
 
 /* Free-move hotkey icon row (enabled + available quick actions) */
 .lc-hotkeys { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
