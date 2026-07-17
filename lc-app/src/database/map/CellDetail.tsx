@@ -6,14 +6,17 @@ const TERRAIN_BASE = 'https://l2.larkinor.hu';
 
 interface CellDetailProps {
   cell: MapCell | null;
+  /** Building-icon → shop-owner name for this cell (e.g. `vegyesbolt.gif`). */
+  owners?: Record<string, string>;
 }
 
 /**
- * Detail panel for a selected map cell — district, buildings, clan houses
- * and blocked exits. Ported from `showCellDetail` (explorer.html:868-892).
+ * Detail panel for a selected map cell — district, buildings (with shop owner
+ * where known), clan houses and blocked exits. Ported from `showCellDetail`
+ * (explorer.html:868-892).
  */
 export function CellDetail(props: CellDetailProps): VNode {
-  const { cell } = props;
+  const { cell, owners = {} } = props;
 
   if (!cell) {
     return (
@@ -37,11 +40,15 @@ export function CellDetail(props: CellDetailProps): VNode {
         <div>
           <strong>Helyek:</strong>
           <ul class="list">
-            {cell.buildings.map((b) => (
-              <li key={b.icon + b.name}>
-                {POI_EMOJI[b.icon] ?? ''} {POI_LABEL[b.icon] ?? b.name ?? b.icon}
-              </li>
-            ))}
+            {cell.buildings.map((b) => {
+              const owner = owners[b.icon];
+              return (
+                <li key={b.icon + b.name}>
+                  {POI_EMOJI[b.icon] ?? ''} {POI_LABEL[b.icon] ?? b.name ?? b.icon}
+                  {owner ? <span class="qty"> ({owner})</span> : null}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

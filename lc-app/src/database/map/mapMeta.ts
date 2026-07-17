@@ -31,3 +31,70 @@ export const POI_LABEL: Record<string, string> = {
   'ekszeresz.gif': 'ékszerész', 'templom.gif': 'templom', 'magustorony.gif': 'mágustorony', 'kocsma.gif': 'kocsma',
   'piac.gif': 'piac', 'kaszino.gif': 'kaszinó', 'arena.gif': 'aréna', 'kikoto.gif': 'kikötő', 'sajathaz.gif': 'sajátház',
 };
+
+/** `data-poi` value used for clan-house markers (they have no icon file). */
+export const CLAN_POI = 'klanhaz';
+
+/**
+ * District colour legend, in display order. `cls` is the swatch/cell CSS
+ * modifier; `label` is the Hungarian district name shown beside the swatch.
+ * Mirrors the static "Districts" list in explorer.html:238-250.
+ */
+export const DISTRICT_SWATCHES: { cls: string; label: string }[] = [
+  { cls: 'varos', label: 'városközpont' },
+  { cls: 'magus', label: 'mágus-negyed' },
+  { cls: 'harcos', label: 'harcos-negyed' },
+  { cls: 'kezdo', label: 'kezdő-negyed' },
+  { cls: 'sotet', label: 'sötét-negyed' },
+  { cls: 'erdo', label: 'erdő' },
+  { cls: 'mocsar', label: 'mocsár' },
+  { cls: 'temeto', label: 'temető' },
+  { cls: 'szikla', label: 'sziklabarlangok' },
+  { cls: 'demon', label: 'démonsziget' },
+  { cls: 'sea', label: 'tenger' },
+  { cls: 'hub', label: 'cell 44' },
+];
+
+/**
+ * Filterable POI legend, in display order. `poi` is the `data-poi` key matched
+ * against cell building icons (or {@link CLAN_POI} for clan houses); `emoji`
+ * and `label` render the row. Mirrors explorer.html:254-268.
+ */
+export const POI_LEGEND: { poi: string; emoji: string; label: string; clan?: boolean }[] = [
+  { poi: 'palota.gif', emoji: '🏰', label: 'palota' },
+  { poi: 'vegyesbolt.gif', emoji: '🛒', label: 'vegyesbolt' },
+  { poi: 'erod.gif', emoji: '🛡️', label: 'erőd' },
+  { poi: 'fegyverbolt.gif', emoji: '⚔️', label: 'fegyverbolt' },
+  { poi: 'ekszeresz.gif', emoji: '💎', label: 'ékszerész' },
+  { poi: 'templom.gif', emoji: '⛪', label: 'templom' },
+  { poi: 'magustorony.gif', emoji: '🔮', label: 'mágustorony' },
+  { poi: 'kocsma.gif', emoji: '🍺', label: 'kocsma' },
+  { poi: 'piac.gif', emoji: '🏪', label: 'piac' },
+  { poi: 'kaszino.gif', emoji: '🎲', label: 'kaszinó' },
+  { poi: 'arena.gif', emoji: '⚔︎', label: 'aréna' },
+  { poi: 'kikoto.gif', emoji: '⚓', label: 'kikötő' },
+  { poi: 'sajathaz.gif', emoji: '🏠', label: 'sajátház' },
+  { poi: CLAN_POI, emoji: 'C', label: 'klánház', clan: true },
+];
+
+/** Per-cell shop-owner lookup: `{ [cellId]: { [buildingIcon]: ownerName } }`. */
+export type ShopOwners = Record<string, Record<string, string>>;
+
+/**
+ * Build the shop-owner lookup consumed by the cell detail panel. Item shops
+ * map to the `vegyesbolt.gif` building, weapon shops to `fegyverbolt.gif` —
+ * reproducing the `shopOwners` table the legacy explorer inlined
+ * (explorer.html:3174).
+ */
+export function buildShopOwners(
+  itemShops: { cellId: string; owner: string }[],
+  weaponShops: { cellId: string; owner: string }[],
+): ShopOwners {
+  const owners: ShopOwners = {};
+  const add = (cellId: string, icon: string, owner: string) => {
+    (owners[cellId] ??= {})[icon] = owner;
+  };
+  for (const s of itemShops) add(s.cellId, 'vegyesbolt.gif', s.owner);
+  for (const s of weaponShops) add(s.cellId, 'fegyverbolt.gif', s.owner);
+  return owners;
+}

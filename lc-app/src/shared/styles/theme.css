@@ -35,6 +35,9 @@
   --blocker-border: #1c3654;
   --blocker-text: rgba(255, 255, 255, 0.85);
   --cell-detail-bg: rgba(0, 0, 0, 0.25);
+  --legend-active-bg: rgba(212, 162, 89, 0.32);
+  --swatch-border: rgba(0, 0, 0, 0.5);
+  --cell-match-glow: rgba(212, 162, 89, 0.6);
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -721,7 +724,34 @@
 .lc-db .map-view .cell-detail .meta { color: var(--muted); margin-bottom: 8px; font-size: 11px; }
 .lc-db .map-view .cell-detail ul.list { margin: 4px 0 8px; padding-left: 18px; }
 .lc-db .map-view .cell-detail ul.list li { padding: 1px 0; display: list-item; }
+.lc-db .map-view .cell-detail ul.list li .qty { color: var(--muted); }
 .lc-db .map-view .cell-detail img.terrain { display: block; margin: 8px auto; max-width: 100%; border: 1px solid var(--border); border-radius: 2px; }
+/* Legend (district colour key + filterable POI list) */
+.lc-db .map-view aside.legend { background: var(--panel); padding: 14px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+.lc-db .map-view aside.legend h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin: 14px 0 8px; }
+.lc-db .map-view aside.legend h2:first-child { margin-top: 0; }
+.lc-db .map-view aside.legend ul { margin: 0 0 10px; padding-left: 0; list-style: none; }
+.lc-db .map-view aside.legend li { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: var(--text); font-size: 12px; }
+.lc-db .map-view aside.legend li.filterable { cursor: pointer; padding: 4px 6px; border-radius: 3px; margin-left: -6px; }
+.lc-db .map-view aside.legend li.filterable:hover { background: var(--accent-dim); }
+.lc-db .map-view aside.legend li.filterable.active { background: var(--legend-active-bg); outline: 1px solid var(--accent); }
+.lc-db .map-view .swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid var(--swatch-border); flex-shrink: 0; }
+.lc-db .map-view .swatch.varos { background: var(--varos); }
+.lc-db .map-view .swatch.magus { background: var(--magus); }
+.lc-db .map-view .swatch.harcos { background: var(--harcos); }
+.lc-db .map-view .swatch.kezdo { background: var(--kezdo); }
+.lc-db .map-view .swatch.sotet { background: var(--sotet); }
+.lc-db .map-view .swatch.szikla { background: var(--szikla); }
+.lc-db .map-view .swatch.erdo { background: var(--erdo); }
+.lc-db .map-view .swatch.mocsar { background: var(--mocsar); }
+.lc-db .map-view .swatch.temeto { background: var(--temeto); }
+.lc-db .map-view .swatch.demon { background: var(--demon); }
+.lc-db .map-view .swatch.sea { background: var(--sea); }
+.lc-db .map-view .swatch.hub { background: var(--varos); box-shadow: 0 0 0 2px var(--accent) inset; }
+/* POI filter highlight */
+.lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
+.lc-db .map-view.filter-active td.cell.match { outline: 2px solid var(--accent); z-index: 2; box-shadow: 0 0 12px var(--cell-match-glow); }
+.lc-db .map-view.filter-active td.cell.match .poi.matched { transform: scale(1.35); box-shadow: 0 0 0 2px var(--accent); }
 
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.
