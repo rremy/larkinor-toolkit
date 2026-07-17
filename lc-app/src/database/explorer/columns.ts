@@ -55,3 +55,14 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
     { key: 'location', label: 'Előfordulás' },
   ],
 };
+
+/**
+ * Initial sort per tab, mirroring the legacy `STATE.sort`
+ * (explorer.html:286): level ascending everywhere except items (price asc).
+ */
+export const DEFAULT_SORT: Record<EntityTab, { key: string; asc: boolean }> = {
+  weapons: { key: 'level', asc: true },
+  armors: { key: 'level', asc: true },
+  items: { key: 'price', asc: true },
+  monsters: { key: 'level', asc: true },
+};

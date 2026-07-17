@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import type { EntityTab } from './columns';
-import { COLS } from './columns';
+import { COLS, DEFAULT_SORT } from './columns';
 import { FILTERS, applyFilters, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
@@ -64,10 +64,13 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
       <div class="layout">
         <div class="table-wrap">
           <DataTable
+            key={tab}
             columns={COLS[tab]}
             rows={visible}
             selected={selected ?? undefined}
             onSelect={(row) => onSelect(row.id as number)}
+            defaultSortKey={DEFAULT_SORT[tab].key}
+            defaultSortAsc={DEFAULT_SORT[tab].asc}
           />
         </div>
         <DetailPanel

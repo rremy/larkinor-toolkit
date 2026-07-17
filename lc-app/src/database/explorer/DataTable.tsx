@@ -8,6 +8,10 @@ interface DataTableProps<T> {
   rows: T[];
   onSelect: (row: T) => void;
   selected?: T;
+  /** Initial sort column; falls back to the first non-numeric column. */
+  defaultSortKey?: string;
+  /** Initial sort direction (default ascending). */
+  defaultSortAsc?: boolean;
 }
 
 const ROW_CAP = 2000;
@@ -27,10 +31,12 @@ function formatCell(value: unknown, col: ColumnDef): VNode | string {
 export function DataTable<T extends Record<string, unknown>>(
   props: DataTableProps<T>,
 ): VNode {
-  const { columns, rows, onSelect, selected } = props;
+  const { columns, rows, onSelect, selected, defaultSortKey, defaultSortAsc } = props;
   const firstSortable = columns.find((c) => !c.num) ?? columns[0];
-  const [sortKey, setSortKey] = useState<string>(firstSortable ? firstSortable.key : '');
-  const [sortAsc, setSortAsc] = useState(true);
+  const [sortKey, setSortKey] = useState<string>(
+    defaultSortKey ?? (firstSortable ? firstSortable.key : ''),
+  );
+  const [sortAsc, setSortAsc] = useState(defaultSortAsc ?? true);
 
   const sortCol = columns.find((c) => c.key === sortKey);
   const sorted = sortKey ? sortRows(rows, sortKey, sortAsc, !!sortCol?.num) : rows;

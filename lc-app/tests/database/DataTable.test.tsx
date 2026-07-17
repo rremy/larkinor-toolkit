@@ -24,4 +24,12 @@ describe('DataTable', () => {
     fireEvent.click(screen.getByText('Kard'));
     expect(onSelect).toHaveBeenCalledWith(rows[0]);
   });
+
+  it('honours defaultSortKey (level asc) on initial render', () => {
+    render(
+      <DataTable columns={cols} rows={rows} onSelect={() => {}} defaultSortKey="level" defaultSortAsc />,
+    );
+    const cells = screen.getAllByRole('row').slice(1).map((r) => r.textContent);
+    expect(cells[0]).toContain('Balta'); // level 2 sorts before level 5 without any click
+  });
 });
