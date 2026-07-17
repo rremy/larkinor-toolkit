@@ -36,6 +36,13 @@ export const POI_LABEL: Record<string, string> = {
 export const CLAN_POI = 'klanhaz';
 
 /**
+ * Building icons intentionally hidden from the map (grid markers, cell detail
+ * and legend). `sajathaz.gif` (the player's own house) is not a fixed point of
+ * interest, so it's suppressed.
+ */
+export const HIDDEN_POI = new Set<string>(['sajathaz.gif']);
+
+/**
  * District colour legend, in display order. `cls` is the swatch/cell CSS
  * modifier; `label` is the Hungarian district name shown beside the swatch.
  * Mirrors the static "Districts" list in explorer.html:238-250.
@@ -73,7 +80,6 @@ export const POI_LEGEND: { poi: string; emoji: string; label: string; clan?: boo
   { poi: 'kaszino.gif', emoji: '🎲', label: 'kaszinó' },
   { poi: 'arena.gif', emoji: '⚔︎', label: 'aréna' },
   { poi: 'kikoto.gif', emoji: '⚓', label: 'kikötő' },
-  { poi: 'sajathaz.gif', emoji: '🏠', label: 'sajátház' },
   { poi: CLAN_POI, emoji: 'C', label: 'klánház', clan: true },
 ];
 
