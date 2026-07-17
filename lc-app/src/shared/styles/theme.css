@@ -801,3 +801,62 @@
 .lc-db-overlay-body {
   min-height: 100%;
 }
+
+/* ================================================================
+   Responsive — mobile layout for the DB explorer + map.
+   Ported from lc-database/explorer.html (@media 768px / 400px), scoped
+   under .lc-db so it applies to both the standalone page and the in-game
+   overlay. (legacy `table.grid` → this build's `table.map-grid`.)
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Header, tabs and filters stack; tabs scroll horizontally. */
+  .lc-db header.top { padding: 8px 10px; gap: 6px; }
+  .lc-db header.top h1 { width: 100%; font-size: 15px; margin-bottom: 2px; }
+  .lc-db .tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 2px; }
+  .lc-db .tab { padding: 8px 14px; font-size: 13px; flex-shrink: 0; }
+  .lc-db .counts { padding: 6px 10px; font-size: 11px; }
+
+  .lc-db .filters { padding: 8px 10px; gap: 6px; }
+  .lc-db .field { flex: 1 1 auto; min-width: 0; }
+  .lc-db .field input, .lc-db .field select { width: 100%; min-width: 0; padding: 7px 8px; font-size: 14px; }
+  .lc-db .field.search { flex-basis: 100%; }
+  .lc-db .field.search input { width: 100%; }
+  .lc-db .field.range { flex-wrap: wrap; align-items: stretch; }
+  .lc-db .field.range label { flex-basis: 100%; }
+  .lc-db .field.range input { flex: 1 1 0; width: auto; }
+  .lc-db .filters .clear { width: 100%; padding: 8px 12px; font-size: 13px; }
+
+  /* Explorer: stack — table gets its own scroll area, detail covers as a
+     full-screen overlay (matches the legacy mobile behaviour). */
+  .lc-db .db-view .layout { display: block; flex: none; }
+  .lc-db .table-wrap { height: calc(100vh - 210px); height: calc(100dvh - 210px); }
+  .lc-db .db-view td, .lc-db .db-view th { padding: 8px 10px; }
+  .lc-db aside.db-detail { position: fixed; inset: 0; width: 100%; height: 100%; border-left: 0; padding: 16px; z-index: 50; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .lc-db .db-view.has-selection .table-wrap { display: none; }
+  .lc-db aside.db-detail .close-detail { top: 14px; right: 14px; width: 36px; height: 36px; line-height: 32px; font-size: 22px; }
+  .lc-db aside.db-detail h2 { font-size: 17px; padding-right: 44px; }
+  .lc-db aside.db-detail .stats { grid-template-columns: 110px 1fr; }
+
+  /* Map: single column (side panel below the grid), smaller cells. */
+  .lc-db .map-view { padding: 12px; }
+  .lc-db .map-view .map-layout { grid-template-columns: 1fr; gap: 14px; }
+  .lc-db .map-view .map-wrap { padding: 8px; }
+  .lc-db .map-view td.cell { width: 40px; height: 50px; }
+  .lc-db .map-view table.map-grid { border-spacing: 1px; }
+  .lc-db .map-view table.map-grid th { min-width: 40px; font-size: 9px; padding-bottom: 2px; }
+  .lc-db .map-view table.map-grid th.rh { min-width: 18px; padding-right: 3px; font-size: 9px; }
+  .lc-db .map-view td.cell .inner { padding: 4px 2px 2px; }
+  .lc-db .map-view .label { font-size: 8px; line-height: 1; }
+  .lc-db .map-view .row-id { font-size: 7px; }
+  .lc-db .map-view .poi { width: 14px; height: 14px; font-size: 10px; }
+  .lc-db .map-view aside.legend h2 { font-size: 12px; margin: 10px 0 6px; }
+  .lc-db .map-view aside.legend li { font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .lc-db .map-view td.cell { width: 32px; height: 40px; }
+  .lc-db .map-view table.map-grid th { min-width: 32px; }
+  .lc-db .map-view .label, .lc-db .map-view .row-id { display: none; }
+  .lc-db .map-view td.cell .inner { padding: 2px; justify-content: center; }
+  .lc-db .map-view .poi { width: 12px; height: 12px; font-size: 9px; }
+}
