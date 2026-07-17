@@ -5,7 +5,7 @@ import { DetailPanel } from '@/database/explorer/DetailPanel';
 import type { Weapon } from '@/shared/data';
 
 const weapon = {
-  id: 4, name: 'bot', weight: 2, price: 6, special: 'Nincs', magical: false,
+  id: 4, name: 'bot', weight: 2, price: 6, marketPrice: null, special: 'Nincs', magical: false,
   craftableAt: 'Erőd', minLevel: 1, recipe: [], droppedBy: [], type: 'Ütő/Zúzó',
   maxDamage: 6, spread: 5, avgDamage: 3.5, vampiric: false, level: 1, availability: [],
   shops: [{ cellId: '44', owner: 'Thorgard', price: 6 }],

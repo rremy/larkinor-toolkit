@@ -20,6 +20,7 @@ export interface Weapon {
   name: string;
   weight: number;
   price: number;
+  marketPrice: number | null;
   special: string;
   magical: boolean;
   craftableAt: string;
@@ -41,6 +42,7 @@ export interface Armor {
   name: string;
   weight: number;
   price: number;
+  marketPrice: number | null;
   special: string;
   magical: boolean;
   craftableAt: string;
@@ -58,6 +60,7 @@ export interface Item {
   name: string;
   weight: number;
   price: number;
+  marketPrice: number | null;
   special: string;
   magical: boolean;
   craftableAt: string;

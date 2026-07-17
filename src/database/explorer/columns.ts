@@ -20,6 +20,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
     { key: 'vampiric', label: 'Vámp.', bool: true, cls: 'center' },
     { key: 'weight', label: 'Súly', num: true, cls: 'right' },
     { key: 'price', label: 'Ár', num: true, cls: 'right' },
+    { key: 'marketPrice', label: 'Piaci ár', num: true, cls: 'right' },
   ],
   armors: [
     { key: 'id', label: 'ID', num: true, cls: 'right dim' },
@@ -30,6 +31,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
     { key: 'magical', label: 'Mág.', bool: true, cls: 'center' },
     { key: 'weight', label: 'Súly', num: true, cls: 'right' },
     { key: 'price', label: 'Ár', num: true, cls: 'right' },
+    { key: 'marketPrice', label: 'Piaci ár', num: true, cls: 'right' },
     { key: 'craftableAt', label: 'Készíthető' },
   ],
   items: [
@@ -40,6 +42,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
     { key: 'magical', label: 'Mág.', bool: true, cls: 'center' },
     { key: 'weight', label: 'Súly', num: true, cls: 'right' },
     { key: 'price', label: 'Ár', num: true, cls: 'right' },
+    { key: 'marketPrice', label: 'Piaci ár', num: true, cls: 'right' },
     { key: 'craftableAt', label: 'Készíthető' },
     { key: 'special', label: 'Speciális' },
   ],

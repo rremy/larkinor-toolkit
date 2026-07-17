@@ -12,8 +12,18 @@ export interface DataLoader {
   loadWeaponShops(): Promise<ShopData>;
 }
 
+/**
+ * Build-time data version, injected by Vite (`__DATA_VERSION__`). Appended as a
+ * `?v=` query so a new deploy busts both the browser HTTP cache and the app's
+ * own GM/localStorage cache. Empty under tests / dev-without-define, in which
+ * case URLs stay unversioned.
+ */
+declare const __DATA_VERSION__: string | undefined;
+const DATA_VERSION = typeof __DATA_VERSION__ === 'string' ? __DATA_VERSION__ : '';
+
 export function createDataLoader(source: DataSource, baseUrl: string): DataLoader {
-  const url = (file: string) => `${baseUrl}/${file}`;
+  const url = (file: string) =>
+    DATA_VERSION ? `${baseUrl}/${file}?v=${DATA_VERSION}` : `${baseUrl}/${file}`;
   return {
     loadWeapons: () => source.fetchJson<Weapon[]>(url('weapons.json')),
     loadArmors: () => source.fetchJson<Armor[]>(url('armors.json')),

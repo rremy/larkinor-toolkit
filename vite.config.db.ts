@@ -16,6 +16,9 @@ import path from 'node:path';
 // scripts/deploy.sh (static/ -> <host>/larkinor/static/), so copying it into
 // dist/ here would just be dead weight.
 export default defineConfig(({ command }) => ({
+  // Build-time data version for cache-busting the DB JSON (see loader.ts).
+  // A fresh value each build/serve means a deploy invalidates stale caches.
+  define: { __DATA_VERSION__: JSON.stringify(String(Date.now())) },
   root: path.resolve(__dirname, 'src/database'),
   base: './',
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },

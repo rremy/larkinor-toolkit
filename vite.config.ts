@@ -34,7 +34,12 @@ function staticAssets(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Build-time data version for cache-busting the DB JSON (see loader.ts).
+  // Omitted under `test` so the loader's exact-URL unit test stays unversioned.
+  define: mode === 'test'
+    ? {}
+    : { __DATA_VERSION__: JSON.stringify(String(Date.now())) },
   resolve: {
     alias: { '@': '/src' },
   },
@@ -68,4 +73,4 @@ export default defineConfig({
     setupFiles: ['tests/setup.ts'],
     globals: true,
   },
-});
+}));

@@ -4,12 +4,12 @@ import type { Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 
 const w = (over: Partial<Weapon>): Weapon => ({
-  id: 0, name: '', weight: 0, price: 0, special: '', magical: false, craftableAt: '',
+  id: 0, name: '', weight: 0, price: 0, marketPrice: null, special: '', magical: false, craftableAt: '',
   minLevel: null, recipe: [], droppedBy: [], type: '', maxDamage: 0, spread: 0,
   avgDamage: 0, vampiric: false, level: 1, availability: [], shops: [], ...over,
 });
 const i = (over: Partial<Item>): Item => ({
-  id: 0, name: '', weight: 0, price: 0, special: '', magical: false, craftableAt: '',
+  id: 0, name: '', weight: 0, price: 0, marketPrice: null, special: '', magical: false, craftableAt: '',
   minLevel: null, recipe: [], droppedBy: [], defense: null, shops: [], ...over,
 });
 const m = (over: Partial<Monster>): Monster => ({

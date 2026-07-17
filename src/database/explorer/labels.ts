@@ -20,17 +20,17 @@ export const DETAIL_FIELDS: Record<EntityTab, [string, string][]> = {
   weapons: [
     ['level', 'Szint'], ['type', 'Típus'], ['maxDamage', 'Max sebzés'],
     ['spread', 'Szórás'], ['avgDamage', 'Átlagsebzés'], ['magical', 'Mágikus'],
-    ['vampiric', 'Vámpirizál'], ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'],
+    ['vampiric', 'Vámpirizál'], ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'], ['marketPrice', 'Piaci ár (ezüst)'],
     ['craftableAt', 'Készíthető'], ['special', 'Speciális'],
   ],
   armors: [
     ['level', 'Szint'], ['type', 'Típus'], ['defense', 'Védelem'],
-    ['magical', 'Mágikus'], ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'],
+    ['magical', 'Mágikus'], ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'], ['marketPrice', 'Piaci ár (ezüst)'],
     ['craftableAt', 'Készíthető'], ['special', 'Speciális'],
   ],
   items: [
     ['minLevel', 'Min. szint'], ['defense', 'Védelem'], ['magical', 'Mágikus'],
-    ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'], ['craftableAt', 'Készíthető'],
+    ['weight', 'Súly (kg)'], ['price', 'Ár (ezüst)'], ['marketPrice', 'Piaci ár (ezüst)'], ['craftableAt', 'Készíthető'],
     ['special', 'Speciális'],
   ],
   monsters: [
