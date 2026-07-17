@@ -1,0 +1,1170 @@
+{
+  "shops": [
+    {
+      "cellId": "44",
+      "owner": "Thorgard",
+      "itemCount": 13,
+      "items": [
+        {
+          "idx": 0,
+          "id": "4",
+          "qty": 1,
+          "name": "bot",
+          "price": 6
+        },
+        {
+          "idx": 1,
+          "id": "12",
+          "qty": 1,
+          "name": "gyémánt láncing",
+          "price": 25000
+        },
+        {
+          "idx": 2,
+          "id": "110",
+          "qty": 1,
+          "name": "lovagi kard",
+          "price": 1550
+        },
+        {
+          "idx": 3,
+          "id": "117",
+          "qty": 1,
+          "name": "kalapács",
+          "price": 54
+        },
+        {
+          "idx": 4,
+          "id": "124",
+          "qty": 1,
+          "name": "kitin buzogány",
+          "price": 600
+        },
+        {
+          "idx": 5,
+          "id": "132",
+          "qty": 1,
+          "name": "napdorong",
+          "price": 6000
+        },
+        {
+          "idx": 6,
+          "id": "144",
+          "qty": 1,
+          "name": "bőrsisak",
+          "price": 8
+        },
+        {
+          "idx": 7,
+          "id": "162",
+          "qty": 1,
+          "name": "bőrpajzs",
+          "price": 8
+        },
+        {
+          "idx": 8,
+          "id": "174",
+          "qty": 1,
+          "name": "törpe surranó",
+          "price": 92
+        },
+        {
+          "idx": 9,
+          "id": "270",
+          "qty": 1,
+          "name": "3 élű kard",
+          "price": 42
+        },
+        {
+          "idx": 10,
+          "id": "308",
+          "qty": 1,
+          "name": "dobótőr",
+          "price": 82
+        },
+        {
+          "idx": 11,
+          "id": "386",
+          "qty": 1,
+          "name": "acéllánc",
+          "price": 322
+        },
+        {
+          "idx": 12,
+          "id": "411",
+          "qty": 1,
+          "name": "kis szegecspajzs",
+          "price": 130
+        }
+      ]
+    },
+    {
+      "cellId": "53",
+      "owner": "Pontos Leif",
+      "itemCount": 11,
+      "items": [
+        {
+          "id": "8",
+          "qty": 1,
+          "name": "parittya",
+          "price": 14
+        },
+        {
+          "id": "9",
+          "qty": 1,
+          "name": "láncing",
+          "price": 140
+        },
+        {
+          "id": "115",
+          "qty": 1,
+          "name": "husáng",
+          "price": 14
+        },
+        {
+          "id": "122",
+          "qty": 1,
+          "name": "szöges bunkó",
+          "price": 330
+        },
+        {
+          "id": "130",
+          "qty": 1,
+          "name": "nappallos",
+          "price": 5000
+        },
+        {
+          "id": "153",
+          "qty": 1,
+          "name": "bőrpáncél",
+          "price": 16
+        },
+        {
+          "id": "164",
+          "qty": 1,
+          "name": "rézpajzs",
+          "price": 52
+        },
+        {
+          "id": "184",
+          "qty": 1,
+          "name": "varázshusáng",
+          "price": 180
+        },
+        {
+          "id": "234",
+          "qty": 1,
+          "name": "manakorona",
+          "price": 5000
+        },
+        {
+          "id": "294",
+          "qty": 1,
+          "name": "bumeráng",
+          "price": 470
+        },
+        {
+          "id": "338",
+          "qty": 1,
+          "name": "1 hetes kenyér",
+          "price": 26
+        }
+      ]
+    },
+    {
+      "cellId": "51",
+      "owner": "Hajas Zoló",
+      "itemCount": 12,
+      "items": [
+        {
+          "id": "5",
+          "qty": 1,
+          "name": "fejsze",
+          "price": 10
+        },
+        {
+          "id": "42",
+          "qty": 1,
+          "name": "kitinpenge",
+          "price": 48
+        },
+        {
+          "id": "58",
+          "qty": 1,
+          "name": "kitintőr",
+          "price": 170
+        },
+        {
+          "id": "116",
+          "qty": 1,
+          "name": "rézbunkó",
+          "price": 46
+        },
+        {
+          "id": "123",
+          "qty": 1,
+          "name": "ezüstdorong",
+          "price": 1500
+        },
+        {
+          "id": "131",
+          "qty": 1,
+          "name": "holdbunkó",
+          "price": 4112
+        },
+        {
+          "id": "145",
+          "qty": 1,
+          "name": "rézsisak",
+          "price": 14
+        },
+        {
+          "id": "163",
+          "qty": 1,
+          "name": "szegecselt pajzs",
+          "price": 36
+        },
+        {
+          "id": "176",
+          "qty": 1,
+          "name": "törpe bakancs",
+          "price": 332
+        },
+        {
+          "id": "271",
+          "qty": 1,
+          "name": "rövid íj",
+          "price": 46
+        },
+        {
+          "id": "309",
+          "qty": 1,
+          "name": "dobófejsze",
+          "price": 150
+        },
+        {
+          "id": "412",
+          "qty": 1,
+          "name": "kerek négyszögpajzs",
+          "price": 30
+        }
+      ]
+    },
+    {
+      "cellId": "83",
+      "owner": "Shorgo-Kemp",
+      "itemCount": 13,
+      "items": [
+        {
+          "id": "11",
+          "qty": 1,
+          "name": "bőrcsizma",
+          "price": 68
+        },
+        {
+          "id": "19",
+          "qty": 1,
+          "name": "íj",
+          "price": 40
+        },
+        {
+          "id": "32",
+          "qty": 1,
+          "name": "lándzsa",
+          "price": 32
+        },
+        {
+          "id": "92",
+          "qty": 1,
+          "name": "mérgezett tőr",
+          "price": 1370
+        },
+        {
+          "id": "113",
+          "qty": 1,
+          "name": "lávakard",
+          "price": 9300
+        },
+        {
+          "id": "118",
+          "qty": 1,
+          "name": "bronzbunkó",
+          "price": 68
+        },
+        {
+          "id": "125",
+          "qty": 1,
+          "name": "harci csákány",
+          "price": 752
+        },
+        {
+          "id": "155",
+          "qty": 1,
+          "name": "bronzpáncél",
+          "price": 72
+        },
+        {
+          "id": "173",
+          "qty": 1,
+          "name": "bakancs",
+          "price": 40
+        },
+        {
+          "id": "232",
+          "qty": 1,
+          "name": "manafejpánt",
+          "price": 200
+        },
+        {
+          "id": "303",
+          "qty": 1,
+          "name": "számszeríj",
+          "price": 364
+        },
+        {
+          "id": "360",
+          "qty": 1,
+          "name": "bárd",
+          "price": 90
+        },
+        {
+          "id": "430",
+          "qty": 1,
+          "name": "wendír pajzs",
+          "price": 210
+        }
+      ]
+    },
+    {
+      "cellId": "77",
+      "owner": "Nyúvadt Greg",
+      "itemCount": 13,
+      "items": [
+        {
+          "id": "10",
+          "qty": 1,
+          "name": "bronzsisak",
+          "price": 46
+        },
+        {
+          "id": "33",
+          "qty": 1,
+          "name": "csonttőr",
+          "price": 90
+        },
+        {
+          "id": "35",
+          "qty": 1,
+          "name": "törpe csákány",
+          "price": 40
+        },
+        {
+          "id": "67",
+          "qty": 1,
+          "name": "ork aprító",
+          "price": 200
+        },
+        {
+          "id": "114",
+          "qty": 1,
+          "name": "lávabunkó",
+          "price": 9210
+        },
+        {
+          "id": "121",
+          "qty": 1,
+          "name": "vaskalapács",
+          "price": 598
+        },
+        {
+          "id": "129",
+          "qty": 1,
+          "name": "lari szigony",
+          "price": 2108
+        },
+        {
+          "id": "154",
+          "qty": 1,
+          "name": "rézpáncél",
+          "price": 28
+        },
+        {
+          "id": "172",
+          "qty": 1,
+          "name": "surranó",
+          "price": 14
+        },
+        {
+          "id": "233",
+          "qty": 1,
+          "name": "manasisak",
+          "price": 1000
+        },
+        {
+          "id": "299",
+          "qty": 1,
+          "name": "fúvócső",
+          "price": 1268
+        },
+        {
+          "id": "358",
+          "qty": 1,
+          "name": "kasza",
+          "price": 76
+        },
+        {
+          "id": "389",
+          "qty": 1,
+          "name": "fa nuncsaku",
+          "price": 32
+        }
+      ]
+    }
+  ],
+  "itemIndex": [
+    {
+      "id": "4",
+      "name": "bot",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 6
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "name": "gyémánt láncing",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 25000
+        }
+      ]
+    },
+    {
+      "id": "110",
+      "name": "lovagi kard",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 1550
+        }
+      ]
+    },
+    {
+      "id": "117",
+      "name": "kalapács",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 54
+        }
+      ]
+    },
+    {
+      "id": "124",
+      "name": "kitin buzogány",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "id": "132",
+      "name": "napdorong",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 6000
+        }
+      ]
+    },
+    {
+      "id": "144",
+      "name": "bőrsisak",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "id": "162",
+      "name": "bőrpajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "id": "174",
+      "name": "törpe surranó",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 92
+        }
+      ]
+    },
+    {
+      "id": "270",
+      "name": "3 élű kard",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 42
+        }
+      ]
+    },
+    {
+      "id": "308",
+      "name": "dobótőr",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 82
+        }
+      ]
+    },
+    {
+      "id": "386",
+      "name": "acéllánc",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 322
+        }
+      ]
+    },
+    {
+      "id": "411",
+      "name": "kis szegecspajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "44",
+          "owner": "Thorgard",
+          "price": 130
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "parittya",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 14
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "name": "láncing",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 140
+        }
+      ]
+    },
+    {
+      "id": "115",
+      "name": "husáng",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 14
+        }
+      ]
+    },
+    {
+      "id": "122",
+      "name": "szöges bunkó",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 330
+        }
+      ]
+    },
+    {
+      "id": "130",
+      "name": "nappallos",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 5000
+        }
+      ]
+    },
+    {
+      "id": "153",
+      "name": "bőrpáncél",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 16
+        }
+      ]
+    },
+    {
+      "id": "164",
+      "name": "rézpajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 52
+        }
+      ]
+    },
+    {
+      "id": "184",
+      "name": "varázshusáng",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 180
+        }
+      ]
+    },
+    {
+      "id": "234",
+      "name": "manakorona",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 5000
+        }
+      ]
+    },
+    {
+      "id": "294",
+      "name": "bumeráng",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 470
+        }
+      ]
+    },
+    {
+      "id": "338",
+      "name": "1 hetes kenyér",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "53",
+          "owner": "Pontos Leif",
+          "price": 26
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "fejsze",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 10
+        }
+      ]
+    },
+    {
+      "id": "42",
+      "name": "kitinpenge",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 48
+        }
+      ]
+    },
+    {
+      "id": "58",
+      "name": "kitintőr",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 170
+        }
+      ]
+    },
+    {
+      "id": "116",
+      "name": "rézbunkó",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 46
+        }
+      ]
+    },
+    {
+      "id": "123",
+      "name": "ezüstdorong",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 1500
+        }
+      ]
+    },
+    {
+      "id": "131",
+      "name": "holdbunkó",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 4112
+        }
+      ]
+    },
+    {
+      "id": "145",
+      "name": "rézsisak",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 14
+        }
+      ]
+    },
+    {
+      "id": "163",
+      "name": "szegecselt pajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 36
+        }
+      ]
+    },
+    {
+      "id": "176",
+      "name": "törpe bakancs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 332
+        }
+      ]
+    },
+    {
+      "id": "271",
+      "name": "rövid íj",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 46
+        }
+      ]
+    },
+    {
+      "id": "309",
+      "name": "dobófejsze",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 150
+        }
+      ]
+    },
+    {
+      "id": "412",
+      "name": "kerek négyszögpajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "51",
+          "owner": "Hajas Zoló",
+          "price": 30
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "name": "bőrcsizma",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 68
+        }
+      ]
+    },
+    {
+      "id": "19",
+      "name": "íj",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 40
+        }
+      ]
+    },
+    {
+      "id": "32",
+      "name": "lándzsa",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 32
+        }
+      ]
+    },
+    {
+      "id": "92",
+      "name": "mérgezett tőr",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 1370
+        }
+      ]
+    },
+    {
+      "id": "113",
+      "name": "lávakard",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 9300
+        }
+      ]
+    },
+    {
+      "id": "118",
+      "name": "bronzbunkó",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 68
+        }
+      ]
+    },
+    {
+      "id": "125",
+      "name": "harci csákány",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 752
+        }
+      ]
+    },
+    {
+      "id": "155",
+      "name": "bronzpáncél",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 72
+        }
+      ]
+    },
+    {
+      "id": "173",
+      "name": "bakancs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 40
+        }
+      ]
+    },
+    {
+      "id": "232",
+      "name": "manafejpánt",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 200
+        }
+      ]
+    },
+    {
+      "id": "303",
+      "name": "számszeríj",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 364
+        }
+      ]
+    },
+    {
+      "id": "360",
+      "name": "bárd",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 90
+        }
+      ]
+    },
+    {
+      "id": "430",
+      "name": "wendír pajzs",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "83",
+          "owner": "Shorgo-Kemp",
+          "price": 210
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "name": "bronzsisak",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 46
+        }
+      ]
+    },
+    {
+      "id": "33",
+      "name": "csonttőr",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 90
+        }
+      ]
+    },
+    {
+      "id": "35",
+      "name": "törpe csákány",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 40
+        }
+      ]
+    },
+    {
+      "id": "67",
+      "name": "ork aprító",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 200
+        }
+      ]
+    },
+    {
+      "id": "114",
+      "name": "lávabunkó",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 9210
+        }
+      ]
+    },
+    {
+      "id": "121",
+      "name": "vaskalapács",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 598
+        }
+      ]
+    },
+    {
+      "id": "129",
+      "name": "lari szigony",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 2108
+        }
+      ]
+    },
+    {
+      "id": "154",
+      "name": "rézpáncél",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 28
+        }
+      ]
+    },
+    {
+      "id": "172",
+      "name": "surranó",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 14
+        }
+      ]
+    },
+    {
+      "id": "233",
+      "name": "manasisak",
+      "type": "vért",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 1000
+        }
+      ]
+    },
+    {
+      "id": "299",
+      "name": "fúvócső",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 1268
+        }
+      ]
+    },
+    {
+      "id": "358",
+      "name": "kasza",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 76
+        }
+      ]
+    },
+    {
+      "id": "389",
+      "name": "fa nuncsaku",
+      "type": "fegyver",
+      "perShop": [
+        {
+          "cellId": "77",
+          "owner": "Nyúvadt Greg",
+          "price": 32
+        }
+      ]
+    }
+  ]
+}
