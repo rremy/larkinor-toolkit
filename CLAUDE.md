@@ -137,22 +137,25 @@ npm run build       # Full build: npm run build:userscript && npm run build:db
 npm run serve       # Simple HTTP server for dist/ (http://localhost:9000)
 ```
 
-**Build order** (important): `npm run build` runs `build:userscript` first (which wipes `dist/`), then `build:db`. Both artifacts are written to `dist/`:
+**Build order** (important): `npm run build` runs `build:userscript` first (which wipes `dist/`), then `build:db` (which writes into `dist/` without emptying it — `emptyOutDir: false`). Both artifacts share the `dist/` root so the DB is the site entry point:
+- `dist/index.html` (+ `dist/assets/`) — standalone database viewer (the site root)
 - `dist/larkinor-ui.user.js` — userscript (run via ViolentMonkey loader)
-- `dist/db/index.html` — standalone database viewer
 
 **Data paths**:
 - Dev userscript: data served from `/static/db/` (publicDir in `vite.config.ts`)
-- Dev standalone DB: data served from `/db/` (publicDir in `vite.config.db.ts` at root)
-- Both configs: `static/db/` is the source; Vite copies it as configured per build target.
+- Dev standalone DB: data served from `/db/` (publicDir in `vite.config.db.ts`, `dev` only)
+- Prod standalone DB: fetches same-origin `/larkinor/static/db/` (baked in `src/database/main.tsx`)
+- `static/db/` is the single source; the DB build does not copy it (deploy ships it separately).
 
 **Production deploy** (host `https://example.invalid/larkinor/`):
 Run `make deploy` in lc-app (or `bash ../scripts/deploy.sh` directly). This:
 1. Builds the userscript and standalone DB
-2. Uploads `dist/larkinor-ui.user.js` → `/larkinor/larkinor-ui.user.js`
-3. Uploads `dist/db/` → `/larkinor/db/` (standalone DB site at `/larkinor/db/index.html`)
-4. Uploads `static/db/` → `/larkinor/static/db/` (data for both userscript and standalone DB)
-Userscript data URL is baked in `main.ts` (`DATA_BASE_URL`); `@connect` host is in `vite.config.ts`. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS.
+2. Uploads `dist/.` → `/larkinor/` — so `/larkinor/` renders the DB (`index.html`),
+   `/larkinor/larkinor-ui.user.js` is the userscript, `/larkinor/assets/` the DB assets
+3. Uploads `static/.` → `/larkinor/static/` (data at `/larkinor/static/db/`, for both)
+Userscript data URL is baked in `main.ts` (`DATA_BASE_URL`, absolute remote host); the
+standalone DB uses the same-origin `/larkinor/static/db`. `@connect` host is in
+`vite.config.ts`. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS.
 
 **Local device testing** via userscript loader:
 ```bash
