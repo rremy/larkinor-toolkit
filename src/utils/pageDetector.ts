@@ -5,6 +5,7 @@ export enum PageType {
   Church = 'Church',
   Login = 'Login',
   Dungeon = 'Dungeon',
+  Home = 'Home',
   Unknown = 'Unknown',
 }
 
@@ -33,6 +34,8 @@ export function detectPage(doc: Document): PageType {
     case 'otFegyverbolt':
     case 'otPiac':
       return PageType.Shop;
+    case 'otSajathaz':
+      return PageType.Home;
     default:
       console.warn(`[Larkinor UI] Unrecognised oldalTipus "${oldalTipus ?? '(missing)'}" — rendering skipped`);
       return PageType.Unknown;

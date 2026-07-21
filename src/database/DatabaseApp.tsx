@@ -22,6 +22,8 @@ export interface DatabaseAppProps {
    * when the overlay is opened from a monster's dropped-item link.
    */
   initialItemId?: number;
+  /** Entity name to open on mount — resolved to its tab+id. Used from the Home page. */
+  initialItemName?: string;
 }
 
 type Tab = EntityTab | 'map';
@@ -61,7 +63,7 @@ function hashFor(tab: Tab, param: string | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', initialItemId } = props;
+  const { loader, routing = 'hash', initialItemId, initialItemName } = props;
   const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
 
   useEffect(() => {
@@ -105,6 +107,21 @@ export function DatabaseApp(props: DatabaseAppProps) {
     return null;
   }
 
+  /** Resolve an entity by (case-insensitive) name across the three item datasets. */
+  async function resolveEntityByName(name: string): Promise<{ tab: EntityTab; id: number } | null> {
+    const norm = name.trim().toLowerCase();
+    const [weapons, armors, items] = await Promise.all([
+      loader.loadWeapons(), loader.loadArmors(), loader.loadItems(),
+    ]);
+    const w = weapons.find((x) => x.name.toLowerCase() === norm);
+    if (w) return { tab: 'weapons', id: w.id };
+    const a = armors.find((x) => x.name.toLowerCase() === norm);
+    if (a) return { tab: 'armors', id: a.id };
+    const it = items.find((x) => x.name.toLowerCase() === norm);
+    if (it) return { tab: 'items', id: it.id };
+    return null;
+  }
+
   /** Resolve a cross-reference jump. Monsters navigate directly; others resolve. */
   async function onJump(tab: EntityTab, id: number) {
     if (tab === 'monsters') { navigate('monsters', String(id)); return; }
@@ -122,6 +139,17 @@ export function DatabaseApp(props: DatabaseAppProps) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialItemId]);
+
+  // Opened on a specific item by name (Home page item link): resolve + jump.
+  useEffect(() => {
+    if (!initialItemName) return;
+    let cancelled = false;
+    resolveEntityByName(initialItemName).then((hit) => {
+      if (!cancelled && hit) navigate(hit.tab, String(hit.id));
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialItemName]);
 
   return (
     <div class="lc-db">

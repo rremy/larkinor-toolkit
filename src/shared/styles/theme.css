@@ -883,3 +883,55 @@
   .lc-db .map-view td.cell .inner { padding: 2px; justify-content: center; }
   .lc-db .map-view .poi { width: 12px; height: 12px; font-size: 9px; }
 }
+
+/* ================================================================
+   Home / inventory page (Otthon)
+   ================================================================ */
+.lc-cap { padding: 0 12px 8px; }
+.lc-cap-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; margin-bottom: 5px; }
+.lc-cap-label { color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-size: 10.5px; }
+.lc-cap-icon { color: var(--accent); margin-right: 6px; }
+.lc-cap-val { font-variant-numeric: tabular-nums; }
+.lc-cap-val b { color: var(--text); }
+.lc-cap-track { height: 8px; border-radius: 5px; background: var(--bg); overflow: hidden; border: 1px solid var(--row-border); }
+.lc-cap-fill { height: 100%; border-radius: 5px; transition: width .3s ease; }
+.lc-cap-fill--ok { background: linear-gradient(90deg, var(--good), var(--accent)); }
+.lc-cap-fill--warn { background: var(--accent); }
+.lc-cap-fill--crit { background: var(--bad); }
+
+/* Tabs */
+.lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+.lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+.lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.lc-home-tab--active { color: var(--accent); border-bottom-color: var(--accent); }
+.lc-home-tab--active .lc-home-count { background: var(--accent-dim); color: var(--accent); }
+
+/* Toolbar */
+.lc-inv-toolbar { display: flex; gap: 8px; padding: 10px 12px; align-items: center; }
+.lc-inv-search { flex: 1; display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; }
+.lc-inv-search input { flex: 1; background: none; border: none; color: var(--text); font-size: 14px; outline: none; }
+.lc-inv-sort, .lc-inv-dir { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 7px 8px; font-size: 13px; cursor: pointer; }
+
+/* Rows */
+.lc-inv-list { display: flex; flex-direction: column; }
+.lc-inv-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--row-border); }
+.lc-inv-name-line { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.lc-inv-name { color: var(--text); font-size: 15px; background: none; border: none; padding: 0; cursor: pointer; border-bottom: 1px dotted var(--accent-dim); }
+.lc-inv-name:hover { color: var(--accent); }
+.lc-inv-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); }
+.lc-inv-meta { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; display: flex; gap: 12px; }
+.lc-inv-meta b { color: var(--text); }
+.lc-inv-move { display: flex; align-items: center; gap: 5px; }
+.lc-inv-qty { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.lc-inv-qty button { background: none; border: none; color: var(--muted); width: 24px; height: 30px; font-size: 16px; cursor: pointer; }
+.lc-inv-qty input { min-width: 3ch; height: 30px; text-align: center; background: none; border: none; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; outline: none; padding: 0 4px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.lc-inv-move-btn { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); border-radius: 7px; height: 32px; padding: 0 10px; cursor: pointer; font-size: 15px; white-space: nowrap; }
+
+/* General tab */
+.lc-home-general { padding: 12px; display: flex; flex-direction: column; gap: 14px; }
+.lc-home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lc-home-act { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; text-align: left; color: var(--text); cursor: pointer; font-size: 13.5px; }
+.lc-home-act--wide { grid-column: 1 / -1; }
+.lc-home-act:hover { border-color: var(--accent); background: var(--panel-2); }
+.lc-home-trap { display: flex; align-items: center; gap: 9px; font-size: 13.5px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; }
+.lc-home-trap-str { margin-left: auto; color: var(--muted); font-size: 12px; }

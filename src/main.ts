@@ -1,11 +1,13 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
+import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
 import { Dungeon } from '@/pages/Dungeon';
+import { Home } from '@/pages/Home';
 import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Static DB assets live under the relative path `static/db/` in both dev and
@@ -25,7 +27,8 @@ type PageState =
   | { pageType: PageType.FreeMove; state: FreeMoveState }
   | { pageType: PageType.Battle; state: BattleState }
   | { pageType: PageType.Login; state: LoginState }
-  | { pageType: PageType.Dungeon; state: DungeonState };
+  | { pageType: PageType.Dungeon; state: DungeonState }
+  | { pageType: PageType.Home; state: HomeState };
 
 /**
  * The game page ships no viewport meta, so mobile browsers assume a ~980px
@@ -54,6 +57,8 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractLogin(doc) };
     case PageType.Dungeon:
       return { pageType, state: extractDungeon(doc) };
+    case PageType.Home:
+      return { pageType, state: extractHome(doc) };
     default:
       return null; // v1 leaves other pages untouched
   }
@@ -92,13 +97,17 @@ function boot(): void {
       case PageType.Dungeon:
         render(h(Dungeon, { state: pageState.state }), root);
         break;
+      case PageType.Home:
+        render(h(Home, { state: pageState.state }), root);
+        break;
     }
   };
 
   renderPage(); // immediate render (db=null; login/dungeon never need it)
 
-  // The login and dungeon screens have no monster references, so skip the fetch.
-  if (pageState.pageType === PageType.Login || pageState.pageType === PageType.Dungeon) return;
+  // The login and dungeon screens have no monster references, and Home uses
+  // the DB overlay's own on-demand loader, so skip the shared monster fetch.
+  if (pageState.pageType === PageType.Login || pageState.pageType === PageType.Dungeon || pageState.pageType === PageType.Home) return;
 
   createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()
     .then((loaded) => {
