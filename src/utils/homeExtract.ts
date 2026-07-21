@@ -179,7 +179,14 @@ function extractTraps(doc: Document): HomeTrap[] {
       const label = textAfter(radio);
       const name = label.split(',')[0].trim();
       const sm = label.match(/erőssége:\s*(\d+)/);
-      return { label: name, strength: sm ? parseInt(sm[1], 10) : null, leszerel: () => leszerel.click() };
+      return {
+        label: name,
+        strength: sm ? parseInt(sm[1], 10) : null,
+        leszerel: () => {
+          radio.checked = true;
+          leszerel.click();
+        },
+      };
     },
   );
 }

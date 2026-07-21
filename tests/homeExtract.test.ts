@@ -128,4 +128,40 @@ describe('extractHome', () => {
     expect(qty.value).toBe('1');
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('with multiple traps, leszerel() on a later trap selects its own radio before clicking the shared disarm button', () => {
+    const TWO_TRAPS_HTML = `
+      <form name="urlap" action="/../cgi-bin/larkinor">
+        <input type="hidden" name="oldalTipus" value="otSajathaz">
+      </form>
+      <b><a title="karakterlap"><font color="blue">Remy</font></a></b>
+      <div>Ház telítettsége: 130.3601/140</div>
+      <div>Remy hátizsákjában és testén 105.7586/107 kg tömegű tárgy van.</div>
+      <input type="image" src="/2/ikon/leszerel.gif" title="Leszereled a csapdát.">
+      <div>Házban lévő csapdák
+        <input type="radio" name="radiobutton" value="on" checked> zuhanórács, erőssége: 7<br>
+        <input type="radio" name="radiobutton" value="on"> farkasverem, erőssége: 4<br>
+      </div>
+      <script>
+        var hazbanCucc = new Array();
+        var hatizsakCucc = new Array();
+      </script>
+    `;
+    const doc = new JSDOM(`<html><body>${TWO_TRAPS_HTML}</body></html>`).window.document;
+    const s = extractHome(doc);
+    expect(s.traps).toHaveLength(2);
+
+    const radios = Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="radio"][name="radiobutton"]'));
+    expect(radios[0].checked).toBe(true);
+    expect(radios[1].checked).toBe(false);
+
+    const disarmBtn = doc.querySelector<HTMLInputElement>('input[src*="leszerel.gif"]')!;
+    const clickSpy = vi.spyOn(disarmBtn, 'click').mockImplementation(() => {});
+
+    s.traps[1].leszerel();
+
+    expect(radios[1].checked).toBe(true);
+    expect(radios[0].checked).toBe(false);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
 });
