@@ -130,7 +130,7 @@ const BATTLE_ACTION_FALLBACK_LABELS: Record<string, string> = {
 };
 
 /** Filename (without extension, lowercased) of an image `src` attribute. */
-function basename(src: string): string {
+export function basename(src: string): string {
   const file = src.split('/').pop() ?? src;
   return file.replace(/\.gif$/i, '').toLowerCase();
 }
@@ -143,7 +143,7 @@ function basename(src: string): string {
  * to `./Something_files/...`; for those we fall back to matching a known
  * marker substring. Anything else is returned unchanged (best-effort).
  */
-function absolutizeGameUrl(src: string): string {
+export function absolutizeGameUrl(src: string): string {
   if (!src) return '';
   if (src.startsWith('http')) return src;
   if (src.startsWith('/')) return `${GAME_ORIGIN}${src}`;
@@ -166,7 +166,7 @@ function parseGold(text: string): number {
   return digits ? parseInt(digits, 10) : 0;
 }
 
-function parsePlayerName(doc: Document): string {
+export function parsePlayerName(doc: Document): string {
   const nameEl = doc.querySelector('a[title="karakterlap"]') ?? doc.querySelector('font[color="blue"]');
   return nameEl?.textContent?.trim() ?? '';
 }
@@ -295,7 +295,7 @@ function extractBuildings(doc: Document, excludeExtra: (name: string) => boolean
 }
 
 /** Finds a titled image input by basename and returns it as a BuildingOption. */
-function extractImageControl(doc: Document, wantName: string): BuildingOption | null {
+export function extractImageControl(doc: Document, wantName: string): BuildingOption | null {
   for (const input of Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="image"]'))) {
     const src = input.getAttribute('src') ?? '';
     if (basename(src) !== wantName) continue;
