@@ -38,4 +38,10 @@ describe('DatabaseOverlay', () => {
     unmount();
     expect(location.hash).toBe(hashBefore);
   });
+
+  it('accepts initialItemName without throwing', () => {
+    const onClose = vi.fn();
+    render(<DatabaseOverlay open onClose={onClose} initialItemName="opál" />);
+    expect(document.querySelector('.lc-db-overlay .lc-db')).toBeTruthy();
+  });
 });
