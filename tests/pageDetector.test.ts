@@ -71,4 +71,8 @@ describe('detectPage', () => {
     expect(() => detectPage(doc)).not.toThrow();
     expect(detectPage(doc)).toBe(PageType.Unknown);
   });
+
+  it('detects the home page from otSajathaz', () => {
+    expect(detectPage(makeDoc('otSajathaz'))).toBe(PageType.Home);
+  });
 });
