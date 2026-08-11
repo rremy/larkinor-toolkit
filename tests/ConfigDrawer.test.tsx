@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { ConfigDrawer } from '../src/components/ConfigDrawer';
 import { HOTKEY_CATALOG } from '../src/utils/hotkeys';
+import { getPlatformOverride, setPlatformOverride } from '../src/utils/config';
 
 describe('ConfigDrawer', () => {
   it('renders one toggle row per catalog hotkey', () => {
@@ -45,5 +46,54 @@ describe('ConfigDrawer', () => {
     expect(
       container.querySelector('.lc-drawer-backdrop')!.classList.contains('lc-drawer-backdrop--center')
     ).toBe(true);
+  });
+});
+
+describe('ConfigDrawer platform toggle', () => {
+  it('marks Automatikus as active when no override is stored', () => {
+    setPlatformOverride(null);
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} />
+    );
+    const auto = container.querySelector('[data-platform="auto"]')!;
+    expect(auto.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('[data-platform="mobile"]')!.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('marks the stored override as active', () => {
+    setPlatformOverride('desktop');
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} />
+    );
+    expect(container.querySelector('[data-platform="desktop"]')!.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('[data-platform="auto"]')!.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('persists the chosen override and reflects it immediately', () => {
+    setPlatformOverride(null);
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} />
+    );
+    fireEvent.click(container.querySelector('[data-platform="mobile"]')!);
+    expect(getPlatformOverride()).toBe('mobile');
+    expect(container.querySelector('[data-platform="mobile"]')!.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('clears the override when Automatikus is chosen', () => {
+    setPlatformOverride('desktop');
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} />
+    );
+    fireEvent.click(container.querySelector('[data-platform="auto"]')!);
+    expect(getPlatformOverride()).toBeNull();
+  });
+
+  it('keeps the hotkey section working alongside the toggle', () => {
+    const onToggle = vi.fn();
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={onToggle} onClose={vi.fn()} />
+    );
+    fireEvent.click(container.querySelector('[data-key="kajal"]')!);
+    expect(onToggle).toHaveBeenCalledWith('kajal');
   });
 });
