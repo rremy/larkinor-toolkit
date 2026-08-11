@@ -43,7 +43,7 @@ describe('bootDesktop — free-move extraction failure', () => {
     const root = doc.getElementById('lc-dock-root');
     expect(root).not.toBeNull();
     expect(root!.querySelector('.lc-dock-db')).not.toBeNull();
-    expect(root!.querySelector('.lc-dock-hotkey')).toBeNull();
+    expect(root!.querySelector('.lc-hotkey')).toBeNull();
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('[Larkinor UI]'),
       expect.anything()

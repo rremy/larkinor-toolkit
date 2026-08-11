@@ -81,7 +81,7 @@
 
 /* DesktopDock renders its hotkeys with the shared HotkeyRow component (see
    src/components/HotkeyRow.tsx), whose base .lc-hotkey/.lc-hotkey-icon rules
-   in theme.css are sized for the mobile UI (64px). These overrides keep the
+   in theme.css are sized for the mobile UI (48px). These overrides keep the
    dock's own, more compact 36px sizing without duplicating the component. */
 #lc-dock-root .lc-hotkey {
   width: 36px;

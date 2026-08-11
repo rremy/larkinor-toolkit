@@ -66,7 +66,7 @@ describe('bootDesktop', () => {
     bootDesktop(doc);
 
     expect(doc.querySelector('#lc-dock-root .lc-dock-db')).not.toBeNull();
-    expect(doc.querySelector('#lc-dock-root .lc-dock-hotkey')).toBeNull();
+    expect(doc.querySelector('#lc-dock-root .lc-hotkey')).toBeNull();
   });
 
   it('renders the minimal dock on an unrecognised page instead of skipping', () => {
