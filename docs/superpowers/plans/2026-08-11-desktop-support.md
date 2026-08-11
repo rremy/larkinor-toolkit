@@ -870,10 +870,9 @@ export interface DesktopDockProps {
 export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
-  const [configOpenLocal, setConfigOpenLocal] = useState(false);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
-  const { enabled, toggleHotkey } = useHotkeyConfig();
+  const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   // No actions to offer means nothing but the DB button is useful: either the
   // page genuinely has none, or the game markup changed under us.
@@ -954,7 +953,7 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
               class="lc-dock-btn lc-dock-config"
               aria-label="Beállítások"
               title="Beállítások"
-              onClick={() => setConfigOpenLocal(true)}
+              onClick={openConfig}
             >
               ⚙
             </button>
@@ -972,12 +971,12 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
         onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
       />
 
-      {configOpenLocal && (
+      {configOpen && (
         <ConfigDrawer
           enabled={enabled}
           variant="modal"
           onToggle={toggleHotkey}
-          onClose={() => setConfigOpenLocal(false)}
+          onClose={closeConfig}
         />
       )}
 
@@ -987,7 +986,9 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
 }
 ```
 
-`useHotkeyConfig` also returns `configOpen` / `openConfig` / `closeConfig`, but the dock keeps its own flag so nothing else has to change in the hook; only `enabled` and `toggleHotkey` are consumed here. The `doc` prop is intentionally unused in this task — tasks 5 and 6 read it. TypeScript will not complain about an unused destructured prop, but if the project's lint setup does, keep it and let tasks 5/6 wire it.
+The dock consumes `useHotkeyConfig` in full — `enabled` and `toggleHotkey` for the hotkey set, and `configOpen` / `openConfig` / `closeConfig` for the drawer — exactly as `FreeMove.tsx` does. Do not add a second config-open flag.
+
+The `doc` prop is declared here but first read in task 5. It is part of the component's interface from the outset deliberately: both tasks 5 and 6 need it, and threading it later would churn every test's props. Keep it.
 
 - [ ] **Step 4: Create `src/desktop/desktop.css`**
 
@@ -1902,12 +1903,12 @@ import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 Add a single close-topmost-modal helper and the hook call after the `useEffect` from task 5:
 
 ```tsx
-  const modalOpen = selectedMonster !== null || configOpenLocal || dbOpen;
+  const modalOpen = selectedMonster !== null || configOpen || dbOpen;
 
   /** Closes the topmost modal — database over config over the monster card. */
   const closeTopModal = () => {
     if (dbOpen) setDbOpen(false);
-    else if (configOpenLocal) setConfigOpenLocal(false);
+    else if (configOpen) closeConfig();
     else if (selectedMonster) setSelectedMonster(null);
   };
 
