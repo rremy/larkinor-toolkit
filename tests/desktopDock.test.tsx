@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/preact';
+import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
 import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
+import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 
 function makeState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
   return {
@@ -117,5 +119,33 @@ describe('DesktopDock', () => {
     GM_setValue(DOCK_COLLAPSED_KEY, 'true');
     const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
     expect(container.querySelector('.lc-dock--collapsed')).not.toBeNull();
+  });
+
+  it('enhances the narration in the supplied document once a db is available', () => {
+    const gameDoc = new JSDOM(
+      '<html><body><font face="Comic sans MS">Valami Sírrabló csámborog a közelben!</font></body></html>'
+    ).window.document;
+
+    const sirrablo: Monster = {
+      id: 7, name: 'Sírrabló', image: '/pic/szornyk/sirrablo_k.gif', level: 3,
+      hp: 40, mp: 0, attackType: 'Szúró/Vágó', debuff: '', magicWeapon: false,
+      location: 'temető', drops: [],
+    };
+
+    render(
+      <DesktopDock doc={gameDoc} state={makeState()} db={buildMonsterDatabase([sirrablo])} />
+    );
+
+    expect(gameDoc.querySelector('a.lc-narr-link')?.textContent).toBe('Sírrabló');
+  });
+
+  it('does not enhance the narration while the db is still loading', () => {
+    const gameDoc = new JSDOM(
+      '<html><body><font face="Comic sans MS">Valami Sírrabló csámborog a közelben!</font></body></html>'
+    ).window.document;
+
+    render(<DesktopDock doc={gameDoc} state={makeState()} db={null} />);
+
+    expect(gameDoc.querySelector('a.lc-narr-link')).toBeNull();
   });
 });

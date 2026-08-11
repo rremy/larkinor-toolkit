@@ -1,5 +1,5 @@
 import { h, type JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { partitionHotkeys, getHotkey, hotkeyIconUrl } from '@/utils/hotkeys';
@@ -8,6 +8,7 @@ import { getDockCollapsed, setDockCollapsed } from '@/utils/config';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { enhanceNarration } from '@/desktop/enhanceNarration';
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -54,6 +55,19 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
     setDbItemId(null);
     setDbOpen(true);
   };
+
+  // The narration lives in the game's own DOM, so this is a side effect on an
+  // external document rather than something Preact renders. enhanceNarration is
+  // idempotent (data-lc-enhanced), so re-running on a db change is harmless.
+  // A failure here must cost only the links, never the game page.
+  useEffect(() => {
+    if (!db) return;
+    try {
+      enhanceNarration(doc, db, setSelectedMonster);
+    } catch (err) {
+      console.warn('[Larkinor UI] Narration enhancement failed:', err);
+    }
+  }, [doc, db]);
 
   return (
     <div class={`lc-dock${collapsed ? ' lc-dock--collapsed' : ''}`}>
