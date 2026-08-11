@@ -148,4 +148,41 @@ describe('DesktopDock', () => {
 
     expect(gameDoc.querySelector('a.lc-narr-link')).toBeNull();
   });
+
+  it('moves the character with an arrow key press on the game document', () => {
+    const gameDoc = new JSDOM('<html><body></body></html>').window.document;
+    const north = { dir: 'north' as const, label: 'északra', trigger: vi.fn() };
+
+    render(<DesktopDock doc={gameDoc} state={makeState({ directions: [north] })} db={null} />);
+
+    const event = new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true, cancelable: true });
+    gameDoc.body.dispatchEvent(event);
+
+    expect(north.trigger).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the database overlay from the Q shortcut', () => {
+    const gameDoc = new JSDOM('<html><body></body></html>').window.document;
+    const { container } = render(<DesktopDock doc={gameDoc} state={makeState()} db={null} />);
+
+    gameDoc.body.dispatchEvent(
+      new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'KeyQ', bubbles: true, cancelable: true })
+    );
+
+    expect(container.querySelector('.lc-db-overlay')).not.toBeNull();
+  });
+
+  it('closes an open modal with Escape', () => {
+    const gameDoc = new JSDOM('<html><body></body></html>').window.document;
+    const { container } = render(<DesktopDock doc={gameDoc} state={makeState()} db={null} />);
+
+    fireEvent.click(container.querySelector('.lc-dock-config')!);
+    expect(container.querySelector('.lc-drawer-backdrop')).not.toBeNull();
+
+    gameDoc.body.dispatchEvent(
+      new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'Escape', bubbles: true, cancelable: true })
+    );
+
+    expect(container.querySelector('.lc-drawer-backdrop')).toBeNull();
+  });
 });

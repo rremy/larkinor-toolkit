@@ -9,6 +9,7 @@ import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
+import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -68,6 +69,25 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
       console.warn('[Larkinor UI] Narration enhancement failed:', err);
     }
   }, [doc, db]);
+
+  const modalOpen = selectedMonster !== null || configOpen || dbOpen;
+
+  /** Closes the topmost modal — database over config over the monster card. */
+  const closeTopModal = () => {
+    if (dbOpen) setDbOpen(false);
+    else if (configOpen) closeConfig();
+    else if (selectedMonster) setSelectedMonster(null);
+  };
+
+  useKeyboardShortcuts({
+    doc,
+    directions: state?.directions ?? [],
+    attack,
+    hotkeyActions,
+    modalOpen,
+    onOpenDatabase: openDatabase,
+    onCloseModal: closeTopModal,
+  });
 
   return (
     <div class={`lc-dock${collapsed ? ' lc-dock--collapsed' : ''}`}>
