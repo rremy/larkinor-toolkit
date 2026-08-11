@@ -37,4 +37,13 @@ describe('ConfigDrawer', () => {
     fireEvent.click(screen.getByRole('button', { name: /bezár|close|×/i }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('renders as a centered modal when the modal variant is requested', () => {
+    const { container } = render(
+      <ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} variant="modal" />
+    );
+    expect(
+      container.querySelector('.lc-drawer-backdrop')!.classList.contains('lc-drawer-backdrop--center')
+    ).toBe(true);
+  });
 });

@@ -17,6 +17,7 @@
   --good: #6fb56f;
   --mp: #4a7acc;
   --sea: #2c4a6e;
+  --dock-shadow: rgba(0, 0, 0, 0.5);
   /* District tints (Térkép / map view) */
   --varos: #c8b27a;  --magus: #6d8db6;  --harcos: #b65d4a;
   --kezdo: #d6c075;  --sotet: #5e4378;  --szikla: #7d6a55;
@@ -186,6 +187,36 @@
 @keyframes lc-slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+/* Desktop variant: the same drawer components as a centered modal dialog. */
+.lc-drawer-backdrop--center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lc-drawer-backdrop--center > .lc-drawer {
+  position: relative;
+  width: auto;
+  min-width: 320px;
+  max-width: 520px;
+  max-height: 84dvh;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: lc-fade-in 0.15s ease-out;
+}
+
+@keyframes lc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Monster name made clickable inside the live game narration (desktop only). */
+.lc-narr-link {
+  color: var(--accent);
+  border-bottom: 1px dotted var(--accent);
+  cursor: pointer;
 }
 
 .lc-drawer-close {

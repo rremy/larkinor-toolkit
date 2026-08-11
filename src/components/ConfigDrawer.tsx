@@ -1,5 +1,6 @@
 import { h, type JSX } from 'preact';
 import { HOTKEY_CATALOG, hotkeyIconUrl } from '@/utils/hotkeys';
+import { backdropClass, type DrawerVariant } from '@/components/drawer';
 
 export interface ConfigDrawerProps {
   /** tevFajta values currently enabled as hotkeys. */
@@ -7,6 +8,8 @@ export interface ConfigDrawerProps {
   /** Toggle a hotkey on/off by its tevFajta value. */
   onToggle: (key: string) => void;
   onClose: () => void;
+  /** 'sheet' (mobile bottom drawer) or 'modal' (desktop centered dialog). */
+  variant?: DrawerVariant;
 }
 
 /**
@@ -14,13 +17,13 @@ export interface ConfigDrawerProps {
  * the enabled free-move hotkeys. Toggling a row is expected to persist and to
  * update the free-move icon row immediately.
  */
-export function ConfigDrawer({ enabled, onToggle, onClose }: ConfigDrawerProps): JSX.Element {
+export function ConfigDrawer({ enabled, onToggle, onClose, variant = 'sheet' }: ConfigDrawerProps): JSX.Element {
   const handleBackdropClick = (e: MouseEvent) => {
     if ((e.target as HTMLElement).classList.contains('lc-drawer-backdrop')) onClose();
   };
 
   return (
-    <div class="lc-drawer-backdrop" onClick={handleBackdropClick}>
+    <div class={backdropClass(variant)} onClick={handleBackdropClick}>
       <div class="lc-drawer" role="dialog" aria-label="Beállítások">
         <button class="lc-drawer-close" aria-label="bezár" onClick={onClose}>×</button>
 

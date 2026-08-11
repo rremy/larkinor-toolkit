@@ -1,11 +1,14 @@
 import { h } from 'preact';
 import type { Monster } from '@/shared/data/monsters';
+import { backdropClass, type DrawerVariant } from '@/components/drawer';
 
 export interface MonsterCardProps {
   monster: Monster | null;
   onClose: () => void;
   /** When set, drops with a real id become links that open the DB on that entity. */
   onItemClick?: (id: number) => void;
+  /** 'sheet' (mobile bottom drawer) or 'modal' (desktop centered dialog). */
+  variant?: DrawerVariant;
 }
 
 const ASSET_BASE = 'https://l2.larkinor.hu';
@@ -21,7 +24,7 @@ export function monsterImageUrl(image: string): string {
   return `${ASSET_BASE}${image.replace(/^\/pic\//, '/')}`;
 }
 
-export function MonsterCard({ monster, onClose, onItemClick }: MonsterCardProps) {
+export function MonsterCard({ monster, onClose, onItemClick, variant = 'sheet' }: MonsterCardProps) {
   if (!monster) return null;
 
   const imgUrl = monsterImageUrl(monster.image);
@@ -33,7 +36,7 @@ export function MonsterCard({ monster, onClose, onItemClick }: MonsterCardProps)
   }
 
   return (
-    <div class="lc-drawer-backdrop" onClick={handleBackdropClick}>
+    <div class={backdropClass(variant)} onClick={handleBackdropClick}>
       <div class="lc-drawer" role="dialog" aria-label={monster.name}>
         <button class="lc-drawer-close" aria-label="bezár" onClick={onClose}>×</button>
 
