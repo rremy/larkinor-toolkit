@@ -44,7 +44,7 @@ describe('DesktopDock', () => {
     const { container } = render(
       <DesktopDock doc={document} state={makeState()} db={null} />
     );
-    expect(container.querySelectorAll('.lc-dock-hotkey').length).toBe(1);
+    expect(container.querySelectorAll('.lc-hotkey').length).toBe(1);
     // The two non-enabled actions fall through to text buttons.
     const labels = Array.from(container.querySelectorAll('.lc-dock-btn')).map(b => b.textContent);
     expect(labels).toContain('imádkozol');
@@ -55,7 +55,7 @@ describe('DesktopDock', () => {
     GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['kajal']));
     const state = makeState();
     const { container } = render(<DesktopDock doc={document} state={state} db={null} />);
-    fireEvent.click(container.querySelector('.lc-dock-hotkey')!);
+    fireEvent.click(container.querySelector('.lc-hotkey')!);
     expect(state.actions[0].trigger).toHaveBeenCalledTimes(1);
   });
 
@@ -78,7 +78,7 @@ describe('DesktopDock', () => {
     const { container } = render(
       <DesktopDock doc={document} state={null} db={null} dbButtonOnly />
     );
-    expect(container.querySelector('.lc-dock-hotkey')).toBeNull();
+    expect(container.querySelector('.lc-hotkey')).toBeNull();
     expect(container.querySelector('.lc-dock-config')).not.toBeNull();
     expect(container.querySelector('.lc-dock-db')).not.toBeNull();
   });

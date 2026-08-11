@@ -93,6 +93,41 @@ describe('enhanceNarration', () => {
     expect(nativeHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('is focusable and exposed as a button for keyboard/screen-reader users', () => {
+    const doc = narrationDoc('Valami Sírrabló csámborog a közelben!');
+    enhanceNarration(doc, DB, vi.fn());
+
+    const link = doc.querySelector<HTMLAnchorElement>('a.lc-narr-link')!;
+    expect(link.tabIndex).toBe(0);
+    expect(link.getAttribute('role')).toBe('button');
+  });
+
+  it('opens the monster card on Enter when the link is focused', () => {
+    const doc = narrationDoc('Valami Sírrabló csámborog a közelben!');
+    const onClick = vi.fn();
+    enhanceNarration(doc, DB, onClick);
+
+    const link = doc.querySelector<HTMLAnchorElement>('a.lc-narr-link')!;
+    const event = new doc.defaultView!.KeyboardEvent('keydown', { code: 'Enter', bubbles: true, cancelable: true });
+    link.dispatchEvent(event);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick.mock.calls[0][0].name).toBe('Sírrabló');
+  });
+
+  it('prevents Space from scrolling the page when the link is focused', () => {
+    const doc = narrationDoc('Valami Sírrabló csámborog a közelben!');
+    const onClick = vi.fn();
+    enhanceNarration(doc, DB, onClick);
+
+    const link = doc.querySelector<HTMLAnchorElement>('a.lc-narr-link')!;
+    const event = new doc.defaultView!.KeyboardEvent('keydown', { code: 'Space', bubbles: true, cancelable: true });
+    link.dispatchEvent(event);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
   it('does not nest a link inside one of the game\'s own anchors', () => {
     const doc = narrationDoc('<a href="#">Valami Sírrabló csámborog a közelben!</a>');
     enhanceNarration(doc, DB, vi.fn());

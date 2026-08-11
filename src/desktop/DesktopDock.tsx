@@ -2,9 +2,10 @@ import { h, type JSX } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
-import { partitionHotkeys, getHotkey, hotkeyIconUrl } from '@/utils/hotkeys';
+import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { getDockCollapsed, setDockCollapsed } from '@/utils/config';
+import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
@@ -104,20 +105,7 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
         <>
           {hotkeyActions.length > 0 && (
             <div class="lc-dock-row">
-              {hotkeyActions.map((action, i) => {
-                const hk = getHotkey(action.actionKey!)!;
-                return (
-                  <button
-                    key={`hk${i}`}
-                    class="lc-dock-hotkey"
-                    title={hk.label}
-                    aria-label={hk.label}
-                    onClick={() => action.trigger()}
-                  >
-                    <img class="lc-dock-icon" src={hotkeyIconUrl(hk)} alt={hk.label} />
-                  </button>
-                );
-              })}
+              <HotkeyRow actions={hotkeyActions} />
             </div>
           )}
 

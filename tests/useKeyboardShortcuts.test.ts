@@ -194,6 +194,43 @@ describe('useKeyboardShortcuts', () => {
     expect(press(doc, 'KeyZ').defaultPrevented).toBe(false);
   });
 
+  it('ignores an auto-repeat keydown so holding a key does not repeat the action', () => {
+    const doc = makeGameDoc();
+    const north = dir('north');
+    mountHook(baseOptions(doc, { directions: [north] }));
+
+    const event = press(doc, 'ArrowUp', { repeat: true });
+
+    expect(north.trigger).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('closes the modal on Escape even while the target is an input, and ignores other keys', () => {
+    const doc = makeGameDoc('<input id="filter">');
+    const north = dir('north');
+    const onCloseModal = vi.fn();
+    mountHook(baseOptions(doc, { directions: [north], modalOpen: true, onCloseModal }));
+
+    const input = doc.getElementById('filter')!;
+    press(doc, 'KeyW', {}, input);
+    press(doc, 'Escape', {}, input);
+
+    expect(north.trigger).not.toHaveBeenCalled();
+    expect(onCloseModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores key events targeting a control inside the dock root', () => {
+    const doc = makeGameDoc('<div id="lc-dock-root"><button id="toggle">collapse</button></div>');
+    const attack = { label: 'Támadás!!!', iconUrl: '', trigger: vi.fn() };
+    mountHook(baseOptions(doc, { attack }));
+
+    const toggle = doc.getElementById('toggle')!;
+    const event = press(doc, 'Space', {}, toggle);
+
+    expect(attack.trigger).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
   it('removes its listener on unmount', () => {
     const doc = makeGameDoc();
     const north = dir('north');

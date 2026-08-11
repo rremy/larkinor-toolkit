@@ -48,9 +48,22 @@ function buildLink(
   link.className = 'lc-narr-link';
   link.textContent = label;
   link.title = `${monster.name} — szint ${monster.level}`;
+  // No href, so the link is a mouse-only affordance by default — this feature's
+  // headline is keyboard control, so it must also be focusable and operable
+  // from the keyboard and by a screen reader (role="button", not a navigation
+  // link, since it has no destination URL).
+  link.tabIndex = 0;
+  link.setAttribute('role', 'button');
   link.addEventListener('click', (event) => {
     event.preventDefault();
     onMonsterClick(monster);
+  });
+  link.addEventListener('keydown', (event) => {
+    if (event.code === 'Enter' || event.code === 'Space') {
+      // Space would otherwise scroll the page, same as activating a real button.
+      event.preventDefault();
+      onMonsterClick(monster);
+    }
   });
   return link;
 }
