@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent } from '@testing-library/preact';
+import { render, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
 import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY } from '../src/utils/config';
@@ -156,7 +156,9 @@ describe('DesktopDock', () => {
     render(<DesktopDock doc={gameDoc} state={makeState({ directions: [north] })} db={null} />);
 
     const event = new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true, cancelable: true });
-    gameDoc.body.dispatchEvent(event);
+    act(() => {
+      gameDoc.body.dispatchEvent(event);
+    });
 
     expect(north.trigger).toHaveBeenCalledTimes(1);
   });
@@ -165,9 +167,11 @@ describe('DesktopDock', () => {
     const gameDoc = new JSDOM('<html><body></body></html>').window.document;
     const { container } = render(<DesktopDock doc={gameDoc} state={makeState()} db={null} />);
 
-    gameDoc.body.dispatchEvent(
-      new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'KeyQ', bubbles: true, cancelable: true })
-    );
+    act(() => {
+      gameDoc.body.dispatchEvent(
+        new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'KeyQ', bubbles: true, cancelable: true })
+      );
+    });
 
     expect(container.querySelector('.lc-db-overlay')).not.toBeNull();
   });
@@ -179,9 +183,11 @@ describe('DesktopDock', () => {
     fireEvent.click(container.querySelector('.lc-dock-config')!);
     expect(container.querySelector('.lc-drawer-backdrop')).not.toBeNull();
 
-    gameDoc.body.dispatchEvent(
-      new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'Escape', bubbles: true, cancelable: true })
-    );
+    act(() => {
+      gameDoc.body.dispatchEvent(
+        new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'Escape', bubbles: true, cancelable: true })
+      );
+    });
 
     expect(container.querySelector('.lc-drawer-backdrop')).toBeNull();
   });
