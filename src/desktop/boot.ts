@@ -31,15 +31,31 @@ function extractDockState(doc: Document): FreeMoveState | null {
   }
 }
 
+/**
+ * Injects the dock's styles and creates its mount point. Returns null on
+ * failure — a restrictive CSP rejecting GM_addStyle is the realistic case —
+ * so the caller can bail out cleanly instead of rendering into nothing.
+ */
+function mountDockRoot(doc: Document): HTMLDivElement | null {
+  try {
+    GM_addStyle(baseStyles);
+    GM_addStyle(dockStyles);
+
+    const root = doc.createElement('div');
+    root.id = 'lc-dock-root';
+    doc.body.appendChild(root);
+    return root;
+  } catch (err) {
+    console.warn('[Larkinor UI] Dock mount failed:', err);
+    return null;
+  }
+}
+
 export function bootDesktop(doc: Document): void {
   const state = extractDockState(doc);
 
-  GM_addStyle(baseStyles);
-  GM_addStyle(dockStyles);
-
-  const root = doc.createElement('div');
-  root.id = 'lc-dock-root';
-  doc.body.appendChild(root);
+  const root = mountDockRoot(doc);
+  if (!root) return;
 
   let db: MonsterDatabase | null = null;
 

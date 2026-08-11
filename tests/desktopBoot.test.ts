@@ -91,4 +91,20 @@ describe('bootDesktop', () => {
     expect(doc.querySelector('#lc-dock-root .lc-dock')).not.toBeNull();
     warn.mockRestore();
   });
+
+  it('survives a style-injection failure, leaving the game DOM untouched', () => {
+    const addStyle = vi.mocked(GM_addStyle).mockImplementation(() => {
+      throw new Error('CSP blocked GM_addStyle');
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const doc = gameDoc('otVilag');
+    expect(() => bootDesktop(doc)).not.toThrow();
+
+    expect(doc.getElementById('game-content')!.parentElement).toBe(doc.body);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[Larkinor UI]'), expect.anything());
+
+    addStyle.mockReset();
+    warn.mockRestore();
+  });
 });
