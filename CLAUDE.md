@@ -11,11 +11,16 @@ theme.
 ```
 lcenter/
 ├── src/
-│   ├── main.ts              # Userscript entry: detect page → proxy DOM → mount Preact
-│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx
+│   ├── main.ts              # Entry: detect platform → bootMobile | bootDesktop
+│   ├── mobile/boot.ts       # Mobile boot: proxy-DOM page replacement
+│   ├── desktop/             # Desktop boot: dock + in-place enhancements
+│   │   ├── boot.ts · DesktopDock.tsx
+│   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
+│   │   └── desktop.css
+│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
 │   ├── hooks/               # useHotkeyConfig
-│   ├── utils/               # pageDetector, domExtract, narration, hotkeys, config
+│   ├── utils/               # platform, pageDetector, domExtract, narration, hotkeys, config
 │   ├── shared/
 │   │   ├── data/
 │   │   │   ├── types.ts     # Weapon, Armor, Item, Monster, MapCell, Shop (typed models)
@@ -64,12 +69,27 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - Single dark-medieval CSS variables sheet; **never add hardcoded hex/rgba in rule bodies** — use `:root` variables and `.lc-db` scopes.
 - `.lc-db` classes scope explorer/map styles; userscript components use `lc-` classes.
 
-#### In-game userscript (`src/main.ts`, `src/pages/`, `src/components/`)
+#### In-game userscript (`src/main.ts`, `src/mobile/`, `src/desktop/`, `src/pages/`, `src/components/`)
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
-- **Proxy-DOM pattern**: on a page we handle (FreeMove, Battle, Dungeon, Login), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. v1 renders FreeMove, Battle, Dungeon, Login.
+- **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon and Home, and leaves the rest untouched; desktop adds its dock to every page.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
+- **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
+  `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
+  override (`lc-platform-override`, set from the config drawer's *Felület* toggle) wins over
+  auto-detection; it takes effect on the next page load.
+  - **Mobile** (`src/mobile/boot.ts`) is the proxy-DOM full replacement described above.
+  - **Desktop** (`src/desktop/boot.ts`) *augments* instead: it never calls `hideOriginalDOM`
+    or injects a viewport meta. It mounts a fixed `#lc-dock-root` companion dock (quick
+    actions, encounter attack, config, database), makes DB-known monster names in the live
+    narration clickable (`enhanceNarration` — text-node splicing only, never `innerHTML`,
+    which would destroy the game's own `<a>` handlers), and binds keyboard shortcuts
+    (WASD/arrows, Space, 1–9, Q, Esc — all suppressed while the event target is a form
+    control, so typing in chat can't move the character). The dock renders on every page,
+    including ones we don't recognise; only free-move gets the full action set.
+  - Because the game page stays visible on desktop, **no CSS may use an unscoped element
+    selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
 
 #### Standalone database (`src/database/`, built separately)
 - **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map).
@@ -88,7 +108,7 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
 - Narration: the `font[face="Comic sans MS"]` block; `<br>` is converted to newlines (rendered with `white-space: pre-line`).
 - **Monster detection uses narration sentence templates** (`utils/narration.ts` → `ENCOUNTER_PATTERNS`), each capturing the monster name, resolved against the DB. Add new templates as single-capture-group regexes to that array (there are unit tests per template).
 - **Monster image path**: the DB stores `/pic/szornyk/NAME_k.gif` but the live server serves it at `/szornyk/NAME_k.gif` (no `/pic`) — `MonsterCard.monsterImageUrl` strips the `/pic`. Asset base is `https://l2.larkinor.hu`.
-- The game page ships **no viewport meta**, so mobile browsers assume ~980px; `main.ts` injects `width=device-width` on pages we take over.
+- The game page ships **no viewport meta**, so mobile browsers assume ~980px; `src/mobile/boot.ts` injects `width=device-width` on pages we take over. The desktop boot deliberately does not — the ~980px assumption is correct there.
 - **Encoding gotcha**: `db/monsters.json` had Latin-1/Latin-2 mojibake (`õ`/`û` instead of `ő`/`ű`) that broke name matching against the correctly-encoded live narration — fixed. Watch for this in any scraped Hungarian data.
 
 ## Development workflow
