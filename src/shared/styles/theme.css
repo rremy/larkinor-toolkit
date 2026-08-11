@@ -283,6 +283,9 @@
 /* Config drawer */
 .lc-config-title { margin: 0 0 12px; padding-right: 36px; font-size: 16px; color: var(--accent); }
 .lc-config-hotkeys { display: flex; flex-direction: column; gap: 6px; }
+/* Separates the hotkey list from the next section's heading ("Felület") —
+   without this the heading sits flush against the last hotkey row. */
+.lc-config-hotkeys + .lc-config-title { margin-top: 20px; }
 .lc-config-hotkey {
   display: flex;
   align-items: center;

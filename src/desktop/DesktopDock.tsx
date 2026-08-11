@@ -80,6 +80,13 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
     else if (selectedMonster) setSelectedMonster(null);
   };
 
+  // `directions`/`hotkeyActions` (fresh arrays each render) and the two
+  // handlers below are intentionally left unmemoized. useKeyboardShortcuts
+  // re-subscribes its listener whenever any of these change, so this does
+  // cause listener churn on every render — but memoizing them (e.g. with
+  // useCallback closing over `dbOpen`/`configOpen`/`selectedMonster`) would
+  // reintroduce the exact stale-closure bug this dependency list avoids:
+  // closeTopModal and onOpenDatabase must always see the current modal state.
   useKeyboardShortcuts({
     doc,
     directions: state?.directions ?? [],

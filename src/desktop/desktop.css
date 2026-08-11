@@ -8,6 +8,12 @@
   position: fixed;
   right: 16px;
   bottom: 16px;
+  /* position: fixed + z-index here establishes a new stacking context, so
+     nested overlays with much higher z-indexes — .lc-drawer-backdrop (1000)
+     and .lc-db-overlay (9999) in theme.css — are stacked *within* this
+     context, not against the page. That only stays invisible to us because
+     the live game's own z-indexes are 3-6; do not "fix" those overlay
+     z-indexes expecting them to compete with the page directly. */
   z-index: 900;
   font-family: -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;

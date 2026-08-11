@@ -10,8 +10,8 @@ import { DesktopDock } from '@/desktop/DesktopDock';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
 
-// Mirrors src/main.ts: the dev server hosts static/db, production serves it
-// from the deployment host.
+// Mirrors src/mobile/boot.ts and src/components/DatabaseOverlay.tsx: the dev
+// server hosts static/db, production serves it from the deployment host.
 const DATA_BASE_URL = import.meta.env.DEV
   ? new URL('/static/db', import.meta.url).href
   : 'https://example.invalid/larkinor/static/db';
