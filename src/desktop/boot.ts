@@ -71,29 +71,19 @@ const VIEWPORT_MARGIN = 8;
 /** Floor for the dock's height, so it never collapses to an unusable sliver. */
 const MIN_DOCK_HEIGHT = 120;
 
-/** The game's right edge, measured live, used when it cannot be computed. */
-const FALLBACK_GAME_RIGHT = 791;
-
 /**
- * The right edge of everything the game draws — 791px on the live layout, and
- * fixed, since the page is absolutely positioned in pixels. Published as
- * `--lc-game-right` so the minimised database overlay can dock into the empty
- * space beside the game instead of covering it.
+ * The game's right edge, published as `--lc-game-right` so the minimised
+ * database overlay can fill the empty page beside the game.
  *
- * Measured rather than hardcoded so the dock does not overlap the game if that
- * width ever changes. Our own root is excluded — it is fixed to the viewport and
- * would otherwise report an edge far to the right of the game.
+ * A constant, not a measurement. Measuring the widest thing on the page looked
+ * more adaptive but was wrong: the page carries third-party ad content that
+ * renders past the game and is not part of it, so the measured edge landed too
+ * far right and the docked overlay came out narrower than the space it was meant
+ * to fill. The game's layout is absolutely positioned in fixed pixels and does
+ * not respond to the viewport, so there is nothing to adapt to — change this one
+ * value if the game's width ever changes.
  */
-function measureGameRight(doc: Document, ownRoot: Element): number {
-  let right = 0;
-  for (const el of Array.from(doc.body.querySelectorAll('*'))) {
-    if (ownRoot.contains(el)) continue;
-    const box = el.getBoundingClientRect();
-    if (box.width < 1 || box.height < 1) continue;
-    if (box.right > right) right = box.right;
-  }
-  return right > 0 ? right : FALLBACK_GAME_RIGHT;
-}
+const GAME_WIDTH = 791;
 
 /**
  * Lays the dock over the game's chat panel by writing the custom properties
@@ -152,7 +142,7 @@ function alignDock(root: HTMLElement, doc: Document): void {
   root.style.setProperty('--lc-dock-top', `${Math.round(top)}px`);
   root.style.setProperty('--lc-dock-width', `${Math.round(column.width)}px`);
   root.style.setProperty('--lc-dock-max-height', `${Math.round(height)}px`);
-  root.style.setProperty('--lc-game-right', `${Math.round(measureGameRight(doc, root))}px`);
+  root.style.setProperty('--lc-game-right', `${GAME_WIDTH}px`);
 }
 
 /**

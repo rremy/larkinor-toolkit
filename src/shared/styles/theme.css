@@ -865,6 +865,11 @@
    src/desktop/boot.ts; the fallback keeps this sane if it is ever absent. */
 .lc-db-overlay--minimized {
   left: var(--lc-game-right, 791px);
+  /* Explicit rather than relying on the base rule's `inset: 0`, so the panel
+     provably stretches to the viewport edge and fills the space instead of
+     shrink-wrapping its content. */
+  right: 0;
+  width: auto;
   border-left: 1px solid var(--border);
   box-shadow: -4px 0 16px var(--dock-shadow);
 }

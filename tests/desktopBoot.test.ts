@@ -129,11 +129,24 @@ describe('bootDesktop', () => {
   });
 
   it('publishes the game\'s right edge for the minimised database overlay', () => {
+    // A constant, not a measurement: the page's third-party ad content renders
+    // past the game, so measuring the widest element put the docked overlay's
+    // left edge too far right and it no longer filled the space beside the game.
     const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
     withChat(doc, { viewportHeight: 900 });
-    // Stand in for the live banner, the widest thing the game draws.
-    const banner = doc.getElementById('game-content')!;
-    banner.getBoundingClientRect = () => ({ right: 791, width: 791, height: 60 }) as DOMRect;
+
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')!.style.getPropertyValue('--lc-game-right')).toBe('791px');
+  });
+
+  it('is not swayed by page content extending past the game', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div><div id="ad">advert</div>');
+    withChat(doc, { viewportHeight: 900 });
+    // An ad banner rendering well to the right of the game must not move the
+    // docked overlay's left edge.
+    doc.getElementById('ad')!.getBoundingClientRect = () =>
+      ({ left: 900, right: 1300, width: 400, height: 600 }) as DOMRect;
 
     bootDesktop(doc);
 
