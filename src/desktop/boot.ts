@@ -12,6 +12,7 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
+import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import baseStyles from '@/shared/styles/theme.css?raw';
@@ -48,16 +49,22 @@ function extractDockState(pageType: PageType, doc: Document): FreeMoveState | nu
   }
 }
 
+/**
+ * Home-page inventory state, for the dock's Készlet panel. Null anywhere else,
+ * and on failure — the dock stays useful without it.
+ */
+function extractInventoryState(pageType: PageType, doc: Document): HomeState | null {
+  if (pageType !== PageType.Home) return null;
+  try {
+    return extractHome(doc);
+  } catch (err) {
+    console.warn('[Larkinor UI] Home extraction failed; inventory panel unavailable:', err);
+    return null;
+  }
+}
+
 /** The game's chat panel. The dock is laid over its message log. */
 const CHAT_SELECTOR = '#mydiv';
-
-/**
- * Chat geometry used when it cannot be found or measured. These are the live
- * game's actual values — the layout is absolutely positioned in fixed pixels and
- * does not move with the window, so they are a good guess rather than a shot in
- * the dark.
- */
-const FALLBACK_CHAT_RECT = { left: 60, top: 473, width: 500, height: 300 };
 
 /** The game's content column, measured live: the chat's own parent. */
 const FALLBACK_COLUMN_RECT = { left: 0, width: 633 };
@@ -111,6 +118,11 @@ const GAME_WIDTH = 791;
  *  - Bounding the height by the chat forced the action list to scroll even with
  *    room to spare underneath.
  *
+ * Pages without a chat at all — Home is one — get `data-anchor="bottom"` and sit
+ * at the foot of the game column instead. An earlier version fell back to the
+ * chat's known coordinates there, which planted the bar at a spot that meant
+ * nothing on that page.
+ *
  * Coordinates are viewport-relative, which is correct for `position: fixed` and
  * needs no scroll offset — and the game page does not scroll, so a single
  * measurement at boot stays valid.
@@ -118,7 +130,20 @@ const GAME_WIDTH = 791;
 function alignDock(root: HTMLElement, doc: Document): void {
   const chat = doc.querySelector(CHAT_SELECTOR);
   const measured = chat?.getBoundingClientRect();
-  const rect = measured && measured.width > 0 ? measured : FALLBACK_CHAT_RECT;
+
+  // No chat to lay the dock over — the Home page is one such. Anchor to the
+  // bottom of the game column instead of pretending the fallback chat
+  // coordinates mean something, which put the bar at an arbitrary spot.
+  if (!measured || measured.width === 0) {
+    root.dataset.anchor = 'bottom';
+    root.style.setProperty('--lc-dock-left', `${FALLBACK_COLUMN_RECT.left}px`);
+    root.style.setProperty('--lc-dock-width', `${FALLBACK_COLUMN_RECT.width}px`);
+    root.style.setProperty('--lc-dock-max-height', `${Math.round((doc.defaultView?.innerHeight ?? 0) * 0.5) || MIN_DOCK_HEIGHT}px`);
+    root.style.setProperty('--lc-game-right', `${GAME_WIDTH}px`);
+    return;
+  }
+
+  const rect = measured;
 
   // Horizontal: the game's content column, which the chat is inset within.
   const columnMeasured = chat?.parentElement?.getBoundingClientRect();
@@ -171,6 +196,7 @@ export function bootDesktop(doc: Document): void {
   if (UNDOCKED_PAGES.has(pageType)) return;
 
   const state = extractDockState(pageType, doc);
+  const homeState = extractInventoryState(pageType, doc);
 
   const root = mountDockRoot(doc);
   if (!root) return;
@@ -179,7 +205,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, dbButtonOnly: state === null }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, dbButtonOnly: state === null }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

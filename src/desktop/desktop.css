@@ -37,6 +37,13 @@
   line-height: 1.4;
 }
 
+/* Pages with no chat to lay the dock over (Home, for one) anchor it to the foot
+   of the game column instead of to a chat position that does not exist there. */
+#lc-dock-root[data-anchor='bottom'] {
+  top: auto;
+  bottom: 8px;
+}
+
 #lc-dock-root *,
 #lc-dock-root *::before,
 #lc-dock-root *::after {

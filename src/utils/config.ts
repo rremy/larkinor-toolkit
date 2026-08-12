@@ -28,8 +28,11 @@ export const PLATFORM_OVERRIDE_KEY = 'lc-platform-override';
 /** GM storage key holding the desktop dock's collapsed flag. */
 export const DOCK_COLLAPSED_KEY = 'lc-dock-collapsed';
 
-/** GM storage key holding the database overlay's minimised flag. */
+/** GM storage key holding the database panel's minimised flag. */
 export const DB_MINIMIZED_KEY = 'lc-db-minimized';
+
+/** GM storage key holding the inventory panel's minimised flag. */
+export const INVENTORY_MINIMIZED_KEY = 'lc-inventory-minimized';
 
 /**
  * The user's manual platform choice, or null for automatic detection. Values
@@ -55,14 +58,15 @@ export function setDockCollapsed(value: boolean): void {
 }
 
 /**
- * Whether the database overlay opens minimised — docked beside the game rather
- * than covering the page. Remembered across page loads, so the choice survives
- * every navigation the game makes.
+ * Whether a docked panel opens minimised — beside the game rather than covering
+ * the page. Remembered across page loads, so the choice survives every
+ * navigation the game makes. Keyed per panel, so the database and the inventory
+ * remember independently.
  */
-export function getDbMinimized(): boolean {
-  return (GM_getValue(DB_MINIMIZED_KEY, '') as string) === 'true';
+export function getPanelMinimized(key: string): boolean {
+  return (GM_getValue(key, '') as string) === 'true';
 }
 
-export function setDbMinimized(value: boolean): void {
-  GM_setValue(DB_MINIMIZED_KEY, value ? 'true' : '');
+export function setPanelMinimized(key: string, value: boolean): void {
+  GM_setValue(key, value ? 'true' : '');
 }

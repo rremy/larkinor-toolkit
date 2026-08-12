@@ -173,15 +173,19 @@ describe('bootDesktop', () => {
     expect(doc.getElementById('lc-dock-root')!.style.getPropertyValue('--lc-dock-max-height')).toBe('120px');
   });
 
-  it('falls back to known geometry when the chat cannot be measured', () => {
-    // jsdom reports zero-size rects, which is the same signal as a missing
-    // chat: use the known offsets rather than collapsing to 0x0 off-screen.
+  it('anchors to the foot of the game column when there is no chat to measure', () => {
+    // Home has no chat at all; jsdom's zero-size rects are the same signal. An
+    // earlier version fell back to the chat's known offsets, which planted the
+    // bar at a position that means nothing on such a page.
     const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
+    expect(root.dataset.anchor).toBe('bottom');
+    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('0px');
     expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
-    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
+    // Bottom-anchored, so no top offset is published at all.
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('');
   });
 
   it('still mounts the dock when there is no chat at all', () => {

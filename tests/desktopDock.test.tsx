@@ -4,6 +4,7 @@ import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
 import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
+import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 
 function makeState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
@@ -95,6 +96,30 @@ describe('DesktopDock', () => {
     expect(container.querySelector('.lc-hotkey')).toBeNull();
     expect(container.querySelector('.lc-dock-config')).not.toBeNull();
     expect(container.querySelector('.lc-dock-db')).not.toBeNull();
+  });
+
+  it('offers no Készlet button away from the Home page', () => {
+    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+    expect(container.querySelector('.lc-dock-inventory')).toBeNull();
+  });
+
+  it('opens the inventory panel from the Készlet button on the Home page', () => {
+    const homeState = {
+      playerName: 'Remy',
+      house: { used: 123.769, max: 140, items: [], move: vi.fn() },
+      backpack: { used: 53.1555, max: 111, items: [], move: vi.fn() },
+      traps: [],
+      actions: { everythingToBackpack: null, magicChair: null, recoverLost: null, settings: null, exit: null },
+    } as unknown as HomeState;
+
+    const { container } = render(
+      <DesktopDock doc={document} state={null} db={null} homeState={homeState} dbButtonOnly />
+    );
+
+    expect(container.querySelector('.lc-db-overlay')).toBeNull();
+    fireEvent.click(container.querySelector('.lc-dock-inventory')!);
+    expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
+    expect(document.querySelector('.lc-home-tabs')).not.toBeNull();
   });
 
   it('degrades to dbButtonOnly when the action list comes back empty', () => {

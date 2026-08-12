@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { DatabaseOverlay } from '../src/components/DatabaseOverlay';
-import { DB_MINIMIZED_KEY, getDbMinimized, setDbMinimized } from '../src/utils/config';
+import { DB_MINIMIZED_KEY, getPanelMinimized, setPanelMinimized } from '../src/utils/config';
 
 describe('DatabaseOverlay', () => {
   beforeEach(() => { location.hash = ''; });
@@ -69,7 +69,7 @@ describe('DatabaseOverlay', () => {
     it('persists the choice', () => {
       const { unmount } = render(<DatabaseOverlay open minimizable onClose={vi.fn()} />);
       fireEvent.click(screen.getByLabelText('Kis méret'));
-      expect(getDbMinimized()).toBe(true);
+      expect(getPanelMinimized(DB_MINIMIZED_KEY)).toBe(true);
       unmount();
 
       // The game navigates on every action, so the overlay is re-created
@@ -81,7 +81,7 @@ describe('DatabaseOverlay', () => {
     it('ignores a stored preference where there is nowhere to dock', () => {
       // Mobile shares the storage key; a desktop choice must not dock the
       // overlay off-screen on a phone.
-      setDbMinimized(true);
+      setPanelMinimized(DB_MINIMIZED_KEY, true);
       render(<DatabaseOverlay open onClose={vi.fn()} />);
       expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(false);
     });

@@ -11,6 +11,8 @@ import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
 import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
+import { InventoryPanel } from '@/desktop/InventoryPanel';
+import type { HomeState } from '@/utils/homeExtract';
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -18,6 +20,12 @@ export interface DesktopDockProps {
   /** Free-move state, or null on pages where we only offer the DB button. */
   state: FreeMoveState | null;
   db: MonsterDatabase | null;
+  /**
+   * Home-page inventory state, when we are on it. A second optional field rather
+   * than a discriminated union over the page type: with two pages the union buys
+   * nothing but churn. Convert if a third page needs its own state.
+   */
+  homeState?: HomeState | null;
   /** Force the minimal (config + database) form regardless of state. */
   dbButtonOnly?: boolean;
 }
@@ -36,11 +44,12 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   // No actions to offer means nothing but the DB button is useful: either the
@@ -75,13 +84,14 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
     }
   }, [doc, db]);
 
-  const modalOpen = selectedMonster !== null || configOpen || dbOpen;
+  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen;
 
-  /** Closes the topmost modal — database over config over the monster card. */
+  /** Closes the topmost modal, innermost first. */
   const closeTopModal = () => {
     if (dbOpen) setDbOpen(false);
     else if (configOpen) closeConfig();
     else if (selectedMonster) setSelectedMonster(null);
+    else if (inventoryOpen) setInventoryOpen(false);
   };
 
   // `directions`/`hotkeyActions` (fresh arrays each render) and the two
@@ -136,6 +146,11 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
               where Space *is* an affordance the page lacks. */}
 
           <div class="lc-dock-row">
+            {homeState && (
+              <button class="lc-dock-btn lc-dock-inventory" onClick={() => setInventoryOpen(true)}>
+                Készlet
+              </button>
+            )}
             <button
               class="lc-dock-btn lc-dock-config"
               aria-label="Beállítások"
@@ -175,6 +190,10 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
         initialItemId={dbItemId ?? undefined}
         onClose={() => setDbOpen(false)}
       />
+
+      {homeState && (
+        <InventoryPanel open={inventoryOpen} state={homeState} onClose={() => setInventoryOpen(false)} />
+      )}
     </div>
   );
 }

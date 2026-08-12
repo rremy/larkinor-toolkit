@@ -7,11 +7,18 @@ import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 
 export interface HomeProps {
   state: HomeState;
+  /**
+   * Show the "Általános" tab (capacity summary, house actions, traps). Desktop
+   * turns it off: the game's own Home page presents every one of those controls
+   * as a single click already, so repeating them beside it would be duplication
+   * rather than help. Mobile keeps it, having replaced the page entirely.
+   */
+  showGeneral?: boolean;
 }
 
 type Tab = 'haz' | 'bag' | 'gen';
 
-export function Home({ state }: HomeProps): JSX.Element {
+export function Home({ state, showGeneral = true }: HomeProps): JSX.Element {
   const [tab, setTab] = useState<Tab>('haz');
   const [dbOpen, setDbOpen] = useState(false);
   const [dbName, setDbName] = useState<string | undefined>(undefined);
@@ -28,9 +35,11 @@ export function Home({ state }: HomeProps): JSX.Element {
         <button class={`lc-home-tab${tab === 'bag' ? ' lc-home-tab--active' : ''}`} onClick={() => setTab('bag')}>
           Hátizsák <span class="lc-home-count">{state.backpack.items.length}</span>
         </button>
-        <button class={`lc-home-tab${tab === 'gen' ? ' lc-home-tab--active' : ''}`} onClick={() => setTab('gen')}>
-          Általános
-        </button>
+        {showGeneral && (
+          <button class={`lc-home-tab${tab === 'gen' ? ' lc-home-tab--active' : ''}`} onClick={() => setTab('gen')}>
+            Általános
+          </button>
+        )}
       </div>
 
       {tab !== 'gen' && (
@@ -62,7 +71,7 @@ export function Home({ state }: HomeProps): JSX.Element {
         />
       )}
 
-      {tab === 'gen' && (
+      {showGeneral && tab === 'gen' && (
         <div class="lc-home-general">
           <CapacityMeter label="Ház" icon="⌂" used={state.house.used} max={state.house.max} />
           <CapacityMeter label="Hátizsák & test" icon="🎒" used={state.backpack.used} max={state.backpack.max} />
