@@ -56,8 +56,10 @@ describe('detectPage', () => {
     expect(detectPage(makeDoc('otFegyverbolt'))).toBe(PageType.Shop);
   });
 
-  it('returns Shop for oldalTipus=otPiac', () => {
-    expect(detectPage(makeDoc('otPiac'))).toBe(PageType.Shop);
+  it('returns Market for oldalTipus=otPiac, not Shop', () => {
+    // The market trades player-to-player and has its own desktop panel, so it is
+    // no longer lumped in with the vendor shops.
+    expect(detectPage(makeDoc('otPiac'))).toBe(PageType.Market);
   });
 
   it('returns Unknown and warns for an unrecognised value (e.g. otKocsma)', () => {

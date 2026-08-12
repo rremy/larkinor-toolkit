@@ -11,11 +11,16 @@ theme.
 ```
 lcenter/
 ├── src/
-│   ├── main.ts              # Userscript entry: detect page → proxy DOM → mount Preact
-│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx
+│   ├── main.ts              # Entry: detect platform → bootMobile | bootDesktop
+│   ├── mobile/boot.ts       # Mobile boot: proxy-DOM page replacement
+│   ├── desktop/             # Desktop boot: dock + in-place enhancements
+│   │   ├── boot.ts · DesktopDock.tsx
+│   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
+│   │   └── desktop.css
+│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
 │   ├── hooks/               # useHotkeyConfig
-│   ├── utils/               # pageDetector, domExtract, narration, hotkeys, config
+│   ├── utils/               # platform, pageDetector, domExtract, narration, hotkeys, config
 │   ├── shared/
 │   │   ├── data/
 │   │   │   ├── types.ts     # Weapon, Armor, Item, Monster, MapCell, Shop (typed models)
@@ -64,12 +69,27 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - Single dark-medieval CSS variables sheet; **never add hardcoded hex/rgba in rule bodies** — use `:root` variables and `.lc-db` scopes.
 - `.lc-db` classes scope explorer/map styles; userscript components use `lc-` classes.
 
-#### In-game userscript (`src/main.ts`, `src/pages/`, `src/components/`)
+#### In-game userscript (`src/main.ts`, `src/mobile/`, `src/desktop/`, `src/pages/`, `src/components/`)
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
-- **Proxy-DOM pattern**: on a page we handle (FreeMove, Battle, Dungeon, Login), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. v1 renders FreeMove, Battle, Dungeon, Login.
+- **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon and Home, and leaves the rest untouched; desktop adds its dock to every page.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
+- **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
+  `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
+  override (`lc-platform-override`, set from the config drawer's *Felület* toggle) wins over
+  auto-detection; it takes effect on the next page load.
+  - **Mobile** (`src/mobile/boot.ts`) is the proxy-DOM full replacement described above.
+  - **Desktop** (`src/desktop/boot.ts`) *augments* instead: it never calls `hideOriginalDOM`
+    or injects a viewport meta. It mounts a fixed `#lc-dock-root` companion dock (quick
+    actions, encounter attack, config, database), makes DB-known monster names in the live
+    narration clickable (`enhanceNarration` — text-node splicing only, never `innerHTML`,
+    which would destroy the game's own `<a>` handlers), and binds keyboard shortcuts
+    (WASD/arrows, Space, 1–9, Q, Esc — all suppressed while the event target is a form
+    control, so typing in chat can't move the character). The dock renders on every page,
+    including ones we don't recognise; only free-move gets the full action set.
+  - Because the game page stays visible on desktop, **no CSS may use an unscoped element
+    selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
 
 #### Standalone database (`src/database/`, built separately)
 - **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map).
@@ -87,9 +107,18 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
 - Monster (battle): `img[title*="letpontja"]` → name before the comma, HP after `életpontja:`.
 - Narration: the `font[face="Comic sans MS"]` block; `<br>` is converted to newlines (rendered with `white-space: pre-line`).
 - **Monster detection uses narration sentence templates** (`utils/narration.ts` → `ENCOUNTER_PATTERNS`), each capturing the monster name, resolved against the DB. Add new templates as single-capture-group regexes to that array (there are unit tests per template).
+- **The game wraps every monster name in `<b><font color="…">`**, with a trailing space inside the tag:
+  `Valami <b><font color="#DF4B22">Gyakorlott vízmágus </font></b> csámborog a közelben!`
+  So the encounter sentence is split across three text nodes while the name sits in one. Anything matching these templates against the live DOM must match the **flattened** block text and then map the captured name back to its node — matching per text node finds nothing at all, since no single node holds a whole template. `src/desktop/enhanceNarration.ts` does this; the mobile path is unaffected because `extractNarration` flattens first. When flattening, convert `<br>` to a newline, or sentences either side of a line break concatenate and a boundary-anchored pattern can match across them.
 - **Monster image path**: the DB stores `/pic/szornyk/NAME_k.gif` but the live server serves it at `/szornyk/NAME_k.gif` (no `/pic`) — `MonsterCard.monsterImageUrl` strips the `/pic`. Asset base is `https://l2.larkinor.hu`.
-- The game page ships **no viewport meta**, so mobile browsers assume ~980px; `main.ts` injects `width=device-width` on pages we take over.
+- The game page ships **no viewport meta**, so mobile browsers assume ~980px; `src/mobile/boot.ts` injects `width=device-width` on pages we take over. The desktop boot deliberately does not — the ~980px assumption is correct there.
 - **Encoding gotcha**: `db/monsters.json` had Latin-1/Latin-2 mojibake (`õ`/`û` instead of `ő`/`ű`) that broke name matching against the correctly-encoded live narration — fixed. Watch for this in any scraped Hungarian data.
+- **The game page runs in quirks mode** (`document.compatMode === 'BackCompat'` — verified live; the doctype is unusable). Two inheritance holes bite anything we render inside it, and neither reproduces in the standalone build, which is standards mode:
+  - **Quirks mode does not inherit `color` or `font-size` into tables.** Cells reset to the document default however light the ancestor is — black text at 16px on our dark background. This made the in-game DB overlay's explorer and map nearly unreadable; `theme.css` now forces `color: inherit` on the `.lc-db` table and form elements. The `font-size` half is deliberately left alone (it only makes cells 16px instead of 14px, and fixing it shifts row heights).
+  - **Form controls never inherit `color`** in any mode, so `input`/`select`/`option`/`button`/`textarea` need it set explicitly too.
+  - Practical rule: an in-game component that renders a `<table>` or a form control must set `color` explicitly rather than relying on a coloured ancestor. Everything else (divs, spans) inherits normally.
+- **Geometry of the desktop chat panel** (`#mydiv`, measured live at both 1440×900 and 1280×720): `left: 60, top: 473, 500×300`, absolutely positioned, `z-index: 10`, with its own text input occupying the top ~22px. It is laid out in fixed pixels and **does not move with the window**, which is why `src/desktop/boot.ts`'s `alignDock` can measure once at boot with no resize listener. Its parent is the 633px game content column at `0,−97` — note the negative top, i.e. the column starts above the viewport.
+- **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow
 

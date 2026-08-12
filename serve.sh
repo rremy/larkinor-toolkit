@@ -16,7 +16,10 @@ cd "$(dirname "$0")"
 
 PORT="${PORT:-9912}"
 DIST="dist"
-MONSTERS_SRC="static/db/monsters.json"
+DB_SRC="static/db"
+# The URL baked into the built bundle (see DATA_BASE_URL in the boot modules),
+# rewritten below so a local run fetches data from this server instead.
+PROD_DATA_URL="https://example.invalid/larkinor/static/db"
 
 # --- Detect a reachable LAN IP (falls back to localhost) ---------------------
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true)"
@@ -26,19 +29,27 @@ HOST="$IP:$PORT"
 echo "==> Building main userscript..."
 npm run build >/dev/null
 
-# --- Stage monster DB next to the script ------------------------------------
-if [ -f "$MONSTERS_SRC" ]; then
-  cp "$MONSTERS_SRC" "$DIST/monsters.json"
-  echo "==> Copied monster DB ($(wc -c < "$DIST/monsters.json" | tr -d ' ') bytes)"
+# --- Stage the game data next to the script ---------------------------------
+# Served at the same relative path the production host uses, so the rewrite
+# below is a pure origin swap.
+if [ -d "$DB_SRC" ]; then
+  mkdir -p "$DIST/static"
+  cp -R "$DB_SRC" "$DIST/static/db"
+  echo "==> Copied game DB ($(ls "$DIST/static/db" | wc -l | tr -d ' ') files)"
 else
-  echo "WARNING: $MONSTERS_SRC not found — monster tooltips will be disabled." >&2
-  echo "[]" > "$DIST/monsters.json"
+  echo "WARNING: $DB_SRC not found — the database overlay and monster links will not work." >&2
 fi
 
-# --- Bake the real monsters URL into the built script -----------------------
-# (main.ts ships with the YOUR_DOMAIN_HERE placeholder)
-sed -i '' "s#https://YOUR_DOMAIN_HERE/monsters.json#http://$HOST/monsters.json#g" \
-  "$DIST/larkinor-ui.user.js"
+# --- Point the built script at this server's copy of the data ---------------
+# Without this the bundle fetches from the production host, which the generated
+# loader does not @connect — ViolentMonkey would block it silently.
+if grep -q "$PROD_DATA_URL" "$DIST/larkinor-ui.user.js"; then
+  sed -i '' "s#$PROD_DATA_URL#http://$HOST/static/db#g" "$DIST/larkinor-ui.user.js"
+  echo "==> Repointed data URL at http://$HOST/static/db"
+else
+  echo "WARNING: '$PROD_DATA_URL' not found in the built script — the data URL in" >&2
+  echo "         the boot modules changed. Update PROD_DATA_URL in serve.sh." >&2
+fi
 
 # --- Generate a ready-to-install loader pointing at this server -------------
 cat > "$DIST/larkinor-loader.user.js" <<EOF
@@ -76,7 +87,7 @@ cat <<EOF
   Larkinor UI — local server
 ============================================================
   Main script : http://$HOST/larkinor-ui.user.js
-  Monster DB  : http://$HOST/monsters.json
+  Game DB     : http://$HOST/static/db/monsters.json
   LOADER      : http://$HOST/larkinor-loader.user.js   <-- install this
 
   ONE-TIME SETUP (per device):

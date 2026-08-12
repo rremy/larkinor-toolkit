@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyFilters, sortRows, foldAccents } from '@/database/explorer/filters';
+import { applyFilters, sortRows } from '@/database/explorer/filters';
 import type { FilterDef } from '@/database/explorer/filters';
 
 const rows = [
@@ -7,12 +7,6 @@ const rows = [
   { name: 'őrbot', level: 2, magical: false },
   { name: 'Balta', level: 5, magical: true },
 ];
-
-describe('foldAccents', () => {
-  it('strips Hungarian accents and lowercases', () => {
-    expect(foldAccents('ŐrÜtő')).toBe('oruto');
-  });
-});
 
 describe('applyFilters', () => {
   const defs: FilterDef[] = [

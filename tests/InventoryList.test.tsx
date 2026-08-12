@@ -14,6 +14,7 @@ const ITEMS: HomeItem[] = [
   item({ index: 0, name: 'halcsont', weight: 0.2, amount: 89, totalWeight: 17.8 }),
   item({ index: 1, name: 'agyar', weight: 4, amount: 6, totalWeight: 24 }),
   item({ index: 2, name: 'ezüst', weight: 0.0001, amount: 2686, totalWeight: 0.2686 }),
+  item({ index: 3, name: 'gyíkbőr', weight: 0.2, amount: 7, totalWeight: 1.4 }),
 ];
 
 describe('InventoryList', () => {
@@ -25,6 +26,17 @@ describe('InventoryList', () => {
     const rows = container.querySelectorAll('.lc-inv-row');
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain('agyar');
+  });
+
+  it('finds an accented name typed without accents', () => {
+    // Nobody types the accents: "gyikbor" has to find "gyíkbőr".
+    const { getByPlaceholderText, container } = render(
+      <InventoryList items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+    fireEvent.input(getByPlaceholderText(/Keresés/), { target: { value: 'gyikbor' } });
+    const rows = container.querySelectorAll('.lc-inv-row');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain('gyíkbőr');
   });
 
   it('sorts by total weight descending', () => {

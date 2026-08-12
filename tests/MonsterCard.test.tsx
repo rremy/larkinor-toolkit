@@ -85,4 +85,27 @@ describe('MonsterCard', () => {
     expect(screen.queryByRole('button', { name: 'ezüst' })).toBeNull();
     expect(screen.getByText(/ezüst/)).toBeTruthy();
   });
+
+  it('renders as a bottom sheet by default', () => {
+    const { container } = render(<MonsterCard monster={MONSTER} onClose={vi.fn()} />);
+    const backdrop = container.querySelector('.lc-drawer-backdrop')!;
+    expect(backdrop.classList.contains('lc-drawer-backdrop--center')).toBe(false);
+  });
+
+  it('renders as a centered modal when the modal variant is requested', () => {
+    const { container } = render(
+      <MonsterCard monster={MONSTER} onClose={vi.fn()} variant="modal" />
+    );
+    const backdrop = container.querySelector('.lc-drawer-backdrop')!;
+    expect(backdrop.classList.contains('lc-drawer-backdrop--center')).toBe(true);
+  });
+
+  it('still closes on a backdrop click in the modal variant', () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <MonsterCard monster={MONSTER} onClose={onClose} variant="modal" />
+    );
+    fireEvent.click(container.querySelector('.lc-drawer-backdrop')!);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

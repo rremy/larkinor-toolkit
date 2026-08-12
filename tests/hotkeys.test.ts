@@ -9,8 +9,24 @@ describe('hotkey catalog', () => {
     const keys = HOTKEY_CATALOG.map(h => h.key);
     expect(keys).toEqual([
       'kajal', 'imadkozas', 'manaital', 'mobilidoxin',
-      'vargyogy', 'burok', 'as', 'ongyilok', 'kilep',
+      'vargyogy', 'homeport', 'burok', 'as', 'ongyilok', 'kilep',
     ]);
+  });
+
+  it('maps "elmondasz egy hómportot" to its irregular icon', () => {
+    // The tevFajta value carries an extra "e" the icon name does not; both were
+    // read off the live page (option value, and a 48x29 icon that loads).
+    expect(getHotkey('homeport')?.icon).toBe('sc_homport');
+    expect(hotkeyIconUrl(getHotkey('homeport')!)).toBe('https://l2.larkinor.hu/2/ikon/sc_homport.gif');
+  });
+
+  it('offers every catalogued action in the config list with a label and icon', () => {
+    // The config drawer renders straight from the catalog, so an entry missing
+    // either field would ship an unlabelled or broken row.
+    for (const hk of HOTKEY_CATALOG) {
+      expect(hk.label.length, hk.key).toBeGreaterThan(0);
+      expect(hk.icon.startsWith('sc_'), hk.key).toBe(true);
+    }
   });
 
   it('looks up a hotkey by its tevFajta value', () => {

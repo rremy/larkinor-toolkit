@@ -2,7 +2,10 @@
 // config. Keyed by the game's tevFajta option value; each maps to the shortcut
 // icon the game serves at /2/ikon/<icon>.gif. Most icon names are the ASCII-
 // folded action word, but a few are irregular (verified against the live
-// server): burok -> sc_durex, ongyilok -> sc_ongyilkossag, kilep -> sc_kilep.
+// server): burok -> sc_durex, ongyilok -> sc_ongyilkossag, kilep -> sc_kilep,
+// and homeport -> sc_homport (the tevFajta value carries an extra "e" the icon
+// name does not). Probe a candidate against the live host before adding it —
+// a wrong name renders a broken image with no other symptom.
 
 export interface Hotkey {
   /** The tevFajta <option> value on the free-move screen. */
@@ -21,6 +24,7 @@ export const HOTKEY_CATALOG: Hotkey[] = [
   { key: 'manaital', label: 'Manaital', icon: 'sc_manaital' },
   { key: 'mobilidoxin', label: 'Mobilidoxin', icon: 'sc_mobilidoxin' },
   { key: 'vargyogy', label: 'Gyógyvarázs', icon: 'sc_gyogyvarazs' },
+  { key: 'homeport', label: 'Hómport', icon: 'sc_homport' },
   { key: 'burok', label: 'Varázsburok', icon: 'sc_durex' },
   { key: 'as', label: 'Ásol', icon: 'sc_asas' },
   { key: 'ongyilok', label: 'Öngyilkosság', icon: 'sc_ongyilkossag' },

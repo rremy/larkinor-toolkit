@@ -17,6 +17,7 @@
   --good: #6fb56f;
   --mp: #4a7acc;
   --sea: #2c4a6e;
+  --dock-shadow: rgba(0, 0, 0, 0.5);
   /* District tints (Térkép / map view) */
   --varos: #c8b27a;  --magus: #6d8db6;  --harcos: #b65d4a;
   --kezdo: #d6c075;  --sotet: #5e4378;  --szikla: #7d6a55;
@@ -188,6 +189,36 @@
   to   { transform: translateY(0); }
 }
 
+/* Desktop variant: the same drawer components as a centered modal dialog. */
+.lc-drawer-backdrop--center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lc-drawer-backdrop--center > .lc-drawer {
+  position: relative;
+  width: auto;
+  min-width: 320px;
+  max-width: 520px;
+  max-height: 84dvh;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: lc-fade-in 0.15s ease-out;
+}
+
+@keyframes lc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Monster name made clickable inside the live game narration (desktop only). */
+.lc-narr-link {
+  color: var(--accent);
+  border-bottom: 1px dotted var(--accent);
+  cursor: pointer;
+}
+
 .lc-drawer-close {
   position: absolute;
   top: 12px;
@@ -252,6 +283,9 @@
 /* Config drawer */
 .lc-config-title { margin: 0 0 12px; padding-right: 36px; font-size: 16px; color: var(--accent); }
 .lc-config-hotkeys { display: flex; flex-direction: column; gap: 6px; }
+/* Separates the hotkey list from the next section's heading ("Felület") —
+   without this the heading sits flush against the last hotkey row. */
+.lc-config-hotkeys + .lc-config-title { margin-top: 20px; }
 .lc-config-hotkey {
   display: flex;
   align-items: center;
@@ -271,6 +305,19 @@
 .lc-config-hotkey-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
 .lc-config-hotkey-label { flex: 1; }
 .lc-config-hotkey-check { color: var(--accent); font-weight: bold; width: 16px; text-align: center; }
+.lc-config-platform { display: flex; gap: 6px; margin-bottom: 8px; }
+.lc-config-platform-btn {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.lc-config-platform-btn--on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+.lc-config-note { margin: 0; font-size: 11px; color: var(--muted); }
 .lc-stat-row { display: flex; align-items: center; gap: 10px; }
 .lc-stat-label { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
 .lc-stat-value { font-size: 13px; color: var(--muted); min-width: 80px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
@@ -546,6 +593,23 @@
 
 .lc-db, .lc-db *, .lc-db *::before, .lc-db *::after { box-sizing: border-box; }
 
+/* Restore colour inheritance the browser withholds.
+   In-game the overlay renders inside the live game page, which has no usable
+   doctype and so runs in quirks mode. Two holes leave text at the document
+   default — black, all but invisible on our dark background:
+     - Quirks mode does not inherit colour into tables, so every cell resets
+       however light its ancestors are. The explorer and the map are both
+       tables, which is most of the overlay.
+     - Form controls never inherit colour, in any mode or document.
+   `inherit` rather than a literal so the more specific rules further down
+   (td.name, td.dim, button.clear, the map's cell labels) still win, and so the
+   value keeps tracking --text on .lc-db. */
+.lc-db table, .lc-db caption, .lc-db thead, .lc-db tbody, .lc-db tr,
+.lc-db th, .lc-db td,
+.lc-db input, .lc-db select, .lc-db option, .lc-db textarea, .lc-db button {
+  color: inherit;
+}
+
 .lc-db header.top {
   padding: 12px 18px;
   background: var(--panel);
@@ -795,20 +859,89 @@
   overflow: auto;
 }
 
-.lc-db-overlay-close {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 10000;
+/* Minimised: docked into the empty space beside the game rather than covering
+   the page, so the game stays visible and playable. --lc-game-right is the
+   game's measured right edge (791px on the live layout), written at boot by
+   src/desktop/boot.ts; the fallback keeps this sane if it is ever absent. */
+.lc-db-overlay--minimized {
+  left: var(--lc-game-right, 791px);
+  /* Explicit rather than relying on the base rule's `inset: 0`, so the panel
+     provably stretches to the viewport edge and fills the space instead of
+     shrink-wrapping its content. */
+  right: 0;
+  width: auto;
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 16px var(--dock-shadow);
+}
+
+/* In a panel the database's own "Larkinor adatbázis" heading is redundant — the
+   panel's header bar already names it — and dropping it gives the tab row the
+   full width, which matters most when docked beside the game. Standalone, where
+   there is no panel header, the heading stays. */
+.lc-db-overlay .lc-db header.top h1 { display: none; }
+
+/* The five tabs need ~412px and the docked panel is often narrower, which left
+   the last two unreachable. The mobile breakpoint already solves this, but it
+   keys on viewport width — useless for a narrow panel inside a wide window — so
+   the same treatment is repeated for the docked case. */
+.lc-db-overlay--minimized .lc-db .tabs {
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.lc-db-overlay--minimized .lc-db .tab { flex-shrink: 0; }
+
+/* Panel header bar. The window controls live here rather than floating in the
+   corner as position: fixed, which painted over whatever the panel put in its
+   top-right — the market's second column header, for one — and over any panel
+   nested inside this one. */
+.lc-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
   background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.lc-panel-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+.lc-panel-controls { display: flex; gap: 6px; flex-shrink: 0; }
+
+.lc-db-overlay-minimize {
   width: 32px;
   height: 32px;
+  padding: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
   border-radius: 4px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lc-db-overlay-minimize:hover,
+.lc-db-overlay-minimize:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.lc-db-overlay-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
   font-size: 18px;
   line-height: 1;
-  padding: 0;
   cursor: pointer;
 }
 
@@ -900,6 +1033,122 @@
 .lc-cap-fill--crit { background: var(--bad); }
 
 /* Tabs */
+/* Split layout — both containers at once, for the desktop docked panel.
+   The base .lc-page caps at 600px and centres, which is right for a phone and
+   strangles two columns in a 700px panel. */
+.lc-page--wide { max-width: none; padding: 10px; gap: 10px; }
+
+/* container-type here rather than on .lc-page so the query measures the panel
+   this is rendered into. A viewport media query would be the wrong tool: the
+   panel can be narrow inside a wide window, which is exactly how the database
+   tab row ended up clipped. */
+.lc-home-split-host { container-type: inline-size; }
+
+.lc-home-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Too narrow for two columns: stack rather than hide one, so both containers
+   stay reachable without a tab. */
+@container (max-width: 560px) {
+  .lc-home-split { grid-template-columns: 1fr; }
+}
+
+.lc-home-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.lc-home-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lc-home-col-head h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+/* Market panel — offerable backpack items and standing offers. Shares the split
+   layout above, since the task is the same shape: move things between two
+   lists. */
+.lc-mkt-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+
+.lc-mkt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px 74px auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--row-border);
+}
+.lc-mkt-row:last-child { border-bottom: 0; }
+
+/* A disabled field reads as inert rather than merely grey. */
+.lc-mkt-field input:disabled { color: var(--muted); cursor: default; opacity: 1; }
+
+.lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+
+/* Item names open the item's database entry, the same affordance the inventory
+   rows have. Styled here rather than by reusing .lc-inv-name, whose 15px would
+   win on source order and break this row's sizing. */
+.lc-mkt-name--link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  border-bottom: 1px dotted var(--accent-dim);
+  cursor: pointer;
+}
+.lc-mkt-name--link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* What the market pays, as printed in the game's own item list. */
+.lc-mkt-pct {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+/* An assumed rate, not one the market quoted — muted so it does not read as
+   authoritative. */
+.lc-mkt-pct--assumed { color: var(--muted); border-color: var(--border); }
+
+.lc-mkt-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-mkt-total { color: var(--good); }
+
+.lc-mkt-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lc-mkt-field span { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.lc-mkt-field input {
+  width: 100%;
+  padding: 4px 5px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.lc-mkt-field input:focus { outline: none; border-color: var(--accent); }
+
+.lc-mkt-offer-btn,
+.lc-mkt-revoke-btn {
+  padding: 5px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-mkt-offer-btn:hover:not(:disabled),
+.lc-mkt-revoke-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+.lc-mkt-offer-btn:disabled { color: var(--muted); cursor: not-allowed; }
+.lc-mkt-revoke-btn { border-color: var(--bad); color: var(--bad); }
+
+.lc-mkt-empty { margin: 0; padding: 10px 8px; font-size: 12px; color: var(--muted); }
+
 .lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
 .lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
 .lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }
