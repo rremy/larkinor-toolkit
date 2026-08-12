@@ -593,6 +593,23 @@
 
 .lc-db, .lc-db *, .lc-db *::before, .lc-db *::after { box-sizing: border-box; }
 
+/* Restore colour inheritance the browser withholds.
+   In-game the overlay renders inside the live game page, which has no usable
+   doctype and so runs in quirks mode. Two holes leave text at the document
+   default — black, all but invisible on our dark background:
+     - Quirks mode does not inherit colour into tables, so every cell resets
+       however light its ancestors are. The explorer and the map are both
+       tables, which is most of the overlay.
+     - Form controls never inherit colour, in any mode or document.
+   `inherit` rather than a literal so the more specific rules further down
+   (td.name, td.dim, button.clear, the map's cell labels) still win, and so the
+   value keeps tracking --text on .lc-db. */
+.lc-db table, .lc-db caption, .lc-db thead, .lc-db tbody, .lc-db tr,
+.lc-db th, .lc-db td,
+.lc-db input, .lc-db select, .lc-db option, .lc-db textarea, .lc-db button {
+  color: inherit;
+}
+
 .lc-db header.top {
   padding: 12px 18px;
   background: var(--panel);
