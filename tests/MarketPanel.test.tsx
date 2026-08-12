@@ -5,7 +5,7 @@ import { MARKET_MINIMIZED_KEY } from '../src/utils/config';
 import type { MarketItem, MarketListing, MarketState } from '../src/utils/marketExtract';
 
 function item(name: string, amount: number, price: number | null, percent: number | null, index: number): MarketItem {
-  const suggestedPrice = price === null ? null : percent === null ? price : Math.round((price * percent) / 100);
+  const suggestedPrice = price === null ? null : Math.round((price * (percent ?? 500)) / 100);
   return {
     name, amount, index, price, pricePercent: percent, suggestedPrice,
     type: 'tárgy', weight: 0.04, totalWeight: 0.04 * amount, magical: false, attrs: [],
@@ -80,6 +80,24 @@ describe('MarketPanel', () => {
 
     expect(meta).not.toContain('piaci ár');
     expect(meta).not.toContain('bolti ár');
+  });
+
+  it('marks an assumed rate as ours rather than the market\'s', () => {
+    // bölényszakáll is priced but unquoted on the live page: the suggestion is
+    // then a guess and must not read as the game's own figure.
+    const state = makeState({ items: [item('bölényszakáll', 5, 40, null, 4)] });
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const badge = container.querySelector('.lc-mkt-pct')!;
+
+    expect(badge.textContent).toBe('500%?');
+    expect(badge.classList.contains('lc-mkt-pct--assumed')).toBe(true);
+    // 40 x 500%
+    expect(container.querySelectorAll<HTMLInputElement>('.lc-mkt-field input')[1].value).toBe('200');
+  });
+
+  it('shows no rate badge at all when there is no price to scale', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    expect(rowFor(container, 'ezüst').querySelector('.lc-mkt-pct')).toBeNull();
   });
 
   it('shows the market percentage so the suggested price is explainable', () => {

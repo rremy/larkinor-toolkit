@@ -23,9 +23,9 @@ export interface MarketItem extends ParsedDetail {
   /** What the market pays for this item, as a percentage (170 = 170%). */
   pricePercent: number | null;
   /**
-   * Price to offer at: the item's Ár scaled by the market percentage. Falls back
-   * to the plain Ár when the item is absent from the percentage table, and is
-   * null for items the game gives no price at all (silver, for one).
+   * Price to offer at: the item's Ár scaled by the market percentage, or by
+   * DEFAULT_PRICE_PERCENT when the market does not quote the item. Null for items
+   * the game gives no price at all (silver, for one).
    */
   suggestedPrice: number | null;
 }
@@ -96,11 +96,22 @@ export function parsePricePercents(doc: Document): Map<string, number> {
   return percents;
 }
 
-/** Ár scaled by the market percentage, rounded to whole silver. */
+/**
+ * Rate assumed for an item the market does not quote. The plain Ár (i.e. 100%)
+ * was a poor default: the quoted rates on the live page run from 50% to 2500%,
+ * so an unquoted item is far likelier to be worth a multiple of its shop price
+ * than exactly it. Deliberately a guess, and marked as one in the UI.
+ */
+export const DEFAULT_PRICE_PERCENT = 500;
+
+/**
+ * Ár scaled by the market percentage, rounded to whole silver. Unquoted items
+ * fall back to DEFAULT_PRICE_PERCENT; an item the game gives no price at all
+ * cannot be priced.
+ */
 export function suggestPrice(price: number | null, percent: number | null): number | null {
   if (price === null) return null;
-  if (percent === null) return price;
-  return Math.round((price * percent) / 100);
+  return Math.round((price * (percent ?? DEFAULT_PRICE_PERCENT)) / 100);
 }
 
 export function extractMarket(doc: Document): MarketState {

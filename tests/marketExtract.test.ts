@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { extractMarket, parsePricePercents, suggestPrice } from '../src/utils/marketExtract';
+import { DEFAULT_PRICE_PERCENT, extractMarket, parsePricePercents, suggestPrice } from '../src/utils/marketExtract';
 
 /**
  * Sanitised reconstruction of the live market page (otPiac). Values are the real
@@ -65,8 +65,11 @@ describe('suggestPrice', () => {
     expect(suggestPrice(33, 170)).toBe(56); // 56.1
   });
 
-  it('falls back to the plain price when the item has no percentage', () => {
-    expect(suggestPrice(50, null)).toBe(50);
+  it('assumes 500% for an item the market does not quote', () => {
+    // The plain Ár was a poor default: quoted rates on the live page run 50% to
+    // 2500%, so an unquoted item is unlikely to be worth exactly its shop price.
+    expect(DEFAULT_PRICE_PERCENT).toBe(500);
+    expect(suggestPrice(50, null)).toBe(250);
   });
 
   it('has nothing to suggest for an item with no price', () => {
@@ -103,9 +106,23 @@ describe('extractMarket', () => {
   });
 
   it('suggests nothing for an item the game prices at nothing', () => {
+    // Silver has no Ár, so there is no figure to scale — the 500% default cannot
+    // rescue it.
     const { items } = extractMarket(marketDoc());
     const silver = items.find(i => i.name === 'ezüst')!;
     expect(silver.suggestedPrice).toBeNull();
+    expect(silver.pricePercent).toBeNull();
+  });
+
+  it('prices an unquoted item at the assumed rate, leaving the percent unknown', () => {
+    const doc = marketDoc();
+    // Drop jáspis from the quote list so it becomes an unquoted, priced item.
+    const melyik = doc.querySelector<HTMLSelectElement>('select[name="melyik"]')!;
+    melyik.querySelector('option[value="37"]')!.remove();
+
+    const jaspis = extractMarket(doc).items.find(i => i.name === 'jáspis')!;
+    expect(jaspis.pricePercent).toBeNull();       // genuinely unknown
+    expect(jaspis.suggestedPrice).toBe(250);      // 50 x 500%
   });
 
   it('drives the game form to offer an item', () => {

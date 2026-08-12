@@ -1,6 +1,6 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import type { MarketItem, MarketListing, MarketState } from '@/utils/marketExtract';
+import { DEFAULT_PRICE_PERCENT, type MarketItem, type MarketListing, type MarketState } from '@/utils/marketExtract';
 import { DockedPanel } from '@/components/DockedPanel';
 import { MARKET_MINIMIZED_KEY } from '@/utils/config';
 import { matchesSearch } from '@/shared/text';
@@ -46,7 +46,19 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
           >
             {item.name}
           </button>
-          {item.pricePercent !== null && <span class="lc-mkt-pct">{item.pricePercent}%</span>}
+          {item.pricePercent !== null ? (
+            <span class="lc-mkt-pct">{item.pricePercent}%</span>
+          ) : item.suggestedPrice !== null && (
+            /* The market does not quote this item, so the rate behind the
+               suggested price is ours. Marked, so the figure is not mistaken for
+               the game's own. */
+            <span
+              class="lc-mkt-pct lc-mkt-pct--assumed"
+              title={`A piac nem adja meg az árfolyamot — ${DEFAULT_PRICE_PERCENT}%-kal számolva`}
+            >
+              {DEFAULT_PRICE_PERCENT}%?
+            </span>
+          )}
         </div>
         <div class="lc-mkt-meta">
           <span>{item.amount} db</span>
