@@ -29,8 +29,8 @@ echo "==> Building main userscript (base URL http://$HOST)..."
 LC_PUBLIC_BASE_URL="http://$HOST" npm run build >/dev/null
 
 # --- Stage the game data next to the script ---------------------------------
-# Served at the same relative path the production host uses, so the rewrite
-# below is a pure origin swap.
+# Served at `static/db`, the same relative path every deployment uses, so the
+# base URL above is the only thing that differs from a production build.
 if [ -d "$DB_SRC" ]; then
   mkdir -p "$DIST/static"
   cp -R "$DB_SRC" "$DIST/static/db"
