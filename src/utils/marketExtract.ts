@@ -36,6 +36,12 @@ export interface MarketListing {
   /** Position in the offers select — what the revoke handler indexes by. */
   index: number;
   detail: ParsedDetail | null;
+  /**
+   * What the market pays for this item, as a percentage — the same figure the
+   * offerable rows show, so an asking price can be judged against it. Null when
+   * the offer's own detail block gave us no name to look up.
+   */
+  pricePercent: number | null;
   revoke: () => void;
 }
 
@@ -116,18 +122,22 @@ export function extractMarket(doc: Document): MarketState {
 
   const offerSelect = selectIn(doc, 'eladasUrlap', 'felkinalt');
   const details = parseCuccArray(scriptText, 'felkinaltTargyak');
-  const listings: MarketListing[] = Array.from(offerSelect?.options ?? []).map((option, index) => ({
-    label: option.text.trim(),
-    index,
-    detail: details[index] !== undefined ? parseCuccDetail(details[index]) : null,
-    revoke: () => {
-      const select = selectIn(doc, 'eladasUrlap', 'felkinalt');
-      const button = imageButtonByBasename(doc, REVOKE_BUTTON);
-      if (!select || !button) return;
-      select.selectedIndex = index;
-      button.click();
-    },
-  }));
+  const listings: MarketListing[] = Array.from(offerSelect?.options ?? []).map((option, index) => {
+    const detail = details[index] !== undefined ? parseCuccDetail(details[index]) : null;
+    return {
+      label: option.text.trim(),
+      index,
+      detail,
+      pricePercent: detail ? percents.get(detail.name.toLowerCase()) ?? null : null,
+      revoke: () => {
+        const select = selectIn(doc, 'eladasUrlap', 'felkinalt');
+        const button = imageButtonByBasename(doc, REVOKE_BUTTON);
+        if (!select || !button) return;
+        select.selectedIndex = index;
+        button.click();
+      },
+    };
+  });
 
   const offer = (item: MarketItem, qty: number, price: number): void => {
     const select = selectIn(doc, 'eladasUrlap', 'hatizsak');

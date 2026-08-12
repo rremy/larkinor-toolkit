@@ -12,11 +12,11 @@ function item(name: string, amount: number, price: number | null, percent: numbe
   };
 }
 
-function listing(label: string, index: number, name?: string): MarketListing {
+function listing(label: string, index: number, name?: string, percent: number | null = null): MarketListing {
   const detail = name
     ? { name, type: 'tárgy' as const, weight: 1, amount: 1, totalWeight: 1, price: null, magical: false, attrs: [] }
     : null;
-  return { label, index, detail, revoke: vi.fn() };
+  return { label, index, detail, pricePercent: percent, revoke: vi.fn() };
 }
 
 /** Real figures from the live page: jáspis 50 ezüst at 170% → 85. */
@@ -27,7 +27,7 @@ function makeState(overrides: Partial<MarketState> = {}): MarketState {
       item('jáspis', 19, 50, 170, 2),
       item('gyíkbőr', 7, 10, 120, 3),
     ],
-    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar')],
+    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar', 565)],
     offer: vi.fn(),
     ...overrides,
   };
@@ -205,11 +205,28 @@ describe('MarketPanel', () => {
     });
   });
 
+  it('shows the market percentage on a standing offer, as the offerable rows do', () => {
+    // Same badge, so an asking price in the label can be judged against what the
+    // market actually pays.
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const offers = container.querySelectorAll('.lc-home-col')[1];
+
+    expect(offers.querySelector('.lc-mkt-pct')!.textContent).toBe('565%');
+  });
+
+  it('omits the badge on an offer with no percentage to show', () => {
+    const state = makeState({ listings: [listing('valami furcsa sor', 0)] });
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const offers = container.querySelectorAll('.lc-home-col')[1];
+
+    expect(offers.querySelector('.lc-mkt-pct')).toBeNull();
+  });
+
   describe('searching the standing offers', () => {
     const OFFERS = [
-      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar'),
-      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs'),
-      listing('19 db. gyíkbőr 50 ezüst/db. áron', 2, 'gyíkbőr'),
+      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar', 565),
+      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs', 2258),
+      listing('19 db. gyíkbőr 50 ezüst/db. áron', 2, 'gyíkbőr', 500),
     ];
 
     it('filters the offers by name', () => {

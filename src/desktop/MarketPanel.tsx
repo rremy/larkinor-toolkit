@@ -104,17 +104,22 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
   return (
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
-        {name ? (
-          <button
-            class="lc-mkt-name lc-mkt-name--link"
-            title={`${name} — adatlap`}
-            onClick={() => onOpenDetail(name)}
-          >
-            {listing.label}
-          </button>
-        ) : (
-          <span class="lc-mkt-name">{listing.label}</span>
-        )}
+        <div class="lc-mkt-name-line">
+          {name ? (
+            <button
+              class="lc-mkt-name lc-mkt-name--link"
+              title={`${name} — adatlap`}
+              onClick={() => onOpenDetail(name)}
+            >
+              {listing.label}
+            </button>
+          ) : (
+            <span class="lc-mkt-name">{listing.label}</span>
+          )}
+          {/* Same badge as the offerable rows: what the market pays, so the
+              asking price in the label can be judged against it. */}
+          {listing.pricePercent !== null && <span class="lc-mkt-pct">{listing.pricePercent}%</span>}
+        </div>
       </div>
       <button class="lc-mkt-revoke-btn" title="Visszavonod" onClick={() => listing.revoke()}>
         Visszavon

@@ -32,6 +32,7 @@ const MARKET_HTML = `
       <option value="37">jáspis (170%)</option>
       <option value="41">vámpír kard (300%)</option>
       <option value="338">1 hetes kenyér (3000%)</option>
+      <option value="94">agyar (565%)</option>
     </select>
     <input type="text" name="mennyit">
   </form>
@@ -151,6 +152,19 @@ describe('extractMarket', () => {
     const select = doc.forms.namedItem('eladasUrlap')!.elements.namedItem('felkinalt') as HTMLSelectElement;
     expect(select.selectedIndex).toBe(1);
     expect(clicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('carries the market percentage onto standing offers', () => {
+    // Looked up from the offer's own detail block, so the offers column can show
+    // the same badge the offerable rows do.
+    const { listings } = extractMarket(marketDoc());
+
+    const agyar = listings.find(l => l.detail?.name === 'agyar')!;
+    expect(agyar.pricePercent).toBe(565);
+
+    // "4 élű kard" is absent from the percentage table in this fixture.
+    const kard = listings.find(l => l.detail?.name === '4 élű kard')!;
+    expect(kard.pricePercent).toBeNull();
   });
 
   it('does not throw on a page missing the market forms', () => {
