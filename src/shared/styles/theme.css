@@ -1083,7 +1083,22 @@
 
 .lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+
+/* Item names open the item's database entry, the same affordance the inventory
+   rows have. Styled here rather than by reusing .lc-inv-name, whose 15px would
+   win on source order and break this row's sizing. */
+.lc-mkt-name--link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  border-bottom: 1px dotted var(--accent-dim);
+  cursor: pointer;
+}
+.lc-mkt-name--link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* What the market pays, as printed in the game's own item list. */
 .lc-mkt-pct {

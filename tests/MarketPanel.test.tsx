@@ -12,8 +12,11 @@ function item(name: string, amount: number, price: number | null, percent: numbe
   };
 }
 
-function listing(label: string, index: number): MarketListing {
-  return { label, index, detail: null, revoke: vi.fn() };
+function listing(label: string, index: number, name?: string): MarketListing {
+  const detail = name
+    ? { name, type: 'tárgy' as const, weight: 1, amount: 1, totalWeight: 1, price: null, magical: false, attrs: [] }
+    : null;
+  return { label, index, detail, revoke: vi.fn() };
 }
 
 /** Real figures from the live page: jáspis 50 ezüst at 170% → 85. */
@@ -24,7 +27,7 @@ function makeState(overrides: Partial<MarketState> = {}): MarketState {
       item('jáspis', 19, 50, 170, 2),
       item('gyíkbőr', 7, 10, 120, 3),
     ],
-    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1)],
+    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar')],
     offer: vi.fn(),
     ...overrides,
   };
@@ -140,6 +143,48 @@ describe('MarketPanel', () => {
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
     expect(names).toContain('gyíkbőr');
     expect(names).not.toContain('jáspis');
+  });
+
+  describe('item names open the item detail', () => {
+    it('opens the database on an offerable item', () => {
+      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
+
+      fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-name--link')!);
+
+      // The detail stacks above the market rather than replacing it.
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(2);
+      expect(container.querySelector('.lc-home-split')).not.toBeNull();
+    });
+
+    it('opens the database from a standing offer', () => {
+      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      const offersCol = container.querySelectorAll('.lc-home-col')[1];
+
+      fireEvent.click(offersCol.querySelector<HTMLElement>('.lc-mkt-name--link')!);
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(2);
+    });
+
+    it('leaves an offer we could not parse a name from as plain text', () => {
+      const state = makeState({ listings: [listing('valami furcsa sor', 0)] });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+      const offersCol = container.querySelectorAll('.lc-home-col')[1];
+
+      expect(offersCol.querySelector('.lc-mkt-name--link')).toBeNull();
+      expect(offersCol.textContent).toContain('valami furcsa sor');
+    });
+
+    it('closes the detail and leaves the market open', () => {
+      const onClose = vi.fn();
+      const { container } = render(<MarketPanel open state={makeState()} onClose={onClose} />);
+      fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-name--link')!);
+
+      const closers = document.querySelectorAll('.lc-db-overlay-close');
+      fireEvent.click(closers[closers.length - 1] as HTMLElement);
+
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   it('says so when there is nothing offered yet', () => {

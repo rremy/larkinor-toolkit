@@ -4,6 +4,7 @@ import type { MarketItem, MarketListing, MarketState } from '@/utils/marketExtra
 import { DockedPanel } from '@/components/DockedPanel';
 import { MARKET_MINIMIZED_KEY } from '@/utils/config';
 import { matchesSearch } from '@/shared/text';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 
 export interface MarketPanelProps {
   open: boolean;
@@ -19,6 +20,7 @@ function silver(n: number): string {
 interface OfferRowProps {
   item: MarketItem;
   onOffer: (item: MarketItem, qty: number, price: number) => void;
+  onOpenDetail: (name: string) => void;
 }
 
 /**
@@ -26,7 +28,7 @@ interface OfferRowProps {
  * price at what the market pays — the two values you would otherwise type by
  * hand every time — so offering is a single click unless you want to change one.
  */
-function OfferRow({ item, onOffer }: OfferRowProps): JSX.Element {
+function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
   const [qty, setQty] = useState(item.amount);
   const [price, setPrice] = useState(item.suggestedPrice ?? 0);
 
@@ -37,7 +39,13 @@ function OfferRow({ item, onOffer }: OfferRowProps): JSX.Element {
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
         <div class="lc-mkt-name-line">
-          <span class="lc-mkt-name">{item.name}</span>
+          <button
+            class="lc-mkt-name lc-mkt-name--link"
+            title={`${item.name} — adatlap`}
+            onClick={() => onOpenDetail(item.name)}
+          >
+            {item.name}
+          </button>
           {item.pricePercent !== null && <span class="lc-mkt-pct">{item.pricePercent}%</span>}
         </div>
         <div class="lc-mkt-meta">
@@ -82,11 +90,27 @@ function OfferRow({ item, onOffer }: OfferRowProps): JSX.Element {
   );
 }
 
-function ListingRow({ listing }: { listing: MarketListing }): JSX.Element {
+interface ListingRowProps {
+  listing: MarketListing;
+  onOpenDetail: (name: string) => void;
+}
+
+function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
+  const name = listing.detail?.name;
   return (
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
-        <span class="lc-mkt-name">{listing.label}</span>
+        {name ? (
+          <button
+            class="lc-mkt-name lc-mkt-name--link"
+            title={`${name} — adatlap`}
+            onClick={() => onOpenDetail(name)}
+          >
+            {listing.label}
+          </button>
+        ) : (
+          <span class="lc-mkt-name">{listing.label}</span>
+        )}
       </div>
       <button class="lc-mkt-revoke-btn" title="Visszavonod" onClick={() => listing.revoke()}>
         Visszavon
@@ -106,6 +130,7 @@ function ListingRow({ listing }: { listing: MarketListing }): JSX.Element {
  */
 export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Element {
   const [search, setSearch] = useState('');
+  const [detailName, setDetailName] = useState<string | undefined>(undefined);
 
   const items = state.items.filter((i) => matchesSearch(i.name, search));
 
@@ -128,7 +153,7 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
               />
               <div class="lc-mkt-list">
                 {items.map((item) => (
-                  <OfferRow key={item.index} item={item} onOffer={state.offer} />
+                  <OfferRow key={item.index} item={item} onOffer={state.offer} onOpenDetail={setDetailName} />
                 ))}
                 {items.length === 0 && <p class="lc-mkt-empty">Nincs találat.</p>}
               </div>
@@ -141,7 +166,7 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
               </header>
               <div class="lc-mkt-list">
                 {state.listings.map((listing) => (
-                  <ListingRow key={listing.index} listing={listing} />
+                  <ListingRow key={listing.index} listing={listing} onOpenDetail={setDetailName} />
                 ))}
                 {state.listings.length === 0 && <p class="lc-mkt-empty">Nincs felkínált tárgyad.</p>}
               </div>
@@ -149,6 +174,14 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
           </div>
         </div>
       </div>
+
+      {/* Stacks above the market, like the inventory's item detail. DockedPanel
+          keeps the layering and the Escape order straight. */}
+      <DatabaseOverlay
+        open={detailName !== undefined}
+        initialItemName={detailName}
+        onClose={() => setDetailName(undefined)}
+      />
     </DockedPanel>
   );
 }
