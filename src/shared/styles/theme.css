@@ -1077,9 +1077,8 @@
 }
 .lc-mkt-row:last-child { border-bottom: 0; }
 
-/* Standing offers carry only a label and the revoke button. */
-.lc-home-col + .lc-home-col .lc-mkt-row,
-.lc-mkt-row:has(> .lc-mkt-revoke-btn) { grid-template-columns: minmax(0, 1fr) auto; }
+/* A disabled field reads as inert rather than merely grey. */
+.lc-mkt-field input:disabled { color: var(--muted); cursor: default; opacity: 1; }
 
 .lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }

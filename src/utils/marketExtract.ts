@@ -42,6 +42,14 @@ export interface MarketListing {
    * the offer's own detail block gave us no name to look up.
    */
   pricePercent: number | null;
+  /** Units offered, parsed from the label ("6 db. …"). */
+  quantity: number | null;
+  /** Asking price per unit, parsed from the label ("… 700 ezüst/db. áron"). */
+  unitPrice: number | null;
+  /** The item's shop price, for comparison against the asking price. */
+  shopPrice: number | null;
+  /** What the market pays per unit — what the asking price is competing with. */
+  suggestedPrice: number | null;
   revoke: () => void;
 }
 
@@ -114,6 +122,21 @@ export function suggestPrice(price: number | null, percent: number | null): numb
   return Math.round((price * (percent ?? DEFAULT_PRICE_PERCENT)) / 100);
 }
 
+/**
+ * Reads the quantity and asking price out of an offer's label, which the game
+ * formats as "6 db. agyar 700 ezüst/db. áron". Both null if it does not match —
+ * the label is the game's prose, so it is not worth trusting blindly.
+ */
+export function parseOfferLabel(label: string): { quantity: number | null; unitPrice: number | null } {
+  const match = label.match(/^\s*([\d\s]+)\s*db\.\s*.*?\s([\d\s]+)\s*ezüst\/db/);
+  if (!match) return { quantity: null, unitPrice: null };
+  const digits = (raw: string) => {
+    const n = parseInt(raw.replace(/\D/g, ''), 10);
+    return Number.isFinite(n) ? n : null;
+  };
+  return { quantity: digits(match[1]), unitPrice: digits(match[2]) };
+}
+
 export function extractMarket(doc: Document): MarketState {
   const scriptText = marketScriptText(doc);
   const percents = parsePricePercents(doc);
@@ -135,11 +158,18 @@ export function extractMarket(doc: Document): MarketState {
   const details = parseCuccArray(scriptText, 'felkinaltTargyak');
   const listings: MarketListing[] = Array.from(offerSelect?.options ?? []).map((option, index) => {
     const detail = details[index] !== undefined ? parseCuccDetail(details[index]) : null;
+    const label = option.text.trim();
+    const pricePercent = detail ? percents.get(detail.name.toLowerCase()) ?? null : null;
+    const { quantity, unitPrice } = parseOfferLabel(label);
     return {
-      label: option.text.trim(),
+      label,
       index,
       detail,
-      pricePercent: detail ? percents.get(detail.name.toLowerCase()) ?? null : null,
+      pricePercent,
+      quantity: quantity ?? detail?.amount ?? null,
+      unitPrice,
+      shopPrice: detail?.price ?? null,
+      suggestedPrice: suggestPrice(detail?.price ?? null, pricePercent),
       revoke: () => {
         const select = selectIn(doc, 'eladasUrlap', 'felkinalt');
         const button = imageButtonByBasename(doc, REVOKE_BUTTON);

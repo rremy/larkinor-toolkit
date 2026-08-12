@@ -12,11 +12,28 @@ function item(name: string, amount: number, price: number | null, percent: numbe
   };
 }
 
-function listing(label: string, index: number, name?: string, percent: number | null = null): MarketListing {
+function listing(
+  label: string,
+  index: number,
+  name?: string,
+  percent: number | null = null,
+  opts: { quantity?: number; unitPrice?: number; shopPrice?: number | null } = {},
+): MarketListing {
+  const shopPrice = opts.shopPrice ?? null;
   const detail = name
-    ? { name, type: 'tárgy' as const, weight: 1, amount: 1, totalWeight: 1, price: null, magical: false, attrs: [] }
+    ? { name, type: 'tárgy' as const, weight: 1, amount: 1, totalWeight: 1, price: shopPrice, magical: false, attrs: [] }
     : null;
-  return { label, index, detail, pricePercent: percent, revoke: vi.fn() };
+  return {
+    label,
+    index,
+    detail,
+    pricePercent: percent,
+    quantity: opts.quantity ?? null,
+    unitPrice: opts.unitPrice ?? null,
+    shopPrice,
+    suggestedPrice: shopPrice === null ? null : Math.round((shopPrice * (percent ?? 500)) / 100),
+    revoke: vi.fn(),
+  };
 }
 
 /** Real figures from the live page: jáspis 50 ezüst at 170% → 85. */
@@ -27,7 +44,7 @@ function makeState(overrides: Partial<MarketState> = {}): MarketState {
       item('jáspis', 19, 50, 170, 2),
       item('gyíkbőr', 7, 10, 120, 3),
     ],
-    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar', 565)],
+    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar', 565, { quantity: 6, unitPrice: 700, shopPrice: 124 })],
     offer: vi.fn(),
     ...overrides,
   };
@@ -240,11 +257,35 @@ describe('MarketPanel', () => {
     expect(offers.querySelector('.lc-mkt-pct')).toBeNull();
   });
 
+  it('renders offers in the same shape as the offerable rows, but inert', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const offer = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-row')!;
+    const inputs = offer.querySelectorAll<HTMLInputElement>('.lc-mkt-field input');
+
+    // Same two fields, carrying the offer's own figures.
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0].value).toBe('6');    // quantity offered
+    expect(inputs[1].value).toBe('700');  // asking price
+    // A standing offer cannot be edited — the game only lets you revoke it.
+    expect(inputs[0].disabled).toBe(true);
+    expect(inputs[1].disabled).toBe(true);
+  });
+
+  it('compares an offer\'s asking price against the shop and market prices', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const meta = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-meta')!.textContent!;
+
+    expect(meta).toContain('bolti ár 124');
+    expect(meta).toContain('piaci ár 701');   // 124 x 565%
+    // Hungarian groups from five digits, so 4200 carries no separator.
+    expect(meta).toContain('összesen 4200'); // 700 x 6, the asking total
+  });
+
   describe('searching the standing offers', () => {
     const OFFERS = [
-      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar', 565),
-      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs', 2258),
-      listing('19 db. gyíkbőr 50 ezüst/db. áron', 2, 'gyíkbőr', 500),
+      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar', 565, { quantity: 6, unitPrice: 700 }),
+      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs', 2258, { quantity: 1, unitPrice: 7000 }),
+      listing('19 db. gyíkbőr 50 ezüst/db. áron', 2, 'gyíkbőr', 500, { quantity: 19, unitPrice: 50 }),
     ];
 
     it('filters the offers by name', () => {

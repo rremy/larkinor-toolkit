@@ -17,6 +17,74 @@ function silver(n: number): string {
   return n.toLocaleString('hu-HU');
 }
 
+interface NameLineProps {
+  /** The clickable text: an item's name, or an offer's whole label. */
+  text: string;
+  /** Name to open the database on, or null to render the text as plain. */
+  detailName: string | null;
+  pricePercent: number | null;
+  /** True when a price exists but the market quotes no rate for it. */
+  assumedRate: boolean;
+  onOpenDetail: (name: string) => void;
+}
+
+/** Item name plus its market rate. Shared so both columns read identically. */
+function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail }: NameLineProps): JSX.Element {
+  return (
+    <div class="lc-mkt-name-line">
+      {detailName ? (
+        <button
+          class="lc-mkt-name lc-mkt-name--link"
+          title={`${detailName} — adatlap`}
+          onClick={() => onOpenDetail(detailName)}
+        >
+          {text}
+        </button>
+      ) : (
+        <span class="lc-mkt-name">{text}</span>
+      )}
+      {pricePercent !== null ? (
+        <span class="lc-mkt-pct">{pricePercent}%</span>
+      ) : assumedRate && (
+        /* The market does not quote this item, so the rate behind the suggested
+           price is ours. Marked, so the figure is not mistaken for the game's. */
+        <span
+          class="lc-mkt-pct lc-mkt-pct--assumed"
+          title={`A piac nem adja meg az árfolyamot — ${DEFAULT_PRICE_PERCENT}%-kal számolva`}
+        >
+          {DEFAULT_PRICE_PERCENT}%?
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface NumberFieldProps {
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+  /** Read-only fields show a standing offer's figures, which cannot be edited. */
+  disabled?: boolean;
+  onInput?: (value: number) => void;
+}
+
+function NumberField({ label, value, min, max, disabled, onInput }: NumberFieldProps): JSX.Element {
+  return (
+    <label class="lc-mkt-field">
+      <span>{label}</span>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        disabled={disabled}
+        onInput={onInput && ((e) => onInput(Number((e.target as HTMLInputElement).value)))}
+      />
+    </label>
+  );
+}
+
 interface OfferRowProps {
   item: MarketItem;
   onOffer: (item: MarketItem, qty: number, price: number) => void;
@@ -38,28 +106,13 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
   return (
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
-        <div class="lc-mkt-name-line">
-          <button
-            class="lc-mkt-name lc-mkt-name--link"
-            title={`${item.name} — adatlap`}
-            onClick={() => onOpenDetail(item.name)}
-          >
-            {item.name}
-          </button>
-          {item.pricePercent !== null ? (
-            <span class="lc-mkt-pct">{item.pricePercent}%</span>
-          ) : item.suggestedPrice !== null && (
-            /* The market does not quote this item, so the rate behind the
-               suggested price is ours. Marked, so the figure is not mistaken for
-               the game's own. */
-            <span
-              class="lc-mkt-pct lc-mkt-pct--assumed"
-              title={`A piac nem adja meg az árfolyamot — ${DEFAULT_PRICE_PERCENT}%-kal számolva`}
-            >
-              {DEFAULT_PRICE_PERCENT}%?
-            </span>
-          )}
-        </div>
+        <NameLine
+          text={item.name}
+          detailName={item.name}
+          pricePercent={item.pricePercent}
+          assumedRate={item.suggestedPrice !== null}
+          onOpenDetail={onOpenDetail}
+        />
         <div class="lc-mkt-meta">
           <span>{item.amount} db</span>
           {/* Both prices, side by side: the shop's is the alternative to selling
@@ -71,26 +124,8 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
         </div>
       </div>
 
-      <label class="lc-mkt-field">
-        <span>Db</span>
-        <input
-          type="number"
-          min={1}
-          max={item.amount}
-          value={qty}
-          onInput={(e) => setQty(clampQty(Number((e.target as HTMLInputElement).value)))}
-        />
-      </label>
-
-      <label class="lc-mkt-field">
-        <span>Ár</span>
-        <input
-          type="number"
-          min={1}
-          value={price}
-          onInput={(e) => setPrice(Number((e.target as HTMLInputElement).value))}
-        />
-      </label>
+      <NumberField label="Db" value={qty} min={1} max={item.amount} onInput={(n) => setQty(clampQty(n))} />
+      <NumberField label="Ár" value={price} min={1} onInput={setPrice} />
 
       <button
         class="lc-mkt-offer-btn"
@@ -112,27 +147,34 @@ interface ListingRowProps {
 }
 
 function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
-  const name = listing.detail?.name;
+  const name = listing.detail?.name ?? null;
+  const qty = listing.quantity ?? 1;
+  const asking = listing.unitPrice;
+
   return (
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
-        <div class="lc-mkt-name-line">
-          {name ? (
-            <button
-              class="lc-mkt-name lc-mkt-name--link"
-              title={`${name} — adatlap`}
-              onClick={() => onOpenDetail(name)}
-            >
-              {listing.label}
-            </button>
-          ) : (
-            <span class="lc-mkt-name">{listing.label}</span>
-          )}
-          {/* Same badge as the offerable rows: what the market pays, so the
-              asking price in the label can be judged against it. */}
-          {listing.pricePercent !== null && <span class="lc-mkt-pct">{listing.pricePercent}%</span>}
+        <NameLine
+          text={listing.label}
+          detailName={name}
+          pricePercent={listing.pricePercent}
+          assumedRate={listing.suggestedPrice !== null}
+          onOpenDetail={onOpenDetail}
+        />
+        <div class="lc-mkt-meta">
+          {listing.shopPrice !== null && <span>bolti ár {silver(listing.shopPrice)}</span>}
+          {listing.suggestedPrice !== null && <span>piaci ár {silver(listing.suggestedPrice)}</span>}
+          {asking !== null && <span class="lc-mkt-total">összesen {silver(asking * qty)}</span>}
         </div>
       </div>
+
+      {/* The same two fields as the offerable rows, disabled: a standing offer's
+          quantity and price are fixed, and the game gives no way to edit one —
+          you revoke it and offer again. Shown rather than omitted so both columns
+          read alike and the asking price sits under the same heading. */}
+      <NumberField label="Db" value={qty} disabled />
+      <NumberField label="Ár" value={asking ?? 0} disabled />
+
       <button class="lc-mkt-revoke-btn" title="Visszavonod" onClick={() => listing.revoke()}>
         Visszavon
       </button>

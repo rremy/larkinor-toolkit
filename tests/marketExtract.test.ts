@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { DEFAULT_PRICE_PERCENT, extractMarket, parsePricePercents, suggestPrice } from '../src/utils/marketExtract';
+import { DEFAULT_PRICE_PERCENT, extractMarket, parseOfferLabel, parsePricePercents, suggestPrice } from '../src/utils/marketExtract';
 
 /**
  * Sanitised reconstruction of the live market page (otPiac). Values are the real
@@ -76,6 +76,26 @@ describe('suggestPrice', () => {
     // Silver itself is listed in the backpack and the game gives it no Ár.
     expect(suggestPrice(null, 170)).toBeNull();
     expect(suggestPrice(null, null)).toBeNull();
+  });
+});
+
+describe('parseOfferLabel', () => {
+  it('reads the quantity and asking price out of the game\'s wording', () => {
+    expect(parseOfferLabel('6 db. agyar 700 ezüst/db. áron')).toEqual({ quantity: 6, unitPrice: 700 });
+  });
+
+  it('handles a multi-word name and a large price', () => {
+    expect(parseOfferLabel('1 db. antianyag bunkó 100000 ezüst/db. áron'))
+      .toEqual({ quantity: 1, unitPrice: 100000 });
+  });
+
+  it('handles a grouped price', () => {
+    expect(parseOfferLabel('14 db. aranyzsanér 1 545 ezüst/db. áron'))
+      .toEqual({ quantity: 14, unitPrice: 1545 });
+  });
+
+  it('gives up rather than guessing on wording it does not recognise', () => {
+    expect(parseOfferLabel('valami furcsa sor')).toEqual({ quantity: null, unitPrice: null });
   });
 });
 
@@ -169,6 +189,16 @@ describe('extractMarket', () => {
     const select = doc.forms.namedItem('eladasUrlap')!.elements.namedItem('felkinalt') as HTMLSelectElement;
     expect(select.selectedIndex).toBe(1);
     expect(clicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('carries the offer\'s own quantity, asking price and comparisons', () => {
+    const { listings } = extractMarket(marketDoc());
+    const agyar = listings.find(l => l.detail?.name === 'agyar')!;
+
+    expect(agyar.quantity).toBe(6);
+    expect(agyar.unitPrice).toBe(700);
+    expect(agyar.shopPrice).toBe(124);          // the item's Ár
+    expect(agyar.suggestedPrice).toBe(701);     // 124 x 565%
   });
 
   it('carries the market percentage onto standing offers', () => {
