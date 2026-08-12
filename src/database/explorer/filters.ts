@@ -1,4 +1,5 @@
 import type { EntityTab } from './columns';
+import { foldAccents, matchesSearch } from '@/shared/text';
 
 export type FilterDef = {
   type: 'search' | 'range' | 'select' | 'tri';
@@ -9,10 +10,6 @@ export type FilterDef = {
 
 export type FilterState = Record<string, string>;
 
-export function foldAccents(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-}
-
 export function applyFilters<T extends Record<string, unknown>>(
   rows: T[], defs: FilterDef[], state: FilterState,
 ): T[] {
@@ -20,7 +17,7 @@ export function applyFilters<T extends Record<string, unknown>>(
     if (def.type === 'search') {
       const q = (state[def.key] ?? '').trim();
       if (!q) return true;
-      return foldAccents(String(row[def.key] ?? '')).includes(foldAccents(q));
+      return matchesSearch(String(row[def.key] ?? ''), q);
     }
     if (def.type === 'range') {
       const v = Number(row[def.key]);

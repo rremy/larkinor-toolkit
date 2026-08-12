@@ -22,6 +22,7 @@ function makeState(overrides: Partial<MarketState> = {}): MarketState {
     items: [
       item('ezüst', 5725, null, null, 0),
       item('jáspis', 19, 50, 170, 2),
+      item('gyíkbőr', 7, 10, 120, 3),
     ],
     listings: [listing('6 db. agyar 700 ezüst/db. áron', 1)],
     offer: vi.fn(),
@@ -130,6 +131,15 @@ describe('MarketPanel', () => {
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
     expect(names).toContain('jáspis');
     expect(names).not.toContain('ezüst');
+  });
+
+  it('finds an accented name typed without accents', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    fireEvent.input(container.querySelector<HTMLInputElement>('.lc-inv-search')!, { target: { value: 'gyikbor' } });
+
+    const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
+    expect(names).toContain('gyíkbőr');
+    expect(names).not.toContain('jáspis');
   });
 
   it('says so when there is nothing offered yet', () => {

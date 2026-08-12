@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { MarketItem, MarketListing, MarketState } from '@/utils/marketExtract';
 import { DockedPanel } from '@/components/DockedPanel';
 import { MARKET_MINIMIZED_KEY } from '@/utils/config';
+import { matchesSearch } from '@/shared/text';
 
 export interface MarketPanelProps {
   open: boolean;
@@ -106,11 +107,10 @@ function ListingRow({ listing }: { listing: MarketListing }): JSX.Element {
 export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Element {
   const [search, setSearch] = useState('');
 
-  const needle = search.trim().toLowerCase();
-  const items = needle ? state.items.filter((i) => i.name.toLowerCase().includes(needle)) : state.items;
+  const items = state.items.filter((i) => matchesSearch(i.name, search));
 
   return (
-    <DockedPanel open={open} onClose={onClose} storageKey={MARKET_MINIMIZED_KEY} minimizable>
+    <DockedPanel title="Piac" open={open} onClose={onClose} storageKey={MARKET_MINIMIZED_KEY} minimizable>
       <div class="lc-page lc-page--wide">
         <div class="lc-home-split-host">
           <div class="lc-home-split">

@@ -2,6 +2,7 @@ import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { HomeItem } from '@/utils/homeExtract';
 import { InventoryRow } from '@/components/InventoryRow';
+import { matchesSearch } from '@/shared/text';
 
 export interface InventoryListProps {
   items: HomeItem[];
@@ -26,10 +27,9 @@ export function InventoryList({ items, moveGlyph, moveTitle, onMove, onOpenDetai
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [asc, setAsc] = useState(true);
 
-  const q = query.trim().toLowerCase();
   const dir = asc ? 1 : -1;
   const visible = items
-    .filter((it) => it.name.toLowerCase().includes(q))
+    .filter((it) => matchesSearch(it.name, query))
     .sort((a, b) => {
       if (sortKey === 'name') return a.name.localeCompare(b.name, 'hu') * dir;
       return ((a[sortKey] ?? 0) - (b[sortKey] ?? 0)) * dir;

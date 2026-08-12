@@ -24,7 +24,7 @@ export interface InventoryPanelProps {
  */
 export function InventoryPanel({ open, onClose, state }: InventoryPanelProps): JSX.Element {
   return (
-    <DockedPanel open={open} onClose={onClose} storageKey={INVENTORY_MINIMIZED_KEY} minimizable>
+    <DockedPanel title="Készlet" open={open} onClose={onClose} storageKey={INVENTORY_MINIMIZED_KEY} minimizable>
       <Home state={state} showGeneral={false} layout="split" />
     </DockedPanel>
   );

@@ -44,7 +44,7 @@ export function DatabaseOverlay({
   const loader = useMemo(() => createDataLoader(gmSource(), DATA_BASE_URL), []);
 
   return (
-    <DockedPanel open={open} onClose={onClose} storageKey={DB_MINIMIZED_KEY} minimizable={minimizable}>
+    <DockedPanel title="Adatbázis" open={open} onClose={onClose} storageKey={DB_MINIMIZED_KEY} minimizable={minimizable}>
       <DatabaseApp loader={loader} routing="memory" initialItemId={initialItemId} initialItemName={initialItemName} />
     </DockedPanel>
   );
