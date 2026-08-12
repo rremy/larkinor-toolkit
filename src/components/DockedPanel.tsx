@@ -1,6 +1,30 @@
 import { h, type ComponentChildren, type JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { getPanelMinimized, setPanelMinimized } from '@/utils/config';
+
+/**
+ * Close handlers of the panels currently open, outermost first. Panels nest — an
+ * inventory item opens the database over it — so Escape has to close the
+ * innermost one and leave the rest standing.
+ *
+ * Module-level rather than context because the panels do not share a Preact
+ * tree in every case, and the stack has to survive across them.
+ */
+const openPanels: Array<() => void> = [];
+
+function handleEscape(event: KeyboardEvent): void {
+  if (event.code !== 'Escape') return;
+  if (event.ctrlKey || event.altKey || event.metaKey) return;
+  const closeInnermost = openPanels[openPanels.length - 1];
+  if (!closeInnermost) return;
+  event.preventDefault();
+  closeInnermost();
+}
+
+/** True while any panel is open — lets other Escape handlers stand down. */
+export function hasOpenPanel(): boolean {
+  return openPanels.length > 0;
+}
 
 export interface DockedPanelProps {
   open: boolean;
@@ -37,6 +61,25 @@ export function DockedPanel({
   children,
 }: DockedPanelProps): JSX.Element | null {
   const [minimized, setMinimized] = useState(() => getPanelMinimized(storageKey));
+
+  // Read through a ref so the registration below does not have to re-run — and
+  // reorder the stack — every time the parent passes a fresh onClose.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const close = () => onCloseRef.current();
+    openPanels.push(close);
+    if (openPanels.length === 1) document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      const at = openPanels.indexOf(close);
+      if (at >= 0) openPanels.splice(at, 1);
+      if (openPanels.length === 0) document.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
 
   if (!open) return null;
 

@@ -9,6 +9,7 @@ import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { hasOpenPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
 import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 import { InventoryPanel } from '@/desktop/InventoryPanel';
@@ -93,12 +94,17 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
 
   const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen;
 
-  /** Closes the topmost modal, innermost first. */
+  /**
+   * Closes the topmost drawer. Panels are not handled here: DockedPanel owns
+   * Escape for those and closes the innermost, which is the only place that
+   * knows about a panel opened from *inside* another one (an inventory item
+   * opening the database). Panels also paint above the drawers, so when one is
+   * open it is the top layer and nothing here should act.
+   */
   const closeTopModal = () => {
-    if (dbOpen) setDbOpen(false);
-    else if (configOpen) closeConfig();
+    if (hasOpenPanel()) return;
+    if (configOpen) closeConfig();
     else if (selectedMonster) setSelectedMonster(null);
-    else if (inventoryOpen) setInventory(false);
   };
 
   // `directions`/`hotkeyActions` (fresh arrays each render) and the two

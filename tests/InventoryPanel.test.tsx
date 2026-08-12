@@ -84,7 +84,7 @@ describe('InventoryPanel', () => {
     const { container } = render(<InventoryPanel open state={state} onClose={vi.fn()} />);
 
     const houseCol = container.querySelectorAll('.lc-home-col')[0];
-    fireEvent.click(houseCol.querySelector('.lc-inv-move-btn')!);
+    fireEvent.click(houseCol.querySelector<HTMLElement>('.lc-inv-move-btn')!);
 
     expect(state.house.move).toHaveBeenCalled();
     expect(state.backpack.move).not.toHaveBeenCalled();
@@ -107,6 +107,56 @@ describe('InventoryPanel', () => {
 
     render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
     expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
+  });
+
+  describe('item detail opens over the inventory', () => {
+    /** Clicks an item name, which opens the database panel on that item. */
+    function openDetail(container: Element): void {
+      fireEvent.click(container.querySelector<HTMLElement>('.lc-inv-name')!);
+    }
+
+    it('stacks the database panel above the inventory, keeping both mounted', () => {
+      const { container } = render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
+      openDetail(container);
+
+      // Two panels: the inventory and the database opened over it.
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(2);
+      expect(document.querySelector('.lc-home-split')).not.toBeNull();
+    });
+
+    it('closes only the database when its own close button is clicked', () => {
+      // Pins the intent, not the original defect: that was a paint-order bug —
+      // the inventory's close button outranked the nested panel and so received
+      // the click — and jsdom dispatches to an element reference without
+      // hit-testing, so it cannot reproduce it. Verified in a real browser with
+      // elementFromPoint instead; see the commit message.
+      const onClose = vi.fn();
+      const { container } = render(<InventoryPanel open state={makeState()} onClose={onClose} />);
+      openDetail(container);
+
+      // The innermost panel's control is the last in document order.
+      const closers = document.querySelectorAll('.lc-db-overlay-close');
+      fireEvent.click(closers[closers.length - 1] as HTMLElement);
+
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
+      expect(document.querySelector('.lc-home-split')).not.toBeNull();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('closes the database first on Escape, then the inventory', () => {
+      const onClose = vi.fn();
+      const { container } = render(<InventoryPanel open state={makeState()} onClose={onClose} />);
+      openDetail(container);
+
+      const escape = () => fireEvent.keyDown(document, { code: 'Escape' });
+
+      escape();
+      expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
+      expect(onClose).not.toHaveBeenCalled();
+
+      escape();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('remembers its own minimised state, not the database\'s', () => {

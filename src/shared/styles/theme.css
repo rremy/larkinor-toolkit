@@ -894,12 +894,19 @@
 
 .lc-db-overlay--minimized .lc-db .tab { flex-shrink: 0; }
 
+/* The window controls' z-index is deliberately small and local, not a global
+   10000. `.lc-db-overlay` sets position + z-index and so is a stacking context,
+   which means these values are resolved *inside* the panel that owns them. A
+   panel can host another panel (an inventory item opens the database), and with
+   the controls at 10000 the outer panel's buttons painted on top of the inner
+   panel — so the ✕ you clicked belonged to the outer one and closed both. Kept
+   above the panel's own content, below anything nested in it. */
 .lc-db-overlay-minimize {
   position: fixed;
   top: 12px;
   /* Sits immediately left of the close button (32px wide, 12px inset). */
   right: 52px;
-  z-index: 10000;
+  z-index: 3;
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--muted);
@@ -921,7 +928,8 @@
   position: fixed;
   top: 12px;
   right: 12px;
-  z-index: 10000;
+  /* Local to the owning panel — see the note above .lc-db-overlay-minimize. */
+  z-index: 3;
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--muted);
