@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { DatabaseOverlay } from '../src/components/DatabaseOverlay';
+import { DB_MINIMIZED_KEY, getDbMinimized, setDbMinimized } from '../src/utils/config';
 
 describe('DatabaseOverlay', () => {
   beforeEach(() => { location.hash = ''; });
@@ -43,5 +44,46 @@ describe('DatabaseOverlay', () => {
     const onClose = vi.fn();
     render(<DatabaseOverlay open onClose={onClose} initialItemName="opál" />);
     expect(document.querySelector('.lc-db-overlay .lc-db')).toBeTruthy();
+  });
+
+  describe('minimise control', () => {
+    beforeEach(() => { GM_setValue(DB_MINIMIZED_KEY, ''); });
+
+    it('is absent by default, so the mobile UI is unchanged', () => {
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      expect(document.querySelector('.lc-db-overlay-minimize')).toBeNull();
+    });
+
+    it('docks the overlay beside the game and restores it', () => {
+      render(<DatabaseOverlay open minimizable onClose={vi.fn()} />);
+      const overlay = document.querySelector('.lc-db-overlay')!;
+      expect(overlay.classList.contains('lc-db-overlay--minimized')).toBe(false);
+
+      fireEvent.click(screen.getByLabelText('Kis méret'));
+      expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
+
+      fireEvent.click(screen.getByLabelText('Teljes méret'));
+      expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(false);
+    });
+
+    it('persists the choice', () => {
+      const { unmount } = render(<DatabaseOverlay open minimizable onClose={vi.fn()} />);
+      fireEvent.click(screen.getByLabelText('Kis méret'));
+      expect(getDbMinimized()).toBe(true);
+      unmount();
+
+      // The game navigates on every action, so the overlay is re-created
+      // constantly — it has to come back minimised.
+      render(<DatabaseOverlay open minimizable onClose={vi.fn()} />);
+      expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
+    });
+
+    it('ignores a stored preference where there is nowhere to dock', () => {
+      // Mobile shares the storage key; a desktop choice must not dock the
+      // overlay off-screen on a phone.
+      setDbMinimized(true);
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(false);
+    });
   });
 });

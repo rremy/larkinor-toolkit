@@ -128,6 +128,18 @@ describe('bootDesktop', () => {
     expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('393px'); // 892 - 499
   });
 
+  it('publishes the game\'s right edge for the minimised database overlay', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { viewportHeight: 900 });
+    // Stand in for the live banner, the widest thing the game draws.
+    const banner = doc.getElementById('game-content')!;
+    banner.getBoundingClientRect = () => ({ right: 791, width: 791, height: 60 }) as DOMRect;
+
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')!.style.getPropertyValue('--lc-game-right')).toBe('791px');
+  });
+
   it('clamps to the viewport so it never runs off the bottom edge', () => {
     const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
     withChat(doc, { input: true, viewportHeight: 720 });

@@ -71,6 +71,30 @@ const VIEWPORT_MARGIN = 8;
 /** Floor for the dock's height, so it never collapses to an unusable sliver. */
 const MIN_DOCK_HEIGHT = 120;
 
+/** The game's right edge, measured live, used when it cannot be computed. */
+const FALLBACK_GAME_RIGHT = 791;
+
+/**
+ * The right edge of everything the game draws — 791px on the live layout, and
+ * fixed, since the page is absolutely positioned in pixels. Published as
+ * `--lc-game-right` so the minimised database overlay can dock into the empty
+ * space beside the game instead of covering it.
+ *
+ * Measured rather than hardcoded so the dock does not overlap the game if that
+ * width ever changes. Our own root is excluded — it is fixed to the viewport and
+ * would otherwise report an edge far to the right of the game.
+ */
+function measureGameRight(doc: Document, ownRoot: Element): number {
+  let right = 0;
+  for (const el of Array.from(doc.body.querySelectorAll('*'))) {
+    if (ownRoot.contains(el)) continue;
+    const box = el.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) continue;
+    if (box.right > right) right = box.right;
+  }
+  return right > 0 ? right : FALLBACK_GAME_RIGHT;
+}
+
 /**
  * Lays the dock over the game's chat panel by writing the custom properties
  * `desktop.css` positions it from.
@@ -128,6 +152,7 @@ function alignDock(root: HTMLElement, doc: Document): void {
   root.style.setProperty('--lc-dock-top', `${Math.round(top)}px`);
   root.style.setProperty('--lc-dock-width', `${Math.round(column.width)}px`);
   root.style.setProperty('--lc-dock-max-height', `${Math.round(height)}px`);
+  root.style.setProperty('--lc-game-right', `${Math.round(measureGameRight(doc, root))}px`);
 }
 
 /**

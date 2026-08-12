@@ -167,7 +167,14 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
         />
       )}
 
-      <DatabaseOverlay open={dbOpen} initialItemId={dbItemId ?? undefined} onClose={() => setDbOpen(false)} />
+      {/* minimizable only here: docking beside the game needs desktop's spare
+          width, which the mobile viewport does not have. */}
+      <DatabaseOverlay
+        open={dbOpen}
+        minimizable
+        initialItemId={dbItemId ?? undefined}
+        onClose={() => setDbOpen(false)}
+      />
     </div>
   );
 }

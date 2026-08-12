@@ -859,6 +859,39 @@
   overflow: auto;
 }
 
+/* Minimised: docked into the empty space beside the game rather than covering
+   the page, so the game stays visible and playable. --lc-game-right is the
+   game's measured right edge (791px on the live layout), written at boot by
+   src/desktop/boot.ts; the fallback keeps this sane if it is ever absent. */
+.lc-db-overlay--minimized {
+  left: var(--lc-game-right, 791px);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 16px var(--dock-shadow);
+}
+
+.lc-db-overlay-minimize {
+  position: fixed;
+  top: 12px;
+  /* Sits immediately left of the close button (32px wide, 12px inset). */
+  right: 52px;
+  z-index: 10000;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lc-db-overlay-minimize:hover,
+.lc-db-overlay-minimize:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .lc-db-overlay-close {
   position: fixed;
   top: 12px;
