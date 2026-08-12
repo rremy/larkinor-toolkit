@@ -67,13 +67,17 @@ const MIN_DOCK_HEIGHT = 120;
  * without joining that layout, where an inserted block displaces nothing and
  * overlaps everything.
  *
+ * The dock takes the chat's left edge and width, but **not** its height: it is
+ * free to run taller than the chat and only the viewport bounds it. Scrolling
+ * inside a dock is worse than extending past the panel, and the area below the
+ * chat holds nothing but chat text that has already overflowed the chat box.
+ *
  * Two things the naive "cover the whole chat rect" version got wrong, both
  * found by measuring the live page:
  *  - The chat's text input sits at the top of the panel, so covering the full
  *    rect stops the player typing. We start below it.
- *  - On a short window the chat itself already runs past the bottom edge, so
- *    inheriting its height put the dock partly off-screen. We clamp to the
- *    viewport and let the dock scroll internally instead.
+ *  - Bounding the height by the chat forced the action list to scroll even with
+ *    room to spare underneath.
  *
  * Coordinates are viewport-relative, which is correct for `position: fixed` and
  * needs no scroll offset — and the game page does not scroll, so a single
@@ -93,8 +97,10 @@ function alignDock(root: HTMLElement, doc: Document): void {
     top = input.bottom + CHAT_INPUT_GAP;
   }
 
+  // Only the viewport caps the height, so the dock scrolls internally solely
+  // when it genuinely cannot fit on screen.
   const viewportLimit = (doc.defaultView?.innerHeight ?? chatBottom) - VIEWPORT_MARGIN;
-  const height = Math.max(MIN_DOCK_HEIGHT, Math.min(chatBottom, viewportLimit) - top);
+  const height = Math.max(MIN_DOCK_HEIGHT, viewportLimit - top);
 
   root.style.setProperty('--lc-dock-left', `${Math.round(rect.left)}px`);
   root.style.setProperty('--lc-dock-top', `${Math.round(top)}px`);

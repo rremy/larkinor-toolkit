@@ -70,7 +70,7 @@ describe('bootDesktop', () => {
     }
   }
 
-  it('lays the dock over the measured chat panel', () => {
+  it('takes the chat panel\'s left edge and width', () => {
     const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
     withChat(doc, { viewportHeight: 900 });
 
@@ -80,7 +80,19 @@ describe('bootDesktop', () => {
     expect(root.style.getPropertyValue('--lc-dock-left')).toBe('60px');
     expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
     expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
-    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('300px');
+  });
+
+  it('may grow taller than the chat rather than scrolling inside itself', () => {
+    // The chat ends at 773, but the dock is allowed the full viewport: capping
+    // at the chat forced the action list to scroll with room to spare below.
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { viewportHeight: 900 });
+
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    // 900 - 8 margin - 473 top = 419, well past the chat's own 300.
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('419px');
   });
 
   it('starts below the chat input so it stays usable', () => {
@@ -93,12 +105,10 @@ describe('bootDesktop', () => {
 
     const root = doc.getElementById('lc-dock-root')!;
     expect(root.style.getPropertyValue('--lc-dock-top')).toBe('499px'); // 495 + 4 gap
-    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('274px'); // 773 - 499
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('393px'); // 892 - 499
   });
 
-  it('clamps to the viewport when the chat runs past the bottom edge', () => {
-    // At 720px tall the chat itself already overflows; inheriting its height
-    // would put the dock partly off-screen.
+  it('clamps to the viewport so it never runs off the bottom edge', () => {
     const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
     withChat(doc, { input: true, viewportHeight: 720 });
 
@@ -106,8 +116,7 @@ describe('bootDesktop', () => {
 
     const root = doc.getElementById('lc-dock-root')!;
     expect(root.style.getPropertyValue('--lc-dock-top')).toBe('499px');
-    // 720 - 8 margin - 499 top = 213, short of the chat's own 274.
-    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('213px');
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('213px'); // 712 - 499
   });
 
   it('never collapses below a usable height on a very short window', () => {
