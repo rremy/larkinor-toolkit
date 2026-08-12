@@ -27,15 +27,43 @@ function isInsideAnchor(node: Text, root: Element): boolean {
   return false;
 }
 
-/** Collects the block's text nodes up front, so later mutation is safe. */
-function collectTextNodes(doc: Document, root: Element): Text[] {
-  const walker = doc.createTreeWalker(root, 0x4 /* NodeFilter.SHOW_TEXT */);
-  const nodes: Text[] = [];
+/** One text node's span within the block's flattened text. */
+interface Segment {
+  node: Text;
+  start: number;
+  /** Exclusive. */
+  end: number;
+}
+
+/**
+ * Flattens the block to a single string and records where each text node landed
+ * in it, so a match found in the flat text can be mapped back to the DOM.
+ *
+ * Collected up front, before any mutation, so the offsets stay valid.
+ *
+ * `<br>` contributes a newline without a segment, mirroring the mobile path's
+ * `extractNarration`. Without it two sentences either side of a line break would
+ * be concatenated, and a pattern anchored on a sentence boundary could match
+ * across them.
+ */
+function flatten(doc: Document, root: Element): { segments: Segment[]; text: string } {
+  const walker = doc.createTreeWalker(root, 0x5 /* SHOW_ELEMENT | SHOW_TEXT */);
+  const segments: Segment[] = [];
+  let text = '';
   let current: Node | null;
+
   while ((current = walker.nextNode()) !== null) {
-    nodes.push(current as Text);
+    if (current.nodeType === 1 /* ELEMENT_NODE */) {
+      if ((current as Element).tagName === 'BR') text += '\n';
+      continue;
+    }
+    const node = current as Text;
+    const content = node.textContent ?? '';
+    segments.push({ node, start: text.length, end: text.length + content.length });
+    text += content;
   }
-  return nodes;
+
+  return { segments, text };
 }
 
 function buildLink(
@@ -103,10 +131,20 @@ function spliceLinks(
 /**
  * Makes database-known monster names in the live narration clickable.
  *
- * Known limitation: matching runs per text node, so a mention split across a
- * <br> or <b> boundary is not found. The encounter templates are
- * single-sentence and normally arrive in one node; reassembling and re-splitting
- * the whole block is not worth the fragility.
+ * Matching runs against the block's **flattened** text, not per text node,
+ * because the game wraps every monster name in `<b><font color=…>`:
+ *
+ *   Valami <b><font color="#DF4B22">Gyakorlott vízmágus </font></b> csámborog…
+ *
+ * That splits the sentence into three text nodes, so a per-node match never sees
+ * the template and no name was ever linked. The name itself is inside a single
+ * node, though — only the surrounding template spans them — so matching flat and
+ * wrapping the captured name is enough, with no cross-element DOM surgery.
+ *
+ * Remaining limitation: a name that is itself split across elements is left as
+ * plain text, since wrapping it would mean restructuring markup whose inline
+ * handlers drive the game. Not observed in practice — the game emits each name
+ * as one run.
  */
 export function enhanceNarration(
   doc: Document,
@@ -116,20 +154,29 @@ export function enhanceNarration(
   const block = doc.querySelector('font[face="Comic sans MS"]');
   if (!block || block.hasAttribute(ENHANCED_ATTR)) return;
 
-  for (const node of collectTextNodes(doc, block)) {
-    if (isInsideAnchor(node, block)) continue;
+  const { segments, text } = flatten(doc, block);
 
-    const text = node.textContent ?? '';
-    if (!text.trim()) continue;
+  // Group by node so one node containing several mentions is spliced once, with
+  // spliceLinks resolving any overlaps between them.
+  const byNode = new Map<Text, ResolvedMention[]>();
 
-    const hits: ResolvedMention[] = [];
-    for (const mention of findMonsterMentions(text)) {
-      const monster = db.getByName(mention.name);
-      if (monster) hits.push({ mention, monster });
-    }
-    if (hits.length === 0) continue;
+  for (const mention of findMonsterMentions(text)) {
+    const monster = db.getByName(mention.name);
+    if (!monster) continue; // unknown name — leave as plain text
 
-    spliceLinks(doc, node, text, hits, onMonsterClick);
+    const end = mention.index + mention.length;
+    const segment = segments.find(s => mention.index >= s.start && end <= s.end);
+    if (!segment) continue; // name spans elements (see above)
+    if (isInsideAnchor(segment.node, block)) continue; // no nested links
+
+    const hits = byNode.get(segment.node) ?? [];
+    // Re-base the offset from the flattened text onto this node's own text.
+    hits.push({ mention: { ...mention, index: mention.index - segment.start }, monster });
+    byNode.set(segment.node, hits);
+  }
+
+  for (const [node, hits] of byNode) {
+    spliceLinks(doc, node, node.textContent ?? '', hits, onMonsterClick);
   }
 
   block.setAttribute(ENHANCED_ATTR, 'true');

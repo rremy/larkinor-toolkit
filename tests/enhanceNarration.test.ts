@@ -134,6 +134,54 @@ describe('enhanceNarration', () => {
     expect(doc.querySelector('a.lc-narr-link')).toBeNull();
   });
 
+  /**
+   * Verbatim from the live page. The game wraps every monster name in
+   * <b><font color=…>, splitting the sentence across three text nodes, so
+   * matching per node found nothing. Both templates below went unrecognised
+   * in-game while matching fine against plain text.
+   */
+  it('links a name the game wrapped in <b><font>, splitting the sentence', () => {
+    const doc = narrationDoc(
+      'Valami <b><font color="#DF4B22">Sírrabló </font></b> csámborog a közelben! Megtámadod?'
+    );
+    enhanceNarration(doc, DB, vi.fn());
+
+    const link = doc.querySelector('b font a.lc-narr-link');
+    expect(link?.textContent).toBe('Sírrabló');
+    // The trailing space inside the font tag survives outside the link.
+    expect(doc.querySelector('b font')!.textContent).toBe('Sírrabló ');
+  });
+
+  it('links a wrapped name in the "feléd indul" template after a <br>', () => {
+    const doc = narrationDoc(
+      'Valami macska csámborog a közelben! Megtámadod?<br>' +
+      '<b><font color="#DF4B22">Sírrabló </font></b> feléd indul!'
+    );
+    enhanceNarration(doc, DB, vi.fn());
+
+    expect(doc.querySelector('b font a.lc-narr-link')?.textContent).toBe('Sírrabló');
+  });
+
+  it('still fires the handler for a wrapped name', () => {
+    const doc = narrationDoc('Valami <b><font>Sírrabló </font></b> csámborog a közelben!');
+    const onClick = vi.fn();
+    enhanceNarration(doc, DB, onClick);
+
+    doc.querySelector('a.lc-narr-link')!
+      .dispatchEvent(new doc.defaultView!.MouseEvent('click', { bubbles: true }));
+
+    expect(onClick.mock.calls[0][0].name).toBe('Sírrabló');
+  });
+
+  it('treats <br> as a sentence break when flattening', () => {
+    // Without a separator the two lines concatenate to "…közelben!Sírrabló" and a
+    // boundary-anchored pattern could match across the break.
+    const doc = narrationDoc('Egy macska mászkál a közelben!<br>Sírrabló van itt.');
+    enhanceNarration(doc, DB, vi.fn());
+
+    expect(doc.querySelectorAll('a.lc-narr-link').length).toBe(0);
+  });
+
   it('enhances a mention inside a nested inline element', () => {
     const doc = narrationDoc('<b>Valami Sírrabló csámborog a közelben!</b>');
     enhanceNarration(doc, DB, vi.fn());
