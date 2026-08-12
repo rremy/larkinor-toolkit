@@ -42,6 +42,23 @@ describe('findMonsterMentions', () => {
     expect(m.map(x => x.name)).toEqual(['Vasszűz']);
   });
 
+  it('captures the monster from "Egy X tart errefele! Most támadsz, vagy lapítasz?"', () => {
+    const m = findMonsterMentions('Egy Vasszűz tart errefele! Most támadsz, vagy lapítasz?');
+    expect(m.map(x => x.name)).toEqual(['Vasszűz']);
+  });
+
+  it('accepts the accented spelling of "errefelé" too', () => {
+    const m = findMonsterMentions('Egy Vasszűz tart errefelé! Most támadsz, vagy lapítasz?');
+    expect(m.map(x => x.name)).toEqual(['Vasszűz']);
+  });
+
+  it('captures a name the live markup leaves a trailing space on', () => {
+    // The game wraps names as <b><font>Koponyadémon </font></b>, so the
+    // flattened text carries a double space before the verb.
+    const m = findMonsterMentions('Egy Koponyadémon  tart errefele! Most támadsz, vagy lapítasz?');
+    expect(m.map(x => x.name)).toEqual(['Koponyadémon']);
+  });
+
   it('captures multi-word monster names', () => {
     const m = findMonsterMentions('Valami Goblin felderítőcsapat csámborog a közelben!');
     expect(m[0].name).toBe('Goblin felderítőcsapat');

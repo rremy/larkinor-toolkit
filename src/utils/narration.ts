@@ -26,6 +26,10 @@ const ENCOUNTER_PATTERNS: RegExp[] = [
   /(?:^|[.!?])\s*([^.!?]+?)\s+után rohansz/g,
   // "Egy <Monster> mászkál a közelben! Megtámadod?!"
   /Egy\s+([^.!?]+?)\s+mászkál a közelben!/g,
+  // "Egy <Monster> tart errefele! Most támadsz, vagy lapítasz?"
+  // The game spells it "errefele"; the accented "errefelé" is allowed too so a
+  // spelling fix on their side would not silently break the match.
+  /Egy\s+([^.!?]+?)\s+tart errefel[eé]!/g,
 ];
 
 export interface MonsterMention {
