@@ -64,6 +64,24 @@ describe('MarketPanel', () => {
     expect(inputs[1].value).toBe('85'); // 50 × 170%
   });
 
+  it('shows the shop price and the market price side by side', () => {
+    // The shop price is the alternative to selling here, so the two need to be
+    // comparable without reading the market figure out of the Ár input.
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const meta = rowFor(container, 'jáspis').querySelector('.lc-mkt-meta')!.textContent!;
+
+    expect(meta).toContain('bolti ár 50');
+    expect(meta).toContain('piaci ár 85');
+  });
+
+  it('shows no market price for an item the market does not price', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const meta = rowFor(container, 'ezüst').querySelector('.lc-mkt-meta')!.textContent!;
+
+    expect(meta).not.toContain('piaci ár');
+    expect(meta).not.toContain('bolti ár');
+  });
+
   it('shows the market percentage so the suggested price is explainable', () => {
     const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
     expect(rowFor(container, 'jáspis').querySelector('.lc-mkt-pct')!.textContent).toBe('170%');

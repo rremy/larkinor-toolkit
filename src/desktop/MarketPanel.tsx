@@ -50,7 +50,11 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
         </div>
         <div class="lc-mkt-meta">
           <span>{item.amount} db</span>
-          {item.price !== null && <span>alapár {silver(item.price)}</span>}
+          {/* Both prices, side by side: the shop's is the alternative to selling
+              here, and the market's is what this panel is offering at. Showing
+              only the latter (inside the Ár input) made them hard to compare. */}
+          {item.price !== null && <span>bolti ár {silver(item.price)}</span>}
+          {item.suggestedPrice !== null && <span>piaci ár {silver(item.suggestedPrice)}</span>}
           {priceValid && <span class="lc-mkt-total">összesen {silver(price * qty)}</span>}
         </div>
       </div>
