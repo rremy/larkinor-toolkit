@@ -179,3 +179,14 @@ game's narration.
 ## Tech stack
 
 Vite · Preact · TypeScript · [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey) · Vitest
+
+## License
+
+[0BSD](LICENSE) — do whatever you like with this. Use it, copy it, modify it,
+redistribute it, fold it into something else, with or without credit. There are
+no conditions; the only clause is the usual disclaimer of warranty.
+
+That covers the code in this repository. It does not cover Larkinor's game
+content — the data under `static/db/` is derived from the game, and the artwork
+the UI displays is served by the game. Those belong to the game's owners, not to
+this project.
