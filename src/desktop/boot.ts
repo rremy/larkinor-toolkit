@@ -11,7 +11,7 @@
 
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
+import { extractBattle, extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
@@ -46,6 +46,20 @@ function extractDockState(pageType: PageType, doc: Document): FreeMoveState | nu
     return extractFreeMove(doc);
   } catch (err) {
     console.warn('[Larkinor UI] Free-move extraction failed; dock degraded:', err);
+    return null;
+  }
+}
+
+/**
+ * Name of the monster being fought, for the dock's Adatlap button. Null off the
+ * battle screen and on failure — the dock stays useful without it.
+ */
+function extractBattleMonsterName(pageType: PageType, doc: Document): string | null {
+  if (pageType !== PageType.Battle) return null;
+  try {
+    return extractBattle(doc).monsterName || null;
+  } catch (err) {
+    console.warn('[Larkinor UI] Battle extraction failed; monster sheet unavailable:', err);
     return null;
   }
 }
@@ -213,6 +227,7 @@ export function bootDesktop(doc: Document): void {
   const state = extractDockState(pageType, doc);
   const homeState = extractInventoryState(pageType, doc);
   const marketState = extractMarketState(pageType, doc);
+  const battleMonsterName = extractBattleMonsterName(pageType, doc);
 
   const root = mountDockRoot(doc);
   if (!root) return;
@@ -221,7 +236,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, marketState, dbButtonOnly: state === null }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
@@ -229,9 +244,10 @@ export function bootDesktop(doc: Document): void {
 
   renderDock();
 
-  // Only the free-move narration references monsters, so nothing else needs the
-  // database up front — the overlay loads its own data on demand.
-  if (!state) return;
+  // The free-move narration and the battle screen's monster sheet are the two
+  // things needing monster data up front; every other panel loads its own on
+  // demand.
+  if (!state && !battleMonsterName) return;
 
   createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()
     .then((loaded) => {

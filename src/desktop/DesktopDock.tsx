@@ -31,6 +31,8 @@ export interface DesktopDockProps {
   homeState?: HomeState | null;
   /** Market state, when we are on the market page. */
   marketState?: MarketState | null;
+  /** Name of the monster being fought, when we are on the battle screen. */
+  battleMonsterName?: string | null;
   /** Force the minimal (config + database) form regardless of state. */
   dbButtonOnly?: boolean;
 }
@@ -49,7 +51,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
@@ -67,6 +69,17 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     ? { hotkeyActions: [], buttonActions: [] }
     : partitionHotkeys(state.actions, enabled);
   const attack = minimal ? null : state.attack;
+
+  // The monster we are fighting, once the database has arrived. Its stats and
+  // drops are what the battle screen does not show.
+  const battleMonster = battleMonsterName && db ? db.getByName(battleMonsterName) ?? null : null;
+
+  // A name the database does not know is worth saying out loud: it means either a
+  // gap in the data or a mismatch, and the button would just be missing.
+  useEffect(() => {
+    if (!db || !battleMonsterName || battleMonster) return;
+    console.warn(`[Larkinor UI] Battle monster "${battleMonsterName}" is not in the database.`);
+  }, [db, battleMonsterName, battleMonster]);
 
   const toggleCollapsed = () => {
     const next = !collapsed;
@@ -169,6 +182,15 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
               where Space *is* an affordance the page lacks. */}
 
           <div class="lc-dock-row">
+            {battleMonster && (
+              <button
+                class="lc-dock-btn lc-dock-monster"
+                title={`${battleMonster.name} — adatlap`}
+                onClick={() => setSelectedMonster(battleMonster)}
+              >
+                Adatlap
+              </button>
+            )}
             {homeState && (
               <button class="lc-dock-btn lc-dock-inventory" onClick={() => setInventory(true)}>
                 Készlet

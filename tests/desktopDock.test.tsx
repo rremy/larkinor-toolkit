@@ -102,6 +102,53 @@ describe('DesktopDock', () => {
     expect(container.querySelector('.lc-dock-db')).not.toBeNull();
   });
 
+  describe('battle monster sheet', () => {
+    const GOBLIN: Monster = {
+      id: 12, name: 'Goblin harcművészek', image: '/pic/szornyk/goblinharcmuvesz_k.gif',
+      level: 12, hp: 112, mp: 0, attackType: 'Szúró/Vágó', debuff: '', magicWeapon: false,
+      location: 'harcos-negyed', drops: [{ qty: 1, name: 'goblinfül', id: 88 }],
+    };
+    const withGoblin = () => buildMonsterDatabase([GOBLIN]);
+
+    it('offers no Adatlap button away from a fight', () => {
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={withGoblin()} />);
+      expect(container.querySelector('.lc-dock-monster')).toBeNull();
+    });
+
+    it('opens the monster card for the monster being fought', () => {
+      const { container } = render(
+        <DesktopDock doc={document} state={null} db={withGoblin()} battleMonsterName="Goblin harcművészek" dbButtonOnly />
+      );
+
+      fireEvent.click(container.querySelector<HTMLElement>('.lc-dock-monster')!);
+
+      // The card carries what the battle screen does not: level and drops.
+      expect(container.querySelector('.lc-mc-name')!.textContent).toBe('Goblin harcművészek');
+      expect(container.textContent).toContain('Szint 12');
+      expect(container.textContent).toContain('goblinfül');
+    });
+
+    it('waits for the database rather than showing a dead button', () => {
+      const { container } = render(
+        <DesktopDock doc={document} state={null} db={null} battleMonsterName="Goblin harcművészek" dbButtonOnly />
+      );
+      expect(container.querySelector('.lc-dock-monster')).toBeNull();
+    });
+
+    it('warns rather than silently omitting the button for an unknown monster', () => {
+      // A name the database does not know means a data gap or a mismatch — the
+      // encoding kind has bitten this project before — so it must not pass quietly.
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { container } = render(
+        <DesktopDock doc={document} state={null} db={withGoblin()} battleMonsterName="Nincs ilyen szörny" dbButtonOnly />
+      );
+
+      expect(container.querySelector('.lc-dock-monster')).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Nincs ilyen szörny'));
+      warn.mockRestore();
+    });
+  });
+
   it('offers no Készlet button away from the Home page', () => {
     const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
     expect(container.querySelector('.lc-dock-inventory')).toBeNull();

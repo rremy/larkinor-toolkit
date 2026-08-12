@@ -226,6 +226,26 @@ describe('bootDesktop', () => {
     expect(labels).toContain('kajálsz');
   });
 
+  it('picks up the monster being fought on the battle screen', () => {
+    // Its name comes from the image title the game puts the HP in:
+    // "Goblin harcművészek, életpontja: 112".
+    const doc = gameDoc('otHarc', '<img title="Goblin harcművészek, életpontja: 112" src="/szornyk/x_k.gif">');
+    bootDesktop(doc);
+
+    // The dock is mounted and the monster fetch was kicked off for it, which the
+    // free-move-only path used to skip.
+    expect(doc.getElementById('lc-dock-root')).not.toBeNull();
+    expect(GM_xmlhttpRequest).toHaveBeenCalled();
+  });
+
+  it('does not fetch monster data on a page with neither free-move nor a fight', () => {
+    const doc = gameDoc('otVegyesbolt');
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')).not.toBeNull();
+    expect(GM_xmlhttpRequest).not.toHaveBeenCalled();
+  });
+
   it('renders the minimal dock on a page type we do not extract', () => {
     const doc = gameDoc('otVegyesbolt');
     bootDesktop(doc);
