@@ -34,12 +34,33 @@ function staticAssets(): Plugin {
   };
 }
 
+/**
+ * Public deployment root, without a trailing slash. Overridden by the
+ * `LC_PUBLIC_BASE_URL` environment variable — the GitHub Pages workflow passes
+ * the URL it was actually deployed to, so a fork needs no code change. The
+ * default matches the upstream Pages deployment.
+ *
+ * Everything the built userscript needs to reach at runtime derives from this:
+ * the data URL (via `__PUBLIC_BASE_URL__`, see src/shared/publicUrl.ts), the
+ * `@connect` grant, and the update/download URLs.
+ */
+const PUBLIC_BASE_URL = (
+  process.env.LC_PUBLIC_BASE_URL ?? 'https://rremy.github.io/larkinor-toolkit'
+).replace(/\/+$/, '');
+
+const PUBLIC_HOST = new URL(PUBLIC_BASE_URL).hostname;
+const REPO_URL = 'https://github.com/rremy/larkinor-toolkit';
+
 export default defineConfig(({ mode }) => ({
-  // Build-time data version for cache-busting the DB JSON (see loader.ts).
-  // Omitted under `test` so the loader's exact-URL unit test stays unversioned.
+  // Build-time constants. Omitted under `test`: the data-version define would
+  // break the loader's exact-URL unit test, and src/shared/publicUrl.ts guards
+  // the absent identifier with `typeof`.
   define: mode === 'test'
     ? {}
-    : { __DATA_VERSION__: JSON.stringify(String(Date.now())) },
+    : {
+        __DATA_VERSION__: JSON.stringify(String(Date.now())),
+        __PUBLIC_BASE_URL__: JSON.stringify(PUBLIC_BASE_URL),
+      },
   resolve: {
     alias: { '@': '/src' },
   },
@@ -49,10 +70,13 @@ export default defineConfig(({ mode }) => ({
     monkey({
       entry: 'src/main.ts',
       userscript: {
-        name: 'Larkinor UI',
-        namespace: 'https://lcenter.local/',
+        name: 'Larkinor Toolkit',
+        namespace: REPO_URL,
         version: '0.1.0',
-        description: 'Mobile-friendly UI for Larkinor browser RPG',
+        author: 'rremy',
+        description: 'Mobile-friendly UI and desktop companion dock for the Larkinor browser RPG',
+        homepage: REPO_URL,
+        supportURL: `${REPO_URL}/issues`,
         match: ['https://larkinor.hu/*', 'https://l2.larkinor.hu/*'],
         grant: [
           'GM_addStyle',
@@ -60,7 +84,12 @@ export default defineConfig(({ mode }) => ({
           'GM_setValue',
           'GM_xmlhttpRequest',
         ],
-        connect: ['l2.larkinor.hu', 'example.invalid', 'localhost', '127.0.0.1'],
+        // The game host serves images; the public host serves static/db JSON.
+        connect: ['l2.larkinor.hu', PUBLIC_HOST, 'localhost', '127.0.0.1'],
+        // Lets the userscript manager update itself from the deployed build, so
+        // a direct install stays current without the dev loader.
+        downloadURL: `${PUBLIC_BASE_URL}/larkinor-ui.user.js`,
+        updateURL: `${PUBLIC_BASE_URL}/larkinor-ui.user.js`,
         'run-at': 'document-end',
       },
       build: {

@@ -15,15 +15,14 @@ import { extractBattle, extractFreeMove, type FreeMoveState } from '@/utils/domE
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
+import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
 
-// Mirrors src/mobile/boot.ts and src/components/DatabaseOverlay.tsx: the dev
-// server hosts static/db, production serves it from the deployment host.
-const DATA_BASE_URL = import.meta.env.DEV
-  ? new URL('/static/db', import.meta.url).href
-  : 'https://example.invalid/larkinor/static/db';
+// Resolved once in @/shared/publicUrl and shared with the mobile boot and the
+// in-game database overlay.
+const DATA_BASE_URL = USERSCRIPT_DATA_BASE_URL;
 
 /**
  * Page types that get no dock at all.

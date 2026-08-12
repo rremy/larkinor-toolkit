@@ -3,6 +3,7 @@ import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
+import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { FreeMove } from '@/pages/FreeMove';
 import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
@@ -15,14 +16,9 @@ import baseStyles from '@/shared/styles/theme.css?raw';
 // src/desktop/boot.ts augments the page instead — see
 // docs/superpowers/specs/2026-08-11-desktop-support-design.md.
 
-// Static DB assets live under the relative path `static/db/` in both dev and
-// production — only the origin differs. In `npm run dev` the folder is served
-// by the Vite dev server (see the lc-static-assets plugin in vite.config.ts),
-// so we resolve against this module's own URL; in the production build the
-// dead dev branch is stripped and we fetch from the deployment host.
-const DATA_BASE_URL = import.meta.env.DEV
-  ? new URL('/static/db', import.meta.url).href
-  : 'https://example.invalid/larkinor/static/db';
+// Resolved once in @/shared/publicUrl and shared with the desktop boot and the
+// in-game database overlay.
+const DATA_BASE_URL = USERSCRIPT_DATA_BASE_URL;
 
 // Discriminated union so the extracted state stays paired with — and
 // narrowable by — the page type that produced it, instead of collapsing to

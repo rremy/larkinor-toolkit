@@ -6,12 +6,15 @@ import theme from '@/shared/styles/theme.css?raw';
 // In dev, `publicDir` (static/) content is served straight off the server
 // root by Vite's own static middleware, so static/db/*.json is reachable at
 // /db/*.json — NOT /static/db/*.json (that path 404s through to the SPA
-// fallback HTML). In production the DB is served at <host>/larkinor/ and its
-// data is deployed alongside at <host>/larkinor/static/db/ (same origin), so a
-// plain fetch of that absolute path works regardless of domain.
+// fallback HTML).
+//
+// In production the data is deployed alongside the app at `static/db/`, so we
+// resolve *relative to the page* rather than hardcoding a mount path. That
+// keeps one build working wherever the site is served from — the repository
+// subpath on GitHub Pages (`/<repo>/`), or any other prefix on a private host.
 const DATA_BASE_URL = import.meta.env.DEV
   ? '/db'
-  : '/larkinor/static/db';
+  : new URL('static/db', document.baseURI).href;
 
 const style = document.createElement('style');
 style.textContent = theme;

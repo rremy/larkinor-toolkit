@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # One run per branch; a new push supersedes an in-flight run. Deploys are not
+  # cancelled mid-flight (see the deploy job) so Pages is never left half-updated.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Proves both targets still build. The deploy job rebuilds with the real
+      # Pages URL rather than reusing this output.
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    # Only a green verify job may publish, and only from main — pull requests
+    # (including those from forks) run verify alone.
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    # A job-level block REPLACES the workflow-level one rather than adding to it,
+    # so contents:read must be repeated here or actions/checkout cannot clone.
+    permissions:
+      contents: read
+      pages: write # deploy to Pages
+      id-token: write # let deploy-pages verify the artifact's origin
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Exposes the URL this repository's Pages site is served from, e.g.
+      # https://<owner>.github.io/<repo>. Requires Pages to be enabled with
+      # "GitHub Actions" as the source (one-time, see README).
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # LC_PUBLIC_BASE_URL is baked into the userscript as its data URL,
+      # @connect host and @updateURL (see vite.config.ts). Taking it from the
+      # step output rather than hardcoding means a fork deploys to itself.
+      - name: Build site and stage game data
+        run: npm run build:site
+        env:
+          LC_PUBLIC_BASE_URL: ${{ steps.pages.outputs.base_url }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

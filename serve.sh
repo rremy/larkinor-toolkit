@@ -17,17 +17,16 @@ cd "$(dirname "$0")"
 PORT="${PORT:-9912}"
 DIST="dist"
 DB_SRC="static/db"
-# The URL baked into the built bundle (see DATA_BASE_URL in the boot modules),
-# rewritten below so a local run fetches data from this server instead.
-PROD_DATA_URL="https://example.invalid/larkinor/static/db"
-
 # --- Detect a reachable LAN IP (falls back to localhost) ---------------------
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true)"
 [ -z "$IP" ] && IP="127.0.0.1"
 HOST="$IP:$PORT"
 
-echo "==> Building main userscript..."
-npm run build >/dev/null
+# Build against this server as the public base URL, so the bundle's data URL,
+# @connect host and @updateURL all point here instead of the deployed site (see
+# vite.config.ts). No post-build patching of the output is needed.
+echo "==> Building main userscript (base URL http://$HOST)..."
+LC_PUBLIC_BASE_URL="http://$HOST" npm run build >/dev/null
 
 # --- Stage the game data next to the script ---------------------------------
 # Served at the same relative path the production host uses, so the rewrite
@@ -40,22 +39,22 @@ else
   echo "WARNING: $DB_SRC not found — the database overlay and monster links will not work." >&2
 fi
 
-# --- Point the built script at this server's copy of the data ---------------
-# Without this the bundle fetches from the production host, which the generated
-# loader does not @connect — ViolentMonkey would block it silently.
-if grep -q "$PROD_DATA_URL" "$DIST/larkinor-ui.user.js"; then
-  sed -i '' "s#$PROD_DATA_URL#http://$HOST/static/db#g" "$DIST/larkinor-ui.user.js"
-  echo "==> Repointed data URL at http://$HOST/static/db"
+# --- Sanity-check that the build really points here --------------------------
+# Cheap guard against a silent misconfiguration: if the bundle still names the
+# deployed host, the userscript would fetch data the loader does not @connect and
+# ViolentMonkey would block it with no visible error.
+if grep -q "http://$HOST" "$DIST/larkinor-ui.user.js"; then
+  echo "==> Data URL points at http://$HOST/static/db"
 else
-  echo "WARNING: '$PROD_DATA_URL' not found in the built script — the data URL in" >&2
-  echo "         the boot modules changed. Update PROD_DATA_URL in serve.sh." >&2
+  echo "WARNING: the built script does not reference http://$HOST — LC_PUBLIC_BASE_URL" >&2
+  echo "         did not reach the build. The data fetch will be blocked." >&2
 fi
 
 # --- Generate a ready-to-install loader pointing at this server -------------
 cat > "$DIST/larkinor-loader.user.js" <<EOF
 // ==UserScript==
-// @name         Larkinor UI Loader (local)
-// @namespace    https://lcenter.local/
+// @name         Larkinor Toolkit Loader (local)
+// @namespace    https://github.com/rremy/larkinor-toolkit
 // @version      1.0.0
 // @description  Loads the locally-served Larkinor UI script
 // @match        https://larkinor.hu/*

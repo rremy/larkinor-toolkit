@@ -1,7 +1,12 @@
 {
-  "name": "lc-app",
+  "name": "larkinor-toolkit",
   "version": "0.1.0",
   "private": true,
+  "description": "Unofficial companion tooling for the Larkinor browser RPG: a userscript UI and a standalone database explorer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rremy/larkinor-toolkit.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,8 +14,11 @@
     "build": "npm run build:userscript && npm run build:db",
     "build:userscript": "vite build",
     "build:db": "vite build --config vite.config.db.ts",
+    "build:site": "npm run build && npm run copy:data",
+    "copy:data": "mkdir -p dist/static && cp -R static/. dist/static/",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "serve": "python3 -m http.server 9000 --directory dist"
   },
   "dependencies": {

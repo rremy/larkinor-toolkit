@@ -1,6 +1,8 @@
-# CLAUDE.md — lcenter
+# CLAUDE.md — larkinor-toolkit
 
 Support tooling for [Larkinor](https://larkinor.hu), a Hungarian browser-based text RPG.
+Published as [rremy/larkinor-toolkit](https://github.com/rremy/larkinor-toolkit); see
+`README.md` for the user-facing documentation.
 
 ## Project structure
 
@@ -9,7 +11,7 @@ userscript **and** a standalone database explorer, sharing one data layer and
 theme.
 
 ```
-lcenter/
+larkinor-toolkit/
 ├── src/
 │   ├── main.ts              # Entry: detect platform → bootMobile | bootDesktop
 │   ├── mobile/boot.ts       # Mobile boot: proxy-DOM page replacement
@@ -28,6 +30,8 @@ lcenter/
 │   │   │   ├── source.ts    # DataSource (gmSource for GM, httpSource for fetch)
 │   │   │   ├── loader.ts    # createDataLoader(source, baseUrl)
 │   │   │   └── index.ts
+│   │   ├── publicUrl.ts     # Deployment base URL + userscript data URL (build-time inject)
+│   │   ├── text.ts          # foldAccents / matchesSearch (accent-insensitive search)
 │   │   └── styles/theme.css # Single shared dark-medieval theme (variables + scopes)
 │   └── database/            # Standalone DB (built separately; also mounted in-game)
 │       ├── index.html · main.tsx · DatabaseApp.tsx   # hash-routed tabs
@@ -39,10 +43,10 @@ lcenter/
 ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader (fetches + evals main script)
 ├── scripts/deploy.sh        # scp dist/ + static/ to the server (config from repo-root .env)
 ├── docs/superpowers/        # specs + plans
+├── .github/workflows/ci.yml # CI: typecheck + test + build; deploys main to GitHub Pages
 ├── vite.config.ts           # Userscript build (vite-plugin-monkey)
 ├── vite.config.db.ts        # Standalone DB build
-├── Makefile · serve.sh · package.json · tsconfig.json
-└── screenshots/             # Game screenshots for reference
+└── Makefile · serve.sh · README.md · package.json · tsconfig.json
 ```
 
 ## Overview
@@ -132,8 +136,9 @@ npm run dev          # Vite dev server for the userscript UI (make dev)
 npm run dev:db       # Standalone DB dev server, data at /db (make dev-db)
 npm test             # Vitest (jsdom); GM_* are mocked in tests/setup.ts
 npm run test:watch   # Vitest in watch mode
-npx tsc --noEmit     # Type-check
+npm run typecheck    # tsc --noEmit
 npm run build        # Full build: build:userscript && build:db (make build)
+npm run build:site   # build + stage static/ into dist/static/ (what CI deploys)
 npm run serve        # Simple HTTP server for dist/ (http://localhost:9000)
 ```
 
@@ -144,18 +149,35 @@ npm run serve        # Simple HTTP server for dist/ (http://localhost:9000)
 **Data paths**:
 - Dev userscript: data served from `/static/db/` (publicDir in `vite.config.ts`)
 - Dev standalone DB: data served from `/db/` (publicDir in `vite.config.db.ts`, `dev` only)
-- Prod standalone DB: fetches same-origin `/larkinor/static/db/` (baked in `src/database/main.tsx`)
-- `static/db/` is the single source; the DB build does not copy it (deploy ships it separately).
+- Prod standalone DB: resolves `static/db` **relative to `document.baseURI`**
+  (`src/database/main.tsx`), so one build works at any mount path — `/larkinor/` on a
+  private host, `/<repo>/` on GitHub Pages.
+- `static/db/` is the single source. The DB build does not copy it; `npm run build:site`
+  stages it into `dist/static/`, and `scripts/deploy.sh` ships it as a separate scp.
 
-**Production deploy** (host `https://example.invalid/larkinor/`):
-Run `make deploy` (or `bash scripts/deploy.sh` directly). This:
-1. Builds the userscript and standalone DB
-2. Uploads `dist/.` → `/larkinor/` — so `/larkinor/` renders the DB (`index.html`),
-   `/larkinor/larkinor-ui.user.js` is the userscript, `/larkinor/assets/` the DB assets
-3. Uploads `static/.` → `/larkinor/static/` (data at `/larkinor/static/db/`, for both)
-Userscript data URL is baked in `main.ts` (`DATA_BASE_URL`, absolute remote host); the
-standalone DB uses the same-origin `/larkinor/static/db`. `@connect` host is in
-`vite.config.ts`. Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS.
+**Public base URL — never hardcode a host.** Everything the built userscript must reach at
+runtime derives from one value, `LC_PUBLIC_BASE_URL` (default in `vite.config.ts`), injected
+as `__PUBLIC_BASE_URL__` and read in `src/shared/publicUrl.ts`:
+- the data URL (`USERSCRIPT_DATA_BASE_URL`, imported by both boot modules **and**
+  `DatabaseOverlay` — one definition, not three);
+- the `@connect` host (derived via `new URL(...).hostname`);
+- `@downloadURL` / `@updateURL`, so a direct install self-updates.
+
+So `LC_PUBLIC_BASE_URL=http://192.168.x.x:9912 npm run build` produces a bundle that is
+entirely self-consistent for local testing — which is exactly what `serve.sh` does, instead
+of patching the built output.
+
+**Deploy — two independent targets:**
+- **GitHub Pages (primary, automatic).** A push to `main` runs `.github/workflows/ci.yml`:
+  typecheck → test → build, then a `deploy` job (gated on that passing, `main` only) rebuilds
+  with `LC_PUBLIC_BASE_URL` set from `actions/configure-pages`' `base_url` output and
+  publishes `dist/`. Nothing about the owner or repo name is hardcoded, so a fork deploys to
+  itself. One-time repo setup: Settings → Pages → Source = GitHub Actions.
+- **Private host (optional).** `make deploy` → `scripts/deploy.sh` scps `dist/.` and
+  `static/.` over SSH, reading `REMOTE_USER`/`REMOTE_HOST`/`REMOTE_DIR` from a git-ignored
+  `.env` (see `.env.example`). Never commit those values.
+
+Static serving over HTTPS is enough — `GM_xmlhttpRequest` bypasses CORS.
 
 **Local device testing** via userscript loader:
 ```bash
