@@ -37,6 +37,10 @@ export const INVENTORY_MINIMIZED_KEY = 'lc-inventory-minimized';
 /** GM storage key holding whether the inventory panel is open. */
 export const INVENTORY_OPEN_KEY = 'lc-inventory-open';
 
+/** GM storage keys for the market panel's minimised and open flags. */
+export const MARKET_MINIMIZED_KEY = 'lc-market-minimized';
+export const MARKET_OPEN_KEY = 'lc-market-open';
+
 /**
  * The user's manual platform choice, or null for automatic detection. Values
  * other than the two known platforms are treated as "no override" so a stale or

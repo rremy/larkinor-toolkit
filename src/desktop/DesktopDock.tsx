@@ -4,7 +4,7 @@ import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, INVENTORY_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
@@ -13,7 +13,9 @@ import { hasOpenPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
 import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 import { InventoryPanel } from '@/desktop/InventoryPanel';
+import { MarketPanel } from '@/desktop/MarketPanel';
 import type { HomeState } from '@/utils/homeExtract';
+import type { MarketState } from '@/utils/marketExtract';
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -27,6 +29,8 @@ export interface DesktopDockProps {
    * nothing but churn. Convert if a third page needs its own state.
    */
   homeState?: HomeState | null;
+  /** Market state, when we are on the market page. */
+  marketState?: MarketState | null;
   /** Force the minimal (config + database) form regardless of state. */
   dbButtonOnly?: boolean;
 }
@@ -45,7 +49,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
@@ -53,6 +57,7 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
   // Persisted: every item move reloads the game page, which would otherwise
   // close the panel the move was made from.
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
+  const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   // No actions to offer means nothing but the DB button is useful: either the
@@ -79,6 +84,11 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
     setPanelOpen(INVENTORY_OPEN_KEY, open);
   };
 
+  const setMarket = (open: boolean) => {
+    setMarketOpen(open);
+    setPanelOpen(MARKET_OPEN_KEY, open);
+  };
+
   // The narration lives in the game's own DOM, so this is a side effect on an
   // external document rather than something Preact renders. enhanceNarration is
   // idempotent (data-lc-enhanced), so re-running on a db change is harmless.
@@ -92,7 +102,7 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
     }
   }, [doc, db]);
 
-  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen;
+  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen || marketOpen;
 
   /**
    * Closes the topmost drawer. Panels are not handled here: DockedPanel owns
@@ -164,6 +174,11 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
                 Készlet
               </button>
             )}
+            {marketState && (
+              <button class="lc-dock-btn lc-dock-market" onClick={() => setMarket(true)}>
+                Piac
+              </button>
+            )}
             <button
               class="lc-dock-btn lc-dock-config"
               aria-label="Beállítások"
@@ -206,6 +221,10 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
 
       {homeState && (
         <InventoryPanel open={inventoryOpen} state={homeState} onClose={() => setInventory(false)} />
+      )}
+
+      {marketState && (
+        <MarketPanel open={marketOpen} state={marketState} onClose={() => setMarket(false)} />
       )}
     </div>
   );

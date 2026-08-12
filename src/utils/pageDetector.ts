@@ -2,6 +2,7 @@ export enum PageType {
   FreeMove = 'FreeMove',
   Battle = 'Battle',
   Shop = 'Shop',
+  Market = 'Market',
   Church = 'Church',
   Login = 'Login',
   Dungeon = 'Dungeon',
@@ -32,8 +33,11 @@ export function detectPage(doc: Document): PageType {
       return PageType.Dungeon;
     case 'otVegyesbolt':
     case 'otFegyverbolt':
-    case 'otPiac':
       return PageType.Shop;
+    // The market is its own type, not a shop: it trades player-to-player, and
+    // the desktop dock gives it a panel of its own.
+    case 'otPiac':
+      return PageType.Market;
     case 'otSajathaz':
       return PageType.Home;
     default:

@@ -1,0 +1,145 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/preact';
+import { MarketPanel } from '../src/desktop/MarketPanel';
+import { MARKET_MINIMIZED_KEY } from '../src/utils/config';
+import type { MarketItem, MarketListing, MarketState } from '../src/utils/marketExtract';
+
+function item(name: string, amount: number, price: number | null, percent: number | null, index: number): MarketItem {
+  const suggestedPrice = price === null ? null : percent === null ? price : Math.round((price * percent) / 100);
+  return {
+    name, amount, index, price, pricePercent: percent, suggestedPrice,
+    type: 'tárgy', weight: 0.04, totalWeight: 0.04 * amount, magical: false, attrs: [],
+  };
+}
+
+function listing(label: string, index: number): MarketListing {
+  return { label, index, detail: null, revoke: vi.fn() };
+}
+
+/** Real figures from the live page: jáspis 50 ezüst at 170% → 85. */
+function makeState(overrides: Partial<MarketState> = {}): MarketState {
+  return {
+    items: [
+      item('ezüst', 5725, null, null, 0),
+      item('jáspis', 19, 50, 170, 2),
+    ],
+    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1)],
+    offer: vi.fn(),
+    ...overrides,
+  };
+}
+
+/** The row for a given item name. */
+function rowFor(container: Element, name: string): Element {
+  const row = [...container.querySelectorAll('.lc-mkt-row')]
+    .find(r => r.querySelector('.lc-mkt-name')?.textContent?.trim() === name);
+  if (!row) throw new Error(`no market row for ${name}`);
+  return row;
+}
+
+describe('MarketPanel', () => {
+  beforeEach(() => { GM_setValue(MARKET_MINIMIZED_KEY, ''); });
+
+  it('renders nothing when closed', () => {
+    const { container } = render(<MarketPanel open={false} state={makeState()} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-db-overlay')).toBeNull();
+  });
+
+  it('shows what can be offered and what already is, side by side', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    expect(container.querySelectorAll('.lc-home-col').length).toBe(2);
+    expect(screen.getByText('jáspis')).toBeTruthy();
+    expect(screen.getByText('6 db. agyar 700 ezüst/db. áron')).toBeTruthy();
+  });
+
+  it('pre-fills the price from the market percentage and the quantity from the stack', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const inputs = rowFor(container, 'jáspis').querySelectorAll<HTMLInputElement>('input');
+
+    expect(inputs[0].value).toBe('19'); // whole stack
+    expect(inputs[1].value).toBe('85'); // 50 × 170%
+  });
+
+  it('shows the market percentage so the suggested price is explainable', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    expect(rowFor(container, 'jáspis').querySelector('.lc-mkt-pct')!.textContent).toBe('170%');
+  });
+
+  it('offers the pre-filled values in one click', () => {
+    const state = makeState();
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+    fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-offer-btn')!);
+
+    expect(state.offer).toHaveBeenCalledTimes(1);
+    const [offered, qty, price] = vi.mocked(state.offer).mock.calls[0];
+    expect(offered.name).toBe('jáspis');
+    expect(qty).toBe(19);
+    expect(price).toBe(85);
+  });
+
+  it('offers the edited values', () => {
+    const state = makeState();
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const row = rowFor(container, 'jáspis');
+    const inputs = row.querySelectorAll<HTMLInputElement>('input');
+
+    fireEvent.input(inputs[0], { target: { value: '5' } });
+    fireEvent.input(inputs[1], { target: { value: '120' } });
+    fireEvent.click(row.querySelector<HTMLElement>('.lc-mkt-offer-btn')!);
+
+    const [, qty, price] = vi.mocked(state.offer).mock.calls[0];
+    expect(qty).toBe(5);
+    expect(price).toBe(120);
+  });
+
+  it('clamps a quantity above the stack', () => {
+    const state = makeState();
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const row = rowFor(container, 'jáspis');
+
+    fireEvent.input(row.querySelectorAll<HTMLInputElement>('input')[0], { target: { value: '999' } });
+    fireEvent.click(row.querySelector<HTMLElement>('.lc-mkt-offer-btn')!);
+
+    expect(vi.mocked(state.offer).mock.calls[0][1]).toBe(19);
+  });
+
+  it('will not offer an item it cannot price', () => {
+    // Silver has no Ár, so there is nothing to suggest and no valid offer.
+    const state = makeState();
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const button = rowFor(container, 'ezüst').querySelector<HTMLButtonElement>('.lc-mkt-offer-btn')!;
+
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(state.offer).not.toHaveBeenCalled();
+  });
+
+  it('revokes a standing offer', () => {
+    const state = makeState();
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+    fireEvent.click(container.querySelector<HTMLElement>('.lc-mkt-revoke-btn')!);
+    expect(state.listings[0].revoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters the offerable list', () => {
+    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    fireEvent.input(container.querySelector<HTMLInputElement>('.lc-inv-search')!, { target: { value: 'jás' } });
+
+    const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
+    expect(names).toContain('jáspis');
+    expect(names).not.toContain('ezüst');
+  });
+
+  it('says so when there is nothing offered yet', () => {
+    render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+    expect(screen.getByText('Nincs felkínált tárgyad.')).toBeTruthy();
+  });
+
+  it('docks beside the game like the other panels', () => {
+    render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Kis méret'));
+    expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
+  });
+});

@@ -1059,6 +1059,75 @@
 .lc-home-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .lc-home-col-head h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
 
+/* Market panel — offerable backpack items and standing offers. Shares the split
+   layout above, since the task is the same shape: move things between two
+   lists. */
+.lc-mkt-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+
+.lc-mkt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px 74px auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--row-border);
+}
+.lc-mkt-row:last-child { border-bottom: 0; }
+
+/* Standing offers carry only a label and the revoke button. */
+.lc-home-col + .lc-home-col .lc-mkt-row,
+.lc-mkt-row:has(> .lc-mkt-revoke-btn) { grid-template-columns: minmax(0, 1fr) auto; }
+
+.lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* What the market pays, as printed in the game's own item list. */
+.lc-mkt-pct {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+.lc-mkt-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-mkt-total { color: var(--good); }
+
+.lc-mkt-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lc-mkt-field span { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.lc-mkt-field input {
+  width: 100%;
+  padding: 4px 5px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.lc-mkt-field input:focus { outline: none; border-color: var(--accent); }
+
+.lc-mkt-offer-btn,
+.lc-mkt-revoke-btn {
+  padding: 5px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-mkt-offer-btn:hover:not(:disabled),
+.lc-mkt-revoke-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+.lc-mkt-offer-btn:disabled { color: var(--muted); cursor: not-allowed; }
+.lc-mkt-revoke-btn { border-color: var(--bad); color: var(--bad); }
+
+.lc-mkt-empty { margin: 0; padding: 10px 8px; font-size: 12px; color: var(--muted); }
+
 .lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
 .lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
 .lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }

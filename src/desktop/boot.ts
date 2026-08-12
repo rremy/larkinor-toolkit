@@ -13,6 +13,7 @@ import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
+import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import baseStyles from '@/shared/styles/theme.css?raw';
@@ -45,6 +46,20 @@ function extractDockState(pageType: PageType, doc: Document): FreeMoveState | nu
     return extractFreeMove(doc);
   } catch (err) {
     console.warn('[Larkinor UI] Free-move extraction failed; dock degraded:', err);
+    return null;
+  }
+}
+
+/**
+ * Market state, for the dock's Piac panel. Null anywhere else, and on failure —
+ * the dock stays useful without it.
+ */
+function extractMarketState(pageType: PageType, doc: Document): MarketState | null {
+  if (pageType !== PageType.Market) return null;
+  try {
+    return extractMarket(doc);
+  } catch (err) {
+    console.warn('[Larkinor UI] Market extraction failed; market panel unavailable:', err);
     return null;
   }
 }
@@ -197,6 +212,7 @@ export function bootDesktop(doc: Document): void {
 
   const state = extractDockState(pageType, doc);
   const homeState = extractInventoryState(pageType, doc);
+  const marketState = extractMarketState(pageType, doc);
 
   const root = mountDockRoot(doc);
   if (!root) return;
@@ -205,7 +221,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, dbButtonOnly: state === null }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, marketState, dbButtonOnly: state === null }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

@@ -97,7 +97,13 @@ function decodeJsString(body: string): string {
 }
 
 /** Reads `varName[i]="..."` entries out of the inventory <script> text, by index. */
-export function parseCuccArray(scriptText: string, varName: 'hazbanCucc' | 'hatizsakCucc'): string[] {
+/**
+ * Reads `varName[i]="..."` entries out of an inline-script text, by index.
+ * `varName` is a plain string rather than a union of the two Home arrays because
+ * the market page publishes its inventory the same way under different names
+ * (`hatizsakTargyak`, `felkinaltTargyak`).
+ */
+export function parseCuccArray(scriptText: string, varName: string): string[] {
   const out: string[] = [];
   const re = new RegExp(`${varName}\\[(\\d+)\\]\\s*=\\s*"((?:\\\\.|[^"\\\\])*)"`, 'g');
   let m: RegExpExecArray | null;
