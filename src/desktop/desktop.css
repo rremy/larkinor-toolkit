@@ -68,8 +68,34 @@
   color: var(--text);
 }
 
+/* Collapsed: shrink to a small square holding just the expand button, keeping
+   the right edge where the expanded dock's was.
+
+   The root has to shrink too, not just the panel inside it: it is the element
+   carrying the column width, and a 633px-wide invisible strip would go on
+   intercepting clicks meant for the chat underneath. Anchoring by the right edge
+   via translateX keeps this independent of the viewport width, so no assumption
+   about scrollbars creeps in.
+
+   `:has()` is the only way to react to a descendant's state from here, since the
+   root is created by boot.ts while the component renders inside it. Where it is
+   unsupported the collapsed dock just keeps the column width — cosmetic, not
+   broken. */
+#lc-dock-root:has(.lc-dock--collapsed) {
+  left: calc(var(--lc-dock-left) + var(--lc-dock-width));
+  width: auto;
+  transform: translateX(-100%);
+}
+
 .lc-dock--collapsed {
-  padding: 4px 36px 4px 4px;
+  /* No room reserved for the toggle: collapsed, it is the only content and sits
+     in normal flow (see below) rather than in the corner. */
+  padding: 4px;
+  width: auto;
+  /* The expanded panel's scroll cap would otherwise put a scrollbar in a box
+     barely bigger than the button. */
+  max-height: none;
+  overflow: visible;
 }
 
 .lc-dock-toggle {
@@ -92,7 +118,7 @@
   cursor: pointer;
 }
 
-.lc-dock--collapsed .lc-dock-toggle { position: static; }
+.lc-dock--collapsed .lc-dock-toggle { position: static; width: 24px; height: 24px; }
 
 .lc-dock-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
