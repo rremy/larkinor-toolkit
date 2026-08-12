@@ -869,6 +869,26 @@
   box-shadow: -4px 0 16px var(--dock-shadow);
 }
 
+/* Docked, the panel is only as wide as the space beside the game and every row
+   of height counts, so the title goes. The tab row it shared the header with
+   then rises into the top-right window controls, hence the reserved padding —
+   88px clears both 32px buttons and their 12px inset. */
+.lc-db-overlay--minimized .lc-db header.top h1 { display: none; }
+.lc-db-overlay--minimized .lc-db header.top { padding-right: 88px; }
+
+/* The five tabs need ~412px and the docked panel is often narrower, which left
+   the last two unreachable. The mobile breakpoint already solves this, but it
+   keys on viewport width — useless for a narrow panel inside a wide window — so
+   the same treatment is repeated for the docked case. */
+.lc-db-overlay--minimized .lc-db .tabs {
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.lc-db-overlay--minimized .lc-db .tab { flex-shrink: 0; }
+
 .lc-db-overlay-minimize {
   position: fixed;
   top: 12px;
