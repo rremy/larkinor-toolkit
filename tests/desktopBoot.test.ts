@@ -33,41 +33,56 @@ describe('bootDesktop', () => {
     expect(doc.querySelector('meta[name="viewport"]')).toBeNull();
   });
 
-  it('places the dock in the page flow directly above the chat', () => {
-    const doc = gameDoc('otVilag', '<div id="wrap"><div id="mydiv">chat</div></div>');
-    bootDesktop(doc);
-
-    const root = doc.getElementById('lc-dock-root')!;
-    const chat = doc.getElementById('mydiv')!;
-
-    expect(root.dataset.placement).toBe('inline');
-    // Immediately before the chat, inside the chat's own parent.
-    expect(chat.previousElementSibling).toBe(root);
-    expect(root.parentElement).toBe(chat.parentElement);
-  });
-
-  it('adds the dock without moving, removing or reordering the chat', () => {
+  it('never inserts the dock into the game layout, only appends to body', () => {
+    // The game's layout is absolutely positioned: a block spliced into it
+    // displaces nothing and overlaps everything, dragging the visible column
+    // off-screen. The dock must stay a sibling of the layout, not part of it.
     const doc = gameDoc('otVilag', '<div id="wrap"><div id="before">x</div><div id="mydiv">chat</div></div>');
     const wrap = doc.getElementById('wrap')!;
     const chat = doc.getElementById('mydiv')!;
 
     bootDesktop(doc);
 
-    // Same element instance, same parent, and the node that preceded the chat
-    // is still ahead of it — we inserted a sibling and nothing else.
+    expect(doc.getElementById('lc-dock-root')!.parentElement).toBe(doc.body);
+    // The chat is the same element instance, in the same place, with the same
+    // siblings in the same order.
     expect(doc.getElementById('mydiv')).toBe(chat);
     expect(chat.parentElement).toBe(wrap);
-    const ids = Array.from(wrap.children).map(el => el.id);
-    expect(ids).toEqual(['before', 'lc-dock-root', 'mydiv']);
+    expect(Array.from(wrap.children).map(el => el.id)).toEqual(['before', 'mydiv']);
   });
 
-  it('falls back to the floating corner panel when there is no chat', () => {
+  it('aligns the dock to the game column via custom properties', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    bootDesktop(doc);
+
+    // jsdom reports zero-size rects, so this exercises the fallback: a centred
+    // column of the expected width, which is always on-screen.
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
+    expect(root.style.getPropertyValue('--lc-dock-left')).toMatch(/^\d+px$/);
+  });
+
+  it('aligns to the measured chat column when rects are available', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    const chat = doc.getElementById('mydiv')!;
+    // Stand in for a real layout engine: a 633px column starting at x=120.
+    chat.getBoundingClientRect = () => ({ width: 633, left: 120 }) as DOMRect;
+
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
+    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('120px');
+  });
+
+  it('still mounts the dock when there is no chat to align to', () => {
     const doc = gameDoc('otVilag');
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
-    expect(root.dataset.placement).toBe('floating');
     expect(root.parentElement).toBe(doc.body);
+    expect(root.querySelector('.lc-dock')).not.toBeNull();
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
   });
 
   it('mounts the dock into a fixed dock root', () => {
