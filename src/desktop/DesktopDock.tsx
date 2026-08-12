@@ -24,10 +24,14 @@ export interface DesktopDockProps {
 
 /**
  * Fixed, collapsible companion bar for desktop. Unlike the mobile pages this
- * adds to the game UI rather than replacing it, so it renders no stats or
- * navigation — only the affordances the desktop page lacks: one-click quick
- * actions (the game needs a select + submit for each), the encounter attack
- * button, and the config/database entry points.
+ * adds to the game UI rather than replacing it, so it renders only the
+ * affordances the desktop page lacks: one-click quick actions (the game needs a
+ * select plus a separate submit for each) and the config/database entry points.
+ *
+ * Deliberately absent: stats, navigation, and the encounter attack button. The
+ * page already presents all three as single clicks, so repeating them here would
+ * be duplication rather than help. `attack` is still consumed — by the keyboard
+ * shortcuts, where Space is an affordance the page genuinely lacks.
  *
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
@@ -126,18 +130,10 @@ export function DesktopDock({ doc, state, db, dbButtonOnly = false }: DesktopDoc
             </div>
           )}
 
-          {attack && (
-            <div class="lc-dock-row">
-              <button
-                class="lc-dock-btn lc-dock-btn--attack"
-                title={attack.label}
-                onClick={() => attack.trigger()}
-              >
-                {attack.iconUrl && <img class="lc-dock-icon" src={attack.iconUrl} alt="" />}
-                <span>{attack.label}</span>
-              </button>
-            </div>
-          )}
+          {/* No attack button: the game page already offers the encounter
+              attack as a single click, so duplicating it in the dock adds
+              nothing. `attack` is still threaded to the keyboard shortcuts,
+              where Space *is* an affordance the page lacks. */}
 
           <div class="lc-dock-row">
             <button

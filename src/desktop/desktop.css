@@ -111,8 +111,6 @@
 
 #lc-dock-root .lc-hotkey-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
 
-.lc-dock-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
-
 .lc-dock-btn {
   display: inline-flex;
   align-items: center;
@@ -127,9 +125,6 @@
 }
 
 .lc-dock-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
-
-.lc-dock-btn--attack { border-color: var(--bad); color: var(--bad); font-weight: bold; }
-.lc-dock-btn--attack .lc-dock-icon { width: 20px; height: 20px; }
 
 /* Sized to its label — stretching to fill the row only made sense in the old
    narrow column layout. */

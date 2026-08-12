@@ -59,18 +59,32 @@ describe('DesktopDock', () => {
     expect(state.actions[0].trigger).toHaveBeenCalledTimes(1);
   });
 
-  it('omits the attack button when there is no encounter', () => {
-    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
-    expect(container.querySelector('.lc-dock-btn--attack')).toBeNull();
-  });
-
-  it('renders the attack button and fires its trigger during an encounter', () => {
+  it('renders no attack button during an encounter', () => {
+    // The game page already presents the encounter attack as a single click,
+    // so a dock button would only duplicate it.
     const attack = { label: 'Támadás!!!', iconUrl: 'https://l2.larkinor.hu/2/ikon/tamadas.gif', trigger: vi.fn() };
     const { container } = render(
       <DesktopDock doc={document} state={makeState({ attack })} db={null} />
     );
-    const btn = container.querySelector('.lc-dock-btn--attack')!;
-    fireEvent.click(btn);
+
+    const labels = [...container.querySelectorAll('.lc-dock-btn')].map(b => b.textContent?.trim());
+    expect(labels).not.toContain('Támadás!!!');
+    expect(container.querySelector('img[src*="tamadas"]')).toBeNull();
+  });
+
+  it('still fires the attack from the Space shortcut during an encounter', () => {
+    // Dropping the button must not drop the keyboard path — Space is the
+    // affordance the page genuinely lacks.
+    const gameDoc = new JSDOM('<html><body></body></html>').window.document;
+    const attack = { label: 'Támadás!!!', iconUrl: '', trigger: vi.fn() };
+    render(<DesktopDock doc={gameDoc} state={makeState({ attack })} db={null} />);
+
+    act(() => {
+      gameDoc.body.dispatchEvent(
+        new gameDoc.defaultView!.KeyboardEvent('keydown', { code: 'Space', bubbles: true, cancelable: true })
+      );
+    });
+
     expect(attack.trigger).toHaveBeenCalledTimes(1);
   });
 
@@ -87,8 +101,9 @@ describe('DesktopDock', () => {
     const { container } = render(
       <DesktopDock doc={document} state={makeState({ actions: [] })} db={null} />
     );
-    expect(container.querySelector('.lc-dock-btn--attack')).toBeNull();
-    expect(container.querySelector('.lc-dock-db')).not.toBeNull();
+    expect(container.querySelector('.lc-hotkey')).toBeNull();
+    const labels = [...container.querySelectorAll('.lc-dock-btn')].map(b => b.textContent?.trim());
+    expect(labels).toEqual(['⚙', 'Adatbázis']);
   });
 
   it('opens the database overlay from the dock button', () => {
