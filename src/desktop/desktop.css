@@ -5,19 +5,37 @@
    ================================================================ */
 
 #lc-dock-root {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  /* position: fixed + z-index here establishes a new stacking context, so
-     nested overlays with much higher z-indexes — .lc-drawer-backdrop (1000)
-     and .lc-db-overlay (9999) in theme.css — are stacked *within* this
-     context, not against the page. That only stays invisible to us because
-     the live game's own z-indexes are 3-6; do not "fix" those overlay
-     z-indexes expecting them to compete with the page directly. */
-  z-index: 900;
+  /* Width of the game's own content container, which the inline placement
+     matches so the dock lines up with the page. */
+  --lc-dock-inline-width: 633px;
   font-family: -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.4;
+}
+
+/* Both placements below set position + z-index, which establishes a new
+   stacking context. Nested overlays with much higher z-indexes —
+   .lc-drawer-backdrop (1000) and .lc-db-overlay (9999) in theme.css — are
+   therefore stacked *within* this context, not against the page. That stays
+   invisible to us only because the live game's own z-indexes are 3-6; do not
+   "fix" those overlay z-indexes expecting them to compete with the page
+   directly. The z-index here is what has to beat the game, and does. */
+
+/* Inline: in the page flow directly above the chat (see mountDockRoot). */
+#lc-dock-root[data-placement='inline'] {
+  position: relative;
+  z-index: 10;
+  width: var(--lc-dock-inline-width);
+  max-width: 100%;
+  margin: 8px 0;
+}
+
+/* Floating: fallback for pages with no chat container to dock above. */
+#lc-dock-root[data-placement='floating'] {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
 }
 
 #lc-dock-root *,
@@ -112,3 +130,33 @@
 .lc-dock-btn--attack .lc-dock-icon { width: 20px; height: 20px; }
 
 .lc-dock-db { flex: 1; justify-content: center; }
+
+/* ---- Inline placement overrides -------------------------------------------
+   At the full container width a stacked column wastes the space, so the rows
+   flow horizontally and wrap. The height cap and scrolling that the floating
+   panel needs are both wrong here: the dock is in the page flow, so the page
+   itself scrolls.                                                          */
+
+#lc-dock-root[data-placement='inline'] .lc-dock {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  max-width: none;
+  max-height: none;
+  overflow-y: visible;
+  /* Keeps the wrapping rows clear of the absolutely-positioned toggle. */
+  padding-right: 36px;
+}
+
+#lc-dock-root[data-placement='inline'] .lc-dock-toggle {
+  /* Absolute rather than the floating panel's sticky: with no scroll
+     container here there is nothing for sticky to stick to. */
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  align-self: auto;
+}
+
+/* Stretching to fill the row is only right in the narrow floating column. */
+#lc-dock-root[data-placement='inline'] .lc-dock-db { flex: 0 0 auto; }

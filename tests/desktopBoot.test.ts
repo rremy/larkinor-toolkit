@@ -33,6 +33,43 @@ describe('bootDesktop', () => {
     expect(doc.querySelector('meta[name="viewport"]')).toBeNull();
   });
 
+  it('places the dock in the page flow directly above the chat', () => {
+    const doc = gameDoc('otVilag', '<div id="wrap"><div id="mydiv">chat</div></div>');
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    const chat = doc.getElementById('mydiv')!;
+
+    expect(root.dataset.placement).toBe('inline');
+    // Immediately before the chat, inside the chat's own parent.
+    expect(chat.previousElementSibling).toBe(root);
+    expect(root.parentElement).toBe(chat.parentElement);
+  });
+
+  it('adds the dock without moving, removing or reordering the chat', () => {
+    const doc = gameDoc('otVilag', '<div id="wrap"><div id="before">x</div><div id="mydiv">chat</div></div>');
+    const wrap = doc.getElementById('wrap')!;
+    const chat = doc.getElementById('mydiv')!;
+
+    bootDesktop(doc);
+
+    // Same element instance, same parent, and the node that preceded the chat
+    // is still ahead of it — we inserted a sibling and nothing else.
+    expect(doc.getElementById('mydiv')).toBe(chat);
+    expect(chat.parentElement).toBe(wrap);
+    const ids = Array.from(wrap.children).map(el => el.id);
+    expect(ids).toEqual(['before', 'lc-dock-root', 'mydiv']);
+  });
+
+  it('falls back to the floating corner panel when there is no chat', () => {
+    const doc = gameDoc('otVilag');
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.dataset.placement).toBe('floating');
+    expect(root.parentElement).toBe(doc.body);
+  });
+
   it('mounts the dock into a fixed dock root', () => {
     const doc = gameDoc('otVilag');
     bootDesktop(doc);
