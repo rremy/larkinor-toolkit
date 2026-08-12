@@ -75,6 +75,9 @@ describe('bootDesktop', () => {
   function withChat(doc: Document, opts: { input?: boolean; viewportHeight?: number } = {}): void {
     const chat = doc.getElementById('mydiv')!;
     chat.getBoundingClientRect = () => ({ left: 60, top: 473, width: 500, height: 300, bottom: 773 }) as DOMRect;
+    // The chat is inset within the game's 633px content column, which is what
+    // the dock takes its horizontal placement from.
+    chat.parentElement!.getBoundingClientRect = () => ({ left: 0, width: 633 }) as DOMRect;
     if (opts.input) {
       const input = doc.createElement('input');
       input.getBoundingClientRect = () => ({ top: 473, height: 22, bottom: 495 }) as DOMRect;
@@ -85,16 +88,18 @@ describe('bootDesktop', () => {
     }
   }
 
-  it('takes the chat panel\'s left edge and width', () => {
-    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+  it('spans the game content column horizontally, not just the chat', () => {
+    // The column is ~130px wider than the chat it contains, which is what lets
+    // the wide action buttons wrap two-per-row instead of one.
+    const doc = gameDoc('otVilag', '<div id="wrap"><div id="mydiv">chat</div></div>');
     withChat(doc, { viewportHeight: 900 });
 
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
-    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('60px');
-    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
+    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('0px');   // column, not the chat's 60
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px'); // column, not the chat's 500
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');   // vertical still from the chat
   });
 
   it('may grow taller than the chat rather than scrolling inside itself', () => {
@@ -150,7 +155,7 @@ describe('bootDesktop', () => {
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
     expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
   });
 
@@ -161,7 +166,7 @@ describe('bootDesktop', () => {
     const root = doc.getElementById('lc-dock-root')!;
     expect(root.parentElement).toBe(doc.body);
     expect(root.querySelector('.lc-dock')).not.toBeNull();
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
   });
 
   it('mounts the dock into a fixed dock root', () => {

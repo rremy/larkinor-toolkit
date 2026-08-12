@@ -59,6 +59,9 @@ const CHAT_SELECTOR = '#mydiv';
  */
 const FALLBACK_CHAT_RECT = { left: 60, top: 473, width: 500, height: 300 };
 
+/** The game's content column, measured live: the chat's own parent. */
+const FALLBACK_COLUMN_RECT = { left: 0, width: 633 };
+
 /** Clearance left under the chat's own text input. */
 const CHAT_INPUT_GAP = 4;
 
@@ -77,10 +80,15 @@ const MIN_DOCK_HEIGHT = 120;
  * without joining that layout, where an inserted block displaces nothing and
  * overlaps everything.
  *
- * The dock takes the chat's left edge and width, but **not** its height: it is
- * free to run taller than the chat and only the viewport bounds it. Scrolling
- * inside a dock is worse than extending past the panel, and the area below the
- * chat holds nothing but chat text that has already overflowed the chat box.
+ * Horizontal placement comes from the game's **content column** (the chat's
+ * parent) rather than the chat itself: the extra ~130px is what lets the wide
+ * action buttons wrap two-per-row instead of one, which nearly halves the
+ * dock's height. Vertical placement comes from the chat.
+ *
+ * The height is **not** bounded by the chat: the dock may run taller and only
+ * the viewport limits it. Scrolling inside a dock is worse than extending past
+ * the panel, and the area below the chat holds nothing but chat text that has
+ * already overflowed the chat box.
  *
  * Two things the naive "cover the whole chat rect" version got wrong, both
  * found by measuring the live page:
@@ -98,6 +106,10 @@ function alignDock(root: HTMLElement, doc: Document): void {
   const measured = chat?.getBoundingClientRect();
   const rect = measured && measured.width > 0 ? measured : FALLBACK_CHAT_RECT;
 
+  // Horizontal: the game's content column, which the chat is inset within.
+  const columnMeasured = chat?.parentElement?.getBoundingClientRect();
+  const column = columnMeasured && columnMeasured.width > 0 ? columnMeasured : FALLBACK_COLUMN_RECT;
+
   const chatBottom = rect.top + rect.height;
   let top = rect.top;
 
@@ -112,9 +124,9 @@ function alignDock(root: HTMLElement, doc: Document): void {
   const viewportLimit = (doc.defaultView?.innerHeight ?? chatBottom) - VIEWPORT_MARGIN;
   const height = Math.max(MIN_DOCK_HEIGHT, viewportLimit - top);
 
-  root.style.setProperty('--lc-dock-left', `${Math.round(rect.left)}px`);
+  root.style.setProperty('--lc-dock-left', `${Math.round(column.left)}px`);
   root.style.setProperty('--lc-dock-top', `${Math.round(top)}px`);
-  root.style.setProperty('--lc-dock-width', `${Math.round(rect.width)}px`);
+  root.style.setProperty('--lc-dock-width', `${Math.round(column.width)}px`);
   root.style.setProperty('--lc-dock-max-height', `${Math.round(height)}px`);
 }
 

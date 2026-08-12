@@ -10,10 +10,15 @@
      here are only the pre-measurement defaults. Fixed rather than in the page
      flow: the game's layout is absolutely positioned, so inserting into it
      displaces nothing and overlaps everything. */
-  --lc-dock-left: 60px;
+  --lc-dock-left: 0px;
   --lc-dock-top: 473px;
-  --lc-dock-width: 500px;
+  --lc-dock-width: 633px;
   --lc-dock-max-height: 300px;
+  /* Multiplier on the action buttons' size. Measured against the live 14-item
+     action list at the 633px column width: 1.0 -> 192px tall, 1.5 -> 351px,
+     against ~393px of available height at a 900px viewport. Raising this much
+     further makes the dock scroll, which defeats the point of the wide layout. */
+  --lc-dock-scale: 1.5;
   position: fixed;
   top: var(--lc-dock-top);
   left: var(--lc-dock-left);
@@ -99,8 +104,8 @@
    in theme.css are sized for the mobile UI (48px). These overrides keep the
    dock's own, more compact 36px sizing without duplicating the component. */
 #lc-dock-root .lc-hotkey {
-  width: 36px;
-  height: 36px;
+  width: calc(36px * var(--lc-dock-scale));
+  height: calc(36px * var(--lc-dock-scale));
   padding: 2px;
 }
 
@@ -112,12 +117,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: calc(6px * var(--lc-dock-scale)) calc(10px * var(--lc-dock-scale));
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
-  font-size: 13px;
+  font-size: calc(13px * var(--lc-dock-scale));
   cursor: pointer;
 }
 
