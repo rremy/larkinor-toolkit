@@ -5,8 +5,8 @@
 // The dock is a fixed panel appended to <body>, never inserted into the game's
 // layout. That layout is absolutely positioned, so a block element spliced into
 // it does not push siblings aside — it lands on top of them and drags the
-// visible column off-screen. Instead we measure the game's content column and
-// align the fixed panel to it, which looks like it belongs to the page without
+// visible column off-screen. Instead we measure the chat panel and lay the dock
+// over it, which puts the dock inside the game's own column without
 // participating in its layout.
 
 import { h, render } from 'preact';
@@ -38,34 +38,68 @@ function extractDockState(doc: Document): FreeMoveState | null {
   }
 }
 
-/** The game's chat container — the widest reliable marker of its content column. */
+/** The game's chat panel. The dock is laid over its message log. */
 const CHAT_SELECTOR = '#mydiv';
 
-/** Width of the game's content column, used when it cannot be measured. */
-const FALLBACK_DOCK_WIDTH = 633;
+/**
+ * Chat geometry used when it cannot be found or measured. These are the live
+ * game's actual values — the layout is absolutely positioned in fixed pixels and
+ * does not move with the window, so they are a good guess rather than a shot in
+ * the dark.
+ */
+const FALLBACK_CHAT_RECT = { left: 60, top: 473, width: 500, height: 300 };
+
+/** Clearance left under the chat's own text input. */
+const CHAT_INPUT_GAP = 4;
+
+/** Clearance kept above the viewport's bottom edge. */
+const VIEWPORT_MARGIN = 8;
+
+/** Floor for the dock's height, so it never collapses to an unusable sliver. */
+const MIN_DOCK_HEIGHT = 120;
 
 /**
- * Aligns the fixed dock with the game's content column by writing the two
- * custom properties `desktop.css` positions it from.
+ * Lays the dock over the game's chat panel by writing the custom properties
+ * `desktop.css` positions it from.
  *
- * The width is measured rather than hardcoded so the dock keeps lining up if
- * the game's column differs from the expected 633px. When measurement is
- * unavailable — no chat element, or a layout engine that reports zero rects —
- * it falls back to a centred column of the expected width, which is always
- * on-screen even if it does not line up perfectly.
+ * Measured rather than hardcoded because the game's layout is absolutely
+ * positioned: overlaying it is the only way to sit inside the game's own column
+ * without joining that layout, where an inserted block displaces nothing and
+ * overlaps everything.
+ *
+ * Two things the naive "cover the whole chat rect" version got wrong, both
+ * found by measuring the live page:
+ *  - The chat's text input sits at the top of the panel, so covering the full
+ *    rect stops the player typing. We start below it.
+ *  - On a short window the chat itself already runs past the bottom edge, so
+ *    inheriting its height put the dock partly off-screen. We clamp to the
+ *    viewport and let the dock scroll internally instead.
+ *
+ * Coordinates are viewport-relative, which is correct for `position: fixed` and
+ * needs no scroll offset — and the game page does not scroll, so a single
+ * measurement at boot stays valid.
  */
 function alignDock(root: HTMLElement, doc: Document): void {
-  const rect = doc.querySelector(CHAT_SELECTOR)?.getBoundingClientRect();
-  const viewportWidth = doc.defaultView?.innerWidth ?? 0;
+  const chat = doc.querySelector(CHAT_SELECTOR);
+  const measured = chat?.getBoundingClientRect();
+  const rect = measured && measured.width > 0 ? measured : FALLBACK_CHAT_RECT;
 
-  const measured = rect && rect.width > 0;
-  const width = measured ? rect.width : FALLBACK_DOCK_WIDTH;
-  // `left` is in viewport coordinates because the panel is position: fixed, so
-  // the rect needs no scroll offset applied.
-  const left = measured ? rect.left : Math.max(0, (viewportWidth - width) / 2);
+  const chatBottom = rect.top + rect.height;
+  let top = rect.top;
 
-  root.style.setProperty('--lc-dock-width', `${Math.round(width)}px`);
-  root.style.setProperty('--lc-dock-left', `${Math.round(left)}px`);
+  // Keep the chat's own input usable: start below it rather than over it.
+  const input = chat?.querySelector('input')?.getBoundingClientRect();
+  if (input && input.height > 0 && input.bottom > top && input.bottom < chatBottom) {
+    top = input.bottom + CHAT_INPUT_GAP;
+  }
+
+  const viewportLimit = (doc.defaultView?.innerHeight ?? chatBottom) - VIEWPORT_MARGIN;
+  const height = Math.max(MIN_DOCK_HEIGHT, Math.min(chatBottom, viewportLimit) - top);
+
+  root.style.setProperty('--lc-dock-left', `${Math.round(rect.left)}px`);
+  root.style.setProperty('--lc-dock-top', `${Math.round(top)}px`);
+  root.style.setProperty('--lc-dock-width', `${Math.round(rect.width)}px`);
+  root.style.setProperty('--lc-dock-max-height', `${Math.round(height)}px`);
 }
 
 /**

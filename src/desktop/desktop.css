@@ -5,16 +5,17 @@
    ================================================================ */
 
 #lc-dock-root {
-  /* Pinned to the bottom of the viewport and aligned to the game's content
-     column. Both custom properties are written by alignDock() in boot.ts from a
-     runtime measurement; the values here are only the pre-measurement defaults.
-     Fixed rather than in the page flow: the game's layout is absolutely
-     positioned, so inserting into it displaces nothing and overlaps
-     everything. */
-  --lc-dock-width: 633px;
-  --lc-dock-left: 0px;
+  /* Laid over the game's chat panel. All four properties are written by
+     alignDock() in boot.ts from a runtime measurement of that panel; the values
+     here are only the pre-measurement defaults. Fixed rather than in the page
+     flow: the game's layout is absolutely positioned, so inserting into it
+     displaces nothing and overlaps everything. */
+  --lc-dock-left: 60px;
+  --lc-dock-top: 473px;
+  --lc-dock-width: 500px;
+  --lc-dock-max-height: 300px;
   position: fixed;
-  bottom: 0;
+  top: var(--lc-dock-top);
   left: var(--lc-dock-left);
   width: var(--lc-dock-width);
   max-width: 100vw;
@@ -48,18 +49,17 @@
   gap: 6px;
   column-gap: 10px;
   /* The live tevFajta select has more options than the 9-entry hotkey catalog,
-     so the wrapped buttons can still grow taller than a short viewport. Cap and
-     scroll rather than overflowing off the top, since the dock is anchored to
-     the bottom edge. */
-  max-height: 60dvh;
+     so the wrapped buttons can grow taller than the panel we are covering. Cap
+     to the chat's height and scroll inside the dock rather than spilling past
+     it. */
+  max-height: var(--lc-dock-max-height);
   overflow-y: auto;
   /* Right padding keeps the wrapping rows clear of the collapse toggle. */
   padding: 10px 36px 10px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
-  /* Sits on the viewport's bottom edge, so only the top corners are rounded. */
-  border-radius: 10px 10px 0 0;
-  box-shadow: 0 -4px 16px var(--dock-shadow);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px var(--dock-shadow);
   color: var(--text);
 }
 

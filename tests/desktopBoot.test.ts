@@ -51,38 +51,93 @@ describe('bootDesktop', () => {
     expect(Array.from(wrap.children).map(el => el.id)).toEqual(['before', 'mydiv']);
   });
 
-  it('aligns the dock to the game column via custom properties', () => {
-    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
-    bootDesktop(doc);
-
-    // jsdom reports zero-size rects, so this exercises the fallback: a centred
-    // column of the expected width, which is always on-screen.
-    const root = doc.getElementById('lc-dock-root')!;
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
-    expect(root.style.getPropertyValue('--lc-dock-left')).toMatch(/^\d+px$/);
-  });
-
-  it('aligns to the measured chat column when rects are available', () => {
-    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+  /**
+   * The live game's chat geometry, verified in a real browser: the panel is at
+   * 60,473 sized 500x300, with its text input occupying the top 22px. The
+   * layout is absolutely positioned in fixed pixels and does not move with the
+   * window, so these values hold at every viewport size.
+   */
+  function withChat(doc: Document, opts: { input?: boolean; viewportHeight?: number } = {}): void {
     const chat = doc.getElementById('mydiv')!;
-    // Stand in for a real layout engine: a 633px column starting at x=120.
-    chat.getBoundingClientRect = () => ({ width: 633, left: 120 }) as DOMRect;
+    chat.getBoundingClientRect = () => ({ left: 60, top: 473, width: 500, height: 300, bottom: 773 }) as DOMRect;
+    if (opts.input) {
+      const input = doc.createElement('input');
+      input.getBoundingClientRect = () => ({ top: 473, height: 22, bottom: 495 }) as DOMRect;
+      chat.appendChild(input);
+    }
+    if (opts.viewportHeight !== undefined) {
+      Object.defineProperty(doc.defaultView!, 'innerHeight', { value: opts.viewportHeight, configurable: true });
+    }
+  }
+
+  it('lays the dock over the measured chat panel', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { viewportHeight: 900 });
 
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
-    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('120px');
+    expect(root.style.getPropertyValue('--lc-dock-left')).toBe('60px');
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('300px');
   });
 
-  it('still mounts the dock when there is no chat to align to', () => {
+  it('starts below the chat input so it stays usable', () => {
+    // Covering the whole chat rect would sit on top of the text field and stop
+    // the player typing.
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { input: true, viewportHeight: 900 });
+
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('499px'); // 495 + 4 gap
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('274px'); // 773 - 499
+  });
+
+  it('clamps to the viewport when the chat runs past the bottom edge', () => {
+    // At 720px tall the chat itself already overflows; inheriting its height
+    // would put the dock partly off-screen.
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { input: true, viewportHeight: 720 });
+
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('499px');
+    // 720 - 8 margin - 499 top = 213, short of the chat's own 274.
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('213px');
+  });
+
+  it('never collapses below a usable height on a very short window', () => {
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    withChat(doc, { input: true, viewportHeight: 520 });
+
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')!.style.getPropertyValue('--lc-dock-max-height')).toBe('120px');
+  });
+
+  it('falls back to known geometry when the chat cannot be measured', () => {
+    // jsdom reports zero-size rects, which is the same signal as a missing
+    // chat: use the known offsets rather than collapsing to 0x0 off-screen.
+    const doc = gameDoc('otVilag', '<div id="mydiv">chat</div>');
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px');
+  });
+
+  it('still mounts the dock when there is no chat at all', () => {
     const doc = gameDoc('otVilag');
     bootDesktop(doc);
 
     const root = doc.getElementById('lc-dock-root')!;
     expect(root.parentElement).toBe(doc.body);
     expect(root.querySelector('.lc-dock')).not.toBeNull();
-    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('500px');
   });
 
   it('mounts the dock into a fixed dock root', () => {
