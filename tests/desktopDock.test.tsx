@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -38,6 +38,10 @@ describe('DesktopDock', () => {
   beforeEach(() => {
     GM_setValue(DOCK_COLLAPSED_KEY, '');
     GM_setValue(ENABLED_HOTKEYS_KEY, '[]');
+    // The inventory panel persists its open state. Without clearing it, the test
+    // that opens the panel leaves every later test with modalOpen true, which
+    // suppresses all the keyboard shortcuts.
+    GM_setValue(INVENTORY_OPEN_KEY, '');
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {
@@ -119,7 +123,7 @@ describe('DesktopDock', () => {
     expect(container.querySelector('.lc-db-overlay')).toBeNull();
     fireEvent.click(container.querySelector('.lc-dock-inventory')!);
     expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
-    expect(document.querySelector('.lc-home-tabs')).not.toBeNull();
+    expect(document.querySelector('.lc-home-split')).not.toBeNull();
   });
 
   it('degrades to dbButtonOnly when the action list comes back empty', () => {

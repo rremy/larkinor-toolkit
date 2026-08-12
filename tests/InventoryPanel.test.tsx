@@ -44,10 +44,25 @@ describe('InventoryPanel', () => {
     expect(container.querySelector('.lc-db-overlay')).toBeNull();
   });
 
-  it('shows both containers as tabs with their item counts', () => {
-    render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
-    expect(screen.getByText('Otthon')).toBeTruthy();
-    expect(screen.getByText('Hátizsák')).toBeTruthy();
+  it('shows both containers at once, with no tab to switch', () => {
+    const { container } = render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
+
+    expect(container.querySelectorAll('.lc-home-col').length).toBe(2);
+    expect(container.querySelector('.lc-home-tabs')).toBeNull();
+    // House and backpack contents visible simultaneously — the whole point of
+    // the split, and what a tabbed layout cannot do.
+    expect(screen.getByText('gyöngy')).toBeTruthy();
+    expect(screen.getByText('gyógyital')).toBeTruthy();
+  });
+
+  it('gives each container its own capacity meter', () => {
+    // Seeing the receiving container's capacity while moving into it is the
+    // reason to prefer the split; one shared meter would not do.
+    const { container } = render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
+
+    expect(container.querySelectorAll('.lc-cap').length).toBe(2);
+    expect(screen.getByText('Ház telítettsége')).toBeTruthy();
+    expect(screen.getByText(/Hátizsák & test/)).toBeTruthy();
   });
 
   it('omits the Általános tab', () => {
@@ -57,16 +72,22 @@ describe('InventoryPanel', () => {
     expect(screen.queryByText('Általános')).toBeNull();
   });
 
-  it('lists the house contents with the capacity meter', () => {
-    render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
-    expect(screen.getByText('gyöngy')).toBeTruthy();
-    expect(screen.getByText('Ház telítettsége')).toBeTruthy();
+  it('lifts the mobile page width cap so two columns have room', () => {
+    // .lc-page caps at 600px and centres, which is right for a phone and
+    // strangles two columns in a 700px panel.
+    const { container } = render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-page--wide')).not.toBeNull();
   });
 
-  it('switches to the backpack contents', () => {
-    render(<InventoryPanel open state={makeState()} onClose={vi.fn()} />);
-    fireEvent.click(screen.getByText('Hátizsák'));
-    expect(screen.getByText('gyógyital')).toBeTruthy();
+  it('moves an item from the container it was listed in', () => {
+    const state = makeState();
+    const { container } = render(<InventoryPanel open state={state} onClose={vi.fn()} />);
+
+    const houseCol = container.querySelectorAll('.lc-home-col')[0];
+    fireEvent.click(houseCol.querySelector('.lc-inv-move-btn')!);
+
+    expect(state.house.move).toHaveBeenCalled();
+    expect(state.backpack.move).not.toHaveBeenCalled();
   });
 
   it('closes from the window control', () => {

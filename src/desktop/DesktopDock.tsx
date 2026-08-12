@@ -4,7 +4,7 @@ import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, INVENTORY_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
@@ -49,7 +49,9 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
-  const [inventoryOpen, setInventoryOpen] = useState(false);
+  // Persisted: every item move reloads the game page, which would otherwise
+  // close the panel the move was made from.
+  const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   // No actions to offer means nothing but the DB button is useful: either the
@@ -69,6 +71,11 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
   const openDatabase = () => {
     setDbItemId(null);
     setDbOpen(true);
+  };
+
+  const setInventory = (open: boolean) => {
+    setInventoryOpen(open);
+    setPanelOpen(INVENTORY_OPEN_KEY, open);
   };
 
   // The narration lives in the game's own DOM, so this is a side effect on an
@@ -91,7 +98,7 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
     if (dbOpen) setDbOpen(false);
     else if (configOpen) closeConfig();
     else if (selectedMonster) setSelectedMonster(null);
-    else if (inventoryOpen) setInventoryOpen(false);
+    else if (inventoryOpen) setInventory(false);
   };
 
   // `directions`/`hotkeyActions` (fresh arrays each render) and the two
@@ -147,7 +154,7 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
 
           <div class="lc-dock-row">
             {homeState && (
-              <button class="lc-dock-btn lc-dock-inventory" onClick={() => setInventoryOpen(true)}>
+              <button class="lc-dock-btn lc-dock-inventory" onClick={() => setInventory(true)}>
                 Készlet
               </button>
             )}
@@ -192,7 +199,7 @@ export function DesktopDock({ doc, state, db, homeState = null, dbButtonOnly = f
       />
 
       {homeState && (
-        <InventoryPanel open={inventoryOpen} state={homeState} onClose={() => setInventoryOpen(false)} />
+        <InventoryPanel open={inventoryOpen} state={homeState} onClose={() => setInventory(false)} />
       )}
     </div>
   );

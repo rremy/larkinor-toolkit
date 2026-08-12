@@ -13,10 +13,11 @@ export interface InventoryPanelProps {
 /**
  * The house/backpack inventory view, docked beside the game.
  *
- * Reuses the mobile `Home` screen rather than a desktop-specific layout: the
- * docked panel is wide enough for the full row — quantity, name, weight, move —
- * which is the reason to prefer it over squeezing both containers into columns
- * half that width.
+ * Reuses the mobile `Home` screen's components, in its `split` layout: both
+ * containers side by side, since the docked panel has the width for it. That
+ * puts the receiving container's capacity in view while moving into it, and
+ * removes the tab switch — which only exists because a phone has no room.
+ * Columns stack when the panel itself is narrow, so both stay visible.
  *
  * `showGeneral` is off because the game's own page already exposes those actions
  * and traps as single clicks; the dock only carries what the page lacks.
@@ -24,7 +25,7 @@ export interface InventoryPanelProps {
 export function InventoryPanel({ open, onClose, state }: InventoryPanelProps): JSX.Element {
   return (
     <DockedPanel open={open} onClose={onClose} storageKey={INVENTORY_MINIMIZED_KEY} minimizable>
-      <Home state={state} showGeneral={false} />
+      <Home state={state} showGeneral={false} layout="split" />
     </DockedPanel>
   );
 }

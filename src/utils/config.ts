@@ -34,6 +34,9 @@ export const DB_MINIMIZED_KEY = 'lc-db-minimized';
 /** GM storage key holding the inventory panel's minimised flag. */
 export const INVENTORY_MINIMIZED_KEY = 'lc-inventory-minimized';
 
+/** GM storage key holding whether the inventory panel is open. */
+export const INVENTORY_OPEN_KEY = 'lc-inventory-open';
+
 /**
  * The user's manual platform choice, or null for automatic detection. Values
  * other than the two known platforms are treated as "no override" so a stale or
@@ -68,5 +71,18 @@ export function getPanelMinimized(key: string): boolean {
 }
 
 export function setPanelMinimized(key: string, value: boolean): void {
+  GM_setValue(key, value ? 'true' : '');
+}
+
+/**
+ * Whether a panel is open. Persisted because the game navigates on every action:
+ * moving an item reloads the page, which would otherwise close the very panel
+ * the move was made from and force it to be reopened each time.
+ */
+export function getPanelOpen(key: string): boolean {
+  return (GM_getValue(key, '') as string) === 'true';
+}
+
+export function setPanelOpen(key: string, value: boolean): void {
   GM_setValue(key, value ? 'true' : '');
 }
