@@ -16,6 +16,9 @@ describe('bootDesktop', () => {
     GM_setValue(DOCK_COLLAPSED_KEY, '');
     GM_setValue(ENABLED_HOTKEYS_KEY, '[]');
     vi.mocked(GM_xmlhttpRequest).mockReset();
+    // Cleared, not reset: the style injection is asserted on, and mockReset
+    // would also drop the implementation other cases rely on.
+    vi.mocked(GM_addStyle).mockClear();
   });
 
   it('leaves the original game DOM in place', () => {
@@ -24,6 +27,18 @@ describe('bootDesktop', () => {
 
     expect(doc.getElementById('lc-offscreen')).toBeNull();
     expect(doc.getElementById('game-content')).not.toBeNull();
+    expect(doc.getElementById('game-content')!.parentElement).toBe(doc.body);
+  });
+
+  it('renders nothing on the login screen', () => {
+    // Pre-authentication there is no chat to anchor to, no character to act on
+    // and no use for the database, so any dock would just float over the login
+    // form at guessed coordinates.
+    const doc = gameDoc('otLogin');
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')).toBeNull();
+    expect(GM_addStyle).not.toHaveBeenCalled();
     expect(doc.getElementById('game-content')!.parentElement).toBe(doc.body);
   });
 

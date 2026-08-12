@@ -24,12 +24,22 @@ const DATA_BASE_URL = import.meta.env.DEV
   : 'https://example.invalid/larkinor/static/db';
 
 /**
- * Free-move state when we are on the free-move page, otherwise null — every
- * other page type (including one we do not recognise) still gets the minimal
- * dock, because on desktop we are adding to a page that already works.
+ * Page types that get no dock at all.
+ *
+ * The login screen is pre-authentication: there is no chat to anchor the dock
+ * to, no character to act on, and the database is of no use before you are in
+ * the game. Anything we drew there would be a panel floating over the login
+ * form at guessed coordinates.
  */
-function extractDockState(doc: Document): FreeMoveState | null {
-  if (detectPage(doc) !== PageType.FreeMove) return null;
+const UNDOCKED_PAGES: ReadonlySet<PageType> = new Set([PageType.Login]);
+
+/**
+ * Free-move state when we are on the free-move page, otherwise null — every
+ * other docked page type (including one we do not recognise) still gets the
+ * minimal dock, because on desktop we are adding to a page that already works.
+ */
+function extractDockState(pageType: PageType, doc: Document): FreeMoveState | null {
+  if (pageType !== PageType.FreeMove) return null;
   try {
     return extractFreeMove(doc);
   } catch (err) {
@@ -130,7 +140,10 @@ function mountDockRoot(doc: Document): HTMLDivElement | null {
 }
 
 export function bootDesktop(doc: Document): void {
-  const state = extractDockState(doc);
+  const pageType = detectPage(doc);
+  if (UNDOCKED_PAGES.has(pageType)) return;
+
+  const state = extractDockState(pageType, doc);
 
   const root = mountDockRoot(doc);
   if (!root) return;
