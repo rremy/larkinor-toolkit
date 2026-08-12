@@ -147,7 +147,7 @@ describe('MarketPanel', () => {
 
   it('filters the offerable list', () => {
     const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
-    fireEvent.input(container.querySelector<HTMLInputElement>('.lc-inv-search')!, { target: { value: 'jás' } });
+    fireEvent.input(screen.getByLabelText('Keresés a felkínálható tárgyak között'), { target: { value: 'jás' } });
 
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
     expect(names).toContain('jáspis');
@@ -156,7 +156,7 @@ describe('MarketPanel', () => {
 
   it('finds an accented name typed without accents', () => {
     const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
-    fireEvent.input(container.querySelector<HTMLInputElement>('.lc-inv-search')!, { target: { value: 'gyikbor' } });
+    fireEvent.input(screen.getByLabelText('Keresés a felkínálható tárgyak között'), { target: { value: 'gyikbor' } });
 
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
     expect(names).toContain('gyíkbőr');
@@ -202,6 +202,63 @@ describe('MarketPanel', () => {
 
       expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
       expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('searching the standing offers', () => {
+    const OFFERS = [
+      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar'),
+      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs'),
+      listing('19 db. gyíkbőr 50 ezüst/db. áron', 2, 'gyíkbőr'),
+    ];
+
+    it('filters the offers by name', () => {
+      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'agyar' } });
+
+      const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
+      expect(offers).toHaveLength(1);
+      expect(offers[0].textContent).toContain('agyar');
+    });
+
+    it('ignores accents, like every other search', () => {
+      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'acelpajzs' } });
+
+      const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
+      expect(offers).toHaveLength(1);
+      expect(offers[0].textContent).toContain('acélpajzs');
+    });
+
+    it('matches on the price too, the whole label being searched', () => {
+      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: '7000' } });
+
+      const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
+      expect(offers).toHaveLength(1);
+      expect(offers[0].textContent).toContain('acélpajzs');
+    });
+
+    it('says when nothing matched, distinctly from having nothing offered', () => {
+      render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'zzz' } });
+
+      expect(screen.getByText('Nincs találat.')).toBeTruthy();
+      expect(screen.queryByText('Nincs felkínált tárgyad.')).toBeNull();
+    });
+
+    it('offers no search box when there is nothing to search', () => {
+      render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+      expect(screen.queryByLabelText('Keresés a felkínált tárgyaim között')).toBeNull();
+    });
+
+    it('filters the two columns independently', () => {
+      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'agyar' } });
+
+      // The offerable column keeps its full list.
+      const offerable = container.querySelectorAll('.lc-home-col')[0].querySelectorAll('.lc-mkt-row');
+      expect(offerable.length).toBe(3);
     });
   });
 

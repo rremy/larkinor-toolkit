@@ -133,10 +133,14 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
  * row carries its own inputs, pre-filled.
  */
 export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Element {
-  const [search, setSearch] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
+  const [offerSearch, setOfferSearch] = useState('');
   const [detailName, setDetailName] = useState<string | undefined>(undefined);
 
-  const items = state.items.filter((i) => matchesSearch(i.name, search));
+  const items = state.items.filter((i) => matchesSearch(i.name, itemSearch));
+  // Matched against the offer's whole label, so a price or a quantity narrows it
+  // down as well as a name.
+  const listings = state.listings.filter((l) => matchesSearch(l.label, offerSearch));
 
   return (
     <DockedPanel title="Piac" open={open} onClose={onClose} storageKey={MARKET_MINIMIZED_KEY} minimizable>
@@ -148,18 +152,25 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
                 <h2>🎒 Felkínálható</h2>
                 <span class="lc-home-count">{state.items.length}</span>
               </header>
-              <input
-                class="lc-inv-search"
-                type="search"
-                placeholder="keresés…"
-                value={search}
-                onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-              />
+              {state.items.length > 0 && (
+                <input
+                  class="lc-inv-search"
+                  type="search"
+                  placeholder="keresés…"
+                  aria-label="Keresés a felkínálható tárgyak között"
+                  value={itemSearch}
+                  onInput={(e) => setItemSearch((e.target as HTMLInputElement).value)}
+                />
+              )}
               <div class="lc-mkt-list">
                 {items.map((item) => (
                   <OfferRow key={item.index} item={item} onOffer={state.offer} onOpenDetail={setDetailName} />
                 ))}
-                {items.length === 0 && <p class="lc-mkt-empty">Nincs találat.</p>}
+                {items.length === 0 && (
+                  <p class="lc-mkt-empty">
+                    {state.items.length === 0 ? 'A hátizsákod üres.' : 'Nincs találat.'}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -168,11 +179,25 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
                 <h2>🏷 Felkínált tárgyaim</h2>
                 <span class="lc-home-count">{state.listings.length}</span>
               </header>
+              {state.listings.length > 0 && (
+                <input
+                  class="lc-inv-search"
+                  type="search"
+                  placeholder="keresés…"
+                  aria-label="Keresés a felkínált tárgyaim között"
+                  value={offerSearch}
+                  onInput={(e) => setOfferSearch((e.target as HTMLInputElement).value)}
+                />
+              )}
               <div class="lc-mkt-list">
-                {state.listings.map((listing) => (
+                {listings.map((listing) => (
                   <ListingRow key={listing.index} listing={listing} onOpenDetail={setDetailName} />
                 ))}
-                {state.listings.length === 0 && <p class="lc-mkt-empty">Nincs felkínált tárgyad.</p>}
+                {listings.length === 0 && (
+                  <p class="lc-mkt-empty">
+                    {state.listings.length === 0 ? 'Nincs felkínált tárgyad.' : 'Nincs találat.'}
+                  </p>
+                )}
               </div>
             </section>
           </div>
