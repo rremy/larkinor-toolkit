@@ -46,6 +46,12 @@ export function QuestGrid(props: QuestGridProps): VNode {
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
         if (cell.narration === '' && !monster && !cell.portal) classes.push('void');
+        // Tint the hit glow with the hovered lock's colour; --quest-key-glow
+        // is the fallback for the (impossible in practice) case of a keyHit
+        // without a highlightLock.
+        const cellStyle = keyHit && highlightLock != null
+          ? { '--hit': `var(--lock-${highlightLock})` }
+          : undefined;
 
         return (
           <div
@@ -53,6 +59,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
             class={classes.join(' ')}
             data-row={cell.row}
             data-col={cell.col}
+            style={cellStyle}
             onClick={() => onSelect(cell)}
             title={coordLabel(cell)}
           >
@@ -98,7 +105,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
               {cell.portal === 'entrance' && <span class="quest-badge entrance" title="bejárat">{BADGE.entrance}</span>}
               {cell.portal === 'exit' && <span class="quest-badge exit" title="kijárat">{BADGE.exit}</span>}
               {cell.key && (
-                <span class="quest-badge key" title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
+                <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
               )}
               {cell.questItem && <span class="quest-badge quest-item" title="küldetés tárgy">{BADGE.questItem}</span>}
               {cell.trap && <span class="quest-badge trap" title="csapda">{BADGE.trap}</span>}

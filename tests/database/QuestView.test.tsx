@@ -45,8 +45,9 @@ function makeLoader(): DataLoader {
 }
 
 describe('QuestView', () => {
-  // The description appears twice — in the picker row and in the header — so
-  // these assertions use findAllByText rather than the single-match variant.
+  // The description appears twice — in a chip's title attribute and in the
+  // header — so these assertions use findAllByText rather than the
+  // single-match variant.
   it('lists the quests and shows the selected one', async () => {
     render(<QuestView loader={makeLoader()} questId={1}
                       onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
@@ -60,26 +61,30 @@ describe('QuestView', () => {
     expect(await screen.findByText('1. küldetés')).toBeTruthy();
   });
 
-  it('filters the picker accent-insensitively', async () => {
+  it('renders a numbered chip per quest, with the active one marked', async () => {
     const { container } = render(
       <QuestView loader={makeLoader()} questId={1}
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
-    const search = container.querySelector('.quest-search input') as HTMLInputElement;
-    fireEvent.input(search, { target: { value: 'kaloz' } });
-    await waitFor(() => {
-      expect(container.querySelectorAll('.quest-pick')).toHaveLength(1);
-    });
-    expect(screen.getByText(/Kalózbanda/)).toBeTruthy();
+    const chips = container.querySelectorAll('.quest-chip');
+    expect(chips).toHaveLength(quests.length);
+    expect(chips[0].textContent).toBe('1');
+    expect(chips[0].classList.contains('active')).toBe(true);
+    expect(chips[1].classList.contains('active')).toBe(false);
+    // Hovering doesn't identify a quest by number alone — the description
+    // stays reachable as a tooltip.
+    expect(chips[1].getAttribute('title')).toBe('Kalózbanda a városfalnál');
   });
 
-  it('reports the picked quest', async () => {
+  it('reports the picked quest when a chip is clicked', async () => {
     const onSelectQuest = vi.fn();
-    render(<QuestView loader={makeLoader()} questId={1}
+    const { container } = render(
+      <QuestView loader={makeLoader()} questId={1}
                       onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />);
-    await screen.findByText(/Kalózbanda/);
-    fireEvent.click(screen.getByText(/Kalózbanda/));
+    await screen.findAllByText(/Gründen borospincéje/);
+    const chips = container.querySelectorAll('.quest-chip');
+    fireEvent.click(chips[1]);
     expect(onSelectQuest).toHaveBeenCalledWith(2);
   });
 
@@ -127,6 +132,17 @@ describe('QuestView', () => {
     // Clicking the door must not bubble to the cell's own onClick — the
     // click is a lock probe, not a cell selection.
     expect(container.querySelectorAll('.quest-cell.selected')).toHaveLength(0);
+  });
+
+  it('marks a key badge with its lock type, for the door↔key colour association', async () => {
+    const { container } = render(
+      <QuestView loader={makeLoader()} questId={1}
+                 onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+    );
+    await screen.findAllByText(/Gründen borospincéje/);
+    const badge = container.querySelector('.quest-badge.key');
+    expect(badge).toBeTruthy();
+    expect(badge?.classList.contains('lock-vas')).toBe(true);
   });
 
   it('shows the szel caption only for a quest that actually has one', async () => {

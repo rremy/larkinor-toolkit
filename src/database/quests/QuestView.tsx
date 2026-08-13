@@ -1,8 +1,7 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { matchesSearch } from '@/shared/text';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
@@ -23,7 +22,6 @@ export function QuestView(props: QuestViewProps): VNode {
   const { loader, questId, onSelectQuest, onJumpToMonster } = props;
   const [quests, setQuests] = useState<Quest[] | null>(null);
   const [monsters, setMonsters] = useState<MonsterDatabase>(() => buildMonsterDatabase([]));
-  const [search, setSearch] = useState('');
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
   const [tileSize, setTileSize] = useState(DEFAULT_TILE);
@@ -40,12 +38,6 @@ export function QuestView(props: QuestViewProps): VNode {
 
   // A different quest means the previous cell selection is meaningless.
   useEffect(() => { setSelectedCell(null); setHighlightLock(null); }, [questId]);
-
-  const filtered = useMemo(() => {
-    if (!quests) return [];
-    if (!search.trim()) return quests;
-    return quests.filter((q) => matchesSearch(`${q.id} ${q.description} ${q.reward}`, search));
-  }, [quests, search]);
 
   if (!quests) {
     return <div class="quest-view"><div class="quest-stats">Betöltés…</div></div>;
@@ -64,31 +56,22 @@ export function QuestView(props: QuestViewProps): VNode {
 
   return (
     <div class="quest-view">
-      <div class="quest-layout">
-        <div class="quest-picker">
-          <div class="field search quest-search">
-            <label for="quest-search-input">Keresés</label>
-            <input
-              id="quest-search-input"
-              type="text"
-              value={search}
-              placeholder="küldetés…"
-              onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-            />
-          </div>
-          <ul class="list">
-            {filtered.map((q) => (
-              <li
-                key={q.id}
-                class={`quest-pick${q.id === quest.id ? ' active' : ''}`}
-                onClick={() => onSelectQuest(q.id)}
-              >
-                <span class="quest-pick-id">{q.id}.</span> {q.description}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div class="quest-strip" role="group" aria-label="Küldetés választó">
+        {quests.map((q) => (
+          <button
+            key={q.id}
+            type="button"
+            class={`quest-chip${q.id === quest.id ? ' active' : ''}`}
+            title={q.description}
+            aria-pressed={q.id === quest.id}
+            onClick={() => onSelectQuest(q.id)}
+          >
+            {q.id}
+          </button>
+        ))}
+      </div>
 
+      <div class="quest-layout">
         <div class="quest-main">
           <div class="quest-header">
             <h2>{quest.id}. küldetés</h2>

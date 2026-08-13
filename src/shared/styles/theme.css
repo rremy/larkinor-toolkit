@@ -51,10 +51,10 @@
   --lock-platina: #6fc08a;
   --lock-tolvaj: #6f8fd6;
   --lock-cso: #cf5f5f;
-  --quest-wall: #0d0a08;
+  --quest-wall: #c9b998;
   --quest-szel: #4b7fa8;
   --quest-void: #191310;
-  --quest-tile-bg: #2b241d;
+  --quest-tile-bg: #40352a;
   --quest-badge-bg: rgba(0, 0, 0, 0.62);
   --quest-key-glow: rgba(212, 162, 89, 0.85);
 }
@@ -882,7 +882,9 @@
 }
 .lc-db .quest-cell.void { background: var(--quest-void); }
 .lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
-.lc-db .quest-cell.key-hit { box-shadow: inset 0 0 0 3px var(--quest-key-glow); z-index: 3; }
+/* --hit is set inline per cell from the hovered door's lock colour
+   (QuestGrid); --quest-key-glow is the fallback if that is ever absent. */
+.lc-db .quest-cell.key-hit { box-shadow: inset 0 0 0 3px var(--hit, var(--quest-key-glow)); z-index: 3; }
 .lc-db .quest-sprite {
   position: absolute; inset: 0; margin: auto;
   max-width: 88%; max-height: 88%;
@@ -912,6 +914,17 @@
 .lc-db .quest-badge {
   background: var(--quest-badge-bg); border-radius: 2px; padding: 1px;
 }
+/* The key glyph is an emoji and ignores `color`, so its lock association is
+   carried by the border instead. */
+.lc-db .quest-badge.key { border: 2px solid transparent; }
+.lc-db .quest-badge.key.lock-vas { border-color: var(--lock-vas); }
+.lc-db .quest-badge.key.lock-rez { border-color: var(--lock-rez); }
+.lc-db .quest-badge.key.lock-bronz { border-color: var(--lock-bronz); }
+.lc-db .quest-badge.key.lock-ezust { border-color: var(--lock-ezust); }
+.lc-db .quest-badge.key.lock-arany { border-color: var(--lock-arany); }
+.lc-db .quest-badge.key.lock-platina { border-color: var(--lock-platina); }
+.lc-db .quest-badge.key.lock-tolvaj { border-color: var(--lock-tolvaj); }
+.lc-db .quest-badge.key.lock-cso { border-color: var(--lock-cso); }
 .lc-db .quest-legend h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
 .lc-db .quest-legend-row {
   display: flex; align-items: center; gap: 6px;
@@ -982,19 +995,21 @@
 .lc-db .quest-legend .placeholder { color: var(--muted); font-style: italic; }
 
 .lc-db .quest-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Number strip — replaces the old left-hand picker column so the maze gets
+   the horizontal space instead. Quests are identified by number only; the
+   description moves to a `title` tooltip and stays visible in the header. */
+.lc-db .quest-strip {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px; border-bottom: 1px solid var(--border);
+}
+.lc-db .quest-chip {
+  min-width: 26px; padding: 3px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); font-size: 12px; cursor: pointer;
+}
+.lc-db .quest-chip:hover { background: var(--panel); }
+.lc-db .quest-chip.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
 .lc-db .quest-layout { display: flex; flex: 1; min-height: 0; }
-.lc-db .quest-picker {
-  width: 210px; flex: none; overflow: auto;
-  border-right: 1px solid var(--border); padding: 8px;
-}
-.lc-db .quest-picker .list { list-style: none; margin: 0; padding: 0; }
-.lc-db .quest-pick {
-  padding: 4px 5px; border-radius: 3px; cursor: pointer;
-  font-size: 12px; color: var(--text);
-}
-.lc-db .quest-pick:hover { background: var(--panel-2); }
-.lc-db .quest-pick.active { background: var(--accent-dim); color: var(--accent); }
-.lc-db .quest-pick-id { color: var(--muted); }
 .lc-db .quest-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .lc-db .quest-header { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .lc-db .quest-header h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
@@ -1011,7 +1026,6 @@
 /* Narrow viewports — mobile and the docked in-game overlay. */
 @media (max-width: 900px) {
   .lc-db .quest-layout { flex-direction: column; }
-  .lc-db .quest-picker,
   .lc-db .quest-side {
     width: auto; max-height: 220px;
     border-right: none; border-left: none;
