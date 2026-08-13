@@ -976,6 +976,44 @@
 .lc-db .quest-detail .placeholder,
 .lc-db .quest-legend .placeholder { color: var(--muted); font-style: italic; }
 
+.lc-db .quest-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.lc-db .quest-layout { display: flex; flex: 1; min-height: 0; }
+.lc-db .quest-picker {
+  width: 210px; flex: none; overflow: auto;
+  border-right: 1px solid var(--border); padding: 8px;
+}
+.lc-db .quest-picker .list { list-style: none; margin: 0; padding: 0; }
+.lc-db .quest-pick {
+  padding: 4px 5px; border-radius: 3px; cursor: pointer;
+  font-size: 12px; color: var(--text);
+}
+.lc-db .quest-pick:hover { background: var(--panel-2); }
+.lc-db .quest-pick.active { background: var(--accent-dim); color: var(--accent); }
+.lc-db .quest-pick-id { color: var(--muted); }
+.lc-db .quest-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lc-db .quest-header { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.lc-db .quest-header h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
+.lc-db .quest-description { margin: 0 0 4px; font-size: 12px; }
+.lc-db .quest-reward { margin: 0 0 4px; font-size: 12px; color: var(--good); }
+.lc-db .quest-stats { color: var(--muted); font-size: 11px; }
+.lc-db .quest-zoom { margin-top: 6px; }
+.lc-db .quest-grid-wrap { flex: 1; overflow: auto; }
+.lc-db .quest-side {
+  width: 280px; flex: none; overflow: auto;
+  border-left: 1px solid var(--border); padding: 8px;
+}
+
+/* Narrow viewports — mobile and the docked in-game overlay. */
+@media (max-width: 900px) {
+  .lc-db .quest-layout { flex-direction: column; }
+  .lc-db .quest-picker,
+  .lc-db .quest-side {
+    width: auto; max-height: 220px;
+    border-right: none; border-left: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.
    `.lc-db` (mounted inside) already carries its own theme via the rules
