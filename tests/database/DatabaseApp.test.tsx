@@ -73,4 +73,16 @@ describe('DatabaseApp routing', () => {
     expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
     expect(document.querySelector('.quest-grid-wrap')).toBeTruthy();
   });
+
+  it('threads an injected prefStore through to the quest view', async () => {
+    location.hash = '#quests/1';
+    const store: Record<string, string> = { 'lc-quest-tile-size': '72' };
+    const prefStore = {
+      read: (key: string) => store[key] ?? null,
+      write: (key: string, value: string) => { store[key] = value; },
+    };
+    render(<DatabaseApp loader={stubLoader} prefStore={prefStore} />);
+    const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+    expect(select.value).toBe('72');
+  });
 });

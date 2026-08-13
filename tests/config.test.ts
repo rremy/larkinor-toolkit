@@ -12,6 +12,9 @@ import {
   getDbRoute,
   setDbRoute,
   DB_ROUTE_KEY,
+  getPref,
+  setPref,
+  QUEST_TILE_KEY,
 } from '../src/utils/config';
 
 describe('enabled-hotkeys config', () => {
@@ -85,5 +88,25 @@ describe('database-route config', () => {
   it('round-trips a bare tab with no selection', () => {
     setDbRoute('monsters');
     expect(getDbRoute()).toBe('monsters');
+  });
+});
+
+describe('generic pref config', () => {
+  it('returns null when nothing is stored for a key', () => {
+    GM_setValue(QUEST_TILE_KEY, '');
+    expect(getPref(QUEST_TILE_KEY)).toBeNull();
+  });
+
+  it('round-trips a value through GM storage, keyed by the caller', () => {
+    setPref(QUEST_TILE_KEY, '72');
+    expect(GM_getValue(QUEST_TILE_KEY, '')).toBe('72');
+    expect(getPref(QUEST_TILE_KEY)).toBe('72');
+  });
+
+  it('keeps values under different keys independent', () => {
+    setPref(QUEST_TILE_KEY, '40');
+    setPref('some-other-key', 'other-value');
+    expect(getPref(QUEST_TILE_KEY)).toBe('40');
+    expect(getPref('some-other-key')).toBe('other-value');
   });
 });

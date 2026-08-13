@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { DatabaseOverlay } from '../src/components/DatabaseOverlay';
-import { DB_MINIMIZED_KEY, DB_ROUTE_KEY, getPanelMinimized, setPanelMinimized, getDbRoute } from '../src/utils/config';
+import { DB_MINIMIZED_KEY, DB_ROUTE_KEY, QUEST_TILE_KEY, getPanelMinimized, setPanelMinimized, getDbRoute, getPref } from '../src/utils/config';
 
 /** The label of the currently selected tab, or null if none is. */
 function activeTab(): string | null {
@@ -14,6 +14,8 @@ describe('DatabaseOverlay', () => {
     // The overlay now persists its route, so a test that switches tabs would
     // otherwise decide which tab every later test starts on.
     GM_setValue(DB_ROUTE_KEY, '');
+    // Same hazard for the quest maze's remembered zoom.
+    GM_setValue(QUEST_TILE_KEY, '');
   });
   afterEach(() => {
     location.hash = '';
@@ -146,6 +148,64 @@ describe('DatabaseOverlay', () => {
       fireEvent.click(screen.getByText('Térkép'));
       expect(getDbRoute()).toBe('map');
       expect(location.hash).toBe(hashBefore);
+    });
+  });
+
+  describe('remembered quest zoom', () => {
+    // The overlay is the surface this feature exists for: the game reloads on
+    // every action, so the GM-backed PrefStore wiring in DatabaseOverlay is
+    // what actually has to survive that reload, not just DatabaseApp's props.
+    function stubQuestData() {
+      const stubQuest = {
+        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        cells: [{
+          row: 0, col: 0,
+          edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+          monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+          portal: null, trap: false, death: false, narration: '', drops: null,
+          question: null, rawImage: '',
+        }],
+      };
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('quests.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+        } else if (opts.url.includes('monsters.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+    }
+
+    it('changes the tile size to a supplied value', async () => {
+      stubQuestData();
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+
+      fireEvent.change(select, { target: { value: '40' } });
+      expect(select.value).toBe('40');
+      expect(getPref(QUEST_TILE_KEY)).toBe('40');
+    });
+
+    // The actual round trip: not just that write() was called, but that a
+    // fresh mount reading from the same GM storage comes back with the size
+    // that was set before the reload — the real-world case is the game
+    // reloading the whole page after every action.
+    it('survives the reload the game performs on every action', async () => {
+      stubQuestData();
+      const { unmount } = render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: '40' } });
+      unmount();
+
+      stubQuestData();
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      const selectAfterReload = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      expect(selectAfterReload.value).toBe('40');
     });
   });
 

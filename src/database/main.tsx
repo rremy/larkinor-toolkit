@@ -1,6 +1,6 @@
 import { h, render } from 'preact';
 import { createDataLoader, httpSource } from '@/shared/data';
-import { DatabaseApp } from './DatabaseApp';
+import { DatabaseApp, type PrefStore } from './DatabaseApp';
 import theme from '@/shared/styles/theme.css?raw';
 
 // In dev, `publicDir` (static/) content is served straight off the server
@@ -21,4 +21,14 @@ style.textContent = theme;
 document.head.appendChild(style);
 
 const loader = createDataLoader(httpSource(), DATA_BASE_URL);
-render(<DatabaseApp loader={loader} />, document.getElementById('lc-db-root')!);
+
+// The standalone page has no GM_* storage, but a real browser `localStorage`
+// to keep preferences in — e.g. the quest maze's zoom (see PrefStore's doc
+// comment in DatabaseApp.tsx for why this is a keyed store rather than a
+// dedicated prop).
+const prefStore: PrefStore = {
+  read: (key) => localStorage.getItem(key),
+  write: (key, value) => localStorage.setItem(key, value),
+};
+
+render(<DatabaseApp loader={loader} prefStore={prefStore} />, document.getElementById('lc-db-root')!);

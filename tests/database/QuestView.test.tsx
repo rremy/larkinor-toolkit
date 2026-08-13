@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
+import type { PrefStore } from '@/database/DatabaseApp';
 
 const openEdges = (): Record<'N'|'E'|'S'|'W', Edge> => ({
   N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' },
@@ -159,6 +160,79 @@ describe('QuestView', () => {
     );
     await screen.findByText('3. küldetés');
     expect(container.querySelector('.quest-szel-note')?.textContent).toMatch(/labirintus széle/);
+  });
+
+  describe('remembered zoom', () => {
+    /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
+    function makePrefStore(initial: Record<string, string> = {}): PrefStore {
+      const store: Record<string, string> = { ...initial };
+      return {
+        read: (key) => store[key] ?? null,
+        write: (key, value) => { store[key] = value; },
+      };
+    }
+
+    it('initialises the zoom from a supplied PrefStore', async () => {
+      const prefStore = makePrefStore({ 'lc-quest-tile-size': '72' });
+      render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      expect(select.value).toBe('72');
+    });
+
+    it('writes the new zoom to the store when it is changed', async () => {
+      const prefStore = makePrefStore();
+      render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: '40' } });
+      expect(prefStore.read('lc-quest-tile-size')).toBe('40');
+    });
+
+    it('survives an unmount/remount through the same store (the actual round trip)', async () => {
+      const prefStore = makePrefStore();
+      const { unmount } = render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: '40' } });
+      unmount();
+
+      render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const selectAfterRemount = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      expect(selectAfterRemount.value).toBe('40');
+    });
+
+    it('falls back to the default zoom when the stored value is not one of the offered sizes', async () => {
+      // A stale value from a build that offered a different size list (or a
+      // hand-edited one) must not hand the grid an unusable tile size.
+      const prefStore = makePrefStore({ 'lc-quest-tile-size': '999' });
+      render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      expect(select.value).toBe('56');
+    });
+
+    it('works with no prefStore at all, defaulting the zoom as before', async () => {
+      render(
+        <QuestView loader={makeLoader()} questId={1}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+      expect(select.value).toBe('56');
+      fireEvent.change(select, { target: { value: '40' } });
+      expect(select.value).toBe('40');
+    });
   });
 
   it('summarises the quest contents', async () => {

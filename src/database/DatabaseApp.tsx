@@ -21,6 +21,29 @@ export interface RouteStore {
   write(route: string): void;
 }
 
+/**
+ * Somewhere to keep a named preference across remounts — e.g. the quest
+ * maze's zoom, which should survive the reload the game performs on every
+ * action, same as the route above.
+ *
+ * Deliberately generic and key-based rather than named after the one value it
+ * happens to store first: a second tile-size-shaped prop bolted onto
+ * `DatabaseAppProps` for the next preference would not age well, and the
+ * maze zoom is unlikely to be the last thing worth remembering here. Callers
+ * pick their own key (a plain string) and own its value's parsing/validation
+ * — this store only persists opaque strings.
+ *
+ * Injected rather than imported for the same reason as `RouteStore`: this
+ * component also ships in the standalone site bundle, which has no GM_* APIs.
+ * The in-game overlay supplies a GM-backed implementation; the standalone
+ * page supplies a `localStorage`-backed one.
+ */
+export interface PrefStore {
+  /** The stored value for `key`, or null if there is none. */
+  read(key: string): string | null;
+  write(key: string, value: string): void;
+}
+
 export interface DatabaseAppProps {
   loader: DataLoader;
   /**
@@ -38,6 +61,14 @@ export interface DatabaseAppProps {
    * where the URL already is the store.
    */
   routeStore?: RouteStore;
+  /**
+   * Optional keyed preference persistence, passed straight through to any
+   * hosted view that wants to remember something across remounts (currently
+   * just `QuestView`'s zoom). Absent under the standalone build's default
+   * boot and in tests, both of which are expected to behave exactly as if it
+   * were never wired up.
+   */
+  prefStore?: PrefStore;
   /**
    * Entity id to open on mount (weapon/armor/item) — resolved to its tab. Used
    * when the overlay is opened from a monster's dropped-item link.
@@ -98,7 +129,7 @@ function hashFor(tab: Tab, param: string | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', routeStore, initialItemId, initialItemName } = props;
+  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName } = props;
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
@@ -216,6 +247,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         <QuestView
           loader={loader}
           questId={route.id}
+          prefStore={prefStore}
           onSelectQuest={(id) => navigate('quests', String(id))}
           onJumpToMonster={(id) => navigate('monsters', String(id))}
         />

@@ -2,6 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
+import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
@@ -11,6 +12,13 @@ interface QuestViewProps {
   loader: DataLoader;
   /** Routed quest id (`#quests/<id>`); null falls back to the first quest. */
   questId: number | null;
+  /**
+   * Optional persistence for the zoom (`tileSize`), so it survives the reload
+   * the game performs on every action. Absent in tests and wherever the host
+   * doesn't wire one up — the zoom then just resets to `DEFAULT_TILE` on
+   * every remount, exactly as it did before this store existed.
+   */
+  prefStore?: PrefStore;
   onSelectQuest(id: number): void;
   onJumpToMonster(id: number): void;
 }
@@ -18,13 +26,36 @@ interface QuestViewProps {
 const TILE_SIZES = [40, 56, 72];
 const DEFAULT_TILE = 56;
 
+// Same literal as QUEST_TILE_KEY in @/utils/config, deliberately not imported
+// from there: that module is GM-only, and this component also ships in the
+// GM-free standalone bundle (see PrefStore's doc comment in DatabaseApp.tsx).
+// Both the GM-backed and localStorage-backed PrefStore implementations are
+// keyed off this same string.
+const TILE_PREF_KEY = 'lc-quest-tile-size';
+
+/**
+ * Parse a stored zoom back into a valid tile size. Anything not in
+ * `TILE_SIZES` — missing, corrupt, or a size this build no longer offers —
+ * degrades to the default rather than being applied, so a stale value can
+ * never hand the grid an unusable size.
+ */
+function parseTileSize(raw: string | null): number {
+  const n = raw != null ? Number(raw) : NaN;
+  return TILE_SIZES.includes(n) ? n : DEFAULT_TILE;
+}
+
 export function QuestView(props: QuestViewProps): VNode {
-  const { loader, questId, onSelectQuest, onJumpToMonster } = props;
+  const { loader, questId, prefStore, onSelectQuest, onJumpToMonster } = props;
   const [quests, setQuests] = useState<Quest[] | null>(null);
   const [monsters, setMonsters] = useState<MonsterDatabase>(() => buildMonsterDatabase([]));
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
-  const [tileSize, setTileSize] = useState(DEFAULT_TILE);
+  const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(TILE_PREF_KEY) ?? null));
+
+  function changeTileSize(next: number) {
+    setTileSize(next);
+    prefStore?.write(TILE_PREF_KEY, String(next));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +117,7 @@ export function QuestView(props: QuestViewProps): VNode {
               <select
                 id="quest-zoom-select"
                 value={String(tileSize)}
-                onChange={(e) => setTileSize(Number((e.target as HTMLSelectElement).value))}
+                onChange={(e) => changeTileSize(Number((e.target as HTMLSelectElement).value))}
               >
                 {TILE_SIZES.map((s) => <option key={s} value={String(s)}>{s}px</option>)}
               </select>

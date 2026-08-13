@@ -37,6 +37,9 @@ export const DB_OPEN_KEY = 'lc-db-open';
 /** GM storage key holding the database panel's last route ('' = none stored). */
 export const DB_ROUTE_KEY = 'lc-db-route';
 
+/** GM storage key holding the quest maze's last selected zoom (tile size). */
+export const QUEST_TILE_KEY = 'lc-quest-tile-size';
+
 /** GM storage key holding the inventory panel's minimised flag. */
 export const INVENTORY_MINIMIZED_KEY = 'lc-inventory-minimized';
 
@@ -113,4 +116,20 @@ export function getDbRoute(): string | null {
 
 export function setDbRoute(route: string): void {
   GM_setValue(DB_ROUTE_KEY, route);
+}
+
+/**
+ * Generic keyed string preference storage — backs a GM `PrefStore` (see its
+ * doc comment in `src/database/DatabaseApp.tsx`) for any DatabaseApp-hosted
+ * view that wants to remember something across the reload the game performs
+ * on every action. Generic like `getPanelOpen`/`setPanelOpen` above, rather
+ * than a dedicated getter/setter pair per preference: `QUEST_TILE_KEY` is the
+ * first key stored this way, but not expected to be the last.
+ */
+export function getPref(key: string): string | null {
+  return (GM_getValue(key, '') as string) || null;
+}
+
+export function setPref(key: string, value: string): void {
+  GM_setValue(key, value);
 }
