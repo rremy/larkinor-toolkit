@@ -11,7 +11,11 @@ export function QuestQuestionCard(props: QuestQuestionCardProps): VNode {
   const { question } = props;
   return (
     <div class="quest-question">
-      <div class="quest-question-prompt">{question.prompt}</div>
+      {/* Empty when the source never repeated the question after a `KÉRDÉS:`
+          label — it only ever posed it in narration prose, already shown
+          above this card. An empty prompt line would render as blank
+          whitespace, so it is omitted rather than always rendered. */}
+      {question.prompt && <div class="quest-question-prompt">{question.prompt}</div>}
       <ul class="quest-choices">
         {question.choices.map((choice) => (
           <li key={choice.index} class="quest-choice">

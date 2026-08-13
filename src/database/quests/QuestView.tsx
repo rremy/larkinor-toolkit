@@ -75,7 +75,10 @@ export function QuestView(props: QuestViewProps): VNode {
 
   const monsterCount = quest.cells.filter((c) => c.monsterId != null).length;
   const keyCount = quest.cells.filter((c) => c.key).length;
-  const questionCount = quest.cells.filter((c) => c.question).length;
+  // hasQuestion (image-derived), not question !== null (parse success) — see
+  // QuestCell.hasQuestion; otherwise this stat undercounts exactly like the
+  // marker did before task 18.
+  const questionCount = quest.cells.filter((c) => c.hasQuestion).length;
   const trapCount = quest.cells.filter((c) => c.trap).length;
   const lockCount = locksIn(quest).length;
 

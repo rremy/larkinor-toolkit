@@ -23,7 +23,7 @@ const stubLoader: DataLoader = {
       row: 0, col: 0,
       edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
       monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
-      portal: null, trap: false, death: false, narration: '', drops: null,
+      portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
       question: null, rawImage: '',
     }],
   }]),

@@ -219,6 +219,55 @@ describe('parseTitle', () => {
   it('returns empty narration for an empty title', () => {
     expect(parseTitle('')).toEqual({ narration: '', drops: null, question: null });
   });
+
+  it('parses a VÁLASZ-only title with no KÉRDÉS token, leaving the prompt empty, on a question-image cell', () => {
+    // The source frequently poses the question in narration prose and jumps
+    // straight to the answers — the prose stays as narration, and there is
+    // no separate prompt to extract. This relaxation is gated on the cell
+    // actually being a question-image tile (2nd arg), so it never fires on
+    // narration that just happens to contain the word "válasz".
+    const r = parseTitle('MI A JELSZÓ??!!!! VÁLASZ: (1) Sárkánytojás -- semmi; (2) Nem tudod -- Halál', true);
+    expect(r.narration).toBe('MI A JELSZÓ??!!!!');
+    expect(r.question?.prompt).toBe('');
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Sárkánytojás', outcome: 'semmi' },
+      { index: 2, text: 'Nem tudod', outcome: 'Halál' },
+    ]);
+  });
+
+  it('parses a VÁLASZOK-only title the same way as VÁLASZ-only', () => {
+    const r = parseTitle('Egy zárt ládát találsz. VÁLASZOK: (1) Kinyitod -- kincs', true);
+    expect(r.narration).toBe('Egy zárt ládát találsz.');
+    expect(r.question?.prompt).toBe('');
+  });
+
+  it('accepts a single-choice answer instead of requiring at least two, on a question-image cell', () => {
+    const r = parseTitle('KÉRDÉS: Mit teszel? VÁLASZ: (1) Elveszed a kulcsot -- vaskulcs', true);
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Elveszed a kulcsot', outcome: 'vaskulcs' },
+    ]);
+  });
+
+  it('does not treat narration containing (1) as a question when no VÁLASZ token is present', () => {
+    // A bare parenthesised number in ordinary prose (not an answer marker)
+    // must never be mistaken for the answer block.
+    const raw = 'A falon egy tábla áll: (1) számú terem.';
+    const r = parseTitle(raw, true);
+    expect(r.question).toBeNull();
+    expect(r.narration).toBe(raw);
+  });
+
+  it('rejects both relaxations on a non-question-image cell, even with a real KÉRDÉS/VÁLASZ shape', () => {
+    // Real case, quest 38 cells (4,4)/(4,5)/(9,4): a `halal.jpg` (death) tile
+    // whose title reads exactly like a one-choice question, purely as
+    // narrative flourish for a forced outcome. Cross-validation against the
+    // live source caught this as the one false positive the single-choice
+    // relaxation would otherwise have introduced — it must stay narration.
+    const raw = 'Beleléptél a mély szakadékba! KÉRDÉS: Mit teszel? VÁLASZ: (1) Lezuhansz -- -25000 ÉP';
+    const r = parseTitle(raw, false);
+    expect(r.question).toBeNull();
+    expect(r.narration).toBe(raw);
+  });
 });
 
 /** Resolver stub: every base resolves, so unresolved cases are explicit in tests. */
@@ -285,6 +334,22 @@ describe('parseQuestPage', () => {
     expect(q.cells).toHaveLength(q.rows * q.cols);
     // The full-maze view is 8 rows; the six key views follow it.
     expect(q.rows).toBeLessThan(20);
+  });
+
+  it('sets hasQuestion from the image even when the title fails to parse', () => {
+    // Mirrors quest 44's real case: a question-image tile whose title is
+    // pure narration prose with neither a KÉRDÉS nor a VÁLASZ token, so there
+    // is no Q&A structure to extract — this is the exact shape that used to
+    // lose its marker entirely (task 18). `hasQuestion` must still be true
+    // because it comes from the image, independent of the parse outcome.
+    const html = `<p><span class="tulajdonsagnev">Leírás:</span> d<br>
+      <span class="tulajdonsagnev">Jutalom:</span> r</p>
+      <div class="lab"><table><tr>
+        <td class=""><img class="szorny" title="Csak nézed a falat, választ nem kapsz." src="kerdes.jpg"></td>
+      </tr></table></div>`;
+    const q = parseQuestPage(html, 999, resolveAll);
+    expect(q.cells[0].hasQuestion).toBe(true);
+    expect(q.cells[0].question).toBeNull();
   });
 
   it('tolerates quest 11 having no entrance marker', () => {

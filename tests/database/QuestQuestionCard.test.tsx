@@ -41,4 +41,13 @@ describe('QuestQuestionCard', () => {
     );
     expect(container.querySelector('.quest-outcome')).toBeNull();
   });
+
+  it('omits the prompt line when the question has no prompt', () => {
+    // The source sometimes asks the question only in narration prose and
+    // jumps straight to VÁLASZ/VÁLASZOK — there is no separate prompt text.
+    const { container } = render(
+      <QuestQuestionCard question={{ prompt: '', choices: [{ index: 1, text: 'Mész', outcome: '' }] }} />,
+    );
+    expect(container.querySelector('.quest-question-prompt')).toBeNull();
+  });
 });

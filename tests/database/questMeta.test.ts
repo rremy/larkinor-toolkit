@@ -12,7 +12,7 @@ function cell(partial: Partial<QuestCell>): QuestCell {
   return {
     row: 0, col: 0, edges: openEdges(), monsterId: null, monsterName: null,
     boss: false, key: null, questItem: false, portal: null, trap: false,
-    death: false, narration: '', drops: null, question: null, rawImage: '',
+    death: false, narration: '', drops: null, hasQuestion: false, question: null, rawImage: '',
     ...partial,
   };
 }

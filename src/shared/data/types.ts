@@ -161,6 +161,17 @@ export interface QuestCell {
   death: boolean;
   narration: string;
   drops: string | null;
+  /**
+   * Whether the source image marks this tile as a question, independent of
+   * `question` below. The title text's Q&A block frequently fails to parse
+   * (prose-only question, missing `KÉRDÉS:` token, ...), and when that
+   * happens the tile must still show a question marker — the marker comes
+   * from the artwork, not from parse success. Never derive this from
+   * `question !== null`; that conflated the two concerns and is the root
+   * cause of quest cells silently losing their question marker.
+   */
+  hasQuestion: boolean;
+  /** Null when the title could not be split into a prompt and choices. */
   question: QuestQuestion | null;
   /** Provenance, for diagnosing source drift. */
   rawImage: string;

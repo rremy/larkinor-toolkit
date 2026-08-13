@@ -102,6 +102,17 @@ export function parseImage(src) {
 }
 
 const QUESTION_RE = /K[ÉE]RD[ÉE]S\s*:?\s*([\s\S]*?)\s*V[ÁA]LASZ(?:OK)?\s*:?\s*([\s\S]*)$/i;
+/**
+ * Fallback for titles that jump straight to the answers with no `KÉRDÉS:`
+ * token. The source frequently poses the question in narration prose (e.g.
+ * `MI A JELSZÓ??!!!!`) and never repeats it after a label — that prose stays
+ * in `narration`, already displayed, so there is no prompt to extract here.
+ * Anchored on the literal `VÁLASZ`/`VÁLASZOK` token, same as `QUESTION_RE`,
+ * so narration that merely contains `(1)` never matches either regex. Only
+ * tried on a genuine question-image cell (see `matchQuestion`) — narration
+ * elsewhere in the source can legitimately contain the word "válasz".
+ */
+const ANSWER_ONLY_RE = /V[ÁA]LASZ(?:OK)?\s*:?\s*([\s\S]*)$/i;
 const CHOICE_MARKER = /\((\d)\)+\s*/g;
 const DROPS_SEPARATOR = ' -- ';
 /** A quest drop always reads `<n> db <thing>`. */
@@ -141,20 +152,60 @@ function parseChoices(raw) {
 }
 
 /**
+ * Locate the question portion of a title, if any.
+ *
+ * Prefers the `KÉRDÉS: ... VÁLASZ(OK): ...` shape, which yields a prompt —
+ * tried unconditionally, since that combination never occurs by accident.
+ * Falls back to a bare `VÁLASZ(OK):` token with no prompt when the question
+ * itself was only ever posed as narration prose, but only when `isQuestionImage`
+ * is true: without a `KÉRDÉS` token to anchor on, "válasz" alone is common
+ * enough in ordinary Hungarian prose that it must not be trusted on a cell
+ * the source itself doesn't mark as a question. Returns null when neither
+ * token applies, so plain narration is never mistaken for a question.
+ */
+function matchQuestion(text, isQuestionImage) {
+  const withPrompt = QUESTION_RE.exec(text);
+  if (withPrompt) {
+    return { narrationEnd: withPrompt.index, prompt: withPrompt[1].trim(), answersRaw: withPrompt[2] };
+  }
+  if (isQuestionImage) {
+    const answersOnly = ANSWER_ONLY_RE.exec(text);
+    if (answersOnly) {
+      return { narrationEnd: answersOnly.index, prompt: '', answersRaw: answersOnly[1] };
+    }
+  }
+  return null;
+}
+
+/**
  * Decompose a cell `title` into narration, drops and an optional question.
  *
  * The question is extracted first: answers use ` -- ` as their own separator,
  * so splitting on the drops separator first would corrupt every question.
+ *
+ * `isQuestionImage` (the image-derived fact, see `parseImage`) gates the two
+ * relaxations added for task 18 — the `KÉRDÉS`-less fallback above, and
+ * accepting a single `(1)` choice below. Both are common on real question
+ * tiles but also occur by pure coincidence on non-question cells (e.g. a
+ * death tile whose title reads "KÉRDÉS: Mit teszel? VÁLASZ: (1) Lezuhansz --
+ * -25000 ÉP" as narrative flourish, not an actual choice point) — measured
+ * directly against the live corpus, so the gate is not speculative.
  */
-export function parseTitle(title) {
+export function parseTitle(title, isQuestionImage = false) {
   const text = decodeEntities(String(title)).replace(/\s+/g, ' ').trim();
   if (!text) return { narration: '', drops: null, question: null };
 
-  const qm = QUESTION_RE.exec(text);
+  const qm = matchQuestion(text, isQuestionImage);
   if (qm) {
-    const choices = parseChoices(qm[2]);
-    if (choices.length >= 2) {
-      const narration = text.slice(0, qm.index).trim();
+    const choices = parseChoices(qm.answersRaw);
+    // A single legitimate one-option outcome (e.g. "take the key") is
+    // common enough on real question tiles to accept, but — like the
+    // KÉRDÉS-less fallback above — only on a cell the image already marks
+    // as a question. Zero choices means the answer block itself didn't
+    // parse, so fall through to the raw-text case below regardless.
+    const minChoices = isQuestionImage ? 1 : 2;
+    if (choices.length >= minChoices) {
+      const narration = text.slice(0, qm.narrationEnd).trim();
       let drops = null;
       // A quest drop can trail the final answer's outcome.
       const last = choices[choices.length - 1];
@@ -166,7 +217,7 @@ export function parseTitle(title) {
           last.outcome = last.outcome.slice(0, cut).trim();
         }
       }
-      return { narration, drops, question: { prompt: qm[1].trim(), choices } };
+      return { narration, drops, question: { prompt: qm.prompt, choices } };
     }
     // Unsplittable answers: keep the raw text rather than invent structure.
     return { narration: text, drops: null, question: null };
@@ -235,7 +286,7 @@ export function parseQuestPage(html, id, resolveMonster) {
       }
 
       const facts = parseImage(src);
-      const parsed = parseTitle(title);
+      const parsed = parseTitle(title, facts.question);
 
       let monsterId = null;
       let monsterName = null;
@@ -259,6 +310,10 @@ export function parseQuestPage(html, id, resolveMonster) {
         death: facts.death,
         narration: parsed.narration,
         drops: parsed.drops,
+        // From the image, independent of whether the title parsed — this is
+        // the tile's ground truth for "is this a question", so a parse miss
+        // can never make the marker disappear (see QuestCell.hasQuestion).
+        hasQuestion: facts.question,
         // Null when the title could not be split, even if the image says
         // "question" — the card is never rendered from invented structure.
         question: parsed.question,

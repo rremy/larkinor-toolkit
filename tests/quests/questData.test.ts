@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { parseImage } from '../../scripts/quests/parseQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
@@ -52,6 +53,23 @@ describe('static/db/quests.json', () => {
         }
       }
     }
+  });
+
+  it('sets hasQuestion on every cell whose image is a question tile, regardless of parse success', () => {
+    // Regression guard for task 18: `hasQuestion` must track the image, not
+    // `question !== null`. This is the invariant that would have caught the
+    // original bug in CI — 42 cells across 10 quests had a question image
+    // but a null `question`, and rendered no marker at all.
+    const mismatches: string[] = [];
+    for (const q of quests) {
+      for (const c of q.cells) {
+        const imageSaysQuestion = parseImage(c.rawImage).question as boolean;
+        if (imageSaysQuestion !== c.hasQuestion) {
+          mismatches.push(`quest ${q.id} cell ${c.row},${c.col}: rawImage="${c.rawImage}"`);
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
   });
 
   it('provides a key cell for every lock that appears on a door', () => {

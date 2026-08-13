@@ -46,9 +46,12 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // corner badge (see CLAUDE.md / task 17). Trap wins if a cell were
         // ever both — not observed in the current data, but a trap is the
         // more dangerous fact, so this ordering is a defensive default.
+        // Driven by `hasQuestion` (the source image), not `question !== null`
+        // (whether the title text happened to parse) — the marker must
+        // survive a parse miss (task 18).
         const bigIcon: 'trap' | 'question' | null = cell.trap
           ? 'trap'
-          : cell.question != null ? 'question' : null;
+          : cell.hasQuestion ? 'question' : null;
         const classes = ['quest-cell'];
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
@@ -145,8 +148,8 @@ export function QuestGrid(props: QuestGridProps): VNode {
               )}
               {cell.death && !bigIcon && <span class="quest-badge death" title="halál">{BADGE.death}</span>}
               {/* No separate `!bigIcon` trap/question corner badges here: bigIcon
-                  is truthy exactly when cell.trap or cell.question is, so the
-                  big icon above always replaces them — nothing to guard. */}
+                  is truthy exactly when cell.trap or cell.hasQuestion is, so
+                  the big icon above always replaces them — nothing to guard. */}
               {cell.boss && <span class="quest-badge boss" title="boss">{BADGE.boss}</span>}
             </div>
           </div>

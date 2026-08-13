@@ -13,7 +13,7 @@ function cell(partial: Partial<QuestCell>): QuestCell {
   return {
     row: 0, col: 0, edges: openEdges(), monsterId: null, monsterName: null,
     boss: false, key: null, questItem: false, portal: null, trap: false,
-    death: false, narration: '', drops: null, question: null, rawImage: '',
+    death: false, narration: '', drops: null, hasQuestion: false, question: null, rawImage: '',
     ...partial,
   };
 }
@@ -30,7 +30,7 @@ const quest: Quest = {
     cell({ row: 0, col: 0, portal: 'entrance' }),
     cell({ row: 0, col: 1, edges: { ...openEdges(), E: { kind: 'door', lock: 'vas' }, N: { kind: 'wall' } } }),
     cell({ row: 1, col: 0, monsterId: 1, monsterName: 'Vérszomjas moszkitóraj' }),
-    cell({ row: 1, col: 1, key: 'vas', question: { prompt: 'Mit teszel?', choices: [] } }),
+    cell({ row: 1, col: 1, key: 'vas', hasQuestion: true, question: { prompt: 'Mit teszel?', choices: [] } }),
   ],
 };
 
@@ -192,7 +192,7 @@ describe('QuestGrid', () => {
         ...quest,
         cells: [
           ...quest.cells.slice(0, 3),
-          cell({ row: 1, col: 1, trap: true, question: { prompt: 'Mit teszel?', choices: [] } }),
+          cell({ row: 1, col: 1, trap: true, hasQuestion: true, question: { prompt: 'Mit teszel?', choices: [] } }),
         ],
       };
       const { container } = render(
@@ -203,6 +203,23 @@ describe('QuestGrid', () => {
       expect(bothCell.querySelector('.quest-big-icon.question')).toBeNull();
     });
 
+    it('renders the big icon from hasQuestion even when the title never parsed into a question', () => {
+      // Task 18: the marker must come from the image, not from `question !==
+      // null`, so a parse miss can never make it disappear.
+      const unparsedQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, hasQuestion: true, question: null }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={unparsedQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const unparsedCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(unparsedCell.querySelector('.quest-big-icon.question')).toBeTruthy();
+    });
+
     it('keeps the boss badge on a question+boss cell', () => {
       // Real case: quest 27, cell (1,2), tolvajkepzoboss_kerdes.jpg — also the
       // only trap/question cell that resolves to a monster.
@@ -211,7 +228,7 @@ describe('QuestGrid', () => {
         cells: [
           ...quest.cells.slice(0, 3),
           cell({
-            row: 1, col: 1, question: { prompt: 'Mit teszel?', choices: [] }, boss: true,
+            row: 1, col: 1, hasQuestion: true, question: { prompt: 'Mit teszel?', choices: [] }, boss: true,
           }),
         ],
       };
