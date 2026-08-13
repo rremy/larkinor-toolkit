@@ -42,6 +42,13 @@ export function QuestGrid(props: QuestGridProps): VNode {
         const monster = cell.monsterId != null ? monsters.getById(cell.monsterId) : undefined;
         const isSelected = selected != null && selected.row === cell.row && selected.col === cell.col;
         const keyHit = highlightLock != null && cell.key === highlightLock;
+        // Trap and question cells get one big centred icon instead of a
+        // corner badge (see CLAUDE.md / task 17). Trap wins if a cell were
+        // ever both — not observed in the current data, but a trap is the
+        // more dangerous fact, so this ordering is a defensive default.
+        const bigIcon: 'trap' | 'question' | null = cell.trap
+          ? 'trap'
+          : cell.question != null ? 'question' : null;
         const classes = ['quest-cell'];
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
@@ -101,16 +108,38 @@ export function QuestGrid(props: QuestGridProps): VNode {
                 loading="lazy"
               />
             )}
+            {bigIcon && (
+              // Overlays the sprite rather than replacing it (quest 27, cell
+              // 1,2 is both a question and a monster encounter).
+              <span
+                class={`quest-big-icon ${bigIcon}`}
+                title={bigIcon === 'trap' ? 'csapda' : 'kérdés'}
+              >
+                {bigIcon === 'trap' ? BADGE.trap : BADGE.question}
+              </span>
+            )}
             <div class="quest-badges">
-              {cell.portal === 'entrance' && <span class="quest-badge entrance" title="bejárat">{BADGE.entrance}</span>}
+              {/* Entrance, quest item, death and the trap/question corner
+                  badge itself are dropped on a big-icon tile to keep it
+                  clear of clutter. Key, exit and boss stay: 10 cells pair a
+                  question with a key the door lookup depends on, 1 pairs a
+                  trap with the quest's exit, and 1 pairs a question with a
+                  boss — hiding any of those would silently break a lookup
+                  or hide the way out. */}
+              {cell.portal === 'entrance' && !bigIcon && (
+                <span class="quest-badge entrance" title="bejárat">{BADGE.entrance}</span>
+              )}
               {cell.portal === 'exit' && <span class="quest-badge exit" title="kijárat">{BADGE.exit}</span>}
               {cell.key && (
                 <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
               )}
-              {cell.questItem && <span class="quest-badge quest-item" title="küldetés tárgy">{BADGE.questItem}</span>}
-              {cell.trap && <span class="quest-badge trap" title="csapda">{BADGE.trap}</span>}
-              {cell.death && <span class="quest-badge death" title="halál">{BADGE.death}</span>}
-              {cell.question && <span class="quest-badge question" title="kérdés">{BADGE.question}</span>}
+              {cell.questItem && !bigIcon && (
+                <span class="quest-badge quest-item" title="küldetés tárgy">{BADGE.questItem}</span>
+              )}
+              {cell.death && !bigIcon && <span class="quest-badge death" title="halál">{BADGE.death}</span>}
+              {/* No separate `!bigIcon` trap/question corner badges here: bigIcon
+                  is truthy exactly when cell.trap or cell.question is, so the
+                  big icon above always replaces them — nothing to guard. */}
               {cell.boss && <span class="quest-badge boss" title="boss">{BADGE.boss}</span>}
             </div>
           </div>

@@ -84,12 +84,14 @@ describe('QuestGrid', () => {
     expect(img.getAttribute('alt')).toBe('Vérszomjas moszkitóraj');
   });
 
-  it('badges key, question and entrance cells', () => {
+  it('badges key and entrance cells', () => {
+    // The fixture's question cell also carries a key (row 1, col 1), so its
+    // corner question badge is superseded by the big icon (see the
+    // "big trap/question icon" suite below) — only the key badge survives.
     const { container } = render(
       <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
     );
     expect(container.querySelector('.quest-badge.key')).toBeTruthy();
-    expect(container.querySelector('.quest-badge.question')).toBeTruthy();
     expect(container.querySelector('.quest-badge.entrance')).toBeTruthy();
   });
 
@@ -109,5 +111,116 @@ describe('QuestGrid', () => {
     );
     expect(container.querySelectorAll('.quest-cell.selected')).toHaveLength(1);
     expect(container.querySelectorAll('.quest-cell.key-hit')).toHaveLength(1);
+  });
+
+  describe('big trap/question icon', () => {
+    it('renders a trap cell with the large centred icon, not the corner badge', () => {
+      const trapQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, trap: true }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={trapQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const trapCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(trapCell.querySelector('.quest-big-icon.trap')).toBeTruthy();
+      expect(trapCell.querySelector('.quest-badge.trap')).toBeNull();
+    });
+
+    it('renders a question cell with the large centred icon, not the corner badge', () => {
+      // `quest.cells[3]` already has a question, with no trap.
+      const { container } = render(
+        <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const questionCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(questionCell.querySelector('.quest-big-icon.question')).toBeTruthy();
+      expect(questionCell.querySelector('.quest-badge.question')).toBeNull();
+    });
+
+    it('suppresses the quest-item, death and entrance badges on a big-icon tile', () => {
+      const clutteredQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({
+            row: 1, col: 1, trap: true, questItem: true, death: true, portal: 'entrance',
+          }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={clutteredQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const trapCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(trapCell.querySelector('.quest-badge.quest-item')).toBeNull();
+      expect(trapCell.querySelector('.quest-badge.death')).toBeNull();
+      expect(trapCell.querySelector('.quest-badge.entrance')).toBeNull();
+    });
+
+    it('regression guard: a question+key cell still shows the key badge, so the door-to-key lookup keeps working', () => {
+      // 10 real cells (e.g. kerdes_aranykulcs.jpg) pair a question with a key;
+      // the key legend depends on this badge surviving the big-icon change.
+      const { container } = render(
+        <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const questionKeyCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(questionKeyCell.querySelector('.quest-big-icon.question')).toBeTruthy();
+      expect(questionKeyCell.querySelector('.quest-badge.key.lock-vas')).toBeTruthy();
+    });
+
+    it('a trap+exit cell still shows the exit badge, so the way out stays findable', () => {
+      // Real case: quest 29, cell (2,2), csapda_labikibe_j.jpg.
+      const trapExitQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, trap: true, portal: 'exit' }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={trapExitQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const trapExitCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(trapExitCell.querySelector('.quest-big-icon.trap')).toBeTruthy();
+      expect(trapExitCell.querySelector('.quest-badge.exit')).toBeTruthy();
+    });
+
+    it('a trap+question cell shows the trap icon, since a trap is the more dangerous fact', () => {
+      const bothQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, trap: true, question: { prompt: 'Mit teszel?', choices: [] } }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={bothQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const bothCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(bothCell.querySelector('.quest-big-icon.trap')).toBeTruthy();
+      expect(bothCell.querySelector('.quest-big-icon.question')).toBeNull();
+    });
+
+    it('keeps the boss badge on a question+boss cell', () => {
+      // Real case: quest 27, cell (1,2), tolvajkepzoboss_kerdes.jpg — also the
+      // only trap/question cell that resolves to a monster.
+      const bossQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({
+            row: 1, col: 1, question: { prompt: 'Mit teszel?', choices: [] }, boss: true,
+          }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={bossQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const bossCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(bossCell.querySelector('.quest-big-icon.question')).toBeTruthy();
+      expect(bossCell.querySelector('.quest-badge.boss')).toBeTruthy();
+    });
   });
 });
