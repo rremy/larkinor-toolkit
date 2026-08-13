@@ -912,6 +912,29 @@
 .lc-db .quest-badge {
   background: var(--quest-badge-bg); border-radius: 2px; padding: 1px;
 }
+.lc-db .quest-legend h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
+.lc-db .quest-legend-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 4px; border-radius: 3px; font-size: 12px;
+}
+.lc-db .quest-legend-row.active { background: var(--accent-dim); }
+.lc-db .quest-lock-swatch {
+  width: 10px; height: 10px; border-radius: 2px;
+  border: 1px solid var(--swatch-border); flex: none;
+}
+.lc-db .quest-lock-swatch.lock-vas { background: var(--lock-vas); }
+.lc-db .quest-lock-swatch.lock-rez { background: var(--lock-rez); }
+.lc-db .quest-lock-swatch.lock-bronz { background: var(--lock-bronz); }
+.lc-db .quest-lock-swatch.lock-ezust { background: var(--lock-ezust); }
+.lc-db .quest-lock-swatch.lock-arany { background: var(--lock-arany); }
+.lc-db .quest-lock-swatch.lock-platina { background: var(--lock-platina); }
+.lc-db .quest-lock-swatch.lock-tolvaj { background: var(--lock-tolvaj); }
+.lc-db .quest-lock-swatch.lock-cso { background: var(--lock-cso); }
+.lc-db .quest-lock-missing { color: var(--muted); font-style: italic; }
+.lc-db .quest-lock-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline; font-size: 12px;
+}
 
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.
