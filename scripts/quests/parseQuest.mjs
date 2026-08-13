@@ -180,3 +180,94 @@ export function parseTitle(title) {
     question: null,
   };
 }
+
+const DESC_RE = /<span class="tulajdonsagnev">\s*Le[íi]r[áa]s\s*:?\s*<\/span>\s*([\s\S]*?)(?:<br|<span class="tulajdonsagnev">|<\/p>)/i;
+const REWARD_RE = /<span class="tulajdonsagnev">\s*Jutalom\s*:?\s*<\/span>\s*([\s\S]*?)<\/p>/i;
+
+function field(html, re, label, questId) {
+  const m = re.exec(html);
+  if (!m) throw new Error(`quest ${questId}: missing ${label}`);
+  const value = stripTags(m[1]).replace(/[;,\s]+$/, '');
+  if (!value) throw new Error(`quest ${questId}: empty ${label}`);
+  return value;
+}
+
+/**
+ * Parse one quest page into a `Quest`.
+ *
+ * `resolveMonster` maps a sprite base to a monster, injected so this stays pure
+ * and the tests need no monsters.json.
+ */
+export function parseQuestPage(html, id, resolveMonster) {
+  const clean = stripComments(html);
+
+  const description = field(clean, DESC_RE, 'description', id);
+  const reward = field(clean, REWARD_RE, 'reward', id);
+
+  const labStart = clean.indexOf('<div class="lab">');
+  if (labStart < 0) throw new Error(`quest ${id}: no maze container`);
+  const lab = clean.slice(labStart);
+
+  // Quest 27 ships seven tables: the full maze followed by six per-key views.
+  const tableMatch = /<table[^>]*>([\s\S]*?)<\/table>/i.exec(lab);
+  if (!tableMatch) throw new Error(`quest ${id}: no maze table`);
+  const table = tableMatch[1];
+
+  const rowHtml = [...table.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map((m) => m[1]);
+  if (rowHtml.length === 0) throw new Error(`quest ${id}: maze has no rows`);
+
+  const cells = [];
+  let cols = 0;
+  rowHtml.forEach((row, r) => {
+    const tds = [...row.matchAll(/<td([^>]*)>([\s\S]*?)<\/td>/gi)];
+    cols = Math.max(cols, tds.length);
+    tds.forEach((td, c) => {
+      const classAttr = (/class="([^"]*)"/i.exec(td[1]) ?? [, ''])[1];
+      const inner = td[2];
+      const src = (/src="([^"]*)"/i.exec(inner) ?? [, ''])[1];
+      const title = (/title="([^"]*)"/i.exec(inner) ?? [, ''])[1];
+
+      let edges;
+      try {
+        edges = parseEdges(classAttr);
+      } catch (err) {
+        throw new Error(`quest ${id} cell ${r},${c}: ${err.message}`);
+      }
+
+      const facts = parseImage(src);
+      const parsed = parseTitle(title);
+
+      let monsterId = null;
+      let monsterName = null;
+      if (facts.base) {
+        const hit = resolveMonster(facts.base);
+        if (hit) { monsterId = hit.id; monsterName = hit.name; }
+        else { monsterName = facts.base; }
+      }
+
+      cells.push({
+        row: r,
+        col: c,
+        edges,
+        monsterId,
+        monsterName,
+        boss: facts.boss,
+        key: facts.key,
+        questItem: facts.questItem,
+        portal: facts.portal,
+        trap: facts.trap,
+        death: facts.death,
+        narration: parsed.narration,
+        drops: parsed.drops,
+        // Null when the title could not be split, even if the image says
+        // "question" — the card is never rendered from invented structure.
+        question: parsed.question,
+        rawImage: src,
+      });
+    });
+  });
+
+  if (cells.length === 0) throw new Error(`quest ${id}: maze has no cells`);
+
+  return { id, description, reward, rows: rowHtml.length, cols, cells };
+}

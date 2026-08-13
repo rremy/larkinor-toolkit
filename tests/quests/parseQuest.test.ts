@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { stripComments, parseEdges, decodeEntities, stripTags, parseImage, parseTitle } from '../../scripts/quests/parseQuest.mjs';
+import {
+  stripComments, parseEdges, decodeEntities, stripTags, parseImage, parseTitle, parseQuestPage,
+} from '../../scripts/quests/parseQuest.mjs';
+import type { Quest } from '@/shared/data';
 
 const fixture = (n: number) => readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8');
 
@@ -215,5 +218,98 @@ describe('parseTitle', () => {
 
   it('returns empty narration for an empty title', () => {
     expect(parseTitle('')).toEqual({ narration: '', drops: null, question: null });
+  });
+});
+
+/** Resolver stub: every base resolves, so unresolved cases are explicit in tests. */
+const resolveAll = (base: string) => ({ id: 1, name: `M:${base}` });
+const resolveNone = () => null;
+
+const parse = (
+  n: number,
+  resolve: (base: string) => { id: number; name: string } | null = resolveAll,
+): Quest => parseQuestPage(readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8'), n, resolve);
+
+describe('parseQuestPage', () => {
+  it('reads the description and reward', () => {
+    const q = parse(1);
+    expect(q.id).toBe(1);
+    expect(q.description).toContain('Gründen borospincéjét ellepték a szúnyogok');
+    expect(q.reward).toContain('20 db ezüst');
+    // Trailing separators from the source are trimmed.
+    expect(q.reward.endsWith(',')).toBe(false);
+  });
+
+  it('derives coordinates from row and column position', () => {
+    const q = parse(1);
+    expect(q.rows).toBe(2);
+    expect(q.cols).toBe(4);
+    expect(q.cells).toHaveLength(8);
+    expect(q.cells[0]).toMatchObject({ row: 0, col: 0 });
+    expect(q.cells.at(-1)).toMatchObject({ row: 1, col: 3 });
+  });
+
+  it('carries edges, keys and portals onto cells', () => {
+    const q = parse(1);
+    const entrance = q.cells.find((c) => c.portal === 'entrance');
+    expect(entrance).toMatchObject({ row: 0, col: 0 });
+    // The iron-key door and the cell that yields the iron key both exist.
+    const doorCell = q.cells.find((c) => Object.values(c.edges).some(
+      (e) => e.kind === 'door' && e.lock === 'vas'));
+    expect(doorCell).toBeTruthy();
+    expect(q.cells.some((c) => c.key === 'vas')).toBe(true);
+  });
+
+  it('attaches parsed narration, drops and questions to the right cells', () => {
+    const q = parse(1);
+    expect(q.cells.some((c) => c.question?.choices.length === 3)).toBe(true);
+    expect(q.cells.some((c) => c.drops === '1 db szúnyogszárny')).toBe(true);
+  });
+
+  it('resolves monsters through the injected resolver', () => {
+    const q = parse(1);
+    const withMonster = q.cells.filter((c) => c.monsterId !== null);
+    expect(withMonster.length).toBeGreaterThan(0);
+    expect(withMonster[0].monsterName).toMatch(/^M:/);
+  });
+
+  it('keeps the raw base as monsterName when resolution fails', () => {
+    const q = parse(1, resolveNone);
+    const unresolved = q.cells.find((c) => c.rawImage.includes('moszkitoraj'));
+    expect(unresolved?.monsterId).toBeNull();
+    expect(unresolved?.monsterName).toBe('moszkitoraj_k');
+  });
+
+  it('takes only the first table of quest 27, which is one maze in seven views', () => {
+    const q = parse(27);
+    expect(q.cells).toHaveLength(q.rows * q.cols);
+    // The full-maze view is 8 rows; the six key views follow it.
+    expect(q.rows).toBeLessThan(20);
+  });
+
+  it('tolerates quest 11 having no entrance marker', () => {
+    const q = parse(11);
+    expect(q.cells.some((c) => c.portal === 'entrance')).toBe(false);
+    expect(q.cells.length).toBeGreaterThan(0);
+  });
+
+  it('preserves szel edges in quest 39', () => {
+    const q = parse(39);
+    expect(q.cells.some((c) => Object.values(c.edges).some((e) => e.kind === 'szel'))).toBe(true);
+  });
+
+  it('ignores the commented-out template row in quest 45', () => {
+    const q = parse(45);
+    expect(q.cells).toHaveLength(q.rows * q.cols);
+    expect(q.cells.every((c) => c.rawImage !== '')).toBe(true);
+  });
+
+  it('records every lock type present in quest 20', () => {
+    const q = parse(20);
+    const locks = new Set(
+      q.cells.flatMap((c) => Object.values(c.edges))
+        .filter((e) => e.kind === 'door').map((e: any) => e.lock),
+    );
+    expect(locks.size).toBeGreaterThanOrEqual(7);
   });
 });
