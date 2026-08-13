@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { stripComments, parseEdges, decodeEntities, stripTags, parseImage } from '../../scripts/quests/parseQuest.mjs';
+import { stripComments, parseEdges, decodeEntities, stripTags, parseImage, parseTitle } from '../../scripts/quests/parseQuest.mjs';
 
 const fixture = (n: number) => readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8');
 
@@ -124,5 +124,87 @@ describe('parseImage', () => {
   it('detects boss bases', () => {
     expect(parseImage('csontlovagboss_kt.jpg')).toMatchObject({ base: 'csontlovagboss', boss: true, questItem: true });
     expect(parseImage('nyonyoraboss_kt.gif')).toMatchObject({ base: 'nyonyoraboss', boss: true });
+  });
+});
+
+describe('parseTitle', () => {
+  it('splits drops off a plain narration', () => {
+    const r = parseTitle('Továbbhaladva látod, hogy dél felé szűkül a folyosó... -- 1 db szúnyogszárny');
+    expect(r.narration).toBe('Továbbhaladva látod, hogy dél felé szűkül a folyosó...');
+    expect(r.drops).toBe('1 db szúnyogszárny');
+    expect(r.question).toBeNull();
+  });
+
+  it('returns null drops when the title has no separator', () => {
+    const r = parseTitle('Itt léptél be Gründen pincéjébe.');
+    expect(r.drops).toBeNull();
+    expect(r.narration).toBe('Itt léptél be Gründen pincéjébe.');
+  });
+
+  it('parses a colon-separated question, keeping narration before it', () => {
+    const r = parseTitle(
+      'Találsz egy borosüveget. KÉRDÉS: Mit teszel? VÁLASZOK: ' +
+      '(1) Megkóstolod: max ÉP (2) Kiiszod az egészet: 3 méreg (3) Otthagyod a földön az üveget: semmi',
+    );
+    expect(r.narration).toBe('Találsz egy borosüveget.');
+    expect(r.question?.prompt).toBe('Mit teszel?');
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Megkóstolod', outcome: 'max ÉP' },
+      { index: 2, text: 'Kiiszod az egészet', outcome: '3 méreg' },
+      { index: 3, text: 'Otthagyod a földön az üveget', outcome: 'semmi' },
+    ]);
+  });
+
+  it('parses a dash-separated question with semicolons', () => {
+    const r = parseTitle(
+      'Látsz egy gyökeret. KÉRDÉS: Mit teszel? VÁLASZ: (1) Megpróbálod meghúzni -- Kaméleon; (2) Otthagyod -- semmi',
+    );
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Megpróbálod meghúzni', outcome: 'Kaméleon' },
+      { index: 2, text: 'Otthagyod', outcome: 'semmi' },
+    ]);
+  });
+
+  it('parses parenthesised outcomes and a lowercase Válasz label', () => {
+    const r = parseTitle(
+      'Észreveszel egy gombát. KÉRDÉS: Mit teszel? Válasz: ' +
+      '(1) Otthagyod. (Gyógyulsz); (2) Bedörzsölöd vele a homlokod (3 méreg); (3) Otthagyod (4 átok)',
+    );
+    expect(r.question?.choices.map((c) => c.outcome)).toEqual(['Gyógyulsz', '3 méreg', '4 átok']);
+    expect(r.question?.choices[1].text).toBe('Bedörzsölöd vele a homlokod');
+  });
+
+  it('does not let the drops separator corrupt the question', () => {
+    const r = parseTitle(
+      'KÉRDÉS: Mit teszel? VÁLASZ: (1) Felállsz -- 15 méreg; (2) Lehajolsz -- 4 méreg',
+    );
+    expect(r.question?.choices).toHaveLength(2);
+    expect(r.question?.choices[0].outcome).toBe('15 méreg');
+    expect(r.drops).toBeNull();
+  });
+
+  it('lifts a trailing quest drop out of the final answer', () => {
+    const r = parseTitle(
+      'KÉRDÉS: Mit teszel? VÁLASZ: (1) Hallgatsz -- semmi; ' +
+      '(2) Megmondod a neved -- Halál; (3) Továbbmész -- Hullámelementál -- 6 db elementál eszencia',
+    );
+    expect(r.drops).toBe('6 db elementál eszencia');
+    expect(r.question?.choices[2].outcome).toBe('Hullámelementál');
+  });
+
+  it('tolerates the doubled parenthesis typo in the source', () => {
+    const r = parseTitle('KÉRDÉS: Mi? VÁLASZ: (1) NYED. -- -20000 ÉP; (2) NYEB. -- semmi; (3)) NYANYED. -- -20000 ÉP');
+    expect(r.question?.choices.map((c) => c.index)).toEqual([1, 2, 3]);
+  });
+
+  it('falls back to raw narration when the answers cannot be split', () => {
+    const raw = 'KÉRDÉS: Mit teszel? VÁLASZ: mindegy';
+    const r = parseTitle(raw);
+    expect(r.question).toBeNull();
+    expect(r.narration).toBe(raw);
+  });
+
+  it('returns empty narration for an empty title', () => {
+    expect(parseTitle('')).toEqual({ narration: '', drops: null, question: null });
   });
 });

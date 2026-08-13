@@ -100,3 +100,83 @@ export function parseImage(src) {
   facts.boss = /boss$/.test(rest);
   return facts;
 }
+
+const QUESTION_RE = /K[ÉE]RD[ÉE]S\s*:?\s*([\s\S]*?)\s*V[ÁA]LASZ(?:OK)?\s*:?\s*([\s\S]*)$/i;
+const CHOICE_MARKER = /\((\d)\)+\s*/g;
+const DROPS_SEPARATOR = ' -- ';
+/** A quest drop always reads `<n> db <thing>`. */
+const DROP_SHAPE = /^\d+\s*db\s/i;
+
+/** Split one raw answer into its text and its outcome. */
+function splitOutcome(index, raw) {
+  let text = raw.trim().replace(/[;,.\s]+$/, '');
+  let outcome = '';
+  let m;
+  if ((m = /^([\s\S]*?)\s+--\s+([\s\S]*)$/.exec(text))) {
+    text = m[1]; outcome = m[2];
+  } else if ((m = /^([\s\S]*?)\s*\(([^()]*)\)\s*$/.exec(text))) {
+    text = m[1]; outcome = m[2];
+  } else if ((m = /^([\s\S]*?):\s*([\s\S]*)$/.exec(text))) {
+    text = m[1]; outcome = m[2];
+  }
+  return {
+    index,
+    text: text.trim().replace(/[;,.\s]+$/, ''),
+    outcome: outcome.trim().replace(/[;,\s]+$/, ''),
+  };
+}
+
+/** Split the answer block on its `(n)` markers. */
+function parseChoices(raw) {
+  const marks = [];
+  CHOICE_MARKER.lastIndex = 0;
+  let m;
+  while ((m = CHOICE_MARKER.exec(raw))) {
+    marks.push({ index: Number(m[1]), start: m.index, end: CHOICE_MARKER.lastIndex });
+  }
+  return marks.map((mark, i) => {
+    const end = i + 1 < marks.length ? marks[i + 1].start : raw.length;
+    return splitOutcome(mark.index, raw.slice(mark.end, end));
+  });
+}
+
+/**
+ * Decompose a cell `title` into narration, drops and an optional question.
+ *
+ * The question is extracted first: answers use ` -- ` as their own separator,
+ * so splitting on the drops separator first would corrupt every question.
+ */
+export function parseTitle(title) {
+  const text = decodeEntities(String(title)).replace(/\s+/g, ' ').trim();
+  if (!text) return { narration: '', drops: null, question: null };
+
+  const qm = QUESTION_RE.exec(text);
+  if (qm) {
+    const choices = parseChoices(qm[2]);
+    if (choices.length >= 2) {
+      const narration = text.slice(0, qm.index).trim();
+      let drops = null;
+      // A quest drop can trail the final answer's outcome.
+      const last = choices[choices.length - 1];
+      const cut = last.outcome.lastIndexOf(DROPS_SEPARATOR);
+      if (cut >= 0) {
+        const tail = last.outcome.slice(cut + DROPS_SEPARATOR.length).trim();
+        if (DROP_SHAPE.test(tail)) {
+          drops = tail;
+          last.outcome = last.outcome.slice(0, cut).trim();
+        }
+      }
+      return { narration, drops, question: { prompt: qm[1].trim(), choices } };
+    }
+    // Unsplittable answers: keep the raw text rather than invent structure.
+    return { narration: text, drops: null, question: null };
+  }
+
+  const cut = text.indexOf(DROPS_SEPARATOR);
+  if (cut < 0) return { narration: text, drops: null, question: null };
+  return {
+    narration: text.slice(0, cut).trim(),
+    drops: text.slice(cut + DROPS_SEPARATOR.length).trim(),
+    question: null,
+  };
+}
