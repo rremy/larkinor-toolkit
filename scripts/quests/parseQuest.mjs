@@ -60,3 +60,43 @@ export function parseEdges(classAttr) {
   }
   return edges;
 }
+
+const KEY_SUFFIX = new RegExp(`_(${LOCK_SUFFIXES.join('|')})kulcs$`);
+const EXIT_SUFFIX = /_labikibe(?:_j)?$/;
+
+/**
+ * Decompose a cell image filename.
+ *
+ * Suffixes interleave in the source (`kereskedo_tolvajkulcs_kt_labikibe.jpg`),
+ * so the strip order is fixed: exit, quest item, key, question. Emptiness is
+ * decided only after stripping, because `nop_labikibe.jpg` is an exit standing
+ * on an otherwise empty cell.
+ */
+export function parseImage(src) {
+  const facts = {
+    base: null, key: null, questItem: false, portal: null,
+    trap: false, death: false, boss: false, question: false, empty: false,
+  };
+
+  let rest = String(src).replace(/^.*\//, '').replace(/\.(gif|jpe?g|png)$/i, '');
+  if (!rest) { facts.empty = true; return facts; }
+
+  if (EXIT_SUFFIX.test(rest)) { facts.portal = 'exit'; rest = rest.replace(EXIT_SUFFIX, ''); }
+  if (/_kt$/.test(rest)) { facts.questItem = true; rest = rest.replace(/_kt$/, ''); }
+
+  const keyMatch = KEY_SUFFIX.exec(rest);
+  if (keyMatch) { facts.key = keyMatch[1]; rest = rest.replace(KEY_SUFFIX, ''); }
+
+  // `tolvajkepzoboss_kerdes` is a question drawn over a boss sprite.
+  if (/_kerdes$/.test(rest)) { facts.question = true; rest = rest.replace(/_kerdes$/, ''); }
+
+  if (rest === 'kerdes') { facts.question = true; facts.empty = true; return facts; }
+  if (rest === 'csapda') { facts.trap = true; facts.empty = true; return facts; }
+  if (rest === 'halal') { facts.death = true; facts.empty = true; return facts; }
+  if (rest === 'bejarat') { facts.portal = 'entrance'; facts.empty = true; return facts; }
+  if (rest === 'nop' || rest === '') { facts.empty = true; return facts; }
+
+  facts.base = rest;
+  facts.boss = /boss$/.test(rest);
+  return facts;
+}
