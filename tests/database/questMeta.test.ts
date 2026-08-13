@@ -60,7 +60,8 @@ describe('outcomeValence', () => {
   });
 
   it('marks non-silver/gold key rewards as good too', () => {
-    expect(outcomeValence('1 db platinakulcs')).toBe('good');
+    expect(outcomeValence('platinakulcs')).toBe('good');
+    expect(outcomeValence('tolvajkulcs')).toBe('good');
   });
 });
 
