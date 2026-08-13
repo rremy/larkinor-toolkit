@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -42,6 +42,11 @@ describe('DesktopDock', () => {
     // that opens the panel leaves every later test with modalOpen true, which
     // suppresses all the keyboard shortcuts.
     GM_setValue(INVENTORY_OPEN_KEY, '');
+    // Same hazard for the database panel, which now persists open state too: a
+    // test that opens it would otherwise leave every later test with modalOpen
+    // true, silently suppressing all the keyboard shortcuts.
+    GM_setValue(DB_OPEN_KEY, '');
+    GM_setValue(DB_ROUTE_KEY, '');
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {
@@ -171,6 +176,39 @@ describe('DesktopDock', () => {
     fireEvent.click(container.querySelector('.lc-dock-inventory')!);
     expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
     expect(document.querySelector('.lc-home-split')).not.toBeNull();
+  });
+
+  describe('database panel persistence', () => {
+    it('is closed on a first visit', () => {
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(container.querySelector('.lc-db-overlay')).toBeNull();
+    });
+
+    it('reopens after the page reload every game action causes', () => {
+      const { container, unmount } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} />
+      );
+      fireEvent.click(container.querySelector('.lc-dock-db')!);
+      expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
+
+      // The reload: the whole dock is torn down and mounted afresh.
+      unmount();
+      render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
+    });
+
+    it('stays closed once closed, rather than reopening on every action', () => {
+      const { container, unmount } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} />
+      );
+      fireEvent.click(container.querySelector('.lc-dock-db')!);
+      fireEvent.click(document.querySelector('.lc-db-overlay-close')!);
+      expect(document.querySelector('.lc-db-overlay')).toBeNull();
+
+      unmount();
+      render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(document.querySelector('.lc-db-overlay')).toBeNull();
+    });
   });
 
   it('degrades to dbButtonOnly when the action list comes back empty', () => {

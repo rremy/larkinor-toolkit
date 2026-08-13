@@ -9,6 +9,9 @@ import {
   getDockCollapsed,
   setDockCollapsed,
   DOCK_COLLAPSED_KEY,
+  getDbRoute,
+  setDbRoute,
+  DB_ROUTE_KEY,
 } from '../src/utils/config';
 
 describe('enabled-hotkeys config', () => {
@@ -64,5 +67,23 @@ describe('dock-collapsed config', () => {
     expect(getDockCollapsed()).toBe(true);
     setDockCollapsed(false);
     expect(getDockCollapsed()).toBe(false);
+  });
+});
+
+describe('database-route config', () => {
+  it('returns null when nothing is stored', () => {
+    GM_setValue(DB_ROUTE_KEY, '');
+    expect(getDbRoute()).toBeNull();
+  });
+
+  it('round-trips a route through GM storage', () => {
+    setDbRoute('map/54');
+    expect(GM_getValue(DB_ROUTE_KEY, '')).toBe('map/54');
+    expect(getDbRoute()).toBe('map/54');
+  });
+
+  it('round-trips a bare tab with no selection', () => {
+    setDbRoute('monsters');
+    expect(getDbRoute()).toBe('monsters');
   });
 });

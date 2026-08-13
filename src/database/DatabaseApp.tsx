@@ -6,6 +6,20 @@ import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
 import { MapView } from './map/MapView';
 
+/**
+ * Somewhere to keep the current route across remounts, for `'memory'` routing.
+ *
+ * Injected rather than imported so this component — which also ships in the
+ * standalone site bundle — stays free of any GM_* dependency. The in-game
+ * overlay supplies a GM-backed implementation; the standalone page supplies
+ * none and keeps using the URL hash.
+ */
+export interface RouteStore {
+  /** The stored route, or null if there is none. */
+  read(): string | null;
+  write(route: string): void;
+}
+
 export interface DatabaseAppProps {
   loader: DataLoader;
   /**
@@ -17,6 +31,12 @@ export interface DatabaseAppProps {
    * on the game URL after closing.
    */
   routing?: 'hash' | 'memory';
+  /**
+   * Optional persistence for `'memory'` routing: the route is read from here on
+   * mount and written back on every navigation. Ignored under `'hash'` routing,
+   * where the URL already is the store.
+   */
+  routeStore?: RouteStore;
   /**
    * Entity id to open on mount (weapon/armor/item) — resolved to its tab. Used
    * when the overlay is opened from a monster's dropped-item link.
@@ -52,19 +72,37 @@ function routeFor(tab: Tab, param: string | null): Route {
   return { tab, id: param != null ? Number(param) : null, cell: null };
 }
 
-function parseHash(): Route {
-  const m = (location.hash || '').match(/^#([a-z]+)(?:\/(-?\d+))?$/);
+/**
+ * Serialise to `tab[/param]`. The param is an entity id on explorer tabs and a
+ * map cell id on the map tab; both are numeric strings, so one grammar covers
+ * them (map cell ids are the game's `imageId`, e.g. "54").
+ */
+function serializeRoute(tab: Tab, param: string | null): string {
+  return param != null ? `${tab}/${param}` : tab;
+}
+
+/** Inverse of `serializeRoute`. Anything unrecognised degrades to the default. */
+function parseRoute(raw: string): Route {
+  const m = raw.match(/^([a-z]+)(?:\/(-?\d+))?$/);
   if (!m || !isTab(m[1])) return DEFAULT_ROUTE;
   return routeFor(m[1] as Tab, m[2] ?? null);
 }
 
+function parseHash(): Route {
+  return parseRoute((location.hash || '').replace(/^#/, ''));
+}
+
 function hashFor(tab: Tab, param: string | null): string {
-  return param != null ? `#${tab}/${param}` : `#${tab}`;
+  return `#${serializeRoute(tab, param)}`;
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', initialItemId, initialItemName } = props;
-  const [route, setRoute] = useState<Route>(() => (routing === 'hash' ? parseHash() : DEFAULT_ROUTE));
+  const { loader, routing = 'hash', routeStore, initialItemId, initialItemName } = props;
+  const [route, setRoute] = useState<Route>(() => {
+    if (routing === 'hash') return parseHash();
+    const stored = routeStore?.read();
+    return stored ? parseRoute(stored) : DEFAULT_ROUTE;
+  });
 
   useEffect(() => {
     if (routing !== 'hash') return;
@@ -77,7 +115,11 @@ export function DatabaseApp(props: DatabaseAppProps) {
   }, [routing]);
 
   function navigate(tab: Tab, param: string | null) {
-    if (routing !== 'hash') { setRoute(routeFor(tab, param)); return; }
+    if (routing !== 'hash') {
+      setRoute(routeFor(tab, param));
+      routeStore?.write(serializeRoute(tab, param));
+      return;
+    }
     const next = hashFor(tab, param);
     if (location.hash !== next) location.hash = next;
     else setRoute(routeFor(tab, param));

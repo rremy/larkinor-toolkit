@@ -31,6 +31,12 @@ export const DOCK_COLLAPSED_KEY = 'lc-dock-collapsed';
 /** GM storage key holding the database panel's minimised flag. */
 export const DB_MINIMIZED_KEY = 'lc-db-minimized';
 
+/** GM storage key holding whether the database panel is open. */
+export const DB_OPEN_KEY = 'lc-db-open';
+
+/** GM storage key holding the database panel's last route ('' = none stored). */
+export const DB_ROUTE_KEY = 'lc-db-route';
+
 /** GM storage key holding the inventory panel's minimised flag. */
 export const INVENTORY_MINIMIZED_KEY = 'lc-inventory-minimized';
 
@@ -89,4 +95,22 @@ export function getPanelOpen(key: string): boolean {
 
 export function setPanelOpen(key: string, value: boolean): void {
   GM_setValue(key, value ? 'true' : '');
+}
+
+/**
+ * The database panel's last route, as the `tab[/id]` string `DatabaseApp`
+ * serialises — or null when nothing is stored.
+ *
+ * Remembered alongside the open flag because restoring the panel without its
+ * route would drop the user back on the default tab: they minimise the database
+ * on the map, move, and the reload hands them the weapons list. The value is
+ * opaque here on purpose; only `DatabaseApp` knows how to read it, and an
+ * unparseable one degrades to its default route.
+ */
+export function getDbRoute(): string | null {
+  return (GM_getValue(DB_ROUTE_KEY, '') as string) || null;
+}
+
+export function setDbRoute(route: string): void {
+  GM_setValue(DB_ROUTE_KEY, route);
 }

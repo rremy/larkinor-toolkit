@@ -4,7 +4,7 @@ import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
@@ -54,10 +54,11 @@ export interface DesktopDockProps {
 export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
-  const [dbOpen, setDbOpen] = useState(false);
+  // Persisted: every action reloads the game page, which would otherwise close
+  // the panel the action was taken from. The database keeps its route too — see
+  // DatabaseOverlay — so a reload restores the tab that was showing.
+  const [dbOpen, setDbOpen] = useState(() => getPanelOpen(DB_OPEN_KEY));
   const [dbItemId, setDbItemId] = useState<number | null>(null);
-  // Persisted: every item move reloads the game page, which would otherwise
-  // close the panel the move was made from.
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
@@ -87,9 +88,14 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     setDockCollapsed(next);
   };
 
+  const setDatabase = (open: boolean) => {
+    setDbOpen(open);
+    setPanelOpen(DB_OPEN_KEY, open);
+  };
+
   const openDatabase = () => {
     setDbItemId(null);
-    setDbOpen(true);
+    setDatabase(true);
   };
 
   const setInventory = (open: boolean) => {
@@ -220,7 +226,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         monster={selectedMonster}
         variant="modal"
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDatabase(true); }}
       />
 
       {configOpen && (
@@ -238,7 +244,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         open={dbOpen}
         minimizable
         initialItemId={dbItemId ?? undefined}
-        onClose={() => setDbOpen(false)}
+        onClose={() => setDatabase(false)}
       />
 
       {homeState && (

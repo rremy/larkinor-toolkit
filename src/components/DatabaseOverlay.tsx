@@ -1,10 +1,10 @@
 import { h } from 'preact';
 import { useMemo } from 'preact/hooks';
-import { DatabaseApp } from '@/database/DatabaseApp';
+import { DatabaseApp, type RouteStore } from '@/database/DatabaseApp';
 import { createDataLoader, gmSource } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DockedPanel } from '@/components/DockedPanel';
-import { DB_MINIMIZED_KEY } from '@/utils/config';
+import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute } from '@/utils/config';
 
 // Resolved once in @/shared/publicUrl and shared with both boot modules. Note
 // this is the *userscript* data URL (`/static/db`); the standalone database app
@@ -41,9 +41,21 @@ export function DatabaseOverlay({
   // therefore mounts no DatabaseApp, until `open`.
   const loader = useMemo(() => createDataLoader(gmSource(), DATA_BASE_URL), []);
 
+  // Remembers the tab and selection across the reload the game performs on every
+  // action, so a minimised database comes back showing what it showed before.
+  // Opening on a specific entity still wins: those props navigate on mount and
+  // the navigation itself overwrites the stored route.
+  const routeStore = useMemo<RouteStore>(() => ({ read: getDbRoute, write: setDbRoute }), []);
+
   return (
     <DockedPanel title="Adatbázis" open={open} onClose={onClose} storageKey={DB_MINIMIZED_KEY} minimizable={minimizable}>
-      <DatabaseApp loader={loader} routing="memory" initialItemId={initialItemId} initialItemName={initialItemName} />
+      <DatabaseApp
+        loader={loader}
+        routing="memory"
+        routeStore={routeStore}
+        initialItemId={initialItemId}
+        initialItemName={initialItemName}
+      />
     </DockedPanel>
   );
 }
