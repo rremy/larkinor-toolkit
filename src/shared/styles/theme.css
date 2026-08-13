@@ -879,10 +879,6 @@
   background: var(--quest-tile-bg);
   cursor: pointer;
   color: var(--text);
-  /* Lets .quest-big-icon size itself off this tile's own rendered width via
-     cqw, so one rule stays legible at all three zoom-control tile sizes
-     (40/56/72px) without a resize listener or a per-zoom CSS variable. */
-  container-type: inline-size;
 }
 .lc-db .quest-cell.void { background: var(--quest-void); }
 .lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
@@ -911,10 +907,14 @@
 .lc-db .quest-edge.lock-tolvaj { background: var(--lock-tolvaj); }
 .lc-db .quest-edge.lock-cso { background: var(--lock-cso); }
 /* Trap and question cells: one big centred icon instead of a small corner
-   badge (owner feedback — those badges were too easy to miss). Sized in
-   cqw (percent of the tile's own inline size) rather than a fixed px
-   font-size, so it stays centred and legible whether the zoom control has
-   set the tile to 40, 56 or 72px. */
+   badge (owner feedback — those badges were too easy to miss). font-size is
+   set inline per cell from `tileSize` (QuestGrid.tsx), not here: a CSS
+   container-query unit would need `container-type` on `.quest-cell`, which
+   creates a stacking context per cell and would scope `.quest-edge`'s
+   z-index inside it — the shared wall lines straddling two cells rely on
+   `.quest-cell` staying `position: relative` with no stacking context of
+   its own so the later cell's background doesn't paint over the earlier
+   cell's edge. */
 .lc-db .quest-big-icon {
   position: absolute;
   inset: 0;
@@ -924,7 +924,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 55cqw;
   line-height: 1;
   background: var(--quest-badge-bg);
   border-radius: 50%;

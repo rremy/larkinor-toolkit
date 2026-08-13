@@ -111,9 +111,16 @@ export function QuestGrid(props: QuestGridProps): VNode {
             {bigIcon && (
               // Overlays the sprite rather than replacing it (quest 27, cell
               // 1,2 is both a question and a monster encounter).
+              // font-size is set inline from tileSize, rather than via a CSS
+              // container-query unit, so `.quest-cell` never needs
+              // `container-type` — that would give every cell its own
+              // stacking context and scope `.quest-edge`'s z-index inside
+              // it, letting a later cell's background paint over the wall
+              // line it shares with the cell before it. See theme.css.
               <span
                 class={`quest-big-icon ${bigIcon}`}
                 title={bigIcon === 'trap' ? 'csapda' : 'kérdés'}
+                style={{ fontSize: `${Math.round(tileSize * 0.55)}px` }}
               >
                 {bigIcon === 'trap' ? BADGE.trap : BADGE.question}
               </span>
