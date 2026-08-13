@@ -10,10 +10,14 @@ const stubLoader: DataLoader = {
   loadWeapons: () => Promise.resolve([]),
   loadArmors: () => Promise.resolve([]),
   loadItems: () => Promise.resolve([]),
-  loadMonsters: () => Promise.resolve({ byName: new Map(), getByName: () => undefined }),
+  loadMonsters: () => Promise.resolve({
+    byName: new Map(), byId: new Map(),
+    getByName: () => undefined, getById: () => undefined,
+  }),
   loadMap: () => Promise.resolve({} as never),
   loadItemShops: () => Promise.resolve({} as never),
   loadWeaponShops: () => Promise.resolve({} as never),
+  loadQuests: () => Promise.resolve([]),
 };
 
 describe('DatabaseApp routing', () => {

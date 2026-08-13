@@ -108,3 +108,64 @@ export interface ItemShop {
 export interface ShopData {
   shops: ItemShop[];
 }
+
+/** The eight lock types a quest door can carry. */
+export type LockType =
+  | 'vas' | 'rez' | 'bronz' | 'ezust'
+  | 'arany' | 'platina' | 'tolvaj' | 'cso';
+
+export type Side = 'N' | 'E' | 'S' | 'W';
+
+/**
+ * One side of a quest maze cell. `szel` is a distinct kind on purpose: the
+ * source site declares the class but ships no CSS rule for it, so its meaning
+ * is undetermined and must not be collapsed into a wall or a door.
+ */
+export type Edge =
+  | { kind: 'open' }
+  | { kind: 'wall' }
+  | { kind: 'door'; lock: LockType }
+  | { kind: 'szel' };
+
+export interface QuestChoice {
+  /** The number the source prints in parentheses, e.g. `(2)`. */
+  index: number;
+  text: string;
+  outcome: string;
+}
+
+export interface QuestQuestion {
+  prompt: string;
+  choices: QuestChoice[];
+}
+
+export interface QuestCell {
+  row: number;
+  col: number;
+  edges: Record<Side, Edge>;
+  /** Resolved against monsters.json; null when the cell holds no monster. */
+  monsterId: number | null;
+  /** Raw sprite base, kept when resolution fails so the UI can still label it. */
+  monsterName: string | null;
+  boss: boolean;
+  /** The lock whose key this cell yields. */
+  key: LockType | null;
+  questItem: boolean;
+  portal: 'entrance' | 'exit' | null;
+  trap: boolean;
+  death: boolean;
+  narration: string;
+  drops: string | null;
+  question: QuestQuestion | null;
+  /** Provenance, for diagnosing source drift. */
+  rawImage: string;
+}
+
+export interface Quest {
+  id: number;
+  description: string;
+  reward: string;
+  rows: number;
+  cols: number;
+  cells: QuestCell[];
+}

@@ -1,5 +1,5 @@
 import type { DataSource } from './source';
-import type { Weapon, Armor, Item, MapData, ShopData } from './types';
+import type { Weapon, Armor, Item, MapData, ShopData, Quest } from './types';
 import { buildMonsterDatabase, type Monster, type MonsterDatabase } from './monsters';
 
 export interface DataLoader {
@@ -10,6 +10,7 @@ export interface DataLoader {
   loadMap(): Promise<MapData>;
   loadItemShops(): Promise<ShopData>;
   loadWeaponShops(): Promise<ShopData>;
+  loadQuests(): Promise<Quest[]>;
 }
 
 /**
@@ -33,5 +34,6 @@ export function createDataLoader(source: DataSource, baseUrl: string): DataLoade
     loadMap: () => source.fetchJson<MapData>(url('map-data.json')),
     loadItemShops: () => source.fetchJson<ShopData>(url('item-shops.json')),
     loadWeaponShops: () => source.fetchJson<ShopData>(url('weapon-shops.json')),
+    loadQuests: () => source.fetchJson<Quest[]>(url('quests.json')),
   };
 }
