@@ -27,6 +27,10 @@ const quests: Quest[] = [
     ],
   },
   { id: 2, description: 'Kalózbanda a városfalnál', reward: '400 db ezüst', rows: 1, cols: 1, cells: [cell({})] },
+  {
+    id: 3, description: 'Nekrodénusz kastélya', reward: '10 db arany', rows: 1, cols: 1,
+    cells: [cell({ edges: { ...openEdges(), N: { kind: 'szel' } } })],
+  },
 ];
 
 function makeLoader(): DataLoader {
@@ -123,6 +127,22 @@ describe('QuestView', () => {
     // Clicking the door must not bubble to the cell's own onClick — the
     // click is a lock probe, not a cell selection.
     expect(container.querySelectorAll('.quest-cell.selected')).toHaveLength(0);
+  });
+
+  it('shows the szel caption only for a quest that actually has one', async () => {
+    const { container, rerender } = render(
+      <QuestView loader={makeLoader()} questId={1}
+                 onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+    );
+    await screen.findByText('1. küldetés');
+    expect(container.querySelector('.quest-szel-note')).toBeNull();
+
+    rerender(
+      <QuestView loader={makeLoader()} questId={3}
+                 onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+    );
+    await screen.findByText('3. küldetés');
+    expect(container.querySelector('.quest-szel-note')?.textContent).toMatch(/labirintus széle/);
   });
 
   it('summarises the quest contents', async () => {

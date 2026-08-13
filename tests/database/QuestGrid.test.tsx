@@ -51,6 +51,22 @@ describe('QuestGrid', () => {
     expect(container.querySelector('.quest-edge.E.door.lock-vas')).toBeTruthy();
   });
 
+  it('marks a szel edge and labels it as the edge of the maze, not a passage', () => {
+    const szelQuest: Quest = {
+      ...quest,
+      cells: [
+        ...quest.cells.slice(0, 3),
+        cell({ row: 1, col: 1, edges: { ...openEdges(), E: { kind: 'szel' } } }),
+      ],
+    };
+    const { container } = render(
+      <QuestGrid quest={szelQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
+    const edge = container.querySelector('.quest-edge.E.szel');
+    expect(edge).toBeTruthy();
+    expect(edge?.getAttribute('title')).toBe('labirintus széle');
+  });
+
   it('makes doors focusable so the key hint is keyboard-reachable', () => {
     const { container } = render(
       <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,

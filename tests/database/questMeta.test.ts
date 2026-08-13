@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { LOCK_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn } from '@/database/quests/questMeta';
+import {
+  LOCK_LABEL, SZEL_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn, hasSzelEdges,
+} from '@/database/quests/questMeta';
 import type { Quest, QuestCell, Edge } from '@/shared/data';
 
 const openEdges = (): Record<'N'|'E'|'S'|'W', Edge> => ({
@@ -69,6 +71,28 @@ describe('coordLabel', () => {
   it('renders 1-based Hungarian row/column labels', () => {
     expect(coordLabel({ row: 0, col: 0 })).toBe('1. sor, 1. oszlop');
     expect(coordLabel({ row: 2, col: 1 })).toBe('3. sor, 2. oszlop');
+  });
+});
+
+describe('hasSzelEdges', () => {
+  it('is false for a quest with only open/wall/door edges', () => {
+    const q = quest([
+      cell({ row: 0, col: 0, edges: { ...openEdges(), E: { kind: 'wall' } } }),
+      cell({ row: 0, col: 1, edges: { ...openEdges(), W: { kind: 'door', lock: 'vas' } } }),
+    ]);
+    expect(hasSzelEdges(q)).toBe(false);
+  });
+
+  it('is true as soon as one edge is a szel marker', () => {
+    const q = quest([
+      cell({ row: 0, col: 0 }),
+      cell({ row: 0, col: 1, edges: { ...openEdges(), N: { kind: 'szel' } } }),
+    ]);
+    expect(hasSzelEdges(q)).toBe(true);
+  });
+
+  it('has a non-empty Hungarian label naming the edge of the maze', () => {
+    expect(SZEL_LABEL).toBe('labirintus széle');
   });
 });
 

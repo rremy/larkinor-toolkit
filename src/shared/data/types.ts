@@ -119,7 +119,7 @@ export type Side = 'N' | 'E' | 'S' | 'W';
 /**
  * One side of a quest maze cell. `szel` is a distinct kind on purpose: the
  * source site declares the class but ships no CSS rule for it. Investigation
- * (see the design doc's "Deferred to implementation" section) found every one
+ * (see the design doc's "Resolved during implementation" section) found every one
  * of its 182 occurrences borders either off-grid space or an empty `nop`
  * filler cell, never a real navigable neighbour — so it marks the edge of the
  * drawn (often irregular) maze shape inside its rectangular grid, not a

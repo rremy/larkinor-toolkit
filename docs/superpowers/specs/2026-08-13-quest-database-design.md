@@ -50,10 +50,13 @@ tolerates it rather than aborting.
 them embed a choice point in the form
 `KÉRDÉS: … VÁLASZOK: (1) … (2) …`.
 
-**Monster resolution rate: 327 of 328 distinct sprite bases** match
-`monsters.json` image basenames exactly. The single miss is
-`tolvajkepzoboss_kerdes`. Click-through to monster details is therefore a
-direct lookup, not a fuzzy match.
+**Monster resolution rate: 328 of 328 distinct sprite bases** match
+`monsters.json` image basenames, zero exceptions. The one that looks like a
+miss at first glance, `tolvajkepzoboss_kerdes`, only resolves because the
+image-grammar parser strips a trailing `_kerdes` (question overlay) before
+lookup, leaving `tolvajkepzoboss`, which then matches via the `_k` suffix
+fallback. Click-through to monster details is therefore a direct lookup, not
+a fuzzy match.
 
 **Two structural exceptions**, both verified:
 
@@ -76,11 +79,13 @@ without putting a third-party fan site in the runtime path of every page view.
 
 The scraper **fails loudly rather than degrading silently**. It aborts the
 write on an unknown class token, a zero-cell quest, a missing description or
-reward, or **any unresolved sprite base other than the single known miss,
-`tolvajkepzoboss_kerdes`**, which is allow-listed by name. A percentage
-threshold would let new drift hide inside the noise floor; an explicit
-allow-list cannot. The scraper prints every unresolved base it sees, so source
-drift surfaces at scrape time rather than as a broken page.
+reward, or **any unresolved sprite base at all** — `scripts/quests/scrape.mjs`
+throws unconditionally if `unresolved.size > 0`, with no allow-list and no
+percentage threshold that could let new drift hide inside a noise floor. All
+328 distinct sprite bases across the 45 quests resolve today, so this check
+has never had to tolerate an exception; the scraper prints every unresolved
+base it sees, so source drift surfaces at scrape time rather than as a broken
+page.
 
 ## Model
 
@@ -271,15 +276,21 @@ scraper: drift becomes a scrape-time error, never a broken page for users.
 **A shared cell boundary is painted twice, and the two paintings can
 disagree.** `QuestGrid` renders each cell's own four edges; `.quest-cell` has
 no `z-index`, so on a shared boundary the two `.quest-edge` divs stack in
-document order. Checked directly against `quests.json`: 19 boundaries across
-quests 11, 17, 39 and 40 declare a different edge on each side (e.g. one cell's
-south edge is `wall`, its neighbour's north edge is a `vas` door; one side
-`platina`, the other `tolvaj`). Visually confirmed in the browser (quest 17,
-row 6/7 col 5; quest 40, row 6 col 3/4): the later cell in DOM order fully
-occludes the earlier one at that boundary — a clean single-coloured line, not
-a visible glitch, but the losing side's declaration is silently discarded.
-This is a fact about the source data's own internal inconsistency (both cells
-of the pair being asked to describe the same physical wall differently), not a
+document order. Checked directly against `quests.json`, counting each
+physical boundary once: **19 boundaries across six quests (11, 17, 39, 40, 44,
+45)** declare a different edge on each side. Eight of those 19 sit next to an
+empty `nop` filler cell on one side — cosmetically visible but never actually
+reachable from that side — so the stricter "two real, enterable rooms
+disagree about their shared wall" count is **11, across five quests (11, 17,
+39, 40, 45)**. Examples of the strict kind: quest 17 row 6/7 col 5 (`wall`
+vs. a `vas` door), quest 40 row 6 col 3/4 (`platina` vs. `tolvaj` doors), and
+quest 45 row 5/6 col 0 (`wall` vs. a `vas` door). Visually confirmed in the
+browser for the quest 17 and quest 40 cases: the later cell in DOM order
+fully occludes the earlier one at that boundary — a clean single-coloured
+line, not a visible glitch, but the losing side's declaration is silently
+discarded. This is a fact about the source data's own internal inconsistency
+(both cells of the pair being asked to describe the same physical wall
+differently), not a
 parser bug, and is not fixed here — flagging it so a future reader who spots
 an oddly-coloured door isn't chasing a rendering bug that isn't there.
 
@@ -302,16 +313,22 @@ Two independent lines of evidence settle it:
    matches `szél` as "edge/margin," not "wind": a wind-barrier mechanic between
    two traversable spaces would be expected to show up at least sometimes
    between two real cells, and it never does.
-2. **Narrative (corroborating, not decisive on its own).** The narration of
-   cells adjacent to `_szel` edges contains no wind/gust/draught vocabulary
-   (`szél` as "wind", `huzat`, `fuvallat`, `szellő`) at all — it's ordinary
-   room narration unrelated to the edge. The word `szél` does appear a
-   handful of times incidentally in this data set's prose, and every one of
-   those uses is the "edge/margin" sense (`"az út szélén álló szomorú fűzek"`
-   — willows at the *edge* of the road; `"a szád szélét"` — the *edge* of your
-   mouth), never "wind." This is a small, incidental sample, not proof by
-   itself, but it points the same direction as the structural evidence rather
-   than against it.
+2. **Narrative (corroborating, not decisive on its own).** No `_szel`-facing
+   direction is ever the one described in wind terms. There is exactly one
+   genuine wind-domain word in the narration of any cell adjacent to a `_szel`
+   edge — quest 44, cell (9,11): *"Észak felöl olyan bűzt hord hátán holmi
+   belső légáramlat…"* ("from the north, some inner **draught** carries such a
+   stench…"). But that cell's `_szel` edge is its **east** side; the sentence
+   names the **north** side, which is plain `open`. So even in the one case
+   where wind vocabulary appears at all, it is not attached to the `_szel`
+   edge itself. Beyond that single incidental hit, the narration contains no
+   other wind/gust/draught vocabulary (`szél` as "wind", `huzat`, `fuvallat`,
+   `szellő`). The word `szél` does appear a couple of other times incidentally
+   in this data set's prose, and those uses are the "edge/margin" sense
+   (`"az út szélén álló szomorú fűzek"` — willows at the *edge* of the road;
+   `"a szád szélét"` — the *edge* of your mouth), never "wind." This is a
+   small, incidental sample, not proof by itself, but on balance it points the
+   same direction as the structural evidence rather than against it.
 
 Queries run (`static/db/quests.json`, via `node -e`):
 
@@ -323,9 +340,11 @@ Queries run (`static/db/quests.json`, via `node -e`):
 //    outOfGrid=42 nopNeighbor=0  realNeighbor=0   (quest 41)
 //    outOfGrid=46 nopNeighbor=0  realNeighbor=0   (quest 44)
 
-// 2. Narration adjacent to _szel edges: zero genuine wind/gust/draught hits
-//    out of 147 unique adjacent cells; the handful of "szél"-word matches
-//    are incidental uses meaning "edge" ("út szélén", "szád szélét").
+// 2. Narration adjacent to _szel edges: one genuine wind/gust/draught hit out
+//    of 147 unique adjacent cells (quest 44, cell 9,11 — "légáramlat", but
+//    naming the cell's *open* north side, not its *szel* east side); the
+//    other "szél"-word matches are incidental uses meaning "edge"
+//    ("út szélén", "szád szélét").
 ```
 
 **Treatment applied.** `_szel` keeps its own distinct `Edge` kind and its own
