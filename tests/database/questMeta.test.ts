@@ -53,6 +53,15 @@ describe('outcomeValence', () => {
     expect(outcomeValence('')).toBe('neutral');
     expect(outcomeValence('Kaméleon')).toBe('neutral');
   });
+
+  it('does not read a `--` drop separator as a negative-ÉP sign, but still catches real damage', () => {
+    expect(outcomeValence('1000 éves hulla -- 6 db kincs')).toBe('good');
+    expect(outcomeValence('-20000 ÉP')).toBe('bad');
+  });
+
+  it('marks non-silver/gold key rewards as good too', () => {
+    expect(outcomeValence('1 db platinakulcs')).toBe('good');
+  });
 });
 
 describe('coordLabel', () => {

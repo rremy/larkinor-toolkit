@@ -41,10 +41,10 @@ export function outcomeValence(text: string): Valence {
   const t = text.toLowerCase();
   if (!t) return 'neutral';
   if (/hal[áa]l/.test(t)) return 'fatal';
-  if (/-\s*\d/.test(t)) return 'bad';
+  if (/(?<!-)-\s*\d/.test(t)) return 'bad';
   if (/m[ée]reg|[áa]tok|fert[őo]z[ée]s|elveszted|veszt|s[ée]r[üu]l/.test(t)) return 'bad';
   if (/^semmi\b|^nincs\b/.test(t)) return 'neutral';
-  if (/max [ée]p|gy[óo]gyul|ez[üu]st|arany|kincs|\d+\s*db\s/.test(t)) return 'good';
+  if (/max [ée]p|gy[óo]gyul|ez[üu]st|arany|kulcs|kincs|\d+\s*db\s/.test(t)) return 'good';
   return 'neutral';
 }
 
