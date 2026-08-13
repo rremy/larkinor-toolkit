@@ -312,4 +312,79 @@ describe('parseQuestPage', () => {
     );
     expect(locks.size).toBeGreaterThanOrEqual(7);
   });
+
+  // Pins cells.length === rows * cols across the whole fixture set, not just the
+  // three quests already covered incidentally above. Dimensions are hard-coded
+  // from a direct measurement so a shape change in the parser, or a re-fetched
+  // fixture with different content, fails loudly instead of silently.
+  it.each([
+    { id: 1, rows: 2, cols: 4 },
+    { id: 11, rows: 7, cols: 9 },
+    { id: 20, rows: 8, cols: 11 },
+    { id: 27, rows: 8, cols: 11 },
+    { id: 39, rows: 12, cols: 12 },
+    { id: 45, rows: 12, cols: 8 },
+  ])('produces a full $rows x $cols grid for quest $id', ({ id, rows, cols }) => {
+    const q = parse(id);
+    expect(q.rows).toBe(rows);
+    expect(q.cols).toBe(cols);
+    expect(q.cells).toHaveLength(rows * cols);
+  });
+});
+
+describe('parseQuestPage error paths', () => {
+  // Every mutation below starts from quest 1's real fixture and cuts out one
+  // structural marker, rather than hand-writing HTML, so the mutated input stays
+  // representative of what the live scrape in Task 6 will actually see.
+  const raw = readFileSync('tests/fixtures/quests/1.html', 'utf-8');
+
+  // The description precedes the fixture's only <br>; the reward follows it, in
+  // the same <p>. Locating spans by index avoids embedding the Hungarian label
+  // text (which the parser matches structurally, not by exact wording) here.
+  const brIdx = raw.indexOf('<br');
+  const descSpanIdx = raw.lastIndexOf('<span class="tulajdonsagnev">', brIdx);
+  const descSpanCloseIdx = raw.indexOf('</span>', descSpanIdx) + '</span>'.length;
+  const pCloseIdx = raw.indexOf('</p>', brIdx);
+  const rewardSpanIdx = raw.indexOf('<span class="tulajdonsagnev">', brIdx);
+  const rewardSpanCloseIdx = raw.indexOf('</span>', rewardSpanIdx) + '</span>'.length;
+
+  it('throws naming the quest id when the description block is missing', () => {
+    const html = raw.slice(0, descSpanIdx) + raw.slice(brIdx);
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: missing description');
+  });
+
+  it('throws naming the quest id when the description block is present but empty', () => {
+    const html = raw.slice(0, descSpanCloseIdx) + raw.slice(brIdx);
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: empty description');
+  });
+
+  it('throws naming the quest id when the reward block is missing', () => {
+    const html = raw.slice(0, rewardSpanIdx) + raw.slice(pCloseIdx);
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: missing reward');
+  });
+
+  it('throws naming the quest id when the reward block is present but empty', () => {
+    const html = raw.slice(0, rewardSpanCloseIdx) + raw.slice(pCloseIdx);
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: empty reward');
+  });
+
+  it('throws naming the quest id when the maze container is missing', () => {
+    const html = raw.replace('<div class="lab">', '');
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: no maze container');
+  });
+
+  it('throws naming the quest id when the maze table is missing', () => {
+    const html = raw.replace('<table>', '').replace('</table>', '');
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: no maze table');
+  });
+
+  it('throws naming the quest id when the maze table has no rows', () => {
+    const html = raw.replace(/<table>[\s\S]*?<\/table>/, '<table></table>');
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no rows');
+  });
+
+  it('throws naming the quest id when the maze table has rows but no cells', () => {
+    const html = raw.replace(/<table>[\s\S]*?<\/table>/, '<table><tr></tr></table>');
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no cells');
+  });
 });
