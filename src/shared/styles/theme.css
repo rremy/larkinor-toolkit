@@ -936,6 +936,30 @@
   color: var(--accent); text-decoration: underline; font-size: 12px;
 }
 
+/* Question card (Q&A) — one choice point with colour-coded outcomes */
+.lc-db .quest-question {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px; margin: 8px 0; background: var(--cell-detail-bg);
+}
+.lc-db .quest-question-prompt { font-weight: bold; color: var(--accent); margin-bottom: 6px; }
+.lc-db .quest-choices { list-style: none; margin: 0; padding: 0; }
+.lc-db .quest-choice {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 3px 0; border-top: 1px solid var(--row-border); font-size: 12px;
+}
+.lc-db .quest-choice:first-child { border-top: none; }
+.lc-db .quest-choice-index {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--panel-2); color: var(--muted);
+  text-align: center; font-size: 10px; line-height: 16px;
+}
+.lc-db .quest-choice-text { flex: 1; }
+.lc-db .quest-outcome { flex: none; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+.lc-db .quest-outcome.good { color: var(--good); background: var(--accent-dim); }
+.lc-db .quest-outcome.bad { color: var(--bad); }
+.lc-db .quest-outcome.fatal { color: var(--text); background: var(--bad); }
+.lc-db .quest-outcome.neutral { color: var(--muted); }
+
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.
    `.lc-db` (mounted inside) already carries its own theme via the rules
