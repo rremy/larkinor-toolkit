@@ -192,6 +192,15 @@ describe('parseTitle', () => {
     expect(r.question?.choices[2].outcome).toBe('Hullámelementál');
   });
 
+  it('leaves a non-drop-shaped trailing segment inside the final outcome', () => {
+    const r = parseTitle(
+      'KÉRDÉS: Mit teszel? VÁLASZ: (1) Hallgatsz -- semmi; ' +
+      '(2) Megmondod a neved -- Halál; (3) Továbbmész -- Hullámelementál -- ez nem zsákmány',
+    );
+    expect(r.drops).toBeNull();
+    expect(r.question?.choices[2].outcome).toBe('Hullámelementál -- ez nem zsákmány');
+  });
+
   it('tolerates the doubled parenthesis typo in the source', () => {
     const r = parseTitle('KÉRDÉS: Mi? VÁLASZ: (1) NYED. -- -20000 ÉP; (2) NYEB. -- semmi; (3)) NYANYED. -- -20000 ÉP');
     expect(r.question?.choices.map((c) => c.index)).toEqual([1, 2, 3]);
