@@ -1,7 +1,7 @@
 import { h, type VNode } from 'preact';
 import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { BADGE, LOCK_LABEL, SIDES, SIDE_LABEL, coordLabel } from './questMeta';
+import { BADGE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL, coordLabel } from './questMeta';
 
 interface QuestGridProps {
   quest: Quest;
@@ -73,7 +73,9 @@ export function QuestGrid(props: QuestGridProps): VNode {
                   aria-label={isDoor
                     ? `${LOCK_LABEL[edge.lock]} ajtó ${SIDE_LABEL[side]} felé`
                     : undefined}
-                  title={isDoor ? `${LOCK_LABEL[edge.lock]} ajtó` : undefined}
+                  title={isDoor
+                    ? `${LOCK_LABEL[edge.lock]} ajtó`
+                    : edge.kind === 'szel' ? SZEL_LABEL : undefined}
                   onMouseEnter={isDoor ? () => onProbeLock?.(edge.lock) : undefined}
                   onMouseLeave={isDoor ? () => onProbeLock?.(null) : undefined}
                   onFocus={isDoor ? () => onProbeLock?.(edge.lock) : undefined}

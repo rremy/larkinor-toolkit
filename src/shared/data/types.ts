@@ -118,8 +118,13 @@ export type Side = 'N' | 'E' | 'S' | 'W';
 
 /**
  * One side of a quest maze cell. `szel` is a distinct kind on purpose: the
- * source site declares the class but ships no CSS rule for it, so its meaning
- * is undetermined and must not be collapsed into a wall or a door.
+ * source site declares the class but ships no CSS rule for it. Investigation
+ * (see the design doc's "Deferred to implementation" section) found every one
+ * of its 182 occurrences borders either off-grid space or an empty `nop`
+ * filler cell, never a real navigable neighbour — so it marks the edge of the
+ * drawn (often irregular) maze shape inside its rectangular grid, not a
+ * traversable barrier. It stays a distinct kind rather than collapsing into
+ * `wall` so the UI can label it accurately.
  */
 export type Edge =
   | { kind: 'open' }

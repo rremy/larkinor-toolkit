@@ -6,7 +6,7 @@ import { matchesSearch } from '@/shared/text';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
-import { locksIn } from './questMeta';
+import { SZEL_LABEL, hasSzelEdges, locksIn } from './questMeta';
 
 interface QuestViewProps {
   loader: DataLoader;
@@ -121,6 +121,13 @@ export function QuestView(props: QuestViewProps): VNode {
               tileSize={tileSize}
             />
           </div>
+          {hasSzelEdges(quest) && (
+            <p class="quest-szel-note">
+              <span class="quest-lock-swatch szel" /> {SZEL_LABEL} — a rács szélét
+              vagy egy kitöltő üres mezőt jelöl, sosem valódi termet; nem
+              játékbeli akadály.
+            </p>
+          )}
         </div>
 
         <div class="quest-side">

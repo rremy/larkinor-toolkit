@@ -36,9 +36,10 @@ larkinor-toolkit/
 │   └── database/            # Standalone DB (built separately; also mounted in-game)
 │       ├── index.html · main.tsx · DatabaseApp.tsx   # hash-routed tabs
 │       ├── explorer/        # DataTable, FilterBar, DetailPanel, ExplorerView, columns/filters/labels/lookups
-│       └── map/             # MapView, CellDetail, Legend, mapMeta
+│       ├── map/             # MapView, CellDetail, Legend, mapMeta
+│       └── quests/          # QuestView, QuestGrid, QuestKeyLegend, QuestCellDetail, QuestQuestionCard, questMeta
 ├── static/db/*.json         # Game data — SINGLE SOURCE OF TRUTH
-│                            #   monsters, weapons, armors, items, map-data, item-shops, weapon-shops
+│                            #   monsters, weapons, armors, items, map-data, item-shops, weapon-shops, quests
 ├── tests/                   # Vitest + @testing-library/preact (jsdom)
 ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader (fetches + evals main script)
 ├── scripts/deploy.sh        # scp dist/ + static/ to the server (config from repo-root .env)
@@ -67,7 +68,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **TypeScript models** (`types.ts`): `Weapon`, `Armor`, `Item`, `Monster`, `MapCell`, `Shop` with full typing.
 - **DataSource abstraction** (`source.ts`): `gmSource` (runs in userscript, uses `GM_xmlhttpRequest`) and `httpSource` (runs standalone, uses `fetch`). DB components must use `DataSource`, never call GM_* directly, so the same code runs in-game and standalone.
 - **Data loader** (`loader.ts`): `createDataLoader(source, baseUrl)` → `DataLoader` with methods like `fetchMonsters()`, `fetchWeapons()`, etc. Cached via `GM_setValue` in-game, HTTP caching standalone.
-- **Data single source of truth**: `static/db/*.json` (monsters, weapons, armors, items, map-data, item-shops, weapon-shops), deployed to `/larkinor/static/db/` on the production host.
+- **Data single source of truth**: `static/db/*.json` (monsters, weapons, armors, items, map-data, item-shops, weapon-shops, quests), deployed to `/larkinor/static/db/` on the production host.
 
 #### Shared theme (`src/shared/styles/theme.css`)
 - Single dark-medieval CSS variables sheet; **never add hardcoded hex/rgba in rule bodies** — use `:root` variables and `.lc-db` scopes.
@@ -96,9 +97,34 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
 
 #### Standalone database (`src/database/`, built separately)
-- **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map).
+- **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map), Küldetések (Quests).
 - **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab.
 - **Map viewer** (`map/`): clickable districts with cell details and resident monsters.
+- **Quest viewer** (`quests/`): the 45 royal quests as interactive mazes, scraped once from a
+  third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
+  `static/db/quests.json` via `npm run scrape:quests` (`scripts/quests/scrape.mjs` +
+  `parseQuest.mjs`). Hard-won facts about that source page, needed if the scraper or parser
+  ever needs revisiting:
+  - Each quest page is one `<table>`; a `<td>`'s class tokens encode its four sides —
+    `f`/`j`/`a`/`b` = north/east/south/west. A bare token (`f`, `j`, …) is a solid wall; a
+    suffixed token (`f_vas`, `j_arany`, …) is a locked door. The eight lock suffixes are
+    `_vas` (iron), `_rez` (copper), `_bronz` (bronze), `_ezust` (silver), `_arany` (gold),
+    `_platina` (platinum), `_tolvaj` (thief), `_cso` (pipe). A ninth, `_szel`, marks the edge
+    of the drawn (often irregular) maze shape rather than a wall or door — see
+    `docs/superpowers/specs/2026-08-13-quest-database-design.md` for the investigation.
+  - Cell images follow `<base>[_<X>kulcs][_kt][_labikibe].jpg`: `_<X>kulcs` = this cell yields
+    that lock's key, `_kt` = holds the quest item, `_labikibe` = labyrinth entrance/exit, a
+    `boss` suffix on the base = boss monster.
+  - Only 5 of the 45 quest pages carry `id="td<RR><CC>"` on their cells — coordinates come
+    from row/column position in the table for the rest, with the ids used as a cross-check
+    where present.
+  - Quest 27 ships **seven** `<table>`s on one page. They are not seven floors — they are
+    seven alternate views of the *same* maze (a hand-made "where is each key" overlay); the
+    parser takes the first table and drops the rest.
+  - The maze is rendered as CSS grid + `<div>`s, **never a `<table>`** — the in-game page runs
+    in quirks mode, where table cells don't inherit `color` and render black-on-dark (see
+    *quirks-mode inheritance holes* below). Rendering divs sidesteps that class of bug rather
+    than patching around it.
 - Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)

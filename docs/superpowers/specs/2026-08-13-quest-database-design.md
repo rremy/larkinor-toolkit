@@ -31,7 +31,8 @@ is a locked door, one of eight lock types:
 
 A ninth suffix, `_szel`, appears 182 times across quests 39, 40, 41 and 44 but
 has **no rule in the source site's CSS**, so it renders as nothing there. Its
-intent is undetermined — see *Open questions*.
+intent was undetermined at design time — resolved during implementation, see
+*Resolved during implementation* below.
 
 One malformed token exists: a bare `_cso` with no side prefix. The parser
 tolerates it rather than aborting.
@@ -267,17 +268,76 @@ than assumed.
 **Third-party drift.** Mitigated by the committed snapshot plus a validating
 scraper: drift becomes a scrape-time error, never a broken page for users.
 
+**A shared cell boundary is painted twice, and the two paintings can
+disagree.** `QuestGrid` renders each cell's own four edges; `.quest-cell` has
+no `z-index`, so on a shared boundary the two `.quest-edge` divs stack in
+document order. Checked directly against `quests.json`: 19 boundaries across
+quests 11, 17, 39 and 40 declare a different edge on each side (e.g. one cell's
+south edge is `wall`, its neighbour's north edge is a `vas` door; one side
+`platina`, the other `tolvaj`). Visually confirmed in the browser (quest 17,
+row 6/7 col 5; quest 40, row 6 col 3/4): the later cell in DOM order fully
+occludes the earlier one at that boundary — a clean single-coloured line, not
+a visible glitch, but the losing side's declaration is silently discarded.
+This is a fact about the source data's own internal inconsistency (both cells
+of the pair being asked to describe the same physical wall differently), not a
+parser bug, and is not fixed here — flagging it so a future reader who spots
+an oddly-coloured door isn't chasing a rendering bug that isn't there.
+
 No new runtime dependency — `MonsterCard` already loads sprites from
 `l2.larkinor.hu`.
 
-## Deferred to implementation
+## Resolved during implementation
 
-**`_szel` semantics.** Undefined in the source site's CSS, so its intent cannot
-be read off the markup. During implementation, read the narration of the cells
-adjacent to these edges in quests 39, 40, 41 and 44 to infer meaning. If it
-remains ambiguous, render it as a distinct neutral passage with a neutral label
-rather than guessing it into a wall or a door — the model already keeps it as
-its own `Edge` kind precisely so this decision stays reversible.
+**`_szel` semantics — resolved, "edge/margin," high confidence.** Undefined in
+the source site's CSS, so intent could not be read off the markup directly.
+Two independent lines of evidence settle it:
+
+1. **Structural (decisive).** For every one of the 182 `_szel` occurrences
+   across quests 39, 40, 41 and 44, the cell on the *other* side of the edge is
+   either off the quest's declared `rows × cols` grid entirely, or is an empty
+   `nop` filler cell. Zero occurrences border a real, navigable neighbouring
+   cell. `_szel` therefore never separates two rooms — it traces the outline of
+   an irregularly-shaped playable area drawn inside a rectangular HTML table,
+   marking where the drawing stops rather than gating a passage. That reading
+   matches `szél` as "edge/margin," not "wind": a wind-barrier mechanic between
+   two traversable spaces would be expected to show up at least sometimes
+   between two real cells, and it never does.
+2. **Narrative (corroborating, not decisive on its own).** The narration of
+   cells adjacent to `_szel` edges contains no wind/gust/draught vocabulary
+   (`szél` as "wind", `huzat`, `fuvallat`, `szellő`) at all — it's ordinary
+   room narration unrelated to the edge. The word `szél` does appear a
+   handful of times incidentally in this data set's prose, and every one of
+   those uses is the "edge/margin" sense (`"az út szélén álló szomorú fűzek"`
+   — willows at the *edge* of the road; `"a szád szélét"` — the *edge* of your
+   mouth), never "wind." This is a small, incidental sample, not proof by
+   itself, but it points the same direction as the structural evidence rather
+   than against it.
+
+Queries run (`static/db/quests.json`, via `node -e`):
+
+```js
+// 1. Every _szel edge borders either off-grid space or a nop filler cell,
+//    never a real neighbouring cell (182/182 across quests 39, 40, 41, 44):
+//    outOfGrid=22 nopNeighbor=40 realNeighbor=0   (quest 39)
+//    outOfGrid=32 nopNeighbor=0  realNeighbor=0   (quest 40)
+//    outOfGrid=42 nopNeighbor=0  realNeighbor=0   (quest 41)
+//    outOfGrid=46 nopNeighbor=0  realNeighbor=0   (quest 44)
+
+// 2. Narration adjacent to _szel edges: zero genuine wind/gust/draught hits
+//    out of 147 unique adjacent cells; the handful of "szél"-word matches
+//    are incidental uses meaning "edge" ("út szélén", "szád szélét").
+```
+
+**Treatment applied.** `_szel` keeps its own distinct `Edge` kind and its own
+`--quest-szel` colour (unchanged) rather than being collapsed into `wall` —
+that distinction is still useful, since it now carries a specific, named
+meaning rather than an unknown one. What changed is the label: the edge's
+tooltip and a caption shown under the grid whenever a quest contains one now
+read **`labirintus széle`** ("edge of the maze") instead of the ambiguous
+fallback `különleges átjáró` ("special passage") that the fallback plan called
+for — a "passage" label would misrepresent a boundary that never actually
+leads anywhere. See `src/database/quests/questMeta.ts` (`SZEL_LABEL`,
+`hasSzelEdges`), `QuestGrid.tsx` and `QuestView.tsx`.
 
 ## Out of scope
 

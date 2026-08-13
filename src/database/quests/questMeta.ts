@@ -31,6 +31,20 @@ export const SIDE_LABEL: Record<Side, string> = {
   N: 'észak', E: 'kelet', S: 'dél', W: 'nyugat',
 };
 
+/**
+ * Label for the `szel` edge kind, shown as its tooltip and in the grid
+ * caption. Resolved from "undetermined" during Task 14: every occurrence
+ * borders either off-grid space or an empty filler cell, never a real room,
+ * so it marks the edge of the drawn maze shape rather than a passage —
+ * `szél` as "edge/margin", not "wind". See the design doc.
+ */
+export const SZEL_LABEL = 'labirintus széle';
+
+/** True when this quest contains at least one `szel` edge. */
+export function hasSzelEdges(quest: Quest): boolean {
+  return quest.cells.some((c) => SIDES.some((s) => c.edges[s].kind === 'szel'));
+}
+
 export type Valence = 'good' | 'bad' | 'fatal' | 'neutral';
 
 /**
