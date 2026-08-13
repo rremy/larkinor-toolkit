@@ -2,6 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
+import { QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -26,13 +27,6 @@ interface QuestViewProps {
 const TILE_SIZES = [40, 56, 72];
 const DEFAULT_TILE = 56;
 
-// Same literal as QUEST_TILE_KEY in @/utils/config, deliberately not imported
-// from there: that module is GM-only, and this component also ships in the
-// GM-free standalone bundle (see PrefStore's doc comment in DatabaseApp.tsx).
-// Both the GM-backed and localStorage-backed PrefStore implementations are
-// keyed off this same string.
-const TILE_PREF_KEY = 'lc-quest-tile-size';
-
 /**
  * Parse a stored zoom back into a valid tile size. Anything not in
  * `TILE_SIZES` — missing, corrupt, or a size this build no longer offers —
@@ -50,11 +44,11 @@ export function QuestView(props: QuestViewProps): VNode {
   const [monsters, setMonsters] = useState<MonsterDatabase>(() => buildMonsterDatabase([]));
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
-  const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(TILE_PREF_KEY) ?? null));
+  const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(QUEST_TILE_PREF_KEY) ?? null));
 
   function changeTileSize(next: number) {
     setTileSize(next);
-    prefStore?.write(TILE_PREF_KEY, String(next));
+    prefStore?.write(QUEST_TILE_PREF_KEY, String(next));
   }
 
   useEffect(() => {
