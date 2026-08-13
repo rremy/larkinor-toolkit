@@ -64,5 +64,13 @@ describe('DatabaseApp routing', () => {
     location.hash = '#quests/1';
     render(<DatabaseApp loader={stubLoader} />);
     expect(await screen.findByText('Küldetések')).toBeTruthy();
+
+    // The tab label alone proves nothing — it renders unconditionally from
+    // TABS regardless of which branch the route body takes. Pin the actual
+    // QuestView render: its description text (which appears twice — once in
+    // the quest picker row, once in the header — so use findAllByText) and
+    // its grid wrapper, neither of which exists unless QuestView mounted.
+    expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    expect(document.querySelector('.quest-grid-wrap')).toBeTruthy();
   });
 });

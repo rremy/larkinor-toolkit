@@ -15,7 +15,12 @@ describe('DatabaseOverlay', () => {
     // otherwise decide which tab every later test starts on.
     GM_setValue(DB_ROUTE_KEY, '');
   });
-  afterEach(() => { location.hash = ''; });
+  afterEach(() => {
+    location.hash = '';
+    // A test that stubs GM_xmlhttpRequest (to feed the quest tab real data)
+    // must not leak that implementation into later tests in this file.
+    vi.mocked(GM_xmlhttpRequest).mockReset();
+  });
 
   it('renders nothing when closed', () => {
     const { container } = render(<DatabaseOverlay open={false} onClose={() => {}} />);
@@ -47,6 +52,45 @@ describe('DatabaseOverlay', () => {
     expect(location.hash).toBe(hashBefore);
 
     unmount();
+    expect(location.hash).toBe(hashBefore);
+  });
+
+  it('renders quest content on the Küldetések tab and never touches location.hash', async () => {
+    // The in-game overlay routes in memory; navigating inside it must never
+    // write to the game page's URL. Stub GM_xmlhttpRequest so the quest tab
+    // has real data to render, proving the quests branch (not just the tab
+    // label) mounted under `routing="memory"`.
+    const stubQuest = {
+      id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+      cells: [{
+        row: 0, col: 0,
+        edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+        monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+        portal: null, trap: false, death: false, narration: '', drops: null,
+        question: null, rawImage: '',
+      }],
+    };
+    vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+      url: string;
+      onload?: (res: { status: number; responseText: string }) => void;
+    }) => {
+      if (opts.url.includes('quests.json')) {
+        opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+      } else if (opts.url.includes('monsters.json')) {
+        opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+      }
+      // Other data files are left unresolved — this test never visits those tabs.
+    }) as unknown as typeof GM_xmlhttpRequest);
+
+    const hashBefore = location.hash;
+    render(<DatabaseOverlay open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByText('Küldetések'));
+    expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    expect(document.querySelector('.quest-grid-wrap')).toBeTruthy();
+
+    // The invariant memory routing exists to protect: the game page's hash
+    // must be untouched by this navigation.
     expect(location.hash).toBe(hashBefore);
   });
 
