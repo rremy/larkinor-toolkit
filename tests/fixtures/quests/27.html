@@ -1,0 +1,956 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <link rel="stylesheet" type="text/css" href="/css/lc.css">
+  <link rel="stylesheet" type="text/css" href="/css/larkiterkep.css">
+  <title>szoveg</title>
+  <base target="szoveg">
+  <script type="text/javascript">
+    function showlab(melyik){
+      for(i=0;i<7;i++){
+        document.getElementById(i).style.display = "none";
+      }  
+      document.getElementById(melyik).style.display = "table";
+    }
+  </script>
+</head>
+
+<body link="#00FF00" vlink="#00FF00" alink="#FFFFFF" text="#00FF00" bgcolor="#000000" onload="showlab(0)">
+<p align="center"><img border="0" src="/pic/larkinorcenter.jpg"></p>
+
+<p><span class="tulajdonsagnev">Királyi küldetések: <a class="keret" href="/kirkuld/1/index.html">1</a> ::  <a class="keret" href="/kirkuld/2/index.html">2</a> ::  <a class="keret" href="/kirkuld/3/index.html">3</a> ::  <a class="keret" href="/kirkuld/4/index.html">4</a> ::  <a class="keret" href="/kirkuld/5/index.html">5</a> ::  <a class="keret" href="/kirkuld/6/index.html">6</a> ::  <a class="keret" href="/kirkuld/7/index.html">7</a> ::  <a class="keret" href="/kirkuld/8/index.html">8</a> ::  <a class="keret" href="/kirkuld/9/index.html">9</a> ::  <a class="keret" href="/kirkuld/10/index.html">10</a> ::  <a class="keret" href="/kirkuld/11/index.html">11</a> ::  <a class="keret" href="/kirkuld/12/index.html">12</a> ::  <a class="keret" href="/kirkuld/13/index.html">13</a> ::  <a class="keret" href="/kirkuld/14/index.html">14</a> ::  <a class="keret" href="/kirkuld/15/index.html">15</a> ::  <a class="keret" href="/kirkuld/16/index.html">16</a> ::  <a class="keret" href="/kirkuld/17/index.html">17</a> ::  <a class="keret" href="/kirkuld/18/index.html">18</a> ::  <a class="keret" href="/kirkuld/19/index.html">19</a> ::  <a class="keret" href="/kirkuld/20/index.html">20</a> ::  <a class="keret" href="/kirkuld/21/index.html">21</a> ::  <a class="keret" href="/kirkuld/22/index.html">22</a> ::  <a class="keret" href="/kirkuld/23/index.html">23</a> ::  <a class="keret" href="/kirkuld/24/index.html">24</a> ::  <a class="keret" href="/kirkuld/25/index.html">25</a> ::  <a class="keret" href="/kirkuld/26/index.html">26</a> ::  <a class="keret" href="/kirkuld/27/index.html">27</a> ::  <a class="keret" href="/kirkuld/28/index.html">28</a> ::  <a class="keret" href="/kirkuld/29/index.html">29</a> ::  <a class="keret" href="/kirkuld/30/index.html">30</a> ::  <a class="keret" href="/kirkuld/31/index.html">31</a> ::  <a class="keret" href="/kirkuld/32/index.html">32</a> ::  <a class="keret" href="/kirkuld/33/index.html">33</a> ::  <a class="keret" href="/kirkuld/34/index.html">34</a> ::  <a class="keret" href="/kirkuld/35/index.html">35</a> ::  <a class="keret" href="/kirkuld/36/index.html">36</a> ::  <a class="keret" href="/kirkuld/37/index.html">37</a> ::  <a class="keret" href="/kirkuld/38/index.html">38</a> ::  <a class="keret" href="/kirkuld/39/index.html">39</a> ::  <a class="keret" href="/kirkuld/40/index.html">40</a> ::  <a class="keret" href="/kirkuld/41/index.html">41</a> ::  <a class="keret" href="/kirkuld/42/index.html">42</a> ::  <a class="keret" href="/kirkuld/43/index.html">43</a> ::  <a class="keret" href="/kirkuld/44/index.html">44</a> ::  <a class="keret" href="/kirkuld/45/index.html">45</a> :: </p>
+<p><span class="tulajdonsagnev">Leírás: </span>A város közelében működik egy bérgyilkos kiképző központ. Eddig is tudtunk a létéről, de megtürtük. De most történt valami. Hogy mi azt nem árulom el, de Stiglic Rezső, a kiképző mester nagyon rossz fát tett a tűzre, és ezért az életével kell fizetnie. Őld meg őt nekünk, és jutalmul megkapod Zamárdi, a híres vadász és bérrabló páncélját. <br /><span class="tulajdonsagnev">Jutalom: </span>700 db ezüst, 1 db gyémánt, 1 db manógomba, 1 db Zamárdi felsője,<br /><span class="tulajdonsagnev">Megjegyzés: </span> Az alábbi gombokkal eltüntethető az adott - és az összes korábban megszerzett -  kulcshoz tartozó ajtó. Így jól láthatóvá válik a rákövetkező kulcshoz vezető útvonal.</p>
+<div class="lab">
+<p id="gombsor" style="background:white;margin-top:0px;">
+  <button type="button" onclick="showlab(0)">Teljes labirintus</button>
+  <button type="button" onclick="showlab(1)">Vaskulcs</button>
+  <button type="button" onclick="showlab(2)">Rézkulcs</button>
+  <button type="button" onclick="showlab(3)">Csőkulcs</button>
+  <button type="button" onclick="showlab(4)">Ezüstkulcs</button>
+  <button type="button" onclick="showlab(5)">Aranykulcs</button>
+  <button type="button" onclick="showlab(6)">Platinakulcs</button>
+</p>
+<table id="0">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj j_ezust a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_rez a_bronz b_ezust"><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_bronz b_rez"><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_cso"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj j_vas a_rez b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz a_arany b_vas"><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj j_vas a_rez b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_ezust a_platina b_vas"><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_arany b_ezust"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina b_cso"><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz a_cso b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_arany"><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="f_ezust j_bronz a_arany b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="f_arany j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="f_rez j_cso a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina b_cso"><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="f_arany j_platina a_rez b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j a_vas b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="f_cso j_rez a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz j_vas a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_bronz a_bronz b_vas"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="f_arany j_vas a_bronz b_cso"><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz b_vas"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_arany a_cso b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina j_ezust a_platina b_arany"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina j_cso a_platina b_ezust"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_ezust a_platina b_cso"><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_vas j_tolvaj a_platina b_ezust"><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz j_ezust a_ezust b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz j_rez a_vas b_ezust"><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz j_ezust a_cso b_rez"><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz j_rez b_ezust"><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz j_vas a_rez b_rez"><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_rez b_vas"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_vas a_arany b_arany"><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina j_ezust a_arany b_vas"><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_arany a_arany b_ezust"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_vas a_ezust b_arany"><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz a_ezust b_vas"><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="f_ezust j_cso a_rez b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_vas j_ezust a_ezust b_cso"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_ezust a_cso b_ezust"><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class="j_rez a_vas b_ezust"><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="tolvaj1_vaskulcs.jpg"></td>
+    <td class="f_rez j_cso a_vas b_rez"><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_ezust a_vas b_cso"><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class="f_arany j_vas a_rez b_ezust"><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class="f_arany j_cso a_ezust b_vas"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_arany j_arany a_rez b_cso"><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class="f_ezust j_arany a_cso b_arany"><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_ezust j_tolvaj a_ezust b_arany"><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="f_rez j_ezust a_vas b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class="f_ezust j_ezust a_vas b_ezust"><img class="szorny" title="1 db rézkulcs" src="tolvaj1_rezkulcs.jpg"></td>
+    <td class="f_cso j_ezust a_ezust b_ezust"><img class="szorny" title="1 db ezüstkulcs" src="tolvaj1_ezustkulcs.jpg"></td>
+    <td class="f_vas j_cso a_vas b_ezust"><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_vas j_cso a_cso b_cso"><img class="szorny" title="1 db csőkulcs" src="tolvaj1_csokulcs.jpg"></td>
+    <td class="f_vas j_ezust a_rez b_cso"><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_cso a_ezust b_ezust"><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_ezust j_ezust a_vas b_cso"><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_arany a_vas b_ezust"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_arany a_vas b_arany"><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="f_ezust j_bronz a_vas b_arany"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="f_vas j_ezust a_cso b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_vas j_vas a_ezust b_ezust"><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_vas a_ezust b_vas"><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_vas j_rez a_ezust b_vas"><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class="f_cso j_vas a_ezust b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_rez j_cso a_ezust b_vas"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_ezust j_rez a_ezust b_cso"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_vas j_ezust a_ezust b_rez"><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class="f_vas j_arany a_rez b_ezust"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_vas j_arany a_arany b_arany"><img class="szorny" title="1 db aranykulcs" src="tolvaj1_aranykulcs.jpg"></td>
+    <td class="f_vas j_tolvaj a_rez b_arany"><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="f_cso j_rez a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="f_ezust j_rez a_bronz b_rez"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_vas a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_vas a_tolvaj b_vas"><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="f_ezust j_cso a_tolvaj b_vas"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_rez a_tolvaj b_cso"><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="f_ezust j_vas a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz b_vas"><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_ezust a_tolvaj b_cso"><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="f_arany j_cso a_bronz b_ezust"><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_rez j_bronz a_tolvaj b_cso"><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="1">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj j_ezust a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_rez a_bronz b_ezust"><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_bronz b_rez"><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_cso"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj a_rez b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz a_arany "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj a_rez b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_ezust a_platina "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_arany b_ezust"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina b_cso"><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz a_cso b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_arany"><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="f_ezust j_bronz a_arany b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="f_arany j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="f_rez j_cso a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina b_cso"><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="f_arany j_platina a_rez b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="f_cso j_rez a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="f_arany a_bronz b_cso"><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_arany a_cso b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina j_ezust a_platina b_arany"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina j_cso a_platina b_ezust"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_ezust a_platina b_cso"><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj a_platina b_ezust"><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz j_ezust a_ezust b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz j_rez b_ezust"><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz j_ezust a_cso b_rez"><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz j_rez b_ezust"><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz a_rez b_rez"><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_rez "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso a_arany b_arany"><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina j_ezust a_arany "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_arany a_arany b_ezust"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina a_ezust b_arany"><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz a_ezust "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="f_ezust j_cso a_rez b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_ezust a_ezust b_cso"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_ezust a_cso b_ezust"><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class="j_rez b_ezust"><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class="f_rez j_cso b_rez"><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_ezust b_cso"><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class="f_arany a_rez b_ezust"><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class="f_arany j_cso a_ezust "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_arany j_arany a_rez b_cso"><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class="f_ezust j_arany a_cso b_arany"><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_ezust j_tolvaj a_ezust b_arany"><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="f_rez j_ezust b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class="f_ezust j_ezust b_ezust"><img class="szorny" title="1 db rézkulcs" src="tolvaj1_rezkulcs.jpg"></td>
+    <td class="f_cso j_ezust a_ezust b_ezust"><img class="szorny" title="1 db ezüstkulcs" src="tolvaj1_ezustkulcs.jpg"></td>
+    <td class="j_cso b_ezust"><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_cso a_cso b_cso"><img class="szorny" title="1 db csőkulcs" src="tolvaj1_csokulcs.jpg"></td>
+    <td class="j_ezust a_rez b_cso"><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_cso a_ezust b_ezust"><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_ezust j_ezust b_cso"><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_rez j_arany b_ezust"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_arany b_arany"><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="f_ezust j_bronz b_arany"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="j_ezust a_cso b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class="a_ezust b_ezust"><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_ezust "><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_rez a_ezust "><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class="f_cso a_ezust b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_rez j_cso a_ezust "><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_ezust j_rez a_ezust b_cso"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="j_ezust a_ezust b_rez"><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class="j_arany a_rez b_ezust"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="j_arany a_arany b_arany"><img class="szorny" title="1 db aranykulcs" src="tolvaj1_aranykulcs.jpg"></td>
+    <td class="j_tolvaj a_rez b_arany"><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="f_cso j_rez a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="f_ezust j_rez a_bronz b_rez"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="f_ezust j_cso a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_rez a_tolvaj b_cso"><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="f_ezust a_bronz b_rez"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_rez j_ezust a_tolvaj b_cso"><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="f_arany j_cso a_bronz b_ezust"><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_rez j_bronz a_tolvaj b_cso"><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="2">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj j_ezust a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz b_ezust"><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_bronz "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_cso"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz a_arany "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_ezust a_platina "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj j_cso a_arany b_ezust"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina b_cso"><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz a_cso b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_arany"><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="f_ezust j_bronz a_arany b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="f_arany j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="j_cso a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina b_cso"><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="f_arany j_platina b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="f_cso a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="f_arany a_bronz b_cso"><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_arany a_cso b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina j_ezust a_platina b_arany"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina j_cso a_platina b_ezust"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_ezust a_platina b_cso"><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj a_platina b_ezust"><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz j_ezust a_ezust b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz b_ezust"><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz j_ezust a_cso "><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz b_ezust"><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso a_arany b_arany"><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina j_ezust a_arany "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_arany a_arany b_ezust"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina a_ezust b_arany"><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz a_ezust "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="f_ezust j_cso b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_ezust a_ezust b_cso"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_ezust a_cso b_ezust"><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class="b_ezust"><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class="j_cso "><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_ezust b_cso"><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class="f_arany b_ezust"><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class="f_arany j_cso a_ezust "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_arany j_arany b_cso"><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class="f_ezust j_arany a_cso b_arany"><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_ezust j_tolvaj a_ezust b_arany"><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="j_ezust b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class="f_ezust j_ezust b_ezust"><img class="szorny" title="1 db rézkulcs" src="nop.jpg"></td>
+    <td class="f_cso j_ezust a_ezust b_ezust"><img class="szorny" title="1 db ezüstkulcs" src="tolvaj1_ezustkulcs.jpg"></td>
+    <td class="j_cso b_ezust"><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_cso a_cso b_cso"><img class="szorny" title="1 db csőkulcs" src="tolvaj1_csokulcs.jpg"></td>
+    <td class="j_ezust b_cso"><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_cso a_ezust b_ezust"><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_ezust j_ezust b_cso"><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_arany b_ezust"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_cso j_arany b_arany"><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="f_ezust j_bronz b_arany"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="j_ezust a_cso b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class="a_ezust b_ezust"><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_ezust "><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_ezust "><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class="f_cso a_ezust "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="j_cso a_ezust "><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_ezust a_ezust b_cso"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="j_ezust a_ezust "><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class="j_arany b_ezust"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="j_arany a_arany b_arany"><img class="szorny" title="1 db aranykulcs" src="tolvaj1_aranykulcs.jpg"></td>
+    <td class="j_tolvaj b_arany"><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="f_cso a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="f_ezust j_cso a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_tolvaj b_cso"><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_cso a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_ezust a_tolvaj b_cso"><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="f_arany j_cso a_bronz b_ezust"><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="j_bronz a_tolvaj b_cso"><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="3">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj j_ezust a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz b_ezust"><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_bronz "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz a_arany "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_ezust a_platina "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_arany b_ezust"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina "><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_arany"><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz a_ezust b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="f_ezust j_bronz a_arany b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="f_arany j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina "><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="f_arany j_platina b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="f_arany a_bronz "><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_arany b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina j_ezust a_platina b_arany"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina a_platina b_ezust"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_ezust a_platina "><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj a_platina b_ezust"><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz j_ezust a_ezust b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz b_ezust"><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz j_ezust "><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz b_ezust"><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_arany b_arany"><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina j_ezust a_arany "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_arany a_arany b_ezust"><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina a_ezust b_arany"><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz a_ezust "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="f_ezust b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_ezust a_ezust "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="j_ezust b_ezust"><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class="b_ezust"><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_ezust "><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class="f_arany b_ezust"><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class="f_arany a_ezust "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_arany j_arany "><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class="f_ezust j_arany b_arany"><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_ezust j_tolvaj a_ezust b_arany"><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="j_ezust b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class="f_ezust j_ezust b_ezust"><img class="szorny" title="1 db rézkulcs" src="nop.jpg"></td>
+    <td class="j_ezust a_ezust b_ezust"><img class="szorny" title="1 db ezüstkulcs" src="tolvaj1_ezustkulcs.jpg"></td>
+    <td class="b_ezust"><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="1 db csőkulcs" src="nop.jpg"></td>
+    <td class="j_ezust "><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_ezust b_ezust"><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_ezust j_ezust "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_arany b_ezust"><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="j_arany b_arany"><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="f_ezust j_bronz b_arany"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="j_ezust b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class="a_ezust b_ezust"><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_ezust "><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_ezust "><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class="a_ezust "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_ezust "><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_ezust a_ezust "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="j_ezust a_ezust "><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class="j_arany b_ezust"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="j_arany a_arany b_arany"><img class="szorny" title="1 db aranykulcs" src="tolvaj1_aranykulcs.jpg"></td>
+    <td class="j_tolvaj b_arany"><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="f_ezust a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_ezust a_tolvaj "><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_ezust a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_ezust a_tolvaj "><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="f_arany a_bronz b_ezust"><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="j_bronz a_tolvaj "><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="4">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_bronz "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz a_arany "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_platina "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_arany "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina "><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz b_arany"><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="j_bronz a_arany b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="f_arany j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina "><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="f_arany j_platina b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="f_arany a_bronz "><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina j_arany b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina a_platina b_arany"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina a_platina "><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="a_platina "><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj a_platina "><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz "><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_arany "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_arany b_arany"><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina a_arany "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_arany a_arany "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina b_arany"><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class="f_arany "><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class="f_arany "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_arany j_arany "><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class="j_arany b_arany"><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj b_arany"><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db rézkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db ezüstkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="1 db csőkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_arany "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="j_arany b_arany"><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="j_bronz b_arany"><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class="j_arany "><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="j_arany a_arany b_arany"><img class="szorny" title="1 db aranykulcs" src="tolvaj1_aranykulcs.jpg"></td>
+    <td class="j_tolvaj b_arany"><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="f_arany a_bronz "><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="j_bronz a_tolvaj "><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="5">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj j_platina a_platina b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj a_bronz b_platina"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_bronz "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_platina "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj a_platina "><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class="f_platina j_bronz b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="j_bronz b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="j_bronz a_platina b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class="a_platina b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="f_platina j_platina a_platina "><img class="szorny" title="1 db platinakulcs" src="tolvaj1_platinakulcs.jpg"></td>
+    <td class="j_platina b_platina"><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class="f_platina j b_platina"><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz j_platina a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_platina b_platina"><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="f_platina a_platina "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_platina a_platina "><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="a_platina "><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj a_platina "><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz "><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_platina "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class="f_platina "><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_platina j_bronz "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj "><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db rézkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db ezüstkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="1 db csőkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="j_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class=""><img class="szorny" title="1 db aranykulcs" src="nop.jpg"></td>
+    <td class="j_tolvaj "><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="j_bronz a_tolvaj "><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+<table id="6">
+  <!--
+  <tr>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+    <td class=""><img class="szorny" title="" src=""></td>
+  </tr>
+  -->
+<!-- 1. sor  -->
+  <tr>
+    <td class="f_tolvaj   b_bronz"><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="f_tolvaj a_bronz "><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="'És most egy kérdés egy párhuzamos világ, a Föld lakóinak. Hány évente szállhat a földre a bolygó hollandi?' VÁLASZOK: (1) 10 -> Kidob; (2) 7 -> Semmi; (3) 3 -> Kidob; (4) 5 -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_tolvaj a_bronz "><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="1 db csillagvető" src="tolvaj2_k.gif"></td>
+    <td class="f_tolvaj b_bronz"><img class="szorny" title="Csapda! Egy forrázó lepett meg. A csapda 4 (24)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz  "><img class="szorny" title="'Melyik a múzsák szent állata?' VÁLASZOK: (1) Fülemüle -> Kidob; (2) Teknősbéka -> Kidob; (3) Bagoly -> Kidob; (4) Méh -> Semmi" src="kerdes.jpg"></td>
+    <td class="f_tolvaj "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="f_bronz j_tolvaj  "><img class="szorny" title="Az déli ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+  </tr>
+<!-- 2. sor  -->
+  <tr>
+    <td class=" j_bronz b_bronz"><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz a_bronz b_bronz"><img class="szorny" title="Előtted ott csillog a centrata tőr, a dicső Stiglic Rezső fegyvere VÁLASZ: (1) Felveszed a tőrt -> Centrata tőr (külditárgy) -- Kijárat" src="kerdes_kt_labikibe.jpg"></td>
+    <td class="f_bronz j_bronz "><img class="szorny" title="'És az utolsó, a 15. kérdés. Mi a baltacim?' VÁLASZOK: (1) pillangós virágú takarmánynövény -> Stiglic Rezső; (2) kovács-szerszám -> Halál!; (3) középkori fekhely -> Halál!; (4) kinzóeszköz -> Halál!" src="tolvajkepzoboss_kerdes.jpg"></td>
+    <td class="f_bronz j_bronz b_bronz"><img class="szorny" title="1 db csonttőr, 1 db kitintőr, 1 db tuskótőr" src="tolvaj8_k.gif"></td>
+    <td class="j_bronz b_bronz"><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="j_bronz a_bronz b_bronz"><img class="szorny" title="37 db ezüst, 1 db nyilvető" src="tolvaj7_k.gif"></td>
+    <td class="j_bronz  b_bronz"><img class="szorny" title="" src="tolvaj8_k.gif"></td>
+    <td class=" b_bronz"><img class="szorny" title="Csapda! Egy kés-prés lepett meg. Sikeresen kivédted a csapdát! (A csapda 3 életpontot sebzett rajtad!)" src="csapda.jpg"></td>
+    <td class="   "><img class="szorny" title="1 db platinakulcs" src="nop.jpg"></td>
+    <td class=" "><img class="szorny" title="Az keleti ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos'" src="nop.jpg"></td>
+    <td class=" j "><img class="szorny" title="1 db golyóvető" src="tolvaj5_k.gif"></td>
+  </tr>
+<!-- 3. sor  -->
+  <tr>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Kopogtatsz a nyugati ajtón. 'Szabad!' - hallod a túloldalról. Jó de hol van a kulcs?" src="nop.jpg"></td>
+    <td class="f_bronz a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="j_bronz a_bronz "><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz b_bronz"><img class="szorny" title="Az északi ajtón felirat: 'Belépés csak saját felelősségre'" src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="'Egy jó bérgyilkos a fizikában is jó! Minek a mértékegysége a lux?' VÁLASZOK: (1) Fényerősségé -> Kidob; (2) Fény frekvenciájáé -> Kidob; (3) A megvilágítás erősségéé -> Semmi; (4) A fényforrás fényességéé -> Kidob" src="kerdes.jpg"></td>
+    <td class="f_bronz  a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class=" "><img class="szorny" title="Az északi ajtón kopogtatót látsz, alatta felirat: 'Bérgyilkos Kar, Torokmetszési Tanszék, Dékán: Stiglic Rezső (egyetemi tanár), Dékánhelyettes: Sáfrány Tihamér (éjjharcos), Tanárok: Kétujjú Taksony (Tőrmester, adjuntus), Adharra Kallik (Orgyilkos, meghívott előadó), Kanossza Béla (Bérgyilkos mester, tanársegéd), id. prof. Stiglic Ármin (Exbérgyilkos, egyetemi tanár), Setét Ciráda (Árnygyilkos, doktorandusz).'" src="nop.jpg"></td>
+    <td class="  "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="  "><img class="szorny" title="Csapda! Egy villám-vető lepett meg. A csapda 1 (8) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=" "><img class="szorny" title="'Hány vegyesbolt van Larkinor városában?' VÁLASZOK: (1) 7 -> Kidob; (2) 6 -> Kidob; (3) 8 -> Semmi; (4) 9 -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj  "><img class="szorny" title="Az északi ajtóra feliratot raktak, hogy megkülönböztessék a többitől: 'Sáfrány Tihamér, éjjharcos' -- 1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+  </tr>
+<!-- 4. sor  -->
+  <tr>
+    <td class="f_bronz b_tolvaj"><img class="szorny" title="" src="tolvaj6_k.gif"></td>
+    <td class="f_bronz "><img class="szorny" title="Megtörlöd kardodat, és folytatod az utat. Csak még azt nem tudod, hogy merre." src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Akkor most merre is? Ja igen!!" src="nop.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Belépsz a nyikorgó kapun, és a következő táblát látod: 'Legyen Ön is bérgyilkos! A szerencse és tudás játéka! Játékvezető: Stiglic Rezső'. Körbenézve amerre ellátsz ajtók és ajtók, egymás hegyén hátán." src="bejarat_labikibe.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="Csapda! Egy csont-roppantó lepett meg. A csapda 7 (42) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class="f_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="'Kinek a kocsmája áll a város főterén a palota mellett?' VÁLASZOK: (1) Mekk-Dable -> Kidob; (2) Csókos Zotan -> Kidob; (3) Szutyok Tongó -> Kidob; (4) Gyurgyó Mester -> Semmi" src="kerdes.jpg"></td>
+    <td class=" "><img class="szorny" title="Csapda! Egy bőr-rágó lepett meg. A csapda 13 (72)  életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=" "><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=" "><img class="szorny" title="Csapda! Egy kis-kőgolyó lepett meg. A csapda 5 (32) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=" j_bronz "><img class="szorny" title="Az északi ajtó mögül üvöltést hallasz." src="nop.jpg"></td>
+  </tr>
+<!-- 5. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Csapda! Egy agy-simító lepett meg. A csapda 22 (125) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="A fene ebbe a küldetésbe, már megint eltévedtél!" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="Felkapod a kulcsot, jól megrugdalod a földön fekvő bérgyilkost aztán benyitsz a délen lévő ajtón. -- 1 db vaskulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mi található a várostól észak-nyugatra?' VÁLASZOK: (1) Sziklabarlangok -> Kidob; (2) Erdő -> Semmi; (3) Mocsár -> Kidob; (4) Temető -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Előveszed a térképedet, és megpróbálod a hátára feltérképezni, amerre eddig jártál. Aztán egy idő után feladod, mert teljesen reménytelen." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="Bárhogy is nézed, az a helyzet, hogy eltévedtél. Leülsz a padlóra, és kétségbe esel. Aztán pár perc múlva összeszeded magad, mert eszedbe jut, hogy egy igazi harcos soha sem adja fel!" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Nem hiszed el, hogy van olyan elmebeteg aki megtervez és felépít egy ilyen helyet." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Mire jó a gyógyital?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Semmi; (4) Paralízist gyógyít -> Kidob" src="kerdes.jpg"></td>
+    <td class="j_tolvaj "><img class="szorny" title="Gyorsan átnézed a jegyzeteidet, hogy a következő kérdés ne érjen váratlanul." src="nop.jpg"></td>
+  </tr>
+<!-- 6. sor  -->
+  <tr>
+    <td class="b_bronz"><img class="szorny" title="Előtted egy csapda van. Ezt biztosan érzed. De sajnos nem tudsz másfelé menni, úgyhogy kénytelen leszel aktiválni." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db rézkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db ezüstkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="A falon egy táblát látsz, mellette 4 gombbal. A táblán felirat:'Ez a hely tanító célzattal épült, így kérdésekkel bombázzuk majd az ifjú tanítványokat, itt is az első: Mennyi pénzt kell a királynak fizetni a szabadságért?' A gombok felett feliratok vannak. VÁLASZOK: (1) '500000 ezüst' -> Kidob; (2) '1500000 ezüst' -> Kidob; (3) 1000000 ezüst' -> Semmi; (4) '2000000 ezüst' -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="1 db csőkulcs" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="'Hány négyzetkilóméter Larkinor szigete?' VÁLASZOK: (1) 10 -> Kidob; (2) 49 -> Kidob; (3) 64 -> Semmi; (4) 81 -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="'Hanyadik Lorden uralkodik jelenleg Larkinoron?' VÁLASZOK: (1) III. -> Kidob; (2) II. -> Kidob; (3) V. -> Kidob; (4) VI. -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy szilánk-fúvó lepett meg. A csapda 10 (58) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="1 db vámpír kard, 1 db tuskópáncél, 1 db törpe surranó" src="tuskofuvo_k.gif"></td>
+    <td class=""><img class="szorny" title="Hagymaleves szagot érzel a levegőben. A gyomrod megcsikordul, érdemes lenne enni valamit." src="nop.jpg"></td>
+    <td class="j_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+  </tr>
+<!-- 7. sor  -->
+  <tr>
+    <td class="b_tolvaj"><img class="szorny" title="'Hány kilogramm egy vaspajzs?' VÁLASZOK: (1) 2 -> Kidob; (2) 3,1 -> Kidob; (3) 4,3 -> Kidob; (4) 3,4 -> Semmi" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Az ajtók kezdenek összezavarni." src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="'Hogy hívják Larkinor jelenlegi uralkodóját?' VÁLASZOK: (1) Bruti -> Kidob; (2) Barrique -> Kidob; (3) Lorden -> Semmi; (4) Solovan Ali -> Kidob" src="kerdes.jpg"></td>
+    <td class=""><img class="szorny" title="Még szerencse, hogy itt már jártál." src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Csapda! Egy gége-örlő lepett meg. A csapda 16 (91) életpontot sebzett rajtad!" src="csapda.jpg"></td>
+    <td class=""><img class="szorny" title="" src="tolvaj1_k.gif"></td>
+    <td class=""><img class="szorny" title="Feltűnt, hogy eddig az összes kérdés Larkinorral foglalkozik. Miért nem kérdeznek a többi szigetről? Lehet, hogy soha nem jutsz el azokra a helyekre?" src="nop.jpg"></td>
+    <td class=""><img class="szorny" title="1 db obszidián tőr" src="zombibergyilok_k.gif"></td>
+    <td class=""><img class="szorny" title="1 db aranykulcs" src="nop.jpg"></td>
+    <td class="j_tolvaj "><img class="szorny" title="Megbotlasz valamiben, és hasravágódsz a földön. Visszanézel és látod, hogy egy lánc van kifeszítve a földön. A leggyengébb láncszem elszakadt." src="nop.jpg"></td>
+  </tr>
+<!-- 8. sor  -->
+  <tr>
+    <td class="a_tolvaj b_bronz"><img class="szorny" title="Hogy fogsz visszatalálni a bejárathoz?" src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Az előző kérdés igencsak nyugtalanít. Mi lesz, ha egy olyan tárgyról fognak kérdezni , aminek még a létezéséről sem tudtál?" src="nop.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="" src="tuskofuvo_k.gif"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Igencsak megzavarodtál a rengeteg ajtótól." src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="1 db mérgezett tőr" src="tolvaj1_k.gif"></td>
+    <td class="a_bronz "><img class="szorny" title="'Hány jáspis kell egy lovagi kard elkészítéséhez?' VÁLASZOK: (1) 4 -> Semmi; (2) 5 -> Kidob; (3) 3 -> Kidob; (4) Nem kell hozzá -> Kidob" src="kerdes.jpg"></td>
+    <td class="a_tolvaj "><img class="szorny" title="Kiváncsi vagy, mi lesz a következő kérdés. Bár ha az is olyan könnyű, mint az eddigiek, akkor nem okozhat gondot." src="nop.jpg"></td>
+    <td class="a_bronz "><img class="szorny" title="'Mire jó a mobilidoxin?' VÁLASZOK: (1) Mérgezést gyógyít -> Kidob; (2) Életpontot gyógyít -> Kidob; (3) Fertőzést gyógyít -> Kidob; (4) Paralízist gyógyít -> Semmi" src="kerdes.jpg"></td>
+    <td class="j_bronz a_tolvaj "><img class="szorny" title="Átnézel a keleti ajtó alatti résen de csak sötétséget látsz." src="nop.jpg"></td>
+  </tr>
+</table>
+</div>
+
+</body>
+
+</html>
