@@ -17,7 +17,16 @@ const stubLoader: DataLoader = {
   loadMap: () => Promise.resolve({} as never),
   loadItemShops: () => Promise.resolve({} as never),
   loadWeaponShops: () => Promise.resolve({} as never),
-  loadQuests: () => Promise.resolve([]),
+  loadQuests: () => Promise.resolve([{
+    id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+    cells: [{
+      row: 0, col: 0,
+      edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+      monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+      portal: null, trap: false, death: false, narration: '', drops: null,
+      question: null, rawImage: '',
+    }],
+  }]),
 };
 
 describe('DatabaseApp routing', () => {
@@ -49,5 +58,11 @@ describe('DatabaseApp routing', () => {
     fireEvent.click(screen.getByText('Vértek'));
     expect(screen.getByText('Vértek').className).toContain('active');
     expect(location.hash).toBe('#monsters/7');
+  });
+
+  it('renders the quest tab and routes to a quest', async () => {
+    location.hash = '#quests/1';
+    render(<DatabaseApp loader={stubLoader} />);
+    expect(await screen.findByText('Küldetések')).toBeTruthy();
   });
 });

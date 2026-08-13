@@ -5,6 +5,7 @@ import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
 import { MapView } from './map/MapView';
+import { QuestView } from './quests/QuestView';
 
 /**
  * Somewhere to keep the current route across remounts, for `'memory'` routing.
@@ -46,11 +47,11 @@ export interface DatabaseAppProps {
   initialItemName?: string;
 }
 
-type Tab = EntityTab | 'map';
+type Tab = EntityTab | 'map' | 'quests';
 
 const EXPLORER_TABS: EntityTab[] = ['weapons', 'armors', 'items', 'monsters'];
-const TABS: Tab[] = [...EXPLORER_TABS, 'map'];
-const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép' };
+const TABS: Tab[] = [...EXPLORER_TABS, 'map', 'quests'];
+const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép', quests: 'Küldetések' };
 
 interface Route {
   tab: Tab;
@@ -211,6 +212,13 @@ export function DatabaseApp(props: DatabaseAppProps) {
       </header>
       {route.tab === 'map' ? (
         <MapView loader={loader} targetCellId={route.cell} />
+      ) : route.tab === 'quests' ? (
+        <QuestView
+          loader={loader}
+          questId={route.id}
+          onSelectQuest={(id) => navigate('quests', String(id))}
+          onJumpToMonster={(id) => navigate('monsters', String(id))}
+        />
       ) : (
         <ExplorerView
           loader={loader}
