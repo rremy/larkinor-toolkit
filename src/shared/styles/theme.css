@@ -960,6 +960,22 @@
 .lc-db .quest-outcome.fatal { color: var(--text); background: var(--bad); }
 .lc-db .quest-outcome.neutral { color: var(--muted); }
 
+/* Cell detail panel — everything about the selected maze cell */
+.lc-db .quest-detail { padding: 10px; color: var(--text); }
+.lc-db .quest-detail h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
+.lc-db .quest-detail-monster { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.lc-db .quest-detail-sprite { width: 40px; height: 46px; object-fit: contain; }
+.lc-db .quest-monster-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline; font-size: 13px;
+}
+.lc-db .quest-markers { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.lc-db .quest-detail-key, .lc-db .quest-detail-doors { font-size: 12px; margin-bottom: 6px; }
+.lc-db .quest-narration { white-space: pre-line; font-size: 12px; margin: 6px 0; }
+.lc-db .quest-drops { font-size: 12px; color: var(--good); }
+.lc-db .quest-detail .placeholder,
+.lc-db .quest-legend .placeholder { color: var(--muted); font-style: italic; }
+
 /* ===== In-game DB overlay =====
    Full-screen overlay hosting the ported DatabaseApp over the live game.
    `.lc-db` (mounted inside) already carries its own theme via the rules
