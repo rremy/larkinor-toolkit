@@ -479,3 +479,17 @@ describe('parseQuestPage error paths', () => {
     expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no cells');
   });
 });
+
+describe('parseTitle multi-digit choice markers', () => {
+  it('keeps answers past nine as their own choices', () => {
+    // Quest 25's potion row runs to eleven options; a single-digit marker
+    // pattern swallowed 10 and 11 into the ninth answer's outcome.
+    const r = parseTitle(
+      'KÉRDÉS: Mit iszol? VÁLASZ: (8) Kesernyés zöld -> Semmi (EZ A JÓ); ' +
+      '(9) Édes átlátszó -> Halál!; (10) Büdös sárga -> Halál!; (11) Szagtalan fekete -> Halál!',
+    );
+    expect(r.question?.choices.map((c) => c.index)).toEqual([8, 9, 10, 11]);
+    expect(r.question?.choices[1].outcome).toBe('Halál!');
+    expect(r.question?.choices[3].text).toBe('Szagtalan fekete');
+  });
+});

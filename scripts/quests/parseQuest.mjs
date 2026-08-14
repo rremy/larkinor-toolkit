@@ -113,7 +113,13 @@ const QUESTION_RE = /K[ÉE]RD[ÉE]S\s*:?\s*([\s\S]*?)\s*V[ÁA]LASZ(?:OK)?\s*:?\s
  * elsewhere in the source can legitimately contain the word "válasz".
  */
 const ANSWER_ONLY_RE = /V[ÁA]LASZ(?:OK)?\s*:?\s*([\s\S]*)$/i;
-const CHOICE_MARKER = /\((\d)\)+\s*/g;
+/**
+ * Answer markers, `(1)` … `(11)`. Multi-digit on purpose: two puzzle cells
+ * (quest 23's lever sequence, quest 25's potion row) run past nine options, and
+ * a single-digit pattern silently swallowed those tails into the ninth answer's
+ * outcome rather than failing — the reader lost options with nothing to show it.
+ */
+const CHOICE_MARKER = /\((\d+)\)+\s*/g;
 const DROPS_SEPARATOR = ' -- ';
 /** A quest drop always reads `<n> db <thing>`. */
 const DROP_SHAPE = /^\d+\s*db\s/i;
