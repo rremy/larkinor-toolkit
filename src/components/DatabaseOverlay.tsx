@@ -18,6 +18,12 @@ export interface DatabaseOverlayProps {
   initialItemId?: number;
   /** Entity name to open on (weapon/armor/item) — e.g. a Home page inventory item. */
   initialItemName?: string;
+  /**
+   * Tab to open on (currently only 'quests') — the desktop dock's dungeon-only
+   * "Küldetések" button. See DatabaseApp's `initialTab` for the precedence
+   * rules against `initialItemId`/`initialItemName`.
+   */
+  initialTab?: 'quests';
   /** Offer the minimise control (desktop only — see DockedPanel). */
   minimizable?: boolean;
 }
@@ -33,6 +39,7 @@ export function DatabaseOverlay({
   onClose,
   initialItemId,
   initialItemName,
+  initialTab,
   minimizable = false,
 }: DatabaseOverlayProps) {
   // The loader must not be rebuilt on every render, but it also must not be
@@ -60,6 +67,7 @@ export function DatabaseOverlay({
         prefStore={prefStore}
         initialItemId={initialItemId}
         initialItemName={initialItemName}
+        initialTab={initialTab}
       />
     </DockedPanel>
   );

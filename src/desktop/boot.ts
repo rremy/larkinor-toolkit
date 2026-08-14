@@ -235,7 +235,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

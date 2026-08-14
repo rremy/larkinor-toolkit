@@ -76,6 +76,20 @@ export interface DatabaseAppProps {
   initialItemId?: number;
   /** Entity name to open on mount — resolved to its tab+id. Used from the Home page. */
   initialItemName?: string;
+  /**
+   * Tab to open on mount, bypassing whatever `routeStore` had remembered.
+   * Currently only `'quests'`, for the desktop dock's dungeon-only
+   * "Küldetések" button — the whole point of that button is to land on
+   * quests regardless of what the panel last showed, so this must win over
+   * the stored route. Deliberately narrow (one literal, not `Tab`): nothing
+   * else opens on an arbitrary tab, and a general tab-routing prop would be
+   * speculative API surface nobody needs yet.
+   *
+   * `initialItemId`/`initialItemName` are more specific (a particular
+   * entity within a tab) and must still win if somehow supplied alongside
+   * this — see the effect below for how that precedence is enforced.
+   */
+  initialTab?: 'quests';
 }
 
 type Tab = EntityTab | 'map' | 'quests';
@@ -129,7 +143,7 @@ function hashFor(tab: Tab, param: string | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName } = props;
+  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab } = props;
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
@@ -224,6 +238,22 @@ export function DatabaseApp(props: DatabaseAppProps) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialItemName]);
+
+  // Opened directly on a tab (currently only 'quests'): navigate there on
+  // mount, overriding whatever routeStore had remembered — that override is
+  // the entire reason this prop exists.
+  //
+  // Precedence, made explicit rather than left to the effects' relative
+  // timing: initialItemId/initialItemName name a specific entity, which is
+  // more specific than a bare tab, so they must win if both are somehow
+  // supplied. Backing off here (instead of racing this synchronous
+  // navigate against those effects' async entity lookups) makes that
+  // ordering guaranteed rather than incidental.
+  useEffect(() => {
+    if (!initialTab || initialItemId != null || initialItemName) return;
+    navigate(initialTab, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab]);
 
   return (
     <div class="lc-db">

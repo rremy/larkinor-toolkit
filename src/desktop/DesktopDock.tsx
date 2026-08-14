@@ -35,6 +35,13 @@ export interface DesktopDockProps {
   battleMonsterName?: string | null;
   /** Force the minimal (config + database) form regardless of state. */
   dbButtonOnly?: boolean;
+  /**
+   * True on the dungeon page. Quest walkthroughs are only useful while
+   * actually in a dungeon, so the dock offers a dedicated shortcut there
+   * straight to the database's quests view — everywhere else this is false
+   * and nothing about the dock changes.
+   */
+  inDungeon?: boolean;
 }
 
 /**
@@ -51,7 +58,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -59,6 +66,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // DatabaseOverlay — so a reload restores the tab that was showing.
   const [dbOpen, setDbOpen] = useState(() => getPanelOpen(DB_OPEN_KEY));
   const [dbItemId, setDbItemId] = useState<number | null>(null);
+  // Which button opened the overlay, when that button wants a specific
+  // landing tab rather than whatever route the overlay remembers. Cleared
+  // by every opener (including the plain Adatbázis button), so it never
+  // leaks from one open to the next.
+  const [dbInitialTab, setDbInitialTab] = useState<'quests' | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
@@ -95,6 +107,16 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
   const openDatabase = () => {
     setDbItemId(null);
+    setDbInitialTab(null);
+    setDatabase(true);
+  };
+
+  // The dungeon-only shortcut: open straight on the quests view, with no
+  // quest id, so the overlay's own "remember the last selected quest"
+  // behaviour restores whichever quest the player last had open.
+  const openQuests = () => {
+    setDbItemId(null);
+    setDbInitialTab('quests');
     setDatabase(true);
   };
 
@@ -215,6 +237,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
             >
               ⚙
             </button>
+            {inDungeon && (
+              <button class="lc-dock-btn lc-dock-quests" onClick={openQuests}>
+                Küldetések
+              </button>
+            )}
             <button class="lc-dock-btn lc-dock-db" onClick={openDatabase}>
               Adatbázis
             </button>
@@ -226,7 +253,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         monster={selectedMonster}
         variant="modal"
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDatabase(true); }}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbInitialTab(null); setDatabase(true); }}
       />
 
       {configOpen && (
@@ -244,6 +271,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         open={dbOpen}
         minimizable
         initialItemId={dbItemId ?? undefined}
+        initialTab={dbInitialTab ?? undefined}
         onClose={() => setDatabase(false)}
       />
 

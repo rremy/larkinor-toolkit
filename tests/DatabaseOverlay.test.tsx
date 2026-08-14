@@ -106,6 +106,81 @@ describe('DatabaseOverlay', () => {
     expect(document.querySelector('.lc-db-overlay .lc-db')).toBeTruthy();
   });
 
+  describe('initialTab (the dungeon "Küldetések" shortcut)', () => {
+    // Same cache hazard as the quest-content test above: the loader caches
+    // quests.json/monsters.json under a fixed GM key in tests, so clear it
+    // before stubbing a fresh response.
+    function clearQuestDataCache() {
+      const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
+      for (const file of ['quests.json', 'monsters.json']) {
+        GM_setValue(`${base}/${file}`, '');
+        GM_setValue(`${base}/${file}:v`, '');
+      }
+    }
+
+    function stubQuestAndMonsterData() {
+      clearQuestDataCache();
+      const stubQuest = {
+        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        cells: [{
+          row: 0, col: 0,
+          edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+          monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+          portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+          question: null, rawImage: '',
+        }],
+      };
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('quests.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+        } else if (opts.url.includes('monsters.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+    }
+
+    it('lands on the quests tab even when a different route is stored — the precedence rule the button relies on', async () => {
+      // A stored route from a previous session, deliberately not quests: the
+      // button must win over it, not merely happen to agree with it.
+      GM_setValue(DB_ROUTE_KEY, 'monsters');
+      stubQuestAndMonsterData();
+
+      render(<DatabaseOverlay open initialTab="quests" onClose={vi.fn()} />);
+
+      expect(activeTab()).toBe('Küldetések');
+      // Assert on quest content, not merely the tab label — a regression that
+      // left the route on 'monsters' while mislabelling the active tab would
+      // otherwise pass.
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    });
+
+    it('still lets initialItemId win over initialTab when both are supplied', async () => {
+      const stubItem = {
+        id: 501, name: 'Teszt tárgy', weight: 1, price: 1, marketPrice: null, special: '',
+        magical: false, craftableAt: '', minLevel: null, recipe: [], droppedBy: [], defense: null, shops: [],
+      };
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('weapons.json') || opts.url.includes('armors.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        } else if (opts.url.includes('items.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([stubItem]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+
+      render(<DatabaseOverlay open initialItemId={501} initialTab="quests" onClose={vi.fn()} />);
+
+      // The list row and the detail panel both show the name, hence "All".
+      expect((await screen.findAllByText('Teszt tárgy')).length).toBeGreaterThan(0);
+      expect(activeTab()).toBe('Tárgyak');
+    });
+  });
+
   describe('remembered route', () => {
     it('opens on the default tab when nothing is stored', () => {
       render(<DatabaseOverlay open onClose={vi.fn()} />);
