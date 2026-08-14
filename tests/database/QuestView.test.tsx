@@ -341,6 +341,59 @@ describe('QuestView', () => {
 
       expect(onSelectQuest).not.toHaveBeenCalledWith('royal', expect.anything());
     });
+
+    // The race this guards against: clicking Kocsmai (starts a slow fetch),
+    // then clicking straight back to Királyi before that fetch resolves, must
+    // land on Királyi — the user's last click — not get silently overridden
+    // when the abandoned tavern fetch finally resolves. This only holds if
+    // the same-set click still bumps navGenerationRef; otherwise the tavern
+    // fetch's generation check never notices it was superseded.
+    it('does not let a same-set click-back get overridden by the fetch it was meant to abandon', async () => {
+      const onSelectQuest = vi.fn();
+      const tavern = deferred<Quest[]>();
+      const loader = makeLoader({ loadTavernQuests: vi.fn(() => tavern.promise) });
+      render(
+        <QuestView loader={loader} questSet="royal" questId="1"
+          onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />,
+      );
+
+      // Click away to tavern: kicks off the deferred fetch.
+      fireEvent.click(await screen.findByRole('button', { name: 'Kocsmai' }));
+      expect(loader.loadTavernQuests).toHaveBeenCalledTimes(1);
+
+      // Click straight back to royal before the tavern fetch resolves. Since
+      // `activeSet` is still 'royal' at this point (no navigation landed
+      // yet), this is a same-set click from `changeSet`'s point of view.
+      fireEvent.click(await screen.findByRole('button', { name: 'Királyi' }));
+
+      // Now let the abandoned tavern fetch resolve.
+      tavern.resolve(tavernQuests);
+      await tavern.promise;
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(onSelectQuest).not.toHaveBeenCalledWith('tavern', expect.anything());
+    });
+
+    // The switcher used to render only after the loading/empty early returns,
+    // so a stored set whose fetch fails (or comes back empty) left the user
+    // wedged with no way back — worse in-game, where the overlay remounts on
+    // every action and re-derives the same stuck set every time. It must now
+    // render even while stuck on "Betöltés…", and clicking it must still work.
+    it('keeps the switcher reachable and clickable when the active set fails to load', async () => {
+      const onSelectQuest = vi.fn();
+      const loader = makeLoader({ loadTavernQuests: vi.fn(() => Promise.reject(new Error('boom'))) });
+      render(<QuestView loader={loader} questSet="tavern" questId={null}
+        onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+
+      // Stuck: the failed fetch never populates `bySet.tavern`, so the view
+      // stays on the "Betöltés…" state — but the switcher must still be there.
+      const royalBtn = await screen.findByRole('button', { name: 'Királyi' });
+      expect(screen.getByText('Betöltés…')).toBeTruthy();
+
+      fireEvent.click(royalBtn);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('royal', '1'));
+    });
   });
 
   describe('per-set persistence', () => {

@@ -1040,6 +1040,10 @@
 }
 .lc-db .quest-set-btn:hover { background: var(--panel); }
 .lc-db .quest-set-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+/* Surfaces a rejected changeSet fetch — the switcher stays reachable (it's
+   rendered above the loading/empty states now) so this is the only feedback
+   the user gets that their click did not land. */
+.lc-db .quest-set-error { margin: 4px 8px 0; font-size: 11px; color: var(--bad); }
 /* Number strip — replaces the old left-hand picker column so the maze gets
    the horizontal space instead. Quests are identified by number only; the
    description moves to a `title` tooltip and stays visible in the header. */

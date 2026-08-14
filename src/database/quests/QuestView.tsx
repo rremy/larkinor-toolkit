@@ -57,6 +57,11 @@ export function QuestView(props: QuestViewProps): VNode {
 
   const [bySet, setBySet] = useState<Partial<Record<QuestSet, Quest[]>>>({});
   const quests = bySet[activeSet] ?? null;
+  // Set by a failed `changeSet` click; cleared on the next attempt. The
+  // switcher is the only feedback surface for this failure — `changeSet`'s
+  // own rejection would otherwise be an unhandled promise rejection and the
+  // button would appear to silently do nothing.
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const [monsters, setMonsters] = useState<MonsterDatabase>(() => buildMonsterDatabase([]));
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
@@ -97,9 +102,14 @@ export function QuestView(props: QuestViewProps): VNode {
     // Once settled this promise is no longer "in flight" — later callers
     // should ask the loader again rather than reuse a result nobody kept
     // (e.g. one discarded below because its switch was superseded).
+    // `.finally()` returns its own derived promise that rejects right along
+    // with `promise` — nothing here awaits or returns it, so a rejection
+    // must still be caught on this fork specifically, independent of
+    // whatever handling the caller of `fetchSet` attaches to `promise`
+    // itself, or it surfaces as an unhandled rejection regardless.
     promise.finally(() => {
       if (inFlightRef.current[set] === promise) delete inFlightRef.current[set];
-    });
+    }).catch(() => {});
     return promise;
   }
 
@@ -111,6 +121,12 @@ export function QuestView(props: QuestViewProps): VNode {
     if (bySet[activeSet]) return;
     fetchSet(activeSet).then((q) => {
       if (!cancelled) setBySet((prev) => ({ ...prev, [activeSet]: q }));
+    }).catch(() => {
+      // Leaves `bySet[activeSet]` unset, so the view stays on the
+      // "Betöltés…" state — but the switcher (rendered even there, see
+      // `questSetSwitcher` below) still lets the user reach the other set
+      // instead of an unhandled rejection wedging this one silently.
+      if (!cancelled) setSwitchError(`Nem sikerült betölteni: ${SET_LABELS[activeSet]}`);
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,10 +202,16 @@ export function QuestView(props: QuestViewProps): VNode {
    * `onSelectQuest` call below; its fetched data (if any) is simply dropped,
    * not cached, so a later switch to the same set fetches fresh rather than
    * risking stale-looking reuse of a result nobody ever displayed.
+   *
+   * The generation is claimed *before* the same-set early return below, on
+   * purpose: clicking back to the set already showing must still invalidate
+   * whatever switch-away is in flight, or that slow fetch resolves after this
+   * call returns and still navigates the user to the set they just clicked
+   * away from. Swapping the two lines would silently reintroduce that race.
    */
   async function changeSet(next: QuestSet) {
-    if (next === activeSet) return;
     const generation = ++navGenerationRef.current;
+    if (next === activeSet) return;
     let list = bySet[next];
     if (!list) {
       list = await fetchSet(next);
@@ -202,11 +224,51 @@ export function QuestView(props: QuestViewProps): VNode {
     onSelectQuest(next, target);
   }
 
+  /**
+   * `onClick` handler for a switcher button. `changeSet` is `async` and its
+   * rejection (a failed `fetchSet`) would otherwise be an unhandled promise
+   * rejection with no visible effect — the button would appear to silently
+   * do nothing. Catching it here and setting `switchError` surfaces the
+   * failure instead.
+   */
+  function handleSetClick(next: QuestSet) {
+    setSwitchError(null);
+    changeSet(next).catch(() => {
+      setSwitchError(`Nem sikerült betölteni: ${SET_LABELS[next]}`);
+    });
+  }
+
+  /**
+   * Rendered above both the loading and empty early returns below, and
+   * unconditionally in the main render, so it is always reachable — a user
+   * whose stored set fails to load (or resolves empty) still has a way back
+   * to the other set from inside this view, rather than being wedged on a
+   * dead "Betöltés…"/"Nincs küldetés." screen. This matters more in-game,
+   * where the overlay remounts on every action and would otherwise re-derive
+   * the same stuck set on every reopen.
+   */
+  const questSetSwitcher = (
+    <div class="quest-sets" role="group" aria-label="Küldetés típus">
+      {SETS.map((s) => (
+        <button
+          key={s}
+          type="button"
+          class={`quest-set-btn${s === activeSet ? ' active' : ''}`}
+          aria-pressed={s === activeSet}
+          onClick={() => handleSetClick(s)}
+        >
+          {SET_LABELS[s]}
+        </button>
+      ))}
+      {switchError && <p class="quest-set-error" role="alert">{switchError}</p>}
+    </div>
+  );
+
   if (!quests) {
-    return <div class="quest-view"><div class="quest-stats">Betöltés…</div></div>;
+    return <div class="quest-view">{questSetSwitcher}<div class="quest-stats">Betöltés…</div></div>;
   }
   if (!quest) {
-    return <div class="quest-view"><div class="quest-stats">Nincs küldetés.</div></div>;
+    return <div class="quest-view">{questSetSwitcher}<div class="quest-stats">Nincs küldetés.</div></div>;
   }
 
   const monsterCount = quest.cells.filter((c) => c.monsterId != null).length;
@@ -220,19 +282,7 @@ export function QuestView(props: QuestViewProps): VNode {
 
   return (
     <div class="quest-view">
-      <div class="quest-sets" role="group" aria-label="Küldetés típus">
-        {SETS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            class={`quest-set-btn${s === activeSet ? ' active' : ''}`}
-            aria-pressed={s === activeSet}
-            onClick={() => changeSet(s)}
-          >
-            {SET_LABELS[s]}
-          </button>
-        ))}
-      </div>
+      {questSetSwitcher}
 
       <div class="quest-strip" role="group" aria-label="Küldetés választó">
         {quests.map((q) => (
