@@ -113,6 +113,44 @@ describe('QuestGrid', () => {
     expect(container.querySelectorAll('.quest-cell.key-hit')).toHaveLength(1);
   });
 
+  describe('void filler tiles', () => {
+    it('does not paint a real cell as void filler just because it has no narration', () => {
+      // Shaped like a tavern question tile: parseTavernTitle empties
+      // `narration` and puts everything into `question`, so `narration === ''`
+      // alone cannot tell a real room from empty filler on that set.
+      const tavernShapedQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({
+            row: 1, col: 1, narration: '', hasQuestion: true,
+            question: { prompt: 'Mit teszel?', choices: [] },
+          }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={tavernShapedQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const questionCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(questionCell.classList.contains('void')).toBe(false);
+    });
+
+    it('still paints an actually-empty filler cell as void', () => {
+      const emptyQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, narration: '' }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={emptyQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const emptyCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(emptyCell.classList.contains('void')).toBe(true);
+    });
+  });
+
   describe('big trap/question icon', () => {
     it('renders a trap cell with the large centred icon, not the corner badge', () => {
       const trapQuest: Quest = {
