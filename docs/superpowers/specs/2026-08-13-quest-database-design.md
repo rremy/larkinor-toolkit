@@ -46,9 +46,9 @@ tolerates it rather than aborting.
 - special bases: `nop` (empty), `kerdes` (question), `csapda` (trap),
   `halal` (death), `bejarat` (entrance)
 
-**Titles** hold the narration, with drops appended after ` -- `, and 143 of
-them embed a choice point in the form
-`KÉRDÉS: … VÁLASZOK: (1) … (2) …`.
+**Titles** hold the narration, with drops appended after ` -- `, and 180 of
+them are image-marked question tiles embedding a choice point in the form
+`KÉRDÉS: … VÁLASZOK: (1) … (2) …` (179 of the 180 split cleanly; see *Risks*).
 
 **Monster resolution rate: 328 of 328 distinct sprite bases** match
 `monsters.json` image basenames, zero exceptions. The one that looks like a
@@ -132,6 +132,14 @@ export interface QuestCell {
   death: boolean;
   narration: string;
   drops: string | null;
+  /**
+   * Image-derived: true whenever the cell's sprite is a question tile,
+   * independent of whether `question` below parsed. This is the ground
+   * truth the UI's question marker is driven from — never conflate it with
+   * `question !== null` (parse success), or a parse miss silently makes the
+   * marker disappear too.
+   */
+  hasQuestion: boolean;
   question: QuestQuestion | null;
   /** Provenance, for diagnosing source drift. */
   rawImage: string;
@@ -163,7 +171,7 @@ Order matters; these are the steps a naive parser gets wrong.
 4. **Monster lookup**: try the base, then base + `_k`, against `monsters.json`
    image basenames.
 5. **Question before drops.** Answer text contains ` -- ` as well, so splitting
-   on the drops separator first corrupts the question in every one of the 143
+   on the drops separator first corrupts the question in every one of the 180
    cells that have one.
 
 Anything the question parser cannot split cleanly falls back to raw narration.
@@ -177,11 +185,12 @@ New folder `src/database/quests/`, laid out like the existing `map/`:
 
 ```
 src/database/quests/
-├── QuestView.tsx          # picker + grid + detail
+├── QuestView.tsx          # number strip + grid + detail
 ├── QuestGrid.tsx          # the maze
 ├── QuestCellDetail.tsx    # side panel for the selected cell
 ├── QuestQuestionCard.tsx  # choice-point rendering
-└── questMeta.ts           # lock labels, colors, badge metadata
+├── QuestKeyLegend.tsx     # permanent lock → key legend
+└── questMeta.ts           # lock labels, colors, badge metadata, tile sizes
 ```
 
 ### The grid is CSS grid and divs, never a `<table>`
@@ -191,8 +200,16 @@ Deliberate. The game page runs in quirks mode, where tables refuse to inherit
 unreadable. Rendering the maze as divs avoids that whole class of bug instead
 of patching around it.
 
-Tile size is a CSS variable, so a zoom control plus a scroll container handles
-17×15 quests inside the ~720px docked in-game overlay and on mobile.
+Tile size is an inline `grid-template-columns` px value plus an inline
+`font-size` on the big icon (both computed from the zoom control's `tileSize`
+in `QuestGrid.tsx`), not a CSS custom property. A CSS container-query unit for
+the icon would need `container-type` on `.quest-cell`, which gives every cell
+its own stacking context and scopes `.quest-edge`'s `z-index` inside it — the
+shared wall lines straddling two cells rely on `.quest-cell` staying
+`position: relative` with no stacking context of its own, so a later cell's
+background can't paint over the earlier cell's edge. The zoom control plus a
+scroll container still handles 17×15 quests inside the ~720px docked in-game
+overlay and on mobile.
 
 A cell draws its four borders from `edges`: walls in the theme's stone color,
 doors in per-lock colors added to `theme.css` — the game's key colors, tuned
@@ -226,8 +243,10 @@ raw narration.
 ### Supporting UI
 
 A quest header carrying description, reward, and counts (monsters, keys,
-questions, traps). The quest picker searches via the existing
-accent-insensitive `matchesSearch` from `shared/text.ts`.
+questions, traps). The quest picker is a number strip (one chip per quest id,
+1–45) rather than a search box — with only 45 numeric ids, a search input
+buys nothing a chip row doesn't already give at a glance, so `matchesSearch`
+is not used anywhere under `src/database/quests/`.
 
 Available on both surfaces: the standalone site and the in-game
 `DatabaseOverlay` both render `DatabaseApp`, so the tab appears in both. The
@@ -265,10 +284,11 @@ fails the build rather than shipping.
 
 ## Risks
 
-**The question parser is lossy.** 143 questions with inconsistent separators;
-some will not split cleanly. Mitigated by the raw-text fallback and by having
-the scraper report the clean-parse rate, so the real number is known rather
-than assumed.
+**The question parser is lossy.** 180 question tiles with inconsistent
+separators; some will not split cleanly. Mitigated by the raw-text fallback
+and by having the scraper report the clean-parse rate — currently 179 of 180,
+the one holdout being quest 44 cell (10,1) — so the real number is known
+rather than assumed.
 
 **Third-party drift.** Mitigated by the committed snapshot plus a validating
 scraper: drift becomes a scrape-time error, never a broken page for users.
