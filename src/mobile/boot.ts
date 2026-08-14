@@ -1,6 +1,8 @@
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, extractBattle, extractLogin, extractDungeon, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
+import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
+import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
@@ -71,7 +73,22 @@ export function bootMobile(doc: Document): void {
   // moved nodes even after hideOriginalDOM() — but extracting once up front
   // and reusing the snapshot for both renders avoids any dependency on that
   // ordering and avoids doing the extraction work twice.
-  const pageState = extractPageState(detectPage(doc), doc);
+  const pageType = detectPage(doc);
+
+  // The pub is not a page mobile takes over, but its narration carries the
+  // tavern quest briefs — so recognise one and pre-select it, and the quests
+  // tab will open on it. This must run before the early return below, because
+  // Tavern has no page state of its own.
+  //
+  // Silent here, unlike desktop: with no UI mounted on this page there is no
+  // overlay for a "recognised" note to open, so mobile gets the activation
+  // without the affordance.
+  if (pageType === PageType.Tavern) {
+    activateQuestOffer(extractNarration(doc), createDataLoader(gmSource(), DATA_BASE_URL), setPref)
+      .catch((err) => console.warn('[Larkinor UI] Quest offer failed:', err));
+  }
+
+  const pageState = extractPageState(pageType, doc);
   if (!pageState) return;
 
   ensureMobileViewport(doc);

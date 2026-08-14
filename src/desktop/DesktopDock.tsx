@@ -42,6 +42,17 @@ export interface DesktopDockProps {
    * and nothing about the dock changes.
    */
   inDungeon?: boolean;
+  /**
+   * Nonce that opens the database on the quests view when it increases.
+   *
+   * The pub's "quest recognised" note lives in the game's own DOM, outside
+   * this Preact tree, so it cannot call `openQuests` directly. Boot bumps
+   * this instead and re-renders. A counter rather than a boolean for the same
+   * reason `initialTabKey` is one: pressing the note twice must re-navigate
+   * even if the overlay is already showing quests. Starts at 0, which never
+   * fires — only an increase does.
+   */
+  openQuestsSignal?: number;
 }
 
 /**
@@ -58,7 +69,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0 }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -129,6 +140,15 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     setDbInitialTab((prev) => ({ tab: 'quests', seq: (prev?.seq ?? 0) + 1 }));
     setDatabase(true);
   };
+
+  // Drive `openQuests` from outside the tree — see `openQuestsSignal`. Guarded
+  // on > 0 so the initial render never opens the overlay by itself.
+  useEffect(() => {
+    if (openQuestsSignal > 0) openQuests();
+    // openQuests is recreated every render; depending on it would fire this
+    // on every render instead of only when the signal changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openQuestsSignal]);
 
   const setInventory = (open: boolean) => {
     setInventoryOpen(open);

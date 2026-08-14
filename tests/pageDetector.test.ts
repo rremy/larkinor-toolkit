@@ -62,9 +62,18 @@ describe('detectPage', () => {
     expect(detectPage(makeDoc('otPiac'))).toBe(PageType.Market);
   });
 
-  it('returns Unknown and warns for an unrecognised value (e.g. otKocsma)', () => {
+  // The pub used to fall through to Unknown (and warn on every visit). It is
+  // now a page type of its own, because its narration carries the tavern
+  // quest briefs that pre-select a quest in the database.
+  it('returns Tavern for oldalTipus=otKocsma', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    expect(detectPage(makeDoc('otKocsma'))).toBe(PageType.Unknown);
+    expect(detectPage(makeDoc('otKocsma'))).toBe(PageType.Tavern);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns Unknown and warns for a genuinely unrecognised value', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(detectPage(makeDoc('otValamiUj'))).toBe(PageType.Unknown);
     expect(warnSpy).toHaveBeenCalled();
   });
 

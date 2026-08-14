@@ -185,7 +185,15 @@ function extractStatusIcons(doc: Document): StatusIcon[] {
   }));
 }
 
-function extractNarration(doc: Document): string {
+/**
+ * The narration block as plain text, `<br>`s converted to newlines.
+ *
+ * Exported because the desktop boot reads it on the pub page to recognise a
+ * tavern quest offer (see `questOffer`), which needs the same flattening the
+ * mobile extraction does — matching per text node finds nothing, since the
+ * game splits sentences across nodes.
+ */
+export function extractNarration(doc: Document): string {
   const el = doc.querySelector('font[face="Comic sans MS"]');
   if (!el) return '';
   // The narration uses <br> for line breaks; textContent would drop them, so
