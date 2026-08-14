@@ -27,6 +27,7 @@ const stubLoader: DataLoader = {
       question: null, rawImage: '',
     }],
   }]),
+  loadTavernQuests: () => Promise.resolve([]),
 };
 
 describe('DatabaseApp routing', () => {

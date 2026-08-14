@@ -52,6 +52,7 @@ function makeLoader(): DataLoader {
     loadItemShops: async () => ({ shops: [] }),
     loadWeaponShops: async () => ({ shops: [] }),
     loadQuests: async () => quests,
+    loadTavernQuests: async () => [],
   };
 }
 
