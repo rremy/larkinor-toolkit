@@ -80,4 +80,18 @@ describe('QuestKeyLegend', () => {
     );
     expect(container.querySelectorAll('.quest-legend-row.active')).toHaveLength(1);
   });
+
+  it('shows a placeholder when the quest has no locked doors at all', () => {
+    // Real cases: quests 3, 5, 9, 14, 23, 33.
+    const lockless: Quest = {
+      id: 2, description: '', reward: '', rows: 1, cols: 1,
+      cells: [cell({ row: 0, col: 0 })],
+    };
+    const { container } = render(
+      <QuestKeyLegend quest={lockless} monsters={monsters} activeLock={null}
+                      onHoverLock={() => {}} onSelectCell={() => {}} />,
+    );
+    expect(screen.getByText('Ebben a küldetésben nincs zárt ajtó.')).toBeTruthy();
+    expect(container.querySelector('.quest-legend-row')).toBeNull();
+  });
 });
