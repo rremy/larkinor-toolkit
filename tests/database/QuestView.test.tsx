@@ -449,6 +449,31 @@ describe('QuestView', () => {
         prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
       await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('royal', '2'));
     });
+
+    // Regression guard for `restoredQuestRef`'s reset effect (the one keyed
+    // on `[activeSet]`). Its guard only lets the restore-from-store effect
+    // fire once per mount unless something flips it back — without the reset
+    // effect, having already restored once on royal would permanently block
+    // ever restoring again after navigating to a bare route on tavern.
+    it('restores the new set\'s own selection after navigating to a bare route on a different set', async () => {
+      const onSelectQuest = vi.fn();
+      const prefStore = makePrefStore({
+        [QUEST_SET_PREF_KEY]: 'royal',
+        [questSelectedKey('royal')]: '2',
+        [questSelectedKey('tavern')]: 'GOMB',
+      });
+      const { rerender } = render(<QuestView loader={makeLoader()} questSet="royal" questId={null}
+        prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      // First restore: fires on royal, latching `restoredQuestRef`.
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('royal', '2'));
+
+      // A bare `#quests/tavern` route lands here with questId null again, on
+      // a different set. Without the reset effect, the latch from the royal
+      // restore above would suppress this one entirely.
+      rerender(<QuestView loader={makeLoader()} questSet="tavern" questId={null}
+        prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('tavern', 'GOMB'));
+    });
   });
 
   it('summarises the quest contents', async () => {

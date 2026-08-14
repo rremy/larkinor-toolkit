@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { parseTavernImage } from '../../scripts/quests/parseTavernQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/tavern-quests.json', 'utf-8'));
@@ -7,6 +8,51 @@ const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
 const monsterIds = new Set<number>(monsters.map((m: { id: number }) => m.id));
 
 const LOCKS: LockType[] = ['vas', 'rez', 'bronz', 'ezust', 'arany', 'platina', 'tolvaj', 'cso'];
+
+/**
+ * Mirrors `resolveMonster` from `scrapeTavern.mjs` closely enough to recreate
+ * the `isMonster` predicate `parseTavernImage` needs to disambiguate a token
+ * like `tolvaj` (thief lock suffix vs. the second word of some monster
+ * names) — see that parser's doc comment on `parseTavernImage`. Aliases are
+ * included even though they only ever settle a *final* unresolved base,
+ * never a marker-token ambiguity in the current data, so this stays a
+ * faithful mirror rather than a partial one that could silently drift from
+ * the real predicate.
+ */
+const SPRITE_ALIASES: Record<string, number> = {
+  'fureszfogu_%2520posvanyalligator': 65,
+  orult_banyasztorp: 26,
+  skivei_orvgyilkos: 151,
+  nyamvadt_varazlotanonc: 12,
+  unikornis: 83,
+  donna_brutalisa: 56,
+  minus: 132,
+};
+
+function fold(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+interface MonsterEntry { id: number; name: string; image: string }
+const byId = new Map<number, MonsterEntry>((monsters as MonsterEntry[]).map((m) => [m.id, m]));
+const byBase = new Map<string, MonsterEntry>();
+const byName = new Map<string, MonsterEntry>();
+for (const m of monsters as MonsterEntry[]) {
+  const base = m.image.replace(/^.*\//, '').replace(/\.[a-z]+$/i, '');
+  if (base && !byBase.has(base)) byBase.set(base, m);
+  const name = fold(m.name);
+  if (name && !byName.has(name)) byName.set(name, m);
+}
+
+function resolveMonster(base: string): MonsterEntry | null {
+  return byBase.get(base)
+    ?? byBase.get(`${base}_k`)
+    ?? byName.get(fold(base))
+    ?? byId.get(SPRITE_ALIASES[base])
+    ?? null;
+}
+
+const isMonster = (name: string): boolean => resolveMonster(name) !== null;
 
 describe('static/db/tavern-quests.json', () => {
   it('holds all 37 tavern quests with unique slug ids and titles', () => {
@@ -70,6 +116,24 @@ describe('static/db/tavern-quests.json', () => {
     for (const c of cells) {
       if (c.question) expect(c.hasQuestion).toBe(true);
     }
+  });
+
+  // Mirrors questData.test.ts's regression guard for task 18: `hasQuestion`
+  // must track the image, not `question !== null`. Aggregate totals alone
+  // (the test above) cannot catch a marker/parse mismatch that cancels out
+  // in the count — e.g. one cell losing its marker while another gains a
+  // spurious one — so this recomputes the image-derived fact per cell.
+  it('recomputes hasQuestion from rawImage for every cell and finds no mismatch', () => {
+    const mismatches: string[] = [];
+    for (const q of quests) {
+      for (const c of q.cells) {
+        const imageSaysQuestion = parseTavernImage(c.rawImage, isMonster).question as boolean;
+        if (imageSaysQuestion !== c.hasQuestion) {
+          mismatches.push(`${q.id} cell ${c.row},${c.col}: rawImage="${c.rawImage}"`);
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
   });
 
   // Tavern answers have no outcomes anywhere in the source; if a future
