@@ -118,27 +118,27 @@ describe('quest routing', () => {
     await screen.findByText('12. küldetés');
   });
 
-  // QuestView isn't set-aware yet (task 7 wires that up), so a tavern route
-  // can't render the tavern quest itself here — the only thing this task can
-  // prove is that the widened grammar accepts the slug and lands on the
-  // quests tab, rather than failing to parse and falling back to the default
-  // (weapons) tab.
-  it('accepts #quests/tavern/GOMB and keeps the quests tab active', async () => {
+  it('accepts #quests/tavern/GOMB and renders the tavern quest', async () => {
     location.hash = '#quests/tavern/GOMB';
     render(<DatabaseApp loader={stubLoader} />);
     expect(await screen.findByText('Küldetések')).toBeTruthy();
     expect(screen.getByText('Küldetések').className).toContain('active');
     expect(screen.getByText('Fegyverek').className).not.toContain('active');
+    // QuestView is set-aware as of task 7 — pin the actual rendered tavern
+    // quest by its title (its header, rendered bare rather than
+    // `<id>. küldetés`, since tavern quests aren't numbered).
+    expect(await screen.findByRole('heading', { name: 'GÖMB' })).toBeTruthy();
   });
 
   // The important case: a slug carrying dots and mixed case, which the old
   // `-?\d+` grammar rejected outright.
-  it('accepts a slug containing dots and mixed case', async () => {
+  it('accepts a slug containing dots and mixed case and renders that tavern quest', async () => {
     location.hash = '#quests/tavern/GY.I.K.';
     render(<DatabaseApp loader={stubLoader} />);
     expect(await screen.findByText('Küldetések')).toBeTruthy();
     expect(screen.getByText('Küldetések').className).toContain('active');
     expect(screen.getByText('Fegyverek').className).not.toContain('active');
+    expect(await screen.findByRole('heading', { name: 'GY.I.K.' })).toBeTruthy();
   });
 
   // Ruling: a null/empty quest id must round-trip through a bare

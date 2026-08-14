@@ -322,12 +322,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
           questSet={route.set}
           questId={route.quest}
           prefStore={prefStore}
-          // QuestView still only manages the royal set (task 7 makes it
-          // set-aware); every chip it can click is a royal quest id, so the
-          // set segment is fixed here rather than threaded from `route.set`,
-          // which may be stale (e.g. left over from a `#quests/tavern/...`
-          // deep link) or null (a bare `#quests` tab switch).
-          onSelectQuest={(id) => navigate('quests', 'royal', id)}
+          onSelectQuest={(set, id) => navigate('quests', set, id)}
           onJumpToMonster={(id) => navigate('monsters', String(id))}
         />
       ) : (

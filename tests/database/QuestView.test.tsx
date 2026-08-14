@@ -5,7 +5,7 @@ import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
-import { LEGACY_QUEST_SELECTED_PREF_KEY } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
 
 /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
 function makePrefStore(initial: Record<string, string> = {}): PrefStore {
@@ -44,6 +44,17 @@ const quests: Quest[] = [
   },
 ];
 
+const tavernQuests: Quest[] = [
+  {
+    id: 'GOMB', set: 'tavern', title: 'GÖMB', description: 'Egy gömbölyű terem', reward: '5 db réz', rows: 1, cols: 1,
+    cells: [cell({})],
+  },
+  {
+    id: 'MASIK', set: 'tavern', title: 'MÁSIK', description: 'Egy másik terem', reward: '5 db réz', rows: 1, cols: 1,
+    cells: [cell({})],
+  },
+];
+
 function makeLoader(): DataLoader {
   return {
     loadWeapons: async () => [], loadArmors: async () => [], loadItems: async () => [],
@@ -52,7 +63,7 @@ function makeLoader(): DataLoader {
     loadItemShops: async () => ({ shops: [] }),
     loadWeaponShops: async () => ({ shops: [] }),
     loadQuests: async () => quests,
-    loadTavernQuests: async () => [],
+    loadTavernQuests: async () => tavernQuests,
   };
 }
 
@@ -61,21 +72,21 @@ describe('QuestView', () => {
   // header — so these assertions use findAllByText rather than the
   // single-match variant.
   it('lists the quests and shows the selected one', async () => {
-    render(<QuestView loader={makeLoader()} questId="1"
+    render(<QuestView loader={makeLoader()} questSet={null} questId="1"
                       onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
     expect((await screen.findAllByText(/Gründen borospincéje/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/20 db ezüst/)).toBeTruthy();
   });
 
   it('defaults to the first quest when none is routed', async () => {
-    render(<QuestView loader={makeLoader()} questId={null}
+    render(<QuestView loader={makeLoader()} questSet={null} questId={null}
                       onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
     expect(await screen.findByText('1. küldetés')).toBeTruthy();
   });
 
   it('renders a numbered chip per quest, with the active one marked', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
@@ -92,17 +103,17 @@ describe('QuestView', () => {
   it('reports the picked quest when a chip is clicked', async () => {
     const onSelectQuest = vi.fn();
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                       onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />);
     await screen.findAllByText(/Gründen borospincéje/);
     const chips = container.querySelectorAll('.quest-chip');
     fireEvent.click(chips[1]);
-    expect(onSelectQuest).toHaveBeenCalledWith('2');
+    expect(onSelectQuest).toHaveBeenCalledWith('royal', '2');
   });
 
   it('highlights the key cell when a door is hovered', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
@@ -119,7 +130,7 @@ describe('QuestView', () => {
   // leaving tabIndex/role intact would otherwise slip through unnoticed.
   it('highlights the key cell when a door is focused', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
@@ -132,7 +143,7 @@ describe('QuestView', () => {
 
   it('highlights the key cell when a door is clicked, without selecting the cell underneath', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
@@ -148,7 +159,7 @@ describe('QuestView', () => {
 
   it('marks a key badge with its lock type, for the door↔key colour association', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findAllByText(/Gründen borospincéje/);
@@ -159,14 +170,14 @@ describe('QuestView', () => {
 
   it('shows the szel caption only for a quest that actually has one', async () => {
     const { container, rerender } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findByText('1. küldetés');
     expect(container.querySelector('.quest-szel-note')).toBeNull();
 
     rerender(
-      <QuestView loader={makeLoader()} questId="3"
+      <QuestView loader={makeLoader()} questSet={null} questId="3"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findByText('3. küldetés');
@@ -177,7 +188,7 @@ describe('QuestView', () => {
     it('initialises the zoom from a supplied PrefStore', async () => {
       const prefStore = makePrefStore({ 'lc-quest-tile-size': '72' });
       render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -187,7 +198,7 @@ describe('QuestView', () => {
     it('writes the new zoom to the store when it is changed', async () => {
       const prefStore = makePrefStore();
       render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -198,7 +209,7 @@ describe('QuestView', () => {
     it('survives an unmount/remount through the same store (the actual round trip)', async () => {
       const prefStore = makePrefStore();
       const { unmount } = render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -206,7 +217,7 @@ describe('QuestView', () => {
       unmount();
 
       render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const selectAfterRemount = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -218,7 +229,7 @@ describe('QuestView', () => {
       // hand-edited one) must not hand the grid an unusable tile size.
       const prefStore = makePrefStore({ 'lc-quest-tile-size': '999' });
       render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -227,7 +238,7 @@ describe('QuestView', () => {
 
     it('works with no prefStore at all, defaulting the zoom as before', async () => {
       render(
-        <QuestView loader={makeLoader()} questId="1"
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
                    onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
       );
       const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
@@ -237,118 +248,93 @@ describe('QuestView', () => {
     });
   });
 
-  describe('remembered selection', () => {
-    it('restores the stored quest when questId is null (tab switch / bare route)', async () => {
+  describe('quest set switcher', () => {
+    it('renders both set buttons with the royal set active by default', async () => {
+      render(<QuestView loader={makeLoader()} questSet={null} questId={null}
+        onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      expect((await screen.findByRole('button', { name: 'Királyi' })).getAttribute('aria-pressed')).toBe('true');
+      expect(screen.getByRole('button', { name: 'Kocsmai' }).getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('loads the tavern set and shows its titles as chips', async () => {
+      render(<QuestView loader={makeLoader()} questSet="tavern" questId={null}
+        onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      expect(await screen.findByRole('button', { name: 'GÖMB' })).toBeTruthy();
+    });
+
+    it('selects the first quest of the set when switching', async () => {
+      const onSelectQuest = vi.fn();
+      render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Kocsmai' }));
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('tavern', 'GOMB'));
+    });
+
+    it('renders the tavern header from the title, not as a numbered quest', async () => {
+      render(<QuestView loader={makeLoader()} questSet="tavern" questId="GOMB"
+        onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      expect(await screen.findByRole('heading', { name: 'GÖMB' })).toBeTruthy();
+    });
+  });
+
+  describe('per-set persistence', () => {
+    // The whole reason the keys are per-set: the in-game overlay remounts on
+    // every page load, and coming back to royal must not dump you on quest 1.
+    it('remembers a separate selection for each set', async () => {
+      const prefStore = makePrefStore({});
+      const { rerender } = render(<QuestView loader={makeLoader()} questSet="royal" questId="3"
+        prefStore={prefStore} onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(prefStore.read(questSelectedKey('royal'))).toBe('3'));
+
+      rerender(<QuestView loader={makeLoader()} questSet="tavern" questId="GOMB"
+        prefStore={prefStore} onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(prefStore.read(questSelectedKey('tavern'))).toBe('GOMB'));
+      expect(prefStore.read(questSelectedKey('royal'))).toBe('3');
+    });
+
+    it('records which set was last shown', async () => {
+      const prefStore = makePrefStore({});
+      render(<QuestView loader={makeLoader()} questSet="tavern" questId="GOMB"
+        prefStore={prefStore} onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(prefStore.read(QUEST_SET_PREF_KEY)).toBe('tavern'));
+    });
+
+    it('restores both the set and its selection on a bare route', async () => {
+      const onSelectQuest = vi.fn();
+      const prefStore = makePrefStore({
+        [QUEST_SET_PREF_KEY]: 'tavern',
+        [questSelectedKey('tavern')]: 'GOMB',
+      });
+      render(<QuestView loader={makeLoader()} questSet={null} questId={null}
+        prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('tavern', 'GOMB'));
+    });
+
+    // Falls back within the stored set, which is exactly what a selection key
+    // alone could not express.
+    it('falls back to the first quest of the stored set when the id is stale', async () => {
+      const onSelectQuest = vi.fn();
+      const prefStore = makePrefStore({
+        [QUEST_SET_PREF_KEY]: 'tavern',
+        [questSelectedKey('tavern')]: 'DELETED',
+      });
+      render(<QuestView loader={makeLoader()} questSet={null} questId={null}
+        prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('tavern', 'GOMB'));
+    });
+
+    it('seeds the royal selection from the pre-switcher key', async () => {
+      const onSelectQuest = vi.fn();
       const prefStore = makePrefStore({ [LEGACY_QUEST_SELECTED_PREF_KEY]: '2' });
-      const onSelectQuest = vi.fn();
-      render(
-        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('2'));
-    });
-
-    it('writes the quest id to the store whenever the selected quest changes', async () => {
-      const prefStore = makePrefStore();
-      const { rerender } = render(
-        <QuestView loader={makeLoader()} questId="1" prefStore={prefStore}
-                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
-      );
-      await waitFor(() => expect(prefStore.read(LEGACY_QUEST_SELECTED_PREF_KEY)).toBe('1'));
-
-      // Simulates the parent navigating after a chip click — QuestView itself
-      // doesn't own the selection, so the prop change stands in for that.
-      rerender(
-        <QuestView loader={makeLoader()} questId="2" prefStore={prefStore}
-                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
-      );
-      await waitFor(() => expect(prefStore.read(LEGACY_QUEST_SELECTED_PREF_KEY)).toBe('2'));
-    });
-
-    it('falls back to the first quest when the stored id does not exist in the data', async () => {
-      const prefStore = makePrefStore({ [LEGACY_QUEST_SELECTED_PREF_KEY]: '999' });
-      const onSelectQuest = vi.fn();
-      render(
-        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      expect(await screen.findByText('1. küldetés')).toBeTruthy();
-      // A stale id must never leave the tab broken, but it also must not be
-      // treated as a valid selection to restore.
-      expect(onSelectQuest).not.toHaveBeenCalled();
-    });
-
-    it('an explicit questId wins over the stored value and overwrites it', async () => {
-      const prefStore = makePrefStore({ [LEGACY_QUEST_SELECTED_PREF_KEY]: '2' });
-      const onSelectQuest = vi.fn();
-      render(
-        <QuestView loader={makeLoader()} questId="3" prefStore={prefStore}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      expect(await screen.findByText('3. küldetés')).toBeTruthy();
-      // The store is a fallback, never an override, for a non-null questId.
-      expect(onSelectQuest).not.toHaveBeenCalled();
-      await waitFor(() => expect(prefStore.read(LEGACY_QUEST_SELECTED_PREF_KEY)).toBe('3'));
-    });
-
-    it('works with no prefStore at all', async () => {
-      const onSelectQuest = vi.fn();
-      render(
-        <QuestView loader={makeLoader()} questId={null}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      expect(await screen.findByText('1. küldetés')).toBeTruthy();
-      expect(onSelectQuest).not.toHaveBeenCalled();
-    });
-
-    // The actual round trip: not just that write() was called, but that a
-    // fresh mount reading from the same store comes back with the quest that
-    // was selected before the unmount — mirrors the tile-size round trip
-    // above, for the same reason: only this proves persistence actually works.
-    it('survives an unmount/remount through the same store (the actual round trip)', async () => {
-      const prefStore = makePrefStore();
-      const { unmount } = render(
-        <QuestView loader={makeLoader()} questId="3" prefStore={prefStore}
-                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
-      );
-      await screen.findByText('3. küldetés');
-      await waitFor(() => expect(prefStore.read(LEGACY_QUEST_SELECTED_PREF_KEY)).toBe('3'));
-      unmount();
-
-      const onSelectQuest = vi.fn();
-      render(
-        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('3'));
-    });
-
-    // Guards against the render-loop hazard called out in task 19: restoring
-    // must fire onSelectQuest exactly once, even across an unrelated parent
-    // re-render (a fresh onSelectQuest closure, same null questId — exactly
-    // what DatabaseApp's inline arrow function produces on every render).
-    it('calls onSelectQuest exactly once when restoring, even across an unrelated re-render', async () => {
-      const prefStore = makePrefStore({ [LEGACY_QUEST_SELECTED_PREF_KEY]: '2' });
-      const onSelectQuest = vi.fn();
-      const { rerender } = render(
-        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
-                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
-      );
-      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledTimes(1));
-
-      const onSelectQuestAfterRerender = vi.fn();
-      rerender(
-        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
-                   onSelectQuest={onSelectQuestAfterRerender} onJumpToMonster={() => {}} />,
-      );
-      expect(onSelectQuestAfterRerender).not.toHaveBeenCalled();
-      expect(onSelectQuest).toHaveBeenCalledTimes(1);
+      render(<QuestView loader={makeLoader()} questSet={null} questId={null}
+        prefStore={prefStore} onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('royal', '2'));
     });
   });
 
   it('summarises the quest contents', async () => {
     const { container } = render(
-      <QuestView loader={makeLoader()} questId="1"
+      <QuestView loader={makeLoader()} questSet={null} questId="1"
                  onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
     );
     await screen.findByText('1. küldetés');
