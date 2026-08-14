@@ -1,10 +1,10 @@
 import { h } from 'preact';
 import { useMemo } from 'preact/hooks';
-import { DatabaseApp, type RouteStore } from '@/database/DatabaseApp';
+import { DatabaseApp, type PrefStore, type RouteStore } from '@/database/DatabaseApp';
 import { createDataLoader, gmSource } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DockedPanel } from '@/components/DockedPanel';
-import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute } from '@/utils/config';
+import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute, getPref, setPref } from '@/utils/config';
 
 // Resolved once in @/shared/publicUrl and shared with both boot modules. Note
 // this is the *userscript* data URL (`/static/db`); the standalone database app
@@ -18,6 +18,18 @@ export interface DatabaseOverlayProps {
   initialItemId?: number;
   /** Entity name to open on (weapon/armor/item) — e.g. a Home page inventory item. */
   initialItemName?: string;
+  /**
+   * Tab to open on (currently only 'quests') — the desktop dock's dungeon-only
+   * "Küldetések" button. See DatabaseApp's `initialTab` for the precedence
+   * rules against `initialItemId`/`initialItemName`.
+   */
+  initialTab?: 'quests';
+  /**
+   * Nonce accompanying `initialTab`, bumped by the caller on every press —
+   * see DatabaseApp's `initialTabKey` for why `initialTab` alone can't drive
+   * a repeated navigation.
+   */
+  initialTabKey?: number;
   /** Offer the minimise control (desktop only — see DockedPanel). */
   minimizable?: boolean;
 }
@@ -33,6 +45,8 @@ export function DatabaseOverlay({
   onClose,
   initialItemId,
   initialItemName,
+  initialTab,
+  initialTabKey,
   minimizable = false,
 }: DatabaseOverlayProps) {
   // The loader must not be rebuilt on every render, but it also must not be
@@ -47,14 +61,21 @@ export function DatabaseOverlay({
   // the navigation itself overwrites the stored route.
   const routeStore = useMemo<RouteStore>(() => ({ read: getDbRoute, write: setDbRoute }), []);
 
+  // Same idea, generalised: any hosted view (currently just the quest maze's
+  // zoom) can remember a value under its own key, surviving the same reload.
+  const prefStore = useMemo<PrefStore>(() => ({ read: getPref, write: setPref }), []);
+
   return (
     <DockedPanel title="Adatbázis" open={open} onClose={onClose} storageKey={DB_MINIMIZED_KEY} minimizable={minimizable}>
       <DatabaseApp
         loader={loader}
         routing="memory"
         routeStore={routeStore}
+        prefStore={prefStore}
         initialItemId={initialItemId}
         initialItemName={initialItemName}
+        initialTab={initialTab}
+        initialTabKey={initialTabKey}
       />
     </DockedPanel>
   );

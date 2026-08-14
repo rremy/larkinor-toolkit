@@ -6,6 +6,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "strict": true,
+    "allowJs": true,
+    "checkJs": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "lib": ["ES2020", "DOM"],
@@ -13,6 +15,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "tests"],
+  "include": ["src", "tests", "scripts"],
   "exclude": ["node_modules", "dist"]
 }

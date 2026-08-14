@@ -108,3 +108,80 @@ export interface ItemShop {
 export interface ShopData {
   shops: ItemShop[];
 }
+
+/** The eight lock types a quest door can carry. */
+export type LockType =
+  | 'vas' | 'rez' | 'bronz' | 'ezust'
+  | 'arany' | 'platina' | 'tolvaj' | 'cso';
+
+export type Side = 'N' | 'E' | 'S' | 'W';
+
+/**
+ * One side of a quest maze cell. `szel` is a distinct kind on purpose: the
+ * source site declares the class but ships no CSS rule for it. Investigation
+ * (see the design doc's "Resolved during implementation" section) found every one
+ * of its 182 occurrences borders either off-grid space or an empty `nop`
+ * filler cell, never a real navigable neighbour — so it marks the edge of the
+ * drawn (often irregular) maze shape inside its rectangular grid, not a
+ * traversable barrier. It stays a distinct kind rather than collapsing into
+ * `wall` so the UI can label it accurately.
+ */
+export type Edge =
+  | { kind: 'open' }
+  | { kind: 'wall' }
+  | { kind: 'door'; lock: LockType }
+  | { kind: 'szel' };
+
+export interface QuestChoice {
+  /** The number the source prints in parentheses, e.g. `(2)`. */
+  index: number;
+  text: string;
+  outcome: string;
+}
+
+export interface QuestQuestion {
+  prompt: string;
+  choices: QuestChoice[];
+}
+
+export interface QuestCell {
+  row: number;
+  col: number;
+  edges: Record<Side, Edge>;
+  /** Resolved against monsters.json; null when the cell holds no monster. */
+  monsterId: number | null;
+  /** Raw sprite base, kept when resolution fails so the UI can still label it. */
+  monsterName: string | null;
+  boss: boolean;
+  /** The lock whose key this cell yields. */
+  key: LockType | null;
+  questItem: boolean;
+  portal: 'entrance' | 'exit' | null;
+  trap: boolean;
+  death: boolean;
+  narration: string;
+  drops: string | null;
+  /**
+   * Whether the source image marks this tile as a question, independent of
+   * `question` below. The title text's Q&A block frequently fails to parse
+   * (prose-only question, missing `KÉRDÉS:` token, ...), and when that
+   * happens the tile must still show a question marker — the marker comes
+   * from the artwork, not from parse success. Never derive this from
+   * `question !== null`; that conflated the two concerns and is the root
+   * cause of quest cells silently losing their question marker.
+   */
+  hasQuestion: boolean;
+  /** Null when the title could not be split into a prompt and choices. */
+  question: QuestQuestion | null;
+  /** Provenance, for diagnosing source drift. */
+  rawImage: string;
+}
+
+export interface Quest {
+  id: number;
+  description: string;
+  reward: string;
+  rows: number;
+  cols: number;
+  cells: QuestCell[];
+}

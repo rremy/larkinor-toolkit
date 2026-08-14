@@ -31,7 +31,8 @@ is a locked door, one of eight lock types:
 
 A ninth suffix, `_szel`, appears 182 times across quests 39, 40, 41 and 44 but
 has **no rule in the source site's CSS**, so it renders as nothing there. Its
-intent is undetermined — see *Open questions*.
+intent was undetermined at design time — resolved during implementation, see
+*Resolved during implementation* below.
 
 One malformed token exists: a bare `_cso` with no side prefix. The parser
 tolerates it rather than aborting.
@@ -45,14 +46,17 @@ tolerates it rather than aborting.
 - special bases: `nop` (empty), `kerdes` (question), `csapda` (trap),
   `halal` (death), `bejarat` (entrance)
 
-**Titles** hold the narration, with drops appended after ` -- `, and 143 of
-them embed a choice point in the form
-`KÉRDÉS: … VÁLASZOK: (1) … (2) …`.
+**Titles** hold the narration, with drops appended after ` -- `, and 180 of
+them are image-marked question tiles embedding a choice point in the form
+`KÉRDÉS: … VÁLASZOK: (1) … (2) …` (179 of the 180 split cleanly; see *Risks*).
 
-**Monster resolution rate: 327 of 328 distinct sprite bases** match
-`monsters.json` image basenames exactly. The single miss is
-`tolvajkepzoboss_kerdes`. Click-through to monster details is therefore a
-direct lookup, not a fuzzy match.
+**Monster resolution rate: 328 of 328 distinct sprite bases** match
+`monsters.json` image basenames, zero exceptions. The one that looks like a
+miss at first glance, `tolvajkepzoboss_kerdes`, only resolves because the
+image-grammar parser strips a trailing `_kerdes` (question overlay) before
+lookup, leaving `tolvajkepzoboss`, which then matches via the `_k` suffix
+fallback. Click-through to monster details is therefore a direct lookup, not
+a fuzzy match.
 
 **Two structural exceptions**, both verified:
 
@@ -75,11 +79,13 @@ without putting a third-party fan site in the runtime path of every page view.
 
 The scraper **fails loudly rather than degrading silently**. It aborts the
 write on an unknown class token, a zero-cell quest, a missing description or
-reward, or **any unresolved sprite base other than the single known miss,
-`tolvajkepzoboss_kerdes`**, which is allow-listed by name. A percentage
-threshold would let new drift hide inside the noise floor; an explicit
-allow-list cannot. The scraper prints every unresolved base it sees, so source
-drift surfaces at scrape time rather than as a broken page.
+reward, or **any unresolved sprite base at all** — `scripts/quests/scrape.mjs`
+throws unconditionally if `unresolved.size > 0`, with no allow-list and no
+percentage threshold that could let new drift hide inside a noise floor. All
+328 distinct sprite bases across the 45 quests resolve today, so this check
+has never had to tolerate an exception; the scraper prints every unresolved
+base it sees, so source drift surfaces at scrape time rather than as a broken
+page.
 
 ## Model
 
@@ -126,6 +132,14 @@ export interface QuestCell {
   death: boolean;
   narration: string;
   drops: string | null;
+  /**
+   * Image-derived: true whenever the cell's sprite is a question tile,
+   * independent of whether `question` below parsed. This is the ground
+   * truth the UI's question marker is driven from — never conflate it with
+   * `question !== null` (parse success), or a parse miss silently makes the
+   * marker disappear too.
+   */
+  hasQuestion: boolean;
   question: QuestQuestion | null;
   /** Provenance, for diagnosing source drift. */
   rawImage: string;
@@ -157,7 +171,7 @@ Order matters; these are the steps a naive parser gets wrong.
 4. **Monster lookup**: try the base, then base + `_k`, against `monsters.json`
    image basenames.
 5. **Question before drops.** Answer text contains ` -- ` as well, so splitting
-   on the drops separator first corrupts the question in every one of the 143
+   on the drops separator first corrupts the question in every one of the 180
    cells that have one.
 
 Anything the question parser cannot split cleanly falls back to raw narration.
@@ -171,11 +185,12 @@ New folder `src/database/quests/`, laid out like the existing `map/`:
 
 ```
 src/database/quests/
-├── QuestView.tsx          # picker + grid + detail
+├── QuestView.tsx          # number strip + grid + detail
 ├── QuestGrid.tsx          # the maze
 ├── QuestCellDetail.tsx    # side panel for the selected cell
 ├── QuestQuestionCard.tsx  # choice-point rendering
-└── questMeta.ts           # lock labels, colors, badge metadata
+├── QuestKeyLegend.tsx     # permanent lock → key legend
+└── questMeta.ts           # lock labels, colors, badge metadata, tile sizes
 ```
 
 ### The grid is CSS grid and divs, never a `<table>`
@@ -185,8 +200,16 @@ Deliberate. The game page runs in quirks mode, where tables refuse to inherit
 unreadable. Rendering the maze as divs avoids that whole class of bug instead
 of patching around it.
 
-Tile size is a CSS variable, so a zoom control plus a scroll container handles
-17×15 quests inside the ~720px docked in-game overlay and on mobile.
+Tile size is an inline `grid-template-columns` px value plus an inline
+`font-size` on the big icon (both computed from the zoom control's `tileSize`
+in `QuestGrid.tsx`), not a CSS custom property. A CSS container-query unit for
+the icon would need `container-type` on `.quest-cell`, which gives every cell
+its own stacking context and scopes `.quest-edge`'s `z-index` inside it — the
+shared wall lines straddling two cells rely on `.quest-cell` staying
+`position: relative` with no stacking context of its own, so a later cell's
+background can't paint over the earlier cell's edge. The zoom control plus a
+scroll container still handles 17×15 quests inside the ~720px docked in-game
+overlay and on mobile.
 
 A cell draws its four borders from `edges`: walls in the theme's stone color,
 doors in per-lock colors added to `theme.css` — the game's key colors, tuned
@@ -220,8 +243,10 @@ raw narration.
 ### Supporting UI
 
 A quest header carrying description, reward, and counts (monsters, keys,
-questions, traps). The quest picker searches via the existing
-accent-insensitive `matchesSearch` from `shared/text.ts`.
+questions, traps). The quest picker is a number strip (one chip per quest id,
+1–45) rather than a search box — with only 45 numeric ids, a search input
+buys nothing a chip row doesn't already give at a glance, so `matchesSearch`
+is not used anywhere under `src/database/quests/`.
 
 Available on both surfaces: the standalone site and the in-game
 `DatabaseOverlay` both render `DatabaseApp`, so the tab appears in both. The
@@ -259,25 +284,99 @@ fails the build rather than shipping.
 
 ## Risks
 
-**The question parser is lossy.** 143 questions with inconsistent separators;
-some will not split cleanly. Mitigated by the raw-text fallback and by having
-the scraper report the clean-parse rate, so the real number is known rather
-than assumed.
+**The question parser is lossy.** 180 question tiles with inconsistent
+separators; some will not split cleanly. Mitigated by the raw-text fallback
+and by having the scraper report the clean-parse rate — currently 179 of 180,
+the one holdout being quest 44 cell (10,1) — so the real number is known
+rather than assumed.
 
 **Third-party drift.** Mitigated by the committed snapshot plus a validating
 scraper: drift becomes a scrape-time error, never a broken page for users.
 
+**A shared cell boundary is painted twice, and the two paintings can
+disagree.** `QuestGrid` renders each cell's own four edges; `.quest-cell` has
+no `z-index`, so on a shared boundary the two `.quest-edge` divs stack in
+document order. Checked directly against `quests.json`, counting each
+physical boundary once: **19 boundaries across six quests (11, 17, 39, 40, 44,
+45)** declare a different edge on each side. Eight of those 19 sit next to an
+empty `nop` filler cell on one side — cosmetically visible but never actually
+reachable from that side — so the stricter "two real, enterable rooms
+disagree about their shared wall" count is **11, across five quests (11, 17,
+39, 40, 45)**. Examples of the strict kind: quest 17 row 6/7 col 5 (`wall`
+vs. a `vas` door), quest 40 row 6 col 3/4 (`platina` vs. `tolvaj` doors), and
+quest 45 row 5/6 col 0 (`wall` vs. a `vas` door). Visually confirmed in the
+browser for the quest 17 and quest 40 cases: the later cell in DOM order
+fully occludes the earlier one at that boundary — a clean single-coloured
+line, not a visible glitch, but the losing side's declaration is silently
+discarded. This is a fact about the source data's own internal inconsistency
+(both cells of the pair being asked to describe the same physical wall
+differently), not a
+parser bug, and is not fixed here — flagging it so a future reader who spots
+an oddly-coloured door isn't chasing a rendering bug that isn't there.
+
 No new runtime dependency — `MonsterCard` already loads sprites from
 `l2.larkinor.hu`.
 
-## Deferred to implementation
+## Resolved during implementation
 
-**`_szel` semantics.** Undefined in the source site's CSS, so its intent cannot
-be read off the markup. During implementation, read the narration of the cells
-adjacent to these edges in quests 39, 40, 41 and 44 to infer meaning. If it
-remains ambiguous, render it as a distinct neutral passage with a neutral label
-rather than guessing it into a wall or a door — the model already keeps it as
-its own `Edge` kind precisely so this decision stays reversible.
+**`_szel` semantics — resolved, "edge/margin," high confidence.** Undefined in
+the source site's CSS, so intent could not be read off the markup directly.
+Two independent lines of evidence settle it:
+
+1. **Structural (decisive).** For every one of the 182 `_szel` occurrences
+   across quests 39, 40, 41 and 44, the cell on the *other* side of the edge is
+   either off the quest's declared `rows × cols` grid entirely, or is an empty
+   `nop` filler cell. Zero occurrences border a real, navigable neighbouring
+   cell. `_szel` therefore never separates two rooms — it traces the outline of
+   an irregularly-shaped playable area drawn inside a rectangular HTML table,
+   marking where the drawing stops rather than gating a passage. That reading
+   matches `szél` as "edge/margin," not "wind": a wind-barrier mechanic between
+   two traversable spaces would be expected to show up at least sometimes
+   between two real cells, and it never does.
+2. **Narrative (corroborating, not decisive on its own).** No `_szel`-facing
+   direction is ever the one described in wind terms. There is exactly one
+   genuine wind-domain word in the narration of any cell adjacent to a `_szel`
+   edge — quest 44, cell (9,11): *"Észak felöl olyan bűzt hord hátán holmi
+   belső légáramlat…"* ("from the north, some inner **draught** carries such a
+   stench…"). But that cell's `_szel` edge is its **east** side; the sentence
+   names the **north** side, which is plain `open`. So even in the one case
+   where wind vocabulary appears at all, it is not attached to the `_szel`
+   edge itself. Beyond that single incidental hit, the narration contains no
+   other wind/gust/draught vocabulary (`szél` as "wind", `huzat`, `fuvallat`,
+   `szellő`). The word `szél` does appear a couple of other times incidentally
+   in this data set's prose, and those uses are the "edge/margin" sense
+   (`"az út szélén álló szomorú fűzek"` — willows at the *edge* of the road;
+   `"a szád szélét"` — the *edge* of your mouth), never "wind." This is a
+   small, incidental sample, not proof by itself, but on balance it points the
+   same direction as the structural evidence rather than against it.
+
+Queries run (`static/db/quests.json`, via `node -e`):
+
+```js
+// 1. Every _szel edge borders either off-grid space or a nop filler cell,
+//    never a real neighbouring cell (182/182 across quests 39, 40, 41, 44):
+//    outOfGrid=22 nopNeighbor=40 realNeighbor=0   (quest 39)
+//    outOfGrid=32 nopNeighbor=0  realNeighbor=0   (quest 40)
+//    outOfGrid=42 nopNeighbor=0  realNeighbor=0   (quest 41)
+//    outOfGrid=46 nopNeighbor=0  realNeighbor=0   (quest 44)
+
+// 2. Narration adjacent to _szel edges: one genuine wind/gust/draught hit out
+//    of 147 unique adjacent cells (quest 44, cell 9,11 — "légáramlat", but
+//    naming the cell's *open* north side, not its *szel* east side); the
+//    other "szél"-word matches are incidental uses meaning "edge"
+//    ("út szélén", "szád szélét").
+```
+
+**Treatment applied.** `_szel` keeps its own distinct `Edge` kind and its own
+`--quest-szel` colour (unchanged) rather than being collapsed into `wall` —
+that distinction is still useful, since it now carries a specific, named
+meaning rather than an unknown one. What changed is the label: the edge's
+tooltip and a caption shown under the grid whenever a quest contains one now
+read **`labirintus széle`** ("edge of the maze") instead of the ambiguous
+fallback `különleges átjáró` ("special passage") that the fallback plan called
+for — a "passage" label would misrepresent a boundary that never actually
+leads anywhere. See `src/database/quests/questMeta.ts` (`SZEL_LABEL`,
+`hasSzelEdges`), `QuestGrid.tsx` and `QuestView.tsx`.
 
 ## Out of scope
 

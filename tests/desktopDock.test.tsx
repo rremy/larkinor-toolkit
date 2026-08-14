@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/preact';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
 import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
+import { USERSCRIPT_DATA_BASE_URL } from '../src/shared/publicUrl';
 
 function makeState(overrides: Partial<FreeMoveState> = {}): FreeMoveState {
   return {
@@ -208,6 +209,112 @@ describe('DesktopDock', () => {
       unmount();
       render(<DesktopDock doc={document} state={makeState()} db={null} />);
       expect(document.querySelector('.lc-db-overlay')).toBeNull();
+    });
+  });
+
+  describe('dungeon quests shortcut', () => {
+    // The loader caches quests.json/monsters.json under a fixed GM key in
+    // tests (no `?v=` tag), so clear it before stubbing a fresh response —
+    // otherwise a stale response cached by an earlier test could satisfy this
+    // block's own stub without the mock ever being called.
+    function clearQuestDataCache() {
+      const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
+      for (const file of ['quests.json', 'monsters.json']) {
+        GM_setValue(`${base}/${file}`, '');
+        GM_setValue(`${base}/${file}:v`, '');
+      }
+    }
+
+    function stubQuestData() {
+      clearQuestDataCache();
+      const stubQuest = {
+        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        cells: [{
+          row: 0, col: 0,
+          edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+          monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+          portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+          question: null, rawImage: '',
+        }],
+      };
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('quests.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+        } else if (opts.url.includes('monsters.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+    }
+
+    afterEach(() => {
+      vi.mocked(GM_xmlhttpRequest).mockReset();
+    });
+
+    it('offers no Küldetések button outside a dungeon', () => {
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(container.querySelector('.lc-dock-quests')).toBeNull();
+    });
+
+    it('offers a Küldetések button in a dungeon, with no other layout change', () => {
+      const { container } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} inDungeon />
+      );
+      expect(container.querySelector('.lc-dock-quests')).not.toBeNull();
+      // Everything else about the dock is unchanged: the plain Adatbázis
+      // button and config gear are still there, side by side with it.
+      expect(container.querySelector('.lc-dock-db')).not.toBeNull();
+      expect(container.querySelector('.lc-dock-config')).not.toBeNull();
+    });
+
+    it('opens the database overlay on the quests view, not merely the panel', async () => {
+      stubQuestData();
+      const { container } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} inDungeon />
+      );
+
+      fireEvent.click(container.querySelector('.lc-dock-quests')!);
+
+      // Assert on the rendered quest content, not just that the panel opened —
+      // a bug that opened the overlay on the wrong tab would still leave the
+      // panel visible.
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    });
+
+    it('re-navigates to quests on a second press, even after the overlay moved to another tab', async () => {
+      // Regression test: the button used to carry only the 'quests' literal,
+      // so a second press was a no-op state update once the overlay was
+      // already showing quests — DatabaseApp's landing effect never re-fired
+      // and the overlay stayed wherever the user had navigated to inside it.
+      stubQuestData();
+      const { container } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} inDungeon />
+      );
+
+      fireEvent.click(container.querySelector('.lc-dock-quests')!);
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+
+      const monstersTab = [...document.querySelectorAll('.lc-db .tab')]
+        .find((t) => t.textContent === 'Szörnyek') as HTMLElement;
+      fireEvent.click(monstersTab);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
+
+      fireEvent.click(container.querySelector('.lc-dock-quests')!);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Küldetések');
+    });
+
+    it('leaves the plain Adatbázis button opening on the stored route, unchanged', () => {
+      GM_setValue(DB_ROUTE_KEY, 'monsters');
+      const { container } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} inDungeon />
+      );
+
+      fireEvent.click(container.querySelector('.lc-dock-db')!);
+
+      expect(document.querySelector('.lc-db-overlay')).not.toBeNull();
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
     });
   });
 

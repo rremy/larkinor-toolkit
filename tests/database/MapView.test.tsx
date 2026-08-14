@@ -26,10 +26,14 @@ function makeLoader(): DataLoader {
   const weaponShops: ShopData = { shops: [{ cellId: '44', owner: 'Thorgard', itemCount: 0, items: [] }] };
   return {
     loadWeapons: async () => [], loadArmors: async () => [], loadItems: async () => [],
-    loadMonsters: async () => ({ byName: new Map(), getByName: () => undefined }),
+    loadMonsters: async () => ({
+      byName: new Map(), byId: new Map(),
+      getByName: () => undefined, getById: () => undefined,
+    }),
     loadMap: async () => map,
     loadItemShops: async () => itemShops,
     loadWeaponShops: async () => weaponShops,
+    loadQuests: async () => [],
   };
 }
 

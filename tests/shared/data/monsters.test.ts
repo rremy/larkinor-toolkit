@@ -29,4 +29,11 @@ describe('buildMonsterDatabase', () => {
     const db = buildMonsterDatabase(SAMPLE_MONSTERS);
     expect(db.getByName('hosszú nevű szörnyeteg király')?.id).toBe(99);
   });
+
+  it('indexes monsters by id as well as by name', () => {
+    const db = buildMonsterDatabase(SAMPLE_MONSTERS);
+    expect(db.byId.has(1)).toBe(true);
+    expect(db.getById(99)?.name).toBe('Hosszú nevű szörnyeteg király');
+    expect(db.getById(12345)).toBeUndefined();
+  });
 });

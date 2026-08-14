@@ -10,10 +10,23 @@ const stubLoader: DataLoader = {
   loadWeapons: () => Promise.resolve([]),
   loadArmors: () => Promise.resolve([]),
   loadItems: () => Promise.resolve([]),
-  loadMonsters: () => Promise.resolve({ byName: new Map(), getByName: () => undefined }),
+  loadMonsters: () => Promise.resolve({
+    byName: new Map(), byId: new Map(),
+    getByName: () => undefined, getById: () => undefined,
+  }),
   loadMap: () => Promise.resolve({} as never),
   loadItemShops: () => Promise.resolve({} as never),
   loadWeaponShops: () => Promise.resolve({} as never),
+  loadQuests: () => Promise.resolve([{
+    id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+    cells: [{
+      row: 0, col: 0,
+      edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+      monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+      portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+      question: null, rawImage: '',
+    }],
+  }]),
 };
 
 describe('DatabaseApp routing', () => {
@@ -45,5 +58,31 @@ describe('DatabaseApp routing', () => {
     fireEvent.click(screen.getByText('Vértek'));
     expect(screen.getByText('Vértek').className).toContain('active');
     expect(location.hash).toBe('#monsters/7');
+  });
+
+  it('renders the quest tab and routes to a quest', async () => {
+    location.hash = '#quests/1';
+    render(<DatabaseApp loader={stubLoader} />);
+    expect(await screen.findByText('Küldetések')).toBeTruthy();
+
+    // The tab label alone proves nothing — it renders unconditionally from
+    // TABS regardless of which branch the route body takes. Pin the actual
+    // QuestView render: its description text (which appears twice — once in
+    // the quest picker row, once in the header — so use findAllByText) and
+    // its grid wrapper, neither of which exists unless QuestView mounted.
+    expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    expect(document.querySelector('.quest-grid-wrap')).toBeTruthy();
+  });
+
+  it('threads an injected prefStore through to the quest view', async () => {
+    location.hash = '#quests/1';
+    const store: Record<string, string> = { 'lc-quest-tile-size': '72' };
+    const prefStore = {
+      read: (key: string) => store[key] ?? null,
+      write: (key: string, value: string) => { store[key] = value; },
+    };
+    render(<DatabaseApp loader={stubLoader} prefStore={prefStore} />);
+    const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
+    expect(select.value).toBe('72');
   });
 });
