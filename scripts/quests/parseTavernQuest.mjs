@@ -80,11 +80,11 @@ function consumeMarker(token, facts) {
   const t = token.toLowerCase();
   if (LOCK_SUFFIXES.includes(t)) { facts.key = t; return true; }
   if (ITEM_TOKENS.has(t)) { facts.questItem = true; return true; }
-  if (PORTAL_TOKENS.has(t)) { facts.portal = 'exit'; return true; }
+  if (PORTAL_TOKENS.has(t)) { facts.portal = facts.portal ?? 'exit'; return true; }
   if (t === 'kerdes') { facts.question = true; return true; }
   if (t === 'csapda') { facts.trap = true; return true; }
   if (t === 'halal') { facts.death = true; return true; }
-  if (t === 'bejarat') { facts.portal = facts.portal ?? 'entrance'; return true; }
+  if (t === 'bejarat') { facts.portal = 'entrance'; return true; }
   return false;
 }
 

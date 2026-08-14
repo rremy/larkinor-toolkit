@@ -100,6 +100,28 @@ describe('parseTavernImage', () => {
     expect(parseTavernImage(`x_elemei/${name}.jpg`)).toMatchObject({ base: null, empty: true });
   });
 
+  // `bejarat` is authoritative for the entrance portal, unlike the deferential
+  // PORTAL_TOKENS (`labikibe`/`kibe`/`labi`), which only set `exit` when no
+  // other marker already claimed `portal`. The bare marker alone must read as
+  // an entrance, not fall through as a plain scenery tile with no portal.
+  it('reads the bare bejarat marker as an entrance', () => {
+    expect(parseTavernImage('x_elemei/bejarat.jpg')).toMatchObject({ base: null, empty: true, portal: 'entrance' });
+  });
+
+  // The corpus's single most common marker tile (36 occurrences, one per
+  // quest): tokens are consumed left to right, so without `bejarat` being
+  // authoritative, the immediately-following `labikibe` would overwrite the
+  // entrance with `exit` and no maze would have a start.
+  it('reads bejarat_labikibe as the maze entrance, not an exit', () => {
+    expect(parseTavernImage('x_elemei/bejarat_labikibe.jpg')).toMatchObject({ base: null, empty: true, portal: 'entrance' });
+  });
+
+  // `kijarat` (exit) is scenery, not a marker token — pinned here alongside
+  // the two tests above so the entrance/exit fix can never silently swap them.
+  it('keeps kijarat_labikibe as an exit', () => {
+    expect(parseTavernImage('x_elemei/kijarat_labikibe.jpg')).toMatchObject({ base: null, empty: true, portal: 'exit' });
+  });
+
   it('flags a boss sprite', () => {
     expect(parseTavernImage('x_elemei/tolvajkepzoboss.jpg'))
       .toMatchObject({ base: 'tolvajkepzoboss', boss: true });
