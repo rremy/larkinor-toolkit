@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useMemo } from 'preact/hooks';
 import { DatabaseApp, type PrefStore, type RouteStore } from '@/database/DatabaseApp';
+import type { QuestSet } from '@/shared/data';
 import { createDataLoader, gmSource } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DockedPanel } from '@/components/DockedPanel';
@@ -30,6 +31,12 @@ export interface DatabaseOverlayProps {
    * a repeated navigation.
    */
   initialTabKey?: number;
+  /**
+   * Open the quests tab on one specific quest instead of the remembered one —
+   * see DatabaseApp's `initialQuest` for why the remembered selection cannot
+   * be relied on by a caller that has just written it.
+   */
+  initialQuest?: { set: QuestSet; id: string } | null;
   /** Offer the minimise control (desktop only — see DockedPanel). */
   minimizable?: boolean;
 }
@@ -47,6 +54,7 @@ export function DatabaseOverlay({
   initialItemName,
   initialTab,
   initialTabKey,
+  initialQuest,
   minimizable = false,
 }: DatabaseOverlayProps) {
   // The loader must not be rebuilt on every render, but it also must not be
@@ -76,6 +84,7 @@ export function DatabaseOverlay({
         initialItemName={initialItemName}
         initialTab={initialTab}
         initialTabKey={initialTabKey}
+        initialQuest={initialQuest}
       />
     </DockedPanel>
   );

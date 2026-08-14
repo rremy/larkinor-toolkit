@@ -237,10 +237,11 @@ export function bootDesktop(doc: Document): void {
 
   let db: MonsterDatabase | null = null;
   let openQuestsSignal = 0;
+  let openQuestTarget: { set: 'tavern'; id: string } | null = null;
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
@@ -256,6 +257,11 @@ export function bootDesktop(doc: Document): void {
     activateQuestOffer(extractNarration(doc), createDataLoader(gmSource(), DATA_BASE_URL), setPref)
       .then((match) => {
         if (!match) return;
+        // Route to the quest explicitly rather than leaning on the
+        // preferences just written: QuestView reads the stored set once at
+        // mount, so an overlay already open when this resolves would never
+        // see them.
+        openQuestTarget = { set: 'tavern', id: match.quest.id };
         renderQuestOfferNote(doc, {
           title: match.quest.title,
           onOpen: () => { openQuestsSignal += 1; renderDock(); },

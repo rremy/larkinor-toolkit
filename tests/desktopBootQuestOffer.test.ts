@@ -132,3 +132,47 @@ describe('bootDesktop on the pub page', () => {
     warn.mockRestore();
   });
 });
+
+describe('the quest-offer note opens the quest it names', () => {
+  beforeEach(() => {
+    GM_setValue(DOCK_COLLAPSED_KEY, '');
+    GM_setValue(ENABLED_HOTKEYS_KEY, '[]');
+    GM_setValue(TAVERN_CACHE_KEY, '');
+    GM_setValue(`${TAVERN_CACHE_KEY}:v`, '');
+    vi.mocked(GM_xmlhttpRequest).mockReset();
+    vi.mocked(GM_addStyle).mockClear();
+  });
+
+  /**
+   * The bug this pins: the note used to open the quests tab and rely on the
+   * preferences it had just written. `QuestView` reads the stored set once at
+   * mount and restores at most once per mount, so an overlay already open when
+   * the match landed never saw them — the panel opened on the previously
+   * selected set and quest instead. Here the stored preferences deliberately
+   * point somewhere else, so anything that leans on them lands on the wrong
+   * quest and fails.
+   */
+  it('routes to the named quest even when the stored preferences disagree', async () => {
+    serveTavernQuests();
+    GM_setValue(QUEST_SET_PREF_KEY, 'royal');
+    GM_setValue(questSelectedKey('tavern'), 'GOMB');
+    // Overlay already open, as it would be after a reload — this is the state
+    // in which the old, preference-dependent path failed.
+    GM_setValue('lc-db-open', 'true');
+    GM_setValue('lc-db-route', '');
+
+    const doc = pubDoc(zurkhas.description);
+    bootDesktop(doc);
+    await settle();
+
+    const button = doc.querySelector<HTMLButtonElement>('.lc-quest-offer-btn');
+    expect(button).not.toBeNull();
+    button!.click();
+    await settle();
+
+    // The overlay's own route is the observable: it must name the tavern set
+    // and this quest, not the stored royal/GOMB pair.
+    const route = GM_getValue('lc-db-route', '');
+    expect(route).toBe('quests/tavern/Zurkhas');
+  });
+});
