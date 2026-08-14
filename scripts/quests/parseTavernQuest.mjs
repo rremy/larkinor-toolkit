@@ -228,7 +228,14 @@ export function parseTavernQuestPage(html, { id, title }, resolveMonster) {
   const cells = [];
   let cols = 0;
   rowHtml.forEach((row, r) => {
-    const tds = [...row.matchAll(/<td([^>]*)>([\s\S]*?)<\/td>/gi)];
+    // Content runs until the next `<td`/`</td` rather than requiring a
+    // closing tag, mirroring browser error recovery: the tavern source's
+    // `komponens` page (row 0, cell 5) ships an unclosed `<img>` followed by
+    // a bare `<td="">`, which a `<\/td>`-anchored lazy match would run past,
+    // merging two cells into one and shifting the row's tail one column left.
+    // Well-formed rows (every other row in the corpus) already end their
+    // content at `</td>`, so this extracts a byte-identical list there.
+    const tds = [...row.matchAll(/<td([^>]*)>((?:(?!<\/?td)[\s\S])*)/gi)];
     cols = Math.max(cols, tds.length);
     tds.forEach((td, c) => {
       const classAttr = (/class="([^"]*)"/i.exec(td[1]) ?? [, ''])[1];

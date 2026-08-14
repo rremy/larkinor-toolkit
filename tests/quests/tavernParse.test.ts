@@ -239,3 +239,58 @@ describe('parseTavernQuestPage', () => {
       .toThrow(/X/);
   });
 });
+
+// Mirrors komponens.htm row 0, cell 5 exactly: an unclosed <img> directly
+// followed by a bare `<td="">`. A `<\/td>`-anchored lazy match runs past this
+// cell to the next real `</td>`, merging two cells into one and shifting
+// every later cell in the row one column left. The cell regex instead runs
+// content until the next `<td`/`</td`, mirroring browser error recovery. A
+// second, fully well-formed row is included to prove ordinary rows still
+// parse exactly as before.
+const RAGGED_PAGE = `
+<p><span class="tulajdonsagnev">Leírás:</span> Teszt.<br></p>
+<p><span class="tulajdonsagnev">Jutalom:</span> 1 arany</p>
+<div class="lab"><table>
+<tr>
+  <td class="a"><img class="szorny" title="" src="x_elemei/first.jpg"></td>
+  <td class="b_vas"><img class="szorny" title="" src="x_elemei/nop.jpg" <td=""><img class="szorny" title="" src="x_elemei/nop.jpg"> </td>
+  <td class="j"><img class="szorny" title="" src="x_elemei/last.jpg"></td>
+</tr>
+<tr>
+  <td class="f"><img class="szorny" title="" src="x_elemei/row2_a.jpg"></td>
+  <td class="a"><img class="szorny" title="" src="x_elemei/row2_b.jpg"></td>
+  <td class="b"><img class="szorny" title="" src="x_elemei/row2_c.jpg"></td>
+  <td class="j"><img class="szorny" title="" src="x_elemei/row2_d.jpg"></td>
+</tr>
+</table></div>`;
+
+describe('parseTavernQuestPage recovers an unclosed <td>', () => {
+  const resolve = () => null;
+
+  it('recovers both cells from the unclosed <td>, keeping later columns aligned', () => {
+    const q = parseTavernQuestPage(RAGGED_PAGE, { id: 'RAGGED', title: 'RAGGED' }, resolve);
+    expect(q.rows).toBe(2);
+    expect(q.cols).toBe(4);
+    expect(q.cells).toHaveLength(8);
+    expect(q.cells.filter((c) => c.row === 0).map((c) => [c.col, c.rawImage])).toEqual([
+      [0, 'x_elemei/first.jpg'],
+      [1, 'x_elemei/nop.jpg'],
+      [2, 'x_elemei/nop.jpg'],
+      [3, 'x_elemei/last.jpg'],
+    ]);
+    // The recovered cell (col 1) keeps its own edge class; the following,
+    // previously-shifted cell (col 3) keeps its correct column and edge too.
+    expect(q.cells[1].edges.W).toEqual({ kind: 'door', lock: 'vas' });
+    expect(q.cells[3].edges.E).toEqual({ kind: 'wall' });
+  });
+
+  it('parses a well-formed row identically alongside the recovered one', () => {
+    const q = parseTavernQuestPage(RAGGED_PAGE, { id: 'RAGGED', title: 'RAGGED' }, resolve);
+    expect(q.cells.filter((c) => c.row === 1).map((c) => [c.col, c.rawImage])).toEqual([
+      [0, 'x_elemei/row2_a.jpg'],
+      [1, 'x_elemei/row2_b.jpg'],
+      [2, 'x_elemei/row2_c.jpg'],
+      [3, 'x_elemei/row2_d.jpg'],
+    ]);
+  });
+});
