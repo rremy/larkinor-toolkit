@@ -10,9 +10,11 @@ const monsterIds = new Set<number>(monsters.map((m: { id: number }) => m.id));
 const LOCKS: LockType[] = ['vas', 'rez', 'bronz', 'ezust', 'arany', 'platina', 'tolvaj', 'cso'];
 
 describe('static/db/quests.json', () => {
-  it('holds a contiguous run of quests starting at 1', () => {
+  it('holds a contiguous run of royal quests starting at 1', () => {
     expect(quests.length).toBeGreaterThanOrEqual(45);
-    expect(quests.map((q) => q.id)).toEqual(quests.map((_, i) => i + 1));
+    expect(quests.map((q) => q.id)).toEqual(quests.map((_, i) => String(i + 1)));
+    expect(quests.every((q) => q.set === 'royal')).toBe(true);
+    expect(quests.map((q) => q.title)).toEqual(quests.map((_, i) => String(i + 1)));
   });
 
   it('gives every quest a description and a reward', () => {

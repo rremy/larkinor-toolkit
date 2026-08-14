@@ -25,7 +25,7 @@ const monsters = buildMonsterDatabase([{
 
 /** Iron door present with its key; gold door present with no key anywhere. */
 const quest: Quest = {
-  id: 1, description: '', reward: '', rows: 2, cols: 2,
+  id: '1', set: 'royal', title: '1', description: '', reward: '', rows: 2, cols: 2,
   cells: [
     cell({ row: 0, col: 0, edges: { ...openEdges(), E: { kind: 'door', lock: 'vas' } } }),
     cell({ row: 0, col: 1, edges: { ...openEdges(), S: { kind: 'door', lock: 'arany' } } }),
@@ -84,7 +84,7 @@ describe('QuestKeyLegend', () => {
   it('shows a placeholder when the quest has no locked doors at all', () => {
     // Real cases: quests 3, 5, 9, 14, 23, 33.
     const lockless: Quest = {
-      id: 2, description: '', reward: '', rows: 1, cols: 1,
+      id: '2', set: 'royal', title: '2', description: '', reward: '', rows: 1, cols: 1,
       cells: [cell({ row: 0, col: 0 })],
     };
     const { container } = render(

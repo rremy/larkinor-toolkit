@@ -2,7 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { QUEST_SELECTED_PREF_KEY, QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -12,7 +12,7 @@ import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, hasSzelEdges, locksIn } from './q
 interface QuestViewProps {
   loader: DataLoader;
   /** Routed quest id (`#quests/<id>`); null falls back to the first quest. */
-  questId: number | null;
+  questId: string | null;
   /**
    * Optional persistence for the zoom (`tileSize`), so it survives the reload
    * the game performs on every action. Absent in tests and wherever the host
@@ -20,7 +20,7 @@ interface QuestViewProps {
    * every remount, exactly as it did before this store existed.
    */
   prefStore?: PrefStore;
-  onSelectQuest(id: number): void;
+  onSelectQuest(id: string): void;
   onJumpToMonster(id: number): void;
 }
 
@@ -86,8 +86,8 @@ export function QuestView(props: QuestViewProps): VNode {
     if (restoredQuestRef.current) return;
     if (questId != null || !quests || !prefStore) return;
     restoredQuestRef.current = true;
-    const storedId = Number(prefStore.read(QUEST_SELECTED_PREF_KEY));
-    if (quests.some((q) => q.id === storedId)) {
+    const storedId = prefStore.read(LEGACY_QUEST_SELECTED_PREF_KEY);
+    if (storedId && quests.some((q) => q.id === storedId)) {
       onSelectQuest(storedId);
     }
   }, [questId, quests, prefStore, onSelectQuest]);
@@ -102,7 +102,7 @@ export function QuestView(props: QuestViewProps): VNode {
    */
   useEffect(() => {
     if (selectedQuestId == null || !prefStore) return;
-    prefStore.write(QUEST_SELECTED_PREF_KEY, String(selectedQuestId));
+    prefStore.write(LEGACY_QUEST_SELECTED_PREF_KEY, selectedQuestId);
   }, [selectedQuestId, prefStore]);
 
   if (!quests) {
@@ -141,7 +141,7 @@ export function QuestView(props: QuestViewProps): VNode {
       <div class="quest-layout">
         <div class="quest-main">
           <div class="quest-header">
-            <h2>{quest.id}. küldetés</h2>
+            <h2>{quest.title}. küldetés</h2>
             <p class="quest-description">{quest.description}</p>
             <p class="quest-reward"><strong>Jutalom:</strong> {quest.reward}</p>
             <div class="quest-stats">

@@ -18,7 +18,7 @@ const stubLoader: DataLoader = {
   loadItemShops: () => Promise.resolve({} as never),
   loadWeaponShops: () => Promise.resolve({} as never),
   loadQuests: () => Promise.resolve([{
-    id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+    id: '1', set: 'royal', title: '1', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
     cells: [{
       row: 0, col: 0,
       edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },

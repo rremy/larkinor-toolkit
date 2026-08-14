@@ -25,7 +25,7 @@ const monsters = buildMonsterDatabase([{
 }]);
 
 const quest: Quest = {
-  id: 1, description: 'd', reward: 'r', rows: 2, cols: 2,
+  id: '1', set: 'royal', title: '1', description: 'd', reward: 'r', rows: 2, cols: 2,
   cells: [
     cell({ row: 0, col: 0, portal: 'entrance' }),
     cell({ row: 0, col: 1, edges: { ...openEdges(), E: { kind: 'door', lock: 'vas' }, N: { kind: 'wall' } } }),

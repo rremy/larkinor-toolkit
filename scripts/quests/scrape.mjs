@@ -35,7 +35,7 @@ for (let id = 1; id <= QUEST_COUNT; id += 1) {
   const res = await fetch(`${BASE}/${id}/index.html`);
   if (!res.ok) throw new Error(`quest ${id}: HTTP ${res.status}`);
   const quest = parseQuestPage(await res.text(), id, resolveMonster);
-  quests.push(quest);
+  quests.push({ ...quest, id: String(id), set: 'royal', title: String(id) });
   process.stdout.write(`quest ${id}: ${quest.rows}x${quest.cols}, ${quest.cells.length} cells\n`);
 }
 

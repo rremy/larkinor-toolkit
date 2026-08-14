@@ -112,22 +112,25 @@ const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép', quests:
 
 interface Route {
   tab: Tab;
-  /** Selected entity id on explorer tabs (null on the map tab). */
+  /** Selected entity id on explorer tabs (null elsewhere). */
   id: number | null;
-  /** Selected/target cell id on the map tab (null on explorer tabs). */
+  /** Selected/target cell id on the map tab (null elsewhere). */
   cell: string | null;
+  /** Selected quest id on the quests tab (null elsewhere). */
+  quest: string | null;
 }
 
 function isTab(value: string): value is Tab {
   return (TABS as string[]).includes(value);
 }
 
-const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null, cell: null };
+const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null, cell: null, quest: null };
 
 /** Build a route from a tab + raw `#tab/param` segment (param is per-tab). */
 function routeFor(tab: Tab, param: string | null): Route {
-  if (tab === 'map') return { tab, id: null, cell: param };
-  return { tab, id: param != null ? Number(param) : null, cell: null };
+  if (tab === 'map') return { tab, id: null, cell: param, quest: null };
+  if (tab === 'quests') return { tab, id: null, cell: null, quest: param };
+  return { tab, id: param != null ? Number(param) : null, cell: null, quest: null };
 }
 
 /**
@@ -288,9 +291,9 @@ export function DatabaseApp(props: DatabaseAppProps) {
       ) : route.tab === 'quests' ? (
         <QuestView
           loader={loader}
-          questId={route.id}
+          questId={route.quest}
           prefStore={prefStore}
-          onSelectQuest={(id) => navigate('quests', String(id))}
+          onSelectQuest={(id) => navigate('quests', id)}
           onJumpToMonster={(id) => navigate('monsters', String(id))}
         />
       ) : (
