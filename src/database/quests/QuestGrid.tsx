@@ -1,7 +1,7 @@
 import { h, type VNode } from 'preact';
 import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { BADGE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL, coordLabel } from './questMeta';
+import { BADGE, DEFAULT_TILE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL, coordLabel } from './questMeta';
 
 interface QuestGridProps {
   quest: Quest;
@@ -15,8 +15,6 @@ interface QuestGridProps {
   /** Tile edge length in px, driven by the zoom control. */
   tileSize?: number;
 }
-
-const DEFAULT_TILE = 56;
 
 /**
  * The quest maze.
@@ -129,13 +127,15 @@ export function QuestGrid(props: QuestGridProps): VNode {
               </span>
             )}
             <div class="quest-badges">
-              {/* Entrance, quest item, death and the trap/question corner
-                  badge itself are dropped on a big-icon tile to keep it
-                  clear of clutter. Key, exit and boss stay: 10 cells pair a
-                  question with a key the door lookup depends on, 1 pairs a
-                  trap with the quest's exit, and 1 pairs a question with a
-                  boss — hiding any of those would silently break a lookup
-                  or hide the way out. */}
+              {/* Entrance and death are dropped on a big-icon tile to keep it
+                  clear of clutter. Key, exit, quest item and boss stay: 10
+                  cells pair a question with a key the door lookup depends
+                  on, 1 pairs a trap with the quest's exit, 1 pairs a
+                  question with a boss, and quest 27 cell (1,1) is
+                  simultaneously the question, the quest objective and the
+                  exit — hiding any of those would silently break a lookup,
+                  hide the way out, or hide the one item you are there to
+                  collect. */}
               {cell.portal === 'entrance' && !bigIcon && (
                 <span class="quest-badge entrance" title="bejárat">{BADGE.entrance}</span>
               )}
@@ -143,7 +143,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
               {cell.key && (
                 <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
               )}
-              {cell.questItem && !bigIcon && (
+              {cell.questItem && (
                 <span class="quest-badge quest-item" title="küldetés tárgy">{BADGE.questItem}</span>
               )}
               {cell.death && !bigIcon && <span class="quest-badge death" title="halál">{BADGE.death}</span>}

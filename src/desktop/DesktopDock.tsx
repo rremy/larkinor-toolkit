@@ -70,7 +70,14 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // landing tab rather than whatever route the overlay remembers. Cleared
   // by every opener (including the plain Adatbázis button), so it never
   // leaks from one open to the next.
-  const [dbInitialTab, setDbInitialTab] = useState<'quests' | null>(null);
+  //
+  // `seq` is bumped on every press rather than the tab alone driving
+  // navigation: DatabaseApp's landing effect depends on this value, and with
+  // only the tab literal to depend on, a second press while already showing
+  // 'quests' would be a no-op state update (same value in, same value out) —
+  // exactly the bug where pressing the dungeon shortcut a second time after
+  // navigating away inside the overlay did nothing.
+  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests'; seq: number } | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
@@ -113,10 +120,13 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
   // The dungeon-only shortcut: open straight on the quests view, with no
   // quest id, so the overlay's own "remember the last selected quest"
-  // behaviour restores whichever quest the player last had open.
+  // behaviour restores whichever quest the player last had open. Bumping
+  // `seq` on every press (rather than just setting the 'quests' literal)
+  // is what makes a second press re-navigate even if the overlay is already
+  // showing quests and was then clicked away from — see the state comment.
   const openQuests = () => {
     setDbItemId(null);
-    setDbInitialTab('quests');
+    setDbInitialTab((prev) => ({ tab: 'quests', seq: (prev?.seq ?? 0) + 1 }));
     setDatabase(true);
   };
 
@@ -271,7 +281,8 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         open={dbOpen}
         minimizable
         initialItemId={dbItemId ?? undefined}
-        initialTab={dbInitialTab ?? undefined}
+        initialTab={dbInitialTab?.tab}
+        initialTabKey={dbInitialTab?.seq}
         onClose={() => setDatabase(false)}
       />
 

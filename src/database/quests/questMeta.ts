@@ -1,5 +1,15 @@
 import type { LockType, Quest, QuestCell, Side } from '@/shared/data';
 
+/**
+ * Maze tile sizes offered by the zoom control, and the one applied before any
+ * pref is loaded. Held here rather than duplicated in both QuestGrid (which
+ * needs the default as its `tileSize` fallback) and QuestView (which needs
+ * both to drive the zoom `<select>`) — the same drift hazard `prefKeys.ts`
+ * exists to eliminate for the pref key itself.
+ */
+export const TILE_SIZES = [40, 56, 72];
+export const DEFAULT_TILE = 56;
+
 /** Hungarian key names, as the game prints them. */
 export const LOCK_LABEL: Record<LockType, string> = {
   vas: 'vaskulcs',

@@ -7,7 +7,7 @@ import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
-import { SZEL_LABEL, hasSzelEdges, locksIn } from './questMeta';
+import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, hasSzelEdges, locksIn } from './questMeta';
 
 interface QuestViewProps {
   loader: DataLoader;
@@ -23,9 +23,6 @@ interface QuestViewProps {
   onSelectQuest(id: number): void;
   onJumpToMonster(id: number): void;
 }
-
-const TILE_SIZES = [40, 56, 72];
-const DEFAULT_TILE = 56;
 
 /**
  * Parse a stored zoom back into a valid tile size. Anything not in

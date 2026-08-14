@@ -283,6 +283,28 @@ describe('DesktopDock', () => {
       expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
     });
 
+    it('re-navigates to quests on a second press, even after the overlay moved to another tab', async () => {
+      // Regression test: the button used to carry only the 'quests' literal,
+      // so a second press was a no-op state update once the overlay was
+      // already showing quests — DatabaseApp's landing effect never re-fired
+      // and the overlay stayed wherever the user had navigated to inside it.
+      stubQuestData();
+      const { container } = render(
+        <DesktopDock doc={document} state={makeState()} db={null} inDungeon />
+      );
+
+      fireEvent.click(container.querySelector('.lc-dock-quests')!);
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+
+      const monstersTab = [...document.querySelectorAll('.lc-db .tab')]
+        .find((t) => t.textContent === 'Szörnyek') as HTMLElement;
+      fireEvent.click(monstersTab);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
+
+      fireEvent.click(container.querySelector('.lc-dock-quests')!);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Küldetések');
+    });
+
     it('leaves the plain Adatbázis button opening on the stored route, unchanged', () => {
       GM_setValue(DB_ROUTE_KEY, 'monsters');
       const { container } = render(

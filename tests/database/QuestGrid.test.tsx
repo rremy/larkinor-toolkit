@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { render, screen, fireEvent } from '@testing-library/preact';
+import { render, fireEvent } from '@testing-library/preact';
 import { describe, it, expect, vi } from 'vitest';
 import { QuestGrid } from '@/database/quests/QuestGrid';
 import { buildMonsterDatabase } from '@/shared/data';
@@ -140,7 +140,7 @@ describe('QuestGrid', () => {
       expect(questionCell.querySelector('.quest-badge.question')).toBeNull();
     });
 
-    it('suppresses the quest-item, death and entrance badges on a big-icon tile', () => {
+    it('suppresses the death and entrance badges on a big-icon tile, but keeps the quest-item badge', () => {
       const clutteredQuest: Quest = {
         ...quest,
         cells: [
@@ -154,9 +154,30 @@ describe('QuestGrid', () => {
         <QuestGrid quest={clutteredQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
       );
       const trapCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
-      expect(trapCell.querySelector('.quest-badge.quest-item')).toBeNull();
       expect(trapCell.querySelector('.quest-badge.death')).toBeNull();
       expect(trapCell.querySelector('.quest-badge.entrance')).toBeNull();
+      expect(trapCell.querySelector('.quest-badge.quest-item')).toBeTruthy();
+    });
+
+    it('shows the quest-item badge on a big-icon tile that is also the objective, so it is not hidden (quest 27, cell 1,1)', () => {
+      // Real case: kerdes_kt_labikibe.jpg is simultaneously the question, the
+      // quest objective and the exit. Suppressing the objective badge here
+      // would silently hide the one item the player is there to collect —
+      // the same argument that already keeps key/exit/boss on a big-icon tile.
+      const objectiveQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({ row: 1, col: 1, hasQuestion: true, question: { prompt: 'Mit teszel?', choices: [] }, questItem: true, portal: 'exit' }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={objectiveQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const objectiveCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(objectiveCell.querySelector('.quest-big-icon.question')).toBeTruthy();
+      expect(objectiveCell.querySelector('.quest-badge.quest-item')).toBeTruthy();
+      expect(objectiveCell.querySelector('.quest-badge.exit')).toBeTruthy();
     });
 
     it('regression guard: a question+key cell still shows the key badge, so the door-to-key lookup keeps working', () => {

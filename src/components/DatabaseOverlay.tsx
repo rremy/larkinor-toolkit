@@ -24,6 +24,12 @@ export interface DatabaseOverlayProps {
    * rules against `initialItemId`/`initialItemName`.
    */
   initialTab?: 'quests';
+  /**
+   * Nonce accompanying `initialTab`, bumped by the caller on every press —
+   * see DatabaseApp's `initialTabKey` for why `initialTab` alone can't drive
+   * a repeated navigation.
+   */
+  initialTabKey?: number;
   /** Offer the minimise control (desktop only — see DockedPanel). */
   minimizable?: boolean;
 }
@@ -40,6 +46,7 @@ export function DatabaseOverlay({
   initialItemId,
   initialItemName,
   initialTab,
+  initialTabKey,
   minimizable = false,
 }: DatabaseOverlayProps) {
   // The loader must not be rebuilt on every render, but it also must not be
@@ -68,6 +75,7 @@ export function DatabaseOverlay({
         initialItemId={initialItemId}
         initialItemName={initialItemName}
         initialTab={initialTab}
+        initialTabKey={initialTabKey}
       />
     </DockedPanel>
   );

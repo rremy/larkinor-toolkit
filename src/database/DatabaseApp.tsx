@@ -90,6 +90,18 @@ export interface DatabaseAppProps {
    * this — see the effect below for how that precedence is enforced.
    */
   initialTab?: 'quests';
+  /**
+   * Nonce accompanying `initialTab`, bumped by the caller on every press.
+   *
+   * `initialTab` alone cannot drive a repeated navigation: the effect below
+   * depends on it, but pressing the same dock button twice hands this
+   * component the same `'quests'` literal both times, which is not a state
+   * change and so re-fires nothing — the overlay would silently stay on
+   * whatever tab the user had navigated to in between. Depending on this
+   * value too (bumped on every press, even to the same tab) forces the
+   * effect to run again regardless of whether `initialTab` itself changed.
+   */
+  initialTabKey?: number;
 }
 
 type Tab = EntityTab | 'map' | 'quests';
@@ -143,7 +155,7 @@ function hashFor(tab: Tab, param: string | null): string {
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab } = props;
+  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab, initialTabKey } = props;
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
@@ -253,7 +265,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
     if (!initialTab || initialItemId != null || initialItemName) return;
     navigate(initialTab, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTab]);
+  }, [initialTab, initialTabKey]);
 
   return (
     <div class="lc-db">
