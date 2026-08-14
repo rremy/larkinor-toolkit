@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { DatabaseOverlay } from '../src/components/DatabaseOverlay';
 import { DB_MINIMIZED_KEY, DB_ROUTE_KEY, QUEST_TILE_KEY, getPanelMinimized, setPanelMinimized, getDbRoute, getPref } from '../src/utils/config';
+import { QUEST_SELECTED_PREF_KEY } from '../src/shared/prefKeys';
+import { USERSCRIPT_DATA_BASE_URL } from '../src/shared/publicUrl';
 
 /** The label of the currently selected tab, or null if none is. */
 function activeTab(): string | null {
@@ -16,6 +18,8 @@ describe('DatabaseOverlay', () => {
     GM_setValue(DB_ROUTE_KEY, '');
     // Same hazard for the quest maze's remembered zoom.
     GM_setValue(QUEST_TILE_KEY, '');
+    // ...and for the remembered quest selection.
+    GM_setValue(QUEST_SELECTED_PREF_KEY, '');
   });
   afterEach(() => {
     location.hash = '';
@@ -206,6 +210,85 @@ describe('DatabaseOverlay', () => {
       fireEvent.click(screen.getByText('Küldetések'));
       const selectAfterReload = await screen.findByLabelText('Méret') as HTMLSelectElement;
       expect(selectAfterReload.value).toBe('40');
+    });
+  });
+
+  describe('remembered quest selection', () => {
+    // The overlay's tab bar always navigates with a null id (DatabaseApp.tsx's
+    // `navigate(t, null)`), so its route store alone can't recover which quest
+    // was selected after switching away and back — that's exactly the gap the
+    // quest PrefStore (wired the same way as the zoom above) exists to close.
+    // The loader caches quests.json/monsters.json under a fixed GM key (no
+    // `?v=` tag in tests), so an earlier test in this file (e.g. "remembered
+    // quest zoom" above, which stubs a single quest under the same file name)
+    // leaves a cached response behind that would otherwise silently satisfy
+    // this describe block's own two-quest stub without ever calling the mock.
+    function clearQuestDataCache() {
+      const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
+      for (const file of ['quests.json', 'monsters.json']) {
+        GM_setValue(`${base}/${file}`, '');
+        GM_setValue(`${base}/${file}:v`, '');
+      }
+    }
+
+    function stubQuestData() {
+      clearQuestDataCache();
+      const cellFor = () => ({
+        row: 0, col: 0,
+        edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+        monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+        portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+        question: null, rawImage: '',
+      });
+      const stubQuests = [
+        { id: 1, description: 'Első teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
+        { id: 2, description: 'Második teszt küldetés', reward: '2 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
+      ];
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('quests.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify(stubQuests) });
+        } else if (opts.url.includes('monsters.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+    }
+
+    it('remembers the selected quest across a tab switch', async () => {
+      stubQuestData();
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      await screen.findByText('1. küldetés');
+
+      fireEvent.click(document.querySelectorAll('.quest-chip')[1]);
+      await screen.findByText('2. küldetés');
+
+      // Switching away and back gives the quests tab a null id on return —
+      // task 19's exact reported failure — so this only passes if the
+      // restore reads the PrefStore rather than falling back to quest 1.
+      fireEvent.click(screen.getByText('Fegyverek'));
+      fireEvent.click(screen.getByText('Küldetések'));
+      await screen.findByText('2. küldetés');
+    });
+
+    // The actual round trip through GM storage: not just that write() was
+    // called, but that a fresh mount (the reload the game performs on every
+    // action) comes back on the quest that was selected before it.
+    it('survives the reload the game performs on every action', async () => {
+      stubQuestData();
+      const { unmount } = render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      await screen.findByText('1. küldetés');
+      fireEvent.click(document.querySelectorAll('.quest-chip')[1]);
+      await screen.findByText('2. küldetés');
+      unmount();
+
+      stubQuestData();
+      render(<DatabaseOverlay open onClose={vi.fn()} />);
+      fireEvent.click(screen.getByText('Küldetések'));
+      await screen.findByText('2. küldetés');
     });
   });
 

@@ -1,8 +1,8 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
+import { QUEST_SELECTED_PREF_KEY, QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -45,6 +45,9 @@ export function QuestView(props: QuestViewProps): VNode {
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
   const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(QUEST_TILE_PREF_KEY) ?? null));
+  // Guards the restore-from-store effect below so it fires at most once per
+  // mount, regardless of how many times its dependencies otherwise change.
+  const restoredQuestRef = useRef(false);
 
   function changeTileSize(next: number) {
     setTileSize(next);
@@ -64,11 +67,50 @@ export function QuestView(props: QuestViewProps): VNode {
   // A different quest means the previous cell selection is meaningless.
   useEffect(() => { setSelectedCell(null); setHighlightLock(null); }, [questId]);
 
+  // Computed unconditionally (not after the early returns below) so it can be
+  // used as a dependency of the hooks that follow — hooks must run in the same
+  // order on every render.
+  const quest = quests ? (quests.find((q) => q.id === questId) ?? quests[0] ?? null) : null;
+  const selectedQuestId = quest?.id ?? null;
+
+  /**
+   * Restore the last-selected quest when navigation cleared the id — switching
+   * tabs and back, or a bare `#quests` route, both hand this component a null
+   * `questId` (see task 19). Without this, that null would fall back to
+   * `quests[0]` every time, silently discarding whatever the user was looking
+   * at. Runs once quest data is loaded and only while `questId` is still null;
+   * `restoredQuestRef` additionally ensures it can never fire a second time —
+   * `onSelectQuest` triggers a route change that re-renders this component
+   * with a new (non-null) `questId`, but guarding on that alone would still
+   * leave a window for an unrelated parent re-render (a fresh `onSelectQuest`
+   * closure, same null `questId`) to call it again.
+   */
+  useEffect(() => {
+    if (restoredQuestRef.current) return;
+    if (questId != null || !quests || !prefStore) return;
+    restoredQuestRef.current = true;
+    const storedId = Number(prefStore.read(QUEST_SELECTED_PREF_KEY));
+    if (quests.some((q) => q.id === storedId)) {
+      onSelectQuest(storedId);
+    }
+  }, [questId, quests, prefStore, onSelectQuest]);
+
+  /**
+   * Remember whichever quest ends up shown — including the default landed on
+   * when nothing was stored yet, or an explicit deep link — so the next
+   * null-`questId` visit restores it. An explicit route always wins over the
+   * store (the effect above never fires while `questId` is non-null), and
+   * this write is what lets that explicit selection overwrite a stale stored
+   * one rather than the store silently outliving it.
+   */
+  useEffect(() => {
+    if (selectedQuestId == null || !prefStore) return;
+    prefStore.write(QUEST_SELECTED_PREF_KEY, String(selectedQuestId));
+  }, [selectedQuestId, prefStore]);
+
   if (!quests) {
     return <div class="quest-view"><div class="quest-stats">Betöltés…</div></div>;
   }
-
-  const quest = quests.find((q) => q.id === questId) ?? quests[0] ?? null;
   if (!quest) {
     return <div class="quest-view"><div class="quest-stats">Nincs küldetés.</div></div>;
   }

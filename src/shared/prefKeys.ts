@@ -12,3 +12,6 @@
 
 /** PrefStore key holding the quest maze's last selected zoom (tile size). */
 export const QUEST_TILE_PREF_KEY = 'lc-quest-tile-size';
+
+/** PrefStore key holding the quests tab's last selected quest id. */
+export const QUEST_SELECTED_PREF_KEY = 'lc-quest-selected';

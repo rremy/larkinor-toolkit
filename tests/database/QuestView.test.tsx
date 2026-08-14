@@ -5,6 +5,16 @@ import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
+import { QUEST_SELECTED_PREF_KEY } from '@/shared/prefKeys';
+
+/** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
+function makePrefStore(initial: Record<string, string> = {}): PrefStore {
+  const store: Record<string, string> = { ...initial };
+  return {
+    read: (key) => store[key] ?? null,
+    write: (key, value) => { store[key] = value; },
+  };
+}
 
 const openEdges = (): Record<'N'|'E'|'S'|'W', Edge> => ({
   N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' },
@@ -163,15 +173,6 @@ describe('QuestView', () => {
   });
 
   describe('remembered zoom', () => {
-    /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
-    function makePrefStore(initial: Record<string, string> = {}): PrefStore {
-      const store: Record<string, string> = { ...initial };
-      return {
-        read: (key) => store[key] ?? null,
-        write: (key, value) => { store[key] = value; },
-      };
-    }
-
     it('initialises the zoom from a supplied PrefStore', async () => {
       const prefStore = makePrefStore({ 'lc-quest-tile-size': '72' });
       render(
@@ -232,6 +233,115 @@ describe('QuestView', () => {
       expect(select.value).toBe('56');
       fireEvent.change(select, { target: { value: '40' } });
       expect(select.value).toBe('40');
+    });
+  });
+
+  describe('remembered selection', () => {
+    it('restores the stored quest when questId is null (tab switch / bare route)', async () => {
+      const prefStore = makePrefStore({ [QUEST_SELECTED_PREF_KEY]: '2' });
+      const onSelectQuest = vi.fn();
+      render(
+        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith(2));
+    });
+
+    it('writes the quest id to the store whenever the selected quest changes', async () => {
+      const prefStore = makePrefStore();
+      const { rerender } = render(
+        <QuestView loader={makeLoader()} questId={1} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await waitFor(() => expect(prefStore.read(QUEST_SELECTED_PREF_KEY)).toBe('1'));
+
+      // Simulates the parent navigating after a chip click — QuestView itself
+      // doesn't own the selection, so the prop change stands in for that.
+      rerender(
+        <QuestView loader={makeLoader()} questId={2} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await waitFor(() => expect(prefStore.read(QUEST_SELECTED_PREF_KEY)).toBe('2'));
+    });
+
+    it('falls back to the first quest when the stored id does not exist in the data', async () => {
+      const prefStore = makePrefStore({ [QUEST_SELECTED_PREF_KEY]: '999' });
+      const onSelectQuest = vi.fn();
+      render(
+        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      expect(await screen.findByText('1. küldetés')).toBeTruthy();
+      // A stale id must never leave the tab broken, but it also must not be
+      // treated as a valid selection to restore.
+      expect(onSelectQuest).not.toHaveBeenCalled();
+    });
+
+    it('an explicit questId wins over the stored value and overwrites it', async () => {
+      const prefStore = makePrefStore({ [QUEST_SELECTED_PREF_KEY]: '2' });
+      const onSelectQuest = vi.fn();
+      render(
+        <QuestView loader={makeLoader()} questId={3} prefStore={prefStore}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      expect(await screen.findByText('3. küldetés')).toBeTruthy();
+      // The store is a fallback, never an override, for a non-null questId.
+      expect(onSelectQuest).not.toHaveBeenCalled();
+      await waitFor(() => expect(prefStore.read(QUEST_SELECTED_PREF_KEY)).toBe('3'));
+    });
+
+    it('works with no prefStore at all', async () => {
+      const onSelectQuest = vi.fn();
+      render(
+        <QuestView loader={makeLoader()} questId={null}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      expect(await screen.findByText('1. küldetés')).toBeTruthy();
+      expect(onSelectQuest).not.toHaveBeenCalled();
+    });
+
+    // The actual round trip: not just that write() was called, but that a
+    // fresh mount reading from the same store comes back with the quest that
+    // was selected before the unmount — mirrors the tile-size round trip
+    // above, for the same reason: only this proves persistence actually works.
+    it('survives an unmount/remount through the same store (the actual round trip)', async () => {
+      const prefStore = makePrefStore();
+      const { unmount } = render(
+        <QuestView loader={makeLoader()} questId={3} prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findByText('3. küldetés');
+      await waitFor(() => expect(prefStore.read(QUEST_SELECTED_PREF_KEY)).toBe('3'));
+      unmount();
+
+      const onSelectQuest = vi.fn();
+      render(
+        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith(3));
+    });
+
+    // Guards against the render-loop hazard called out in task 19: restoring
+    // must fire onSelectQuest exactly once, even across an unrelated parent
+    // re-render (a fresh onSelectQuest closure, same null questId — exactly
+    // what DatabaseApp's inline arrow function produces on every render).
+    it('calls onSelectQuest exactly once when restoring, even across an unrelated re-render', async () => {
+      const prefStore = makePrefStore({ [QUEST_SELECTED_PREF_KEY]: '2' });
+      const onSelectQuest = vi.fn();
+      const { rerender } = render(
+        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
+                   onSelectQuest={onSelectQuest} onJumpToMonster={() => {}} />,
+      );
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledTimes(1));
+
+      const onSelectQuestAfterRerender = vi.fn();
+      rerender(
+        <QuestView loader={makeLoader()} questId={null} prefStore={prefStore}
+                   onSelectQuest={onSelectQuestAfterRerender} onJumpToMonster={() => {}} />,
+      );
+      expect(onSelectQuestAfterRerender).not.toHaveBeenCalled();
+      expect(onSelectQuest).toHaveBeenCalledTimes(1);
     });
   });
 
