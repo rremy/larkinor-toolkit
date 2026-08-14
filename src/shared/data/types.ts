@@ -183,7 +183,7 @@ export type QuestSet = 'royal' | 'tavern';
 export interface Quest {
   /**
    * Royal quests use their number as a string (`'1'`…`'45'`); tavern quests
-   * use the source page's slug (`'GOMB'`, `'alapito_okirat'`, `'GY.I.K.'`).
+   * use the source page's slug (`'GOMB'`, `'alapito_okirat'`, `'GY.I.K'`).
    * One string type rather than a `number | string` union: every consumer
    * compares and routes on it, and a union would push a discriminant check
    * into each of those sites for no benefit.

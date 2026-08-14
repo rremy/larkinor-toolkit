@@ -68,8 +68,13 @@ this set. No amount of parsing recovers them.
 ### 4. The source has typos
 
 Four malformed edge class tokens would make a strict parser throw:
-`b_Ezust` (capital), `f_azust`, `j_asrany`, `j_bronnz`. `_szel` occurs 11 times
-with its royal meaning (edge of the drawn maze, not a wall or door).
+`b_Ezust` (capital), `f_azust`, `j_asrany`, `j_bronnz`. `_szel` does not occur
+as an edge token anywhere in the tavern corpus — all 11 hits for the substring
+are inside monster sprite filenames (`harcikutya_szelidito`, `temeto_szellem`,
+`sirrablo_szelleme`), not `<td>` class tokens; the committed data has zero
+`szel` edges across 2951 cells. The parser keeps the `szel` branch in
+`parseTavernEdges` anyway, as harmless defensive parity with the royal
+grammar, not because the tavern source needs it.
 
 Seven sprite basenames are misspelled or mis-encoded relative to
 `monsters.json`. All seven were confirmed by the user on 2026-08-14:
@@ -101,7 +106,7 @@ export type QuestSet = 'royal' | 'tavern';
 `Quest` gains two fields and widens one:
 
 - `id: string` — was `number`. Royal becomes `'1'`…`'45'`; tavern uses the
-  source slug (`'GOMB'`, `'alapito_okirat'`, `'GY.I.K.'`).
+  source slug (`'GOMB'`, `'alapito_okirat'`, `'GY.I.K'`).
 - `set: QuestSet`
 - `title: string` — the chip and header label. Royal holds the number as a
   string; tavern holds the display name.
