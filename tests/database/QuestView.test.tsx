@@ -55,16 +55,31 @@ const tavernQuests: Quest[] = [
   },
 ];
 
-function makeLoader(): DataLoader {
+/**
+ * `overrides` lets a test replace `loadQuests`/`loadTavernQuests` with its own
+ * `vi.fn()` — to assert call counts, or to return a deferred promise the test
+ * resolves manually to control fetch timing for a race scenario. Everything
+ * not overridden defaults to a `vi.fn()` wrapper too, so plain `makeLoader()`
+ * callers can still inspect call counts without opting in explicitly.
+ */
+function makeLoader(overrides: Partial<DataLoader> = {}): DataLoader {
   return {
     loadWeapons: async () => [], loadArmors: async () => [], loadItems: async () => [],
     loadMonsters: async () => buildMonsterDatabase([]),
     loadMap: async () => ({ cells: [] }),
     loadItemShops: async () => ({ shops: [] }),
     loadWeaponShops: async () => ({ shops: [] }),
-    loadQuests: async () => quests,
-    loadTavernQuests: async () => tavernQuests,
+    loadQuests: vi.fn(async () => quests),
+    loadTavernQuests: vi.fn(async () => tavernQuests),
+    ...overrides,
   };
+}
+
+/** A promise a test can resolve on its own schedule, to control fetch timing. */
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
 }
 
 describe('QuestView', () => {
@@ -274,6 +289,57 @@ describe('QuestView', () => {
       render(<QuestView loader={makeLoader()} questSet="tavern" questId="GOMB"
         onSelectQuest={vi.fn()} onJumpToMonster={vi.fn()} />);
       expect(await screen.findByRole('heading', { name: 'GÖMB' })).toBeTruthy();
+    });
+
+    // The on-demand fetch exists to avoid ever loading both ~1.5MB/~1.2MB
+    // files at once; a rapid double click on the same uncached target must
+    // not defeat that by issuing the request twice.
+    it('shares one fetch when the same uncached target is clicked twice before it resolves', async () => {
+      const onSelectQuest = vi.fn();
+      const loader = makeLoader();
+      render(<QuestView loader={loader} questSet="royal" questId="1"
+        onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />);
+      const kocsmaiBtn = await screen.findByRole('button', { name: 'Kocsmai' });
+      fireEvent.click(kocsmaiBtn);
+      fireEvent.click(kocsmaiBtn);
+      await waitFor(() => expect(onSelectQuest).toHaveBeenCalledWith('tavern', 'GOMB'));
+      expect(loader.loadTavernQuests).toHaveBeenCalledTimes(1);
+    });
+
+    // The race this guards against: a slow fetch for a set the user is
+    // switching *away from* (in spirit — here, away from *to*, but the same
+    // shape) must not land after the user has already navigated elsewhere by
+    // a different path (a direct chip click), yanking them back out of where
+    // they now are. A deferred promise pins the fetch open so the test can
+    // interleave the "meanwhile" navigation deterministically, without a timer.
+    it('drops a stale switch result superseded by a navigation that lands first', async () => {
+      const onSelectQuest = vi.fn();
+      const royal = deferred<Quest[]>();
+      const loader = makeLoader({ loadQuests: vi.fn(() => royal.promise) });
+      const { rerender } = render(
+        <QuestView loader={loader} questSet="tavern" questId="MASIK"
+          onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />,
+      );
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Királyi' }));
+      expect(loader.loadQuests).toHaveBeenCalledTimes(1);
+
+      // Before the royal fetch resolves, a direct chip click already landed a
+      // different navigation — simulated the same way every other
+      // persistence test simulates the parent feeding a new route back in.
+      rerender(
+        <QuestView loader={loader} questSet="tavern" questId="GOMB"
+          onSelectQuest={onSelectQuest} onJumpToMonster={vi.fn()} />,
+      );
+
+      royal.resolve(quests);
+      // Flush the microtask queue enough times for changeSet's continuation
+      // (the `await fetchSet` and the checks after it) to run to completion.
+      await royal.promise;
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(onSelectQuest).not.toHaveBeenCalledWith('royal', expect.anything());
     });
   });
 

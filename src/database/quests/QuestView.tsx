@@ -64,10 +64,43 @@ export function QuestView(props: QuestViewProps): VNode {
   // Guards the restore-from-store effect below so it fires at most once per
   // active set, regardless of how many times its other dependencies change.
   const restoredQuestRef = useRef(false);
+  /**
+   * Monotonically bumped whenever the routed `questSet`/`questId` actually
+   * change (an external navigation landing — whether the resolution of a
+   * previous `changeSet` call, a direct chip click, or a deep link) *and*
+   * once synchronously at the start of every `changeSet` call. `changeSet`
+   * captures the value before its (possibly async) work and compares it
+   * afterwards: if it moved on, some other navigation already won this race
+   * and applying this one now would silently yank the user away from
+   * wherever they've since gone. See `changeSet` and `fetchSet` below.
+   */
+  const navGenerationRef = useRef(0);
+  useEffect(() => { navGenerationRef.current += 1; }, [questSet, questId]);
+  /**
+   * In-flight fetch per set, shared between the effect below and `changeSet`,
+   * so concurrent callers requesting the same uncached set — two rapid clicks
+   * on the same switcher button, or a click racing this effect — share one
+   * fetch instead of issuing two ~1.2–1.5MB requests.
+   */
+  const inFlightRef = useRef<Partial<Record<QuestSet, Promise<Quest[]>>>>({});
 
   function changeTileSize(next: number) {
     setTileSize(next);
     prefStore?.write(QUEST_TILE_PREF_KEY, String(next));
+  }
+
+  function fetchSet(set: QuestSet): Promise<Quest[]> {
+    const pending = inFlightRef.current[set];
+    if (pending) return pending;
+    const promise = set === 'tavern' ? loader.loadTavernQuests() : loader.loadQuests();
+    inFlightRef.current[set] = promise;
+    // Once settled this promise is no longer "in flight" — later callers
+    // should ask the loader again rather than reuse a result nobody kept
+    // (e.g. one discarded below because its switch was superseded).
+    promise.finally(() => {
+      if (inFlightRef.current[set] === promise) delete inFlightRef.current[set];
+    });
+    return promise;
   }
 
   // Fetch each set at most once, on demand — the royal and tavern data files
@@ -76,11 +109,11 @@ export function QuestView(props: QuestViewProps): VNode {
   useEffect(() => {
     let cancelled = false;
     if (bySet[activeSet]) return;
-    const load = activeSet === 'tavern' ? loader.loadTavernQuests() : loader.loadQuests();
-    load.then((q) => {
+    fetchSet(activeSet).then((q) => {
       if (!cancelled) setBySet((prev) => ({ ...prev, [activeSet]: q }));
     });
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loader, activeSet, bySet]);
 
   useEffect(() => {
@@ -139,17 +172,31 @@ export function QuestView(props: QuestViewProps): VNode {
    * specific quest (e.g. this same component reused with an explicit
    * `questId`) would never be. If the target set's data was already fetched
    * (or the user has visited it before, so `prefStore` remembers a
-   * selection), this resolves synchronously; otherwise it fetches on demand —
-   * the whole point of not preloading both ~1.5MB/~1.2MB sets up front — and
-   * caches the result in `bySet` so a repeat switch never re-fetches.
+   * selection), this resolves synchronously; otherwise it fetches on demand
+   * via `fetchSet` — the whole point of not preloading both ~1.5MB/~1.2MB
+   * sets up front — and caches the result in `bySet` once fetched, so a
+   * repeat switch (even one racing this one) never re-fetches.
+   *
+   * The `navGenerationRef` claim/check below guards a slow fetch here from
+   * clobbering a navigation the user has since moved on to: claiming a
+   * generation at the start marks *this* call the current authority, and any
+   * later claim — another `changeSet` call, or the routed props actually
+   * changing (a direct chip click's `onSelectQuest`, or a deep link) —
+   * invalidates it. A superseded call makes neither the `setBySet` nor the
+   * `onSelectQuest` call below; its fetched data (if any) is simply dropped,
+   * not cached, so a later switch to the same set fetches fresh rather than
+   * risking stale-looking reuse of a result nobody ever displayed.
    */
   async function changeSet(next: QuestSet) {
     if (next === activeSet) return;
+    const generation = ++navGenerationRef.current;
     let list = bySet[next];
     if (!list) {
-      list = next === 'tavern' ? await loader.loadTavernQuests() : await loader.loadQuests();
+      list = await fetchSet(next);
+      if (navGenerationRef.current !== generation) return;
       setBySet((prev) => ({ ...prev, [next]: list as Quest[] }));
     }
+    if (navGenerationRef.current !== generation) return;
     const stored = prefStore?.read(questSelectedKey(next)) ?? null;
     const target = (stored && list.some((q) => q.id === stored) ? stored : list[0]?.id) ?? null;
     onSelectQuest(next, target);
