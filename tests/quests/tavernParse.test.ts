@@ -31,6 +31,30 @@ describe('parseTavernEdges', () => {
   it('throws on a genuinely unknown token', () => {
     expect(() => parseTavernEdges('f_quartz')).toThrow(/unrecognised/);
   });
+
+  // The three tokens below don't fit the side-prefix grammar at all (no
+  // leading f/j/a/b), unlike the typo aliases above, which correct a
+  // suffix on an otherwise well-formed token. Each is tolerated — dropped
+  // rather than guessed at — because a guess would invent a door the source
+  // never drew. One test per token, from the live pages that carry them.
+  it.each([
+    ['kastely.htm cell (2,8)', 'a _rezf'],
+    ['kiralyno_7_torpe.htm cell (6,8)', 'j b_arany l_platina'],
+    ['letezik_egy_labirintus.htm cell (0,3)', 'f b_platina j bronz a_bronz'],
+  ])('tolerates the malformed token from %s', (_label, classAttr) => {
+    expect(() => parseTavernEdges(classAttr)).not.toThrow();
+  });
+
+  it('ignoring the tolerated token loses no side on the fully-declared cell', () => {
+    // f, b_platina, j, a_bronz already declare all four sides; the bare,
+    // prefixless `bronz` token that rides along must not overwrite any of them.
+    expect(parseTavernEdges('f b_platina j bronz a_bronz')).toEqual({
+      N: { kind: 'wall' },
+      E: { kind: 'wall' },
+      S: { kind: 'door', lock: 'bronz' },
+      W: { kind: 'door', lock: 'platina' },
+    });
+  });
 });
 
 describe('parseTavernImage', () => {
@@ -79,6 +103,50 @@ describe('parseTavernImage', () => {
   it('flags a boss sprite', () => {
     expect(parseTavernImage('x_elemei/tolvajkepzoboss.jpg'))
       .toMatchObject({ base: 'tolvajkepzoboss', boss: true });
+  });
+
+  // `tolvaj` (thief) is both a lock suffix and the second word of some
+  // monster names — `berbunko_tolvaj` (a monster, no key) versus
+  // `klonolo_tolvaj` (a different monster plus a thief-locked key). No
+  // lexical rule can tell these apart; only knowledge of which strings are
+  // monster names can. `isMonster` here mirrors resolveMonster's real
+  // matches for these three names.
+  describe('with an isMonster predicate', () => {
+    const isMonster = (name: string) => ['berbunko_tolvaj', 'klonolo', 'csontsarkany'].includes(name);
+
+    it('takes the longest monster-name prefix, leaving the rest as markers', () => {
+      expect(parseTavernImage('x_elemei/berbunko_tolvaj_arany.jpg', isMonster))
+        .toMatchObject({ base: 'berbunko_tolvaj', key: 'arany' });
+    });
+
+    it('falls back to a shorter monster-name prefix when the longer one is not a monster', () => {
+      expect(parseTavernImage('x_elemei/klonolo_tolvaj.jpg', isMonster))
+        .toMatchObject({ base: 'klonolo', key: 'tolvaj' });
+    });
+
+    it('resolves a single-token monster name plus its key', () => {
+      expect(parseTavernImage('x_elemei/csontsarkany_bronz.jpg', isMonster))
+        .toMatchObject({ base: 'csontsarkany', key: 'bronz' });
+    });
+
+    it('falls back to marker-only classification when no prefix is a monster', () => {
+      expect(parseTavernImage('x_elemei/kerdes_platina.jpg', isMonster))
+        .toMatchObject({ question: true, key: 'platina', base: null, empty: true });
+    });
+
+    it('reads the plain monster name with no key when nothing follows it', () => {
+      expect(parseTavernImage('x_elemei/berbunko_tolvaj.jpg', isMonster))
+        .toMatchObject({ base: 'berbunko_tolvaj', key: null });
+    });
+  });
+
+  // Proves the default predicate (always false) is a true no-op: same
+  // filename as the last case above, but with isMonster omitted. Without a
+  // predicate opinion, `tolvaj` falls back to its lock-suffix meaning
+  // wherever it sits — exactly task 2's original, predicate-free behaviour.
+  it('without isMonster supplied, keeps the pre-existing marker-anywhere behaviour', () => {
+    expect(parseTavernImage('x_elemei/berbunko_tolvaj.jpg'))
+      .toMatchObject({ base: 'berbunko', key: 'tolvaj' });
   });
 });
 

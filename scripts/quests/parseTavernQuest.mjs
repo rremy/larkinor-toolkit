@@ -27,6 +27,27 @@ export const TAVERN_EDGE_ALIASES = {
 
 const SIDE_TOKEN = /^([fjab])(?:_([a-z]+))?$/;
 
+/**
+ * Malformed edge-class tokens present in the source that don't fit the
+ * side-prefix grammar at all (no leading f/j/a/b), unlike `TAVERN_EDGE_ALIASES`
+ * above, which corrects typos on an otherwise well-formed token. Enumerated
+ * by hand across all 37 pages — exactly these three, one occurrence each.
+ * Tolerated (the token is dropped) rather than guessed at, because guessing a
+ * side and lock would invent a door the source never actually drew.
+ */
+export const TAVERN_TOLERATED_TOKENS = new Set([
+  // kastely.htm cell (2,8): `class="a _rezf"`. No leading side letter at all.
+  '_rezf',
+  // kiralyno_7_torpe.htm cell (6,8): `class="j b_arany l_platina"`. Prefix
+  // `l` isn't in SIDE_BY_PREFIX.
+  'l_platina',
+  // letezik_egy_labirintus.htm cell (0,3): `class="f b_platina j bronz
+  // a_bronz"`. Bare, prefixless `bronz` alongside a cell whose other four
+  // tokens (f, b_platina, j, a_bronz) already declare all four sides, so
+  // dropping this one loses no information.
+  'bronz',
+]);
+
 /** Parse a `<td>` class attribute into the cell's four edges. */
 export function parseTavernEdges(classAttr) {
   const edges = {
@@ -36,6 +57,7 @@ export function parseTavernEdges(classAttr) {
   for (const raw of String(classAttr).trim().split(/\s+/)) {
     if (!raw) continue;
     const token = raw.toLowerCase();
+    if (TAVERN_TOLERATED_TOKENS.has(token)) continue;
     const m = SIDE_TOKEN.exec(token);
     if (!m) throw new Error(`unrecognised edge class token "${raw}"`);
     const side = SIDE_BY_PREFIX[m[1]];
@@ -53,15 +75,42 @@ const PORTAL_TOKENS = new Set(['labikibe', 'kibe', 'labi']);
 /** Bases that are scenery or markers, never a creature. */
 const SCENERY = new Set(['black', 'nop', 'kijarat', 'bejarat', 'csapda', 'halal', 'kerdes', '']);
 
+/** Classify a single filename token as a marker, mutating `facts` if it is one. */
+function consumeMarker(token, facts) {
+  const t = token.toLowerCase();
+  if (LOCK_SUFFIXES.includes(t)) { facts.key = t; return true; }
+  if (ITEM_TOKENS.has(t)) { facts.questItem = true; return true; }
+  if (PORTAL_TOKENS.has(t)) { facts.portal = 'exit'; return true; }
+  if (t === 'kerdes') { facts.question = true; return true; }
+  if (t === 'csapda') { facts.trap = true; return true; }
+  if (t === 'halal') { facts.death = true; return true; }
+  if (t === 'bejarat') { facts.portal = facts.portal ?? 'entrance'; return true; }
+  return false;
+}
+
 /**
  * Decompose a cell image filename.
  *
  * Token-based rather than an ordered suffix peel, because the source writes
  * markers on either side of the sprite name (`kerdes_platina` and
- * `labikibe_kerdes` both occur). Every recognised token is consumed wherever
- * it sits; whatever is left rejoins to form the sprite base.
+ * `labikibe_kerdes` both occur).
+ *
+ * `isMonster` (optional, defaults to always-false so callers that don't need
+ * it — including task 2's own tests — see no change in behaviour) resolves an
+ * ambiguity a lexical rule alone cannot: `tolvaj` (thief) is both a lock
+ * suffix and the second word of some monster names, e.g. `berbunko_tolvaj`
+ * (a monster with no key) versus `klonolo_tolvaj` (a different monster plus a
+ * thief-locked key) — identical token shape, opposite meanings. When
+ * `isMonster` recognises a leading run of tokens as a monster name, that run
+ * is taken whole as the sprite name and every token after it is classified as
+ * a marker. Otherwise every recognised token anywhere in the name is treated
+ * as a marker and whatever remains rejoins to form the base — the pre-existing
+ * behaviour, preserved exactly for names `isMonster` has no opinion on.
+ *
+ * @param {string} src
+ * @param {(name: string) => boolean} [isMonster]
  */
-export function parseTavernImage(src) {
+export function parseTavernImage(src, isMonster = () => false) {
   const facts = {
     base: null, key: null, questItem: false, portal: null,
     trap: false, death: false, boss: false, question: false, empty: false,
@@ -70,20 +119,32 @@ export function parseTavernImage(src) {
   const raw = String(src).replace(/^.*\//, '').replace(/\.(gif|jpe?g|png)$/i, '');
   if (!raw) { facts.empty = true; return facts; }
 
-  const rest = [];
-  for (const token of raw.split('_')) {
-    const t = token.toLowerCase();
-    if (LOCK_SUFFIXES.includes(t)) { facts.key = t; continue; }
-    if (ITEM_TOKENS.has(t)) { facts.questItem = true; continue; }
-    if (PORTAL_TOKENS.has(t)) { facts.portal = 'exit'; continue; }
-    if (t === 'kerdes') { facts.question = true; continue; }
-    if (t === 'csapda') { facts.trap = true; continue; }
-    if (t === 'halal') { facts.death = true; continue; }
-    if (t === 'bejarat') { facts.portal = facts.portal ?? 'entrance'; continue; }
-    rest.push(token);
+  const tokens = raw.split('_');
+
+  // Longest leading prefix of tokens that names a known monster; 0 means none.
+  let monsterLen = 0;
+  for (let n = tokens.length; n >= 1; n -= 1) {
+    if (isMonster(tokens.slice(0, n).join('_'))) { monsterLen = n; break; }
   }
 
-  const base = rest.join('_');
+  const rest = [];
+  let base;
+  if (monsterLen > 0) {
+    base = tokens.slice(0, monsterLen).join('_');
+    for (const token of tokens.slice(monsterLen)) {
+      if (!consumeMarker(token, facts)) rest.push(token);
+    }
+    // Shouldn't happen against the confirmed data set: every token after a
+    // recognised monster name is a known marker. Kept for safety rather than
+    // silently dropping an unrecognised trailing token.
+    if (rest.length > 0) base = [base, ...rest].join('_');
+  } else {
+    for (const token of tokens) {
+      if (!consumeMarker(token, facts)) rest.push(token);
+    }
+    base = rest.join('_');
+  }
+
   if (SCENERY.has(base.toLowerCase())) { facts.empty = true; return facts; }
 
   facts.base = base;
@@ -141,9 +202,16 @@ function field(html, re, label, questId) {
  * Parse one tavern quest page into a `Quest`.
  *
  * `resolveMonster` maps a sprite base to a monster, injected so this stays
- * pure and the tests need no monsters.json.
+ * pure and the tests need no monsters.json. The same function also backs the
+ * `isMonster` predicate `parseTavernImage` uses to find a monster-name prefix
+ * in an ambiguous sprite filename — a name it resolves is, definitionally, a
+ * monster. `resolveMonster` must be side-effect-free for this to be sound:
+ * `parseTavernImage` may call it speculatively on prefixes it ultimately
+ * rejects, so any caller collecting "unresolved" bases must do so from the
+ * final per-cell result, not from inside `resolveMonster` itself.
  */
 export function parseTavernQuestPage(html, { id, title }, resolveMonster) {
+  const isMonster = (name) => resolveMonster(name) !== null;
   const clean = stripComments(html);
 
   const description = field(clean, DESC_RE, 'description', id);
@@ -175,7 +243,7 @@ export function parseTavernQuestPage(html, { id, title }, resolveMonster) {
         throw new Error(`quest ${id} cell ${r},${c}: ${err.message}`);
       }
 
-      const facts = parseTavernImage(src);
+      const facts = parseTavernImage(src, isMonster);
       const parsed = parseTavernTitle(rawTitle, facts.question);
 
       let monsterId = null;
