@@ -123,7 +123,18 @@ function splitOutcome(index, raw) {
   let text = raw.trim().replace(/[;,.\s]+$/, '');
   let outcome = '';
   let m;
-  if ((m = /^([\s\S]*?)\s+--\s+([\s\S]*)$/.exec(text))) {
+  if ((m = /^([\s\S]*?)\s*->\s*([\s\S]*)$/.exec(text))) {
+    // Checked first, ahead of both `--` and the trailing-parenthesis rule
+    // below: a handful of real answers chain both markers (e.g. "Végignyom-
+    // kodod a gombokat ... -> Bugyuta barbár -- 78 db ezüst, ..."), and the
+    // arrow marks the actual text/outcome boundary there — leaving `--`
+    // (and any trailing paren) inside the outcome is correct, since that is
+    // itself part of what the choice leads to. Checking `--` first would
+    // instead strand the arrow inside `text`. Separately, 11 measured cases
+    // read `"... -> Semmi (EZ A JÓ)"`, where a paren match would otherwise
+    // grab just "EZ A JÓ" and leave "Semmi" stuck in `text`.
+    text = m[1]; outcome = m[2];
+  } else if ((m = /^([\s\S]*?)\s+--\s+([\s\S]*)$/.exec(text))) {
     text = m[1]; outcome = m[2];
   } else if ((m = /^([\s\S]*?)\s*\(([^()]*)\)\s*$/.exec(text))) {
     text = m[1]; outcome = m[2];

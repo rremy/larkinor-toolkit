@@ -114,6 +114,9 @@ describe('parseImage', () => {
   it('flags question, trap and death cells', () => {
     expect(parseImage('kerdes.jpg')).toMatchObject({ question: true, empty: true });
     expect(parseImage('kerdes_aranykulcs.jpg')).toMatchObject({ question: true, key: 'arany' });
+    // Real file: quest 27, cell (1,1) — simultaneously the question, the
+    // quest objective (the centrata tőr) and the exit; the largest quest's
+    // objective cell.
     expect(parseImage('kerdes_kt_labikibe.jpg')).toMatchObject({ question: true, questItem: true, portal: 'exit' });
     expect(parseImage('csapda.jpg')).toMatchObject({ trap: true, empty: true });
     expect(parseImage('halal.jpg')).toMatchObject({ death: true, empty: true });
@@ -202,6 +205,29 @@ describe('parseTitle', () => {
     );
     expect(r.drops).toBeNull();
     expect(r.question?.choices[2].outcome).toBe('Hullámelementál -- ez nem zsákmány');
+  });
+
+  it('splits an arrow-separated outcome', () => {
+    const r = parseTitle(
+      'KÉRDÉS: Mit teszel? VÁLASZ: (1) Megvárod mi történik -> Halál!; (2) Továbbrohansz -> Halál!',
+    );
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Megvárod mi történik', outcome: 'Halál!' },
+      { index: 2, text: 'Továbbrohansz', outcome: 'Halál!' },
+    ]);
+  });
+
+  it('prefers the arrow split over a trailing parenthesis, so the paren note stays with the outcome', () => {
+    // Real case (quest 23, cell 5,9): without the arrow rule running first,
+    // the trailing-parenthesis rule would instead grab just "EZ A JÓ" and
+    // strand "Semmi" in `text`.
+    const r = parseTitle(
+      'KÉRDÉS: Mit teszel? VÁLASZ: (1) Lehasalsz a lépcső alá -> Semmi (EZ A JÓ)',
+      true,
+    );
+    expect(r.question?.choices).toEqual([
+      { index: 1, text: 'Lehasalsz a lépcső alá', outcome: 'Semmi (EZ A JÓ)' },
+    ]);
   });
 
   it('tolerates the doubled parenthesis typo in the source', () => {

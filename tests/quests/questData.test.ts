@@ -72,7 +72,12 @@ describe('static/db/quests.json', () => {
     expect(mismatches).toEqual([]);
   });
 
-  it('provides a key cell for every lock that appears on a door', () => {
+  it('provides a key cell for every lock that appears on a door, except this known set', () => {
+    // The source genuinely omits a key for some door/quest pairs — the UI
+    // states "nincs kulcs ebben a küldetésben" for these rather than treating
+    // it as a data error. Pinned to the exact measured set (not merely
+    // "recorded") so a future re-scrape that gains or loses one fails the
+    // build instead of silently drifting.
     const missing: string[] = [];
     for (const q of quests) {
       const keysHere = new Set(q.cells.map((c) => c.key).filter(Boolean));
@@ -81,10 +86,15 @@ describe('static/db/quests.json', () => {
           .filter((e) => e.kind === 'door')
           .map((e) => (e as { lock: LockType }).lock),
       );
-      for (const lock of locksHere) if (!keysHere.has(lock)) missing.push(`quest ${q.id}: ${lock}`);
+      for (const lock of locksHere) if (!keysHere.has(lock)) missing.push(`${q.id}:${lock}`);
     }
-    // Recorded, not asserted empty: the source may genuinely omit a key.
-    // The UI states "nincs kulcs ebben a küldetésben" for these.
-    expect(Array.isArray(missing)).toBe(true);
+    expect(missing.sort()).toEqual([
+      '18:arany', '18:bronz', '18:ezust', '18:tolvaj',
+      '27:bronz', '27:tolvaj',
+      '32:arany', '32:bronz', '32:vas',
+      '39:vas',
+      '41:bronz',
+      '42:rez',
+    ]);
   });
 });

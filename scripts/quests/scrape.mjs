@@ -45,7 +45,10 @@ if (unresolved.size > 0) {
 
 const cells = quests.flatMap((q) => q.cells);
 const questions = cells.filter((c) => c.question).length;
-const rawQuestionCells = cells.filter((c) => /K[ÉE]RD[ÉE]S/i.test(c.narration)).length;
+// hasQuestion is the image-derived ground truth (see parseQuest.mjs); a cell
+// with hasQuestion true but a null question is one whose title text failed
+// to split, i.e. exactly the parser-lossiness this diagnostic exists to catch.
+const rawQuestionCells = cells.filter((c) => c.hasQuestion && !c.question).length;
 process.stdout.write(
   `\n${quests.length} quests, ${cells.length} cells, ` +
   `${questions} questions parsed, ${rawQuestionCells} left as raw text\n`,
