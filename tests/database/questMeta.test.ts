@@ -18,7 +18,7 @@ function cell(partial: Partial<QuestCell>): QuestCell {
 }
 
 function quest(cells: QuestCell[]): Quest {
-  return { id: 1, description: '', reward: '', rows: 2, cols: 2, cells };
+  return { id: '1', set: 'royal', title: '1', description: '', reward: '', rows: 2, cols: 2, cells };
 }
 
 describe('LOCK_LABEL', () => {

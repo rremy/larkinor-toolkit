@@ -5,6 +5,15 @@ import {
 } from '../../scripts/quests/parseQuest.mjs';
 import type { Quest } from '@/shared/data';
 
+/**
+ * `parseQuestPage`'s actual return shape: the pre-reshape quest, before
+ * `scripts/quests/scrape.mjs`'s loop stamps on the string `id`, `set` and
+ * `title` that make it a full `Quest`. Kept distinct from `Quest` itself so
+ * this file's `id` assertions (still against the numeric source page id)
+ * stay honest about what the parser actually produces.
+ */
+type ParsedQuest = Omit<Quest, 'id' | 'set' | 'title'> & { id: number };
+
 const fixture = (n: number) => readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8');
 
 describe('stripComments', () => {
@@ -303,7 +312,7 @@ const resolveNone = () => null;
 const parse = (
   n: number,
   resolve: (base: string) => { id: number; name: string } | null = resolveAll,
-): Quest => parseQuestPage(readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8'), n, resolve);
+): ParsedQuest => parseQuestPage(readFileSync(`tests/fixtures/quests/${n}.html`, 'utf-8'), n, resolve);
 
 describe('parseQuestPage', () => {
   it('reads the description and reward', () => {

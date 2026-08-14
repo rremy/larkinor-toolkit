@@ -177,8 +177,24 @@ export interface QuestCell {
   rawImage: string;
 }
 
+/** Which body of quests a `Quest` belongs to. */
+export type QuestSet = 'royal' | 'tavern';
+
 export interface Quest {
-  id: number;
+  /**
+   * Royal quests use their number as a string (`'1'`…`'45'`); tavern quests
+   * use the source page's slug (`'GOMB'`, `'alapito_okirat'`, `'GY.I.K'`).
+   * One string type rather than a `number | string` union: every consumer
+   * compares and routes on it, and a union would push a discriminant check
+   * into each of those sites for no benefit.
+   */
+  id: string;
+  set: QuestSet;
+  /**
+   * Chip and header label. Royal holds the bare number (the header renders
+   * `12. küldetés` from it); tavern holds the display title.
+   */
+  title: string;
   description: string;
   reward: string;
   rows: number;

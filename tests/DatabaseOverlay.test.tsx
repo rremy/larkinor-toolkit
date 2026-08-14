@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { DatabaseOverlay } from '../src/components/DatabaseOverlay';
 import { DB_MINIMIZED_KEY, DB_ROUTE_KEY, QUEST_TILE_KEY, getPanelMinimized, setPanelMinimized, getDbRoute, getPref } from '../src/utils/config';
-import { QUEST_SELECTED_PREF_KEY } from '../src/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY } from '../src/shared/prefKeys';
 import { USERSCRIPT_DATA_BASE_URL } from '../src/shared/publicUrl';
 
 /** The label of the currently selected tab, or null if none is. */
@@ -19,7 +19,7 @@ describe('DatabaseOverlay', () => {
     // Same hazard for the quest maze's remembered zoom.
     GM_setValue(QUEST_TILE_KEY, '');
     // ...and for the remembered quest selection.
-    GM_setValue(QUEST_SELECTED_PREF_KEY, '');
+    GM_setValue(LEGACY_QUEST_SELECTED_PREF_KEY, '');
   });
   afterEach(() => {
     location.hash = '';
@@ -67,7 +67,7 @@ describe('DatabaseOverlay', () => {
     // has real data to render, proving the quests branch (not just the tab
     // label) mounted under `routing="memory"`.
     const stubQuest = {
-      id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+      id: '1', set: 'royal', title: '1', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
       cells: [{
         row: 0, col: 0,
         edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
@@ -121,7 +121,7 @@ describe('DatabaseOverlay', () => {
     function stubQuestAndMonsterData() {
       clearQuestDataCache();
       const stubQuest = {
-        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        id: '1', set: 'royal', title: '1', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
         cells: [{
           row: 0, col: 0,
           edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
@@ -236,7 +236,7 @@ describe('DatabaseOverlay', () => {
     // what actually has to survive that reload, not just DatabaseApp's props.
     function stubQuestData() {
       const stubQuest = {
-        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        id: '1', set: 'royal', title: '1', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
         cells: [{
           row: 0, col: 0,
           edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
@@ -316,8 +316,8 @@ describe('DatabaseOverlay', () => {
         question: null, rawImage: '',
       });
       const stubQuests = [
-        { id: 1, description: 'Első teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
-        { id: 2, description: 'Második teszt küldetés', reward: '2 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
+        { id: '1', set: 'royal', title: '1', description: 'Első teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
+        { id: '2', set: 'royal', title: '2', description: 'Második teszt küldetés', reward: '2 db ezüst', rows: 1, cols: 1, cells: [cellFor()] },
       ];
       vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
         url: string;

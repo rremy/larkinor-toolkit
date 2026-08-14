@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import type { DataLoader } from '@/shared/data';
+import type { DataLoader, QuestSet } from '@/shared/data';
 import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
@@ -112,46 +112,77 @@ const TAB_LABELS: Record<Tab, string> = { ...TAB_LABEL, map: 'Térkép', quests:
 
 interface Route {
   tab: Tab;
-  /** Selected entity id on explorer tabs (null on the map tab). */
+  /** Selected entity id on explorer tabs (null elsewhere). */
   id: number | null;
-  /** Selected/target cell id on the map tab (null on explorer tabs). */
+  /** Selected/target cell id on the map tab (null elsewhere). */
   cell: string | null;
+  /** Which quest set the quests tab shows (null elsewhere / when unrouted). */
+  set: QuestSet | null;
+  /** Selected quest id on the quests tab (null elsewhere). */
+  quest: string | null;
 }
 
 function isTab(value: string): value is Tab {
   return (TABS as string[]).includes(value);
 }
 
-const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null, cell: null };
+const QUEST_SETS: QuestSet[] = ['royal', 'tavern'];
 
-/** Build a route from a tab + raw `#tab/param` segment (param is per-tab). */
-function routeFor(tab: Tab, param: string | null): Route {
-  if (tab === 'map') return { tab, id: null, cell: param };
-  return { tab, id: param != null ? Number(param) : null, cell: null };
+function isQuestSet(value: string): value is QuestSet {
+  return (QUEST_SETS as string[]).includes(value);
+}
+
+const DEFAULT_ROUTE: Route = { tab: 'weapons', id: null, cell: null, set: null, quest: null };
+
+/** Build a route from a tab and its raw path segments (meaning is per-tab). */
+function routeFor(tab: Tab, first: string | null, second: string | null): Route {
+  const empty = { id: null, cell: null, set: null, quest: null };
+  if (tab === 'map') return { ...empty, tab, cell: first };
+  if (tab === 'quests') {
+    // `#quests/<set>/<id>` is the current grammar. A first segment that is
+    // not a set name is a pre-switcher route (`#quests/12`) or an old stored
+    // pref, and means a royal quest — worth honouring so existing bookmarks
+    // keep working.
+    if (first != null && isQuestSet(first)) return { ...empty, tab, set: first, quest: second };
+    return { ...empty, tab, set: first != null ? 'royal' : null, quest: first };
+  }
+  // Explorer tabs take a numeric entity id; the widened grammar below also
+  // admits non-numeric segments, which are not valid here.
+  const id = first != null && /^-?\d+$/.test(first) ? Number(first) : null;
+  return { ...empty, tab, id };
 }
 
 /**
- * Serialise to `tab[/param]`. The param is an entity id on explorer tabs and a
- * map cell id on the map tab; both are numeric strings, so one grammar covers
- * them (map cell ids are the game's `imageId`, e.g. "54").
+ * Serialise to `tab[/first[/second]]`. Explorer tabs pass an entity id, the
+ * map tab a cell id, and the quests tab a set and quest id.
+ *
+ * A null *or empty-string* second segment is omitted rather than serialised
+ * as a trailing slash: switching to a set whose quest list has not resolved
+ * yet (task 7) must produce `#quests/tavern`, not `#quests/tavern/`, which
+ * `parseRoute`'s regex below cannot parse back.
  */
-function serializeRoute(tab: Tab, param: string | null): string {
-  return param != null ? `${tab}/${param}` : tab;
+export function serializeRoute(tab: Tab, first: string | null, second: string | null): string {
+  if (first == null) return tab;
+  return second == null || second === '' ? `${tab}/${first}` : `${tab}/${first}/${second}`;
 }
 
-/** Inverse of `serializeRoute`. Anything unrecognised degrades to the default. */
-function parseRoute(raw: string): Route {
-  const m = raw.match(/^([a-z]+)(?:\/(-?\d+))?$/);
+/**
+ * Inverse of `serializeRoute`. Anything unrecognised degrades to the default.
+ * The segment charset admits the tavern slugs, which carry mixed case and
+ * dots (`GY.I.K.`) — the old `-?\d+` grammar rejected them outright.
+ */
+export function parseRoute(raw: string): Route {
+  const m = raw.match(/^([a-z]+)(?:\/([A-Za-z0-9._-]+))?(?:\/([A-Za-z0-9._-]+))?$/);
   if (!m || !isTab(m[1])) return DEFAULT_ROUTE;
-  return routeFor(m[1] as Tab, m[2] ?? null);
+  return routeFor(m[1] as Tab, m[2] ?? null, m[3] ?? null);
 }
 
 function parseHash(): Route {
   return parseRoute((location.hash || '').replace(/^#/, ''));
 }
 
-function hashFor(tab: Tab, param: string | null): string {
-  return `#${serializeRoute(tab, param)}`;
+function hashFor(tab: Tab, first: string | null, second: string | null): string {
+  return `#${serializeRoute(tab, first, second)}`;
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
@@ -172,15 +203,15 @@ export function DatabaseApp(props: DatabaseAppProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routing]);
 
-  function navigate(tab: Tab, param: string | null) {
+  function navigate(tab: Tab, first: string | null, second: string | null = null) {
     if (routing !== 'hash') {
-      setRoute(routeFor(tab, param));
-      routeStore?.write(serializeRoute(tab, param));
+      setRoute(routeFor(tab, first, second));
+      routeStore?.write(serializeRoute(tab, first, second));
       return;
     }
-    const next = hashFor(tab, param);
+    const next = hashFor(tab, first, second);
     if (location.hash !== next) location.hash = next;
-    else setRoute(routeFor(tab, param));
+    else setRoute(routeFor(tab, first, second));
   }
 
   function onSelect(id: number | null) {
@@ -288,9 +319,10 @@ export function DatabaseApp(props: DatabaseAppProps) {
       ) : route.tab === 'quests' ? (
         <QuestView
           loader={loader}
-          questId={route.id}
+          questSet={route.set}
+          questId={route.quest}
           prefStore={prefStore}
-          onSelectQuest={(id) => navigate('quests', String(id))}
+          onSelectQuest={(set, id) => navigate('quests', set, id)}
           onJumpToMonster={(id) => navigate('monsters', String(id))}
         />
       ) : (

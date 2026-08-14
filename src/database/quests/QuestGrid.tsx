@@ -53,7 +53,19 @@ export function QuestGrid(props: QuestGridProps): VNode {
         const classes = ['quest-cell'];
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
-        if (cell.narration === '' && !monster && !cell.portal) classes.push('void');
+        // `narration === ''` alone is not a reliable "empty filler" proxy on
+        // the tavern set: `parseTavernTitle` moves all text into `question`
+        // and leaves `narration: ''` on every question tile, so without these
+        // extra exclusions 141 question tiles, 9 key tiles and 1 quest-item
+        // tile painted as void even though they carry real content. Royal
+        // cells are unaffected — none of them combine an empty narration with
+        // any of these markers, since the royal parser always leaves some
+        // narration behind on a real room.
+        if (
+          cell.narration === '' && !monster && !cell.portal
+          && !cell.hasQuestion && !cell.key && !cell.questItem
+          && !cell.trap && !cell.death && !cell.boss
+        ) classes.push('void');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit
         // without a highlightLock.

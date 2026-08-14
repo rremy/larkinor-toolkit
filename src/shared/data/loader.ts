@@ -11,6 +11,7 @@ export interface DataLoader {
   loadItemShops(): Promise<ShopData>;
   loadWeaponShops(): Promise<ShopData>;
   loadQuests(): Promise<Quest[]>;
+  loadTavernQuests(): Promise<Quest[]>;
 }
 
 /**
@@ -35,5 +36,6 @@ export function createDataLoader(source: DataSource, baseUrl: string): DataLoade
     loadItemShops: () => source.fetchJson<ShopData>(url('item-shops.json')),
     loadWeaponShops: () => source.fetchJson<ShopData>(url('weapon-shops.json')),
     loadQuests: () => source.fetchJson<Quest[]>(url('quests.json')),
+    loadTavernQuests: () => source.fetchJson<Quest[]>(url('tavern-quests.json')),
   };
 }

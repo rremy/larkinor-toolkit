@@ -39,10 +39,13 @@ larkinor-toolkit/
 │       ├── map/             # MapView, CellDetail, Legend, mapMeta
 │       └── quests/          # QuestView, QuestGrid, QuestKeyLegend, QuestCellDetail, QuestQuestionCard, questMeta
 ├── static/db/*.json         # Game data — SINGLE SOURCE OF TRUTH
-│                            #   monsters, weapons, armors, items, map-data, item-shops, weapon-shops, quests
+│                            #   monsters, weapons, armors, items, map-data, item-shops, weapon-shops,
+│                            #   quests, tavern-quests
 ├── tests/                   # Vitest + @testing-library/preact (jsdom)
 ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader (fetches + evals main script)
-├── scripts/deploy.sh        # scp dist/ + static/ to the server (config from repo-root .env)
+├── scripts/
+│   ├── deploy.sh            # scp dist/ + static/ to the server (config from repo-root .env)
+│   └── quests/              # scrape.mjs+parseQuest.mjs (royal), scrapeTavern.mjs+parseTavernQuest.mjs (tavern)
 ├── docs/superpowers/        # specs + plans
 ├── .github/workflows/ci.yml # CI: typecheck + test + build; deploys main to GitHub Pages
 ├── vite.config.ts           # Userscript build (vite-plugin-monkey)
@@ -68,7 +71,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **TypeScript models** (`types.ts`): `Weapon`, `Armor`, `Item`, `Monster`, `MapCell`, `Shop` with full typing.
 - **DataSource abstraction** (`source.ts`): `gmSource` (runs in userscript, uses `GM_xmlhttpRequest`) and `httpSource` (runs standalone, uses `fetch`). DB components must use `DataSource`, never call GM_* directly, so the same code runs in-game and standalone.
 - **Data loader** (`loader.ts`): `createDataLoader(source, baseUrl)` → `DataLoader` with methods like `fetchMonsters()`, `fetchWeapons()`, etc. Cached via `GM_setValue` in-game, HTTP caching standalone.
-- **Data single source of truth**: `static/db/*.json` (monsters, weapons, armors, items, map-data, item-shops, weapon-shops, quests), deployed to `/larkinor/static/db/` on the production host.
+- **Data single source of truth**: `static/db/*.json` (monsters, weapons, armors, items, map-data, item-shops, weapon-shops, quests, tavern-quests), deployed to `/larkinor/static/db/` on the production host.
 
 #### Shared theme (`src/shared/styles/theme.css`)
 - Single dark-medieval CSS variables sheet; **never add hardcoded hex/rgba in rule bodies** — use `:root` variables and `.lc-db` scopes.
@@ -125,6 +128,70 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     in quirks mode, where table cells don't inherit `color` and render black-on-dark (see
     *quirks-mode inheritance holes* below). Rendering divs sidesteps that class of bug rather
     than patching around it.
+  - **Tavern quests** (*kocsmai küldetések*) are a second, independent quest body — 37 quests
+    keyed by page slug rather than a number (ids like `GOMB` or `GY.I.K`, dots and mixed case
+    included), titled from the index link's text — scraped from
+    `https://www.larkinorcenter.hu/kocskuld/` via `npm run scrape:tavern`
+    (`scripts/quests/scrapeTavern.mjs` + `parseTavernQuest.mjs`) into the committed
+    `static/db/tavern-quests.json`. The slug (from the link's `href`) is stable; the title
+    (the link's text) carries the source's own accents and typos, so the two are tracked
+    separately rather than one derived from the other. It shares a page skeleton with the
+    royal source but almost no grammar, which is why it has its own parser module rather than
+    a dialect flag through `parseQuest.mjs`. Hard-won facts, each costly enough to be worth
+    recording once:
+    - **The filename grammar differs from the royal set's outright, not just in spelling.** A
+      key cell is `<monster>_<lock>` (no `kulcs` suffix — royal: `_<lock>kulcs`), the quest
+      item marker is `_kulditargy` (royal: `_kt`), the exit marker is `_labikibe` or `_kibe`,
+      and markers can sit on **either side** of the sprite name (`kerdes_platina` and
+      `labikibe_kerdes` both occur in the corpus). So `parseTavernImage` classifies every
+      underscore-separated token rather than peeling an ordered suffix chain.
+    - **`tolvaj` (thief) is both a lock name and part of a monster's name.**
+      `berbunko_tolvaj.jpg` is monster #149 *Bérbunkó tolvaj* with no key; `klonolo_tolvaj.jpg`
+      is #158 *Klónölő* plus a thief-locked key — identical token shape, opposite meanings. A
+      lexical rule alone cannot tell them apart, so `parseTavernImage` takes an injected
+      `isMonster` predicate and resolves the sprite name as the **longest leading prefix of
+      tokens that names a known monster**; every token after that prefix is a marker.
+    - **Edge-class typos are aliased; three more tokens are tolerated and ignored — never
+      guessed.** `TAVERN_EDGE_ALIASES` corrects three misspelled lock suffixes (`azust` →
+      `ezust`, `asrany` → `arany`, `bronnz` → `bronz`) after lowercasing, so a same-cased typo
+      of an already-correct suffix (`Ezust`) needs no entry of its own. Separately, three
+      tokens don't fit the side-prefix grammar at all and go in
+      `TAVERN_TOLERATED_TOKENS`, dropped outright: `_rezf` (`kastely`, cell 2,8), `l_platina`
+      (`kiralyno_7_torpe`, cell 6,8), and a bare `bronz` (`letezik_egy_labirintus`, cell 0,3) —
+      one occurrence each across all 37 pages. Guessing would invent a door the source never
+      drew, and on that third cell the other three tokens already declare all four sides, so
+      dropping the stray one costs nothing. Any *other* unrecognised token still throws —
+      that abort is the drift detector, mirroring `TOLERATED_TOKENS` in the royal parser.
+    - **The `komponens` page has an unclosed `<img>` followed by a bare `<td="">`** (row 0,
+      cell 5). A `</td>`-anchored lazy match runs past it, merging two cells into one and
+      shifting the rest of the row one column left — exactly what a browser's own error
+      recovery does, and what the parser must reproduce rather than "fix". The tavern cell
+      regex therefore reads a cell's content up to the next `<td`/`</td` instead of requiring
+      a closing tag; checked across all 306 rows of the 37 pages, exactly this one row
+      changes shape.
+    - **There is no question grammar at all**: zero `(n)` markers, arrows or ` -- ` outcome
+      separators anywhere in the set (the royal set uses these — see `parseQuest.mjs`).
+      Question tiles are instead identified by **image** (a `kerdes` token in the filename),
+      and their `title` attribute is newline-delimited: line 0 is the setup, the remaining
+      lines are the options, and there is **no outcome text at all** — the source simply never
+      records one, unlike the royal set's choices.
+    - Seven sprite basenames are misspelled or mis-encoded beyond what accent-folded name
+      matching recovers on its own; `SPRITE_ALIASES` in `scrapeTavern.mjs` maps each by hand
+      to a monster id.
+    - `black.jpg` is void filler, exactly like `nop.jpg` — both resolve to an empty cell with
+      no creature and no marker.
+    - Final data shape, and what `tests/quests/tavernQuestData.test.ts` locks in: 37 quests,
+      2951 cells, 147 question tiles (132 with parsed options — the other 15 keep the marker
+      but yield no card, same as the royal set), 0 unresolved sprites, every quest rectangular
+      (`cells.length === rows * cols`).
+  - **Persistence is per set.** The quest tab remembers which set was shown last
+    (`lc-quest-set`) and, separately, the last selected quest **within each set**
+    (`lc-quest-selected-royal` / `lc-quest-selected-tavern`, built by `questSelectedKey(set)`
+    in `src/shared/prefKeys.ts`), with the legacy single key `lc-quest-selected` read once to
+    seed the royal key on upgrade. Per-set rather than one shared key so switching to tavern,
+    browsing, and switching back returns you to the royal quest you left, and so the
+    stale-id fallback lands in the right set — a forgotten id falls back to the first quest of
+    the *set the user was in*, which one key alone cannot tell you.
 - Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)
@@ -180,6 +247,9 @@ npm run serve        # Simple HTTP server for dist/ (http://localhost:9000)
   private host, `/<repo>/` on GitHub Pages.
 - `static/db/` is the single source. The DB build does not copy it; `npm run build:site`
   stages it into `dist/static/`, and `scripts/deploy.sh` ships it as a separate scp.
+- The royal and tavern quest sets are separate files (`quests.json`, `tavern-quests.json`),
+  each fetched only once its tab is actually shown, not both up front — together they run
+  ~1.5MB + ~1.2MB, and most sessions never switch sets at all.
 
 **Public base URL — never hardcode a host.** Everything the built userscript must reach at
 runtime derives from one value, `LC_PUBLIC_BASE_URL` (default in `vite.config.ts`), injected

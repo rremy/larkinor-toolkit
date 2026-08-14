@@ -1027,6 +1027,23 @@
 .lc-db .quest-legend .placeholder { color: var(--muted); font-style: italic; }
 
 .lc-db .quest-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Royal/tavern set toggle, above the chip strip. Same spacing as the strip
+   below it; buttons get the same treatment as an active chip when selected. */
+.lc-db .quest-sets {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px 8px 0; border-bottom: 1px solid var(--border);
+}
+.lc-db .quest-set-btn {
+  padding: 3px 10px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); font-size: 12px; cursor: pointer;
+}
+.lc-db .quest-set-btn:hover { background: var(--panel); }
+.lc-db .quest-set-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+/* Surfaces a rejected changeSet fetch — the switcher stays reachable (it's
+   rendered above the loading/empty states now) so this is the only feedback
+   the user gets that their click did not land. */
+.lc-db .quest-set-error { margin: 4px 8px 0; font-size: 11px; color: var(--bad); }
 /* Number strip — replaces the old left-hand picker column so the maze gets
    the horizontal space instead. Quests are identified by number only; the
    description moves to a `title` tooltip and stays visible in the header. */

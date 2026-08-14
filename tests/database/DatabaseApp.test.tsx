@@ -1,8 +1,19 @@
 import { h } from 'preact';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DatabaseApp } from '@/database/DatabaseApp';
-import type { DataLoader } from '@/shared/data';
+import { DatabaseApp, parseRoute, serializeRoute } from '@/database/DatabaseApp';
+import type { DataLoader, QuestCell } from '@/shared/data';
+
+// Shared by every quest fixture below: a fully-populated 1x1 grid, so the
+// exact geometry never matters to a test that only checks which quest/tab
+// rendered.
+const TEST_CELL: QuestCell = {
+  row: 0, col: 0,
+  edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+  monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+  portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+  question: null, rawImage: '',
+};
 
 // Minimal stub loader — these tests only exercise tab navigation, never wait
 // on the resolved data, so the exact payload shape doesn't matter.
@@ -18,15 +29,19 @@ const stubLoader: DataLoader = {
   loadItemShops: () => Promise.resolve({} as never),
   loadWeaponShops: () => Promise.resolve({} as never),
   loadQuests: () => Promise.resolve([{
-    id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
-    cells: [{
-      row: 0, col: 0,
-      edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
-      monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
-      portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
-      question: null, rawImage: '',
-    }],
+    id: '12', set: 'royal', title: '12', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+    cells: [TEST_CELL],
   }]),
+  loadTavernQuests: () => Promise.resolve([
+    {
+      id: 'GOMB', set: 'tavern', title: 'GÖMB', description: 'Teszt küldetés', reward: '1 db ezüst',
+      rows: 1, cols: 1, cells: [TEST_CELL],
+    },
+    {
+      id: 'GY.I.K.', set: 'tavern', title: 'GY.I.K.', description: 'Teszt küldetés', reward: '1 db ezüst',
+      rows: 1, cols: 1, cells: [TEST_CELL],
+    },
+  ]),
 };
 
 describe('DatabaseApp routing', () => {
@@ -84,5 +99,55 @@ describe('DatabaseApp routing', () => {
     render(<DatabaseApp loader={stubLoader} prefStore={prefStore} />);
     const select = await screen.findByLabelText('Méret') as HTMLSelectElement;
     expect(select.value).toBe('72');
+  });
+});
+
+describe('quest routing', () => {
+  beforeEach(() => { location.hash = ''; });
+  afterEach(() => { location.hash = ''; });
+
+  it('reads a legacy #quests/12 as royal quest 12', async () => {
+    location.hash = '#quests/12';
+    render(<DatabaseApp loader={stubLoader} />);
+    await screen.findByText('12. küldetés');
+  });
+
+  it('routes #quests/royal/12 to royal quest 12', async () => {
+    location.hash = '#quests/royal/12';
+    render(<DatabaseApp loader={stubLoader} />);
+    await screen.findByText('12. küldetés');
+  });
+
+  it('accepts #quests/tavern/GOMB and renders the tavern quest', async () => {
+    location.hash = '#quests/tavern/GOMB';
+    render(<DatabaseApp loader={stubLoader} />);
+    expect(await screen.findByText('Küldetések')).toBeTruthy();
+    expect(screen.getByText('Küldetések').className).toContain('active');
+    expect(screen.getByText('Fegyverek').className).not.toContain('active');
+    // QuestView is set-aware as of task 7 — pin the actual rendered tavern
+    // quest by its title (its header, rendered bare rather than
+    // `<id>. küldetés`, since tavern quests aren't numbered).
+    expect(await screen.findByRole('heading', { name: 'GÖMB' })).toBeTruthy();
+  });
+
+  // The important case: a slug carrying dots and mixed case, which the old
+  // `-?\d+` grammar rejected outright.
+  it('accepts a slug containing dots and mixed case and renders that tavern quest', async () => {
+    location.hash = '#quests/tavern/GY.I.K.';
+    render(<DatabaseApp loader={stubLoader} />);
+    expect(await screen.findByText('Küldetések')).toBeTruthy();
+    expect(screen.getByText('Küldetések').className).toContain('active');
+    expect(screen.getByText('Fegyverek').className).not.toContain('active');
+    expect(await screen.findByRole('heading', { name: 'GY.I.K.' })).toBeTruthy();
+  });
+
+  // Ruling: a null/empty quest id must round-trip through a bare
+  // `#quests/<set>` hash, not an unparseable trailing slash.
+  it('serialises a null/empty quest id without a trailing slash and parses it back', () => {
+    expect(serializeRoute('quests', 'tavern', null)).toBe('quests/tavern');
+    expect(serializeRoute('quests', 'tavern', '')).toBe('quests/tavern');
+    expect(parseRoute('quests/tavern')).toEqual({
+      tab: 'quests', id: null, cell: null, set: 'tavern', quest: null,
+    });
   });
 });

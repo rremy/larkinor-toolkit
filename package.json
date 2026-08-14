@@ -19,6 +19,7 @@
     "copy:data": "mkdir -p dist/static && cp -R static/. dist/static/",
     "test": "vitest run",
     "scrape:quests": "node scripts/quests/scrape.mjs",
+    "scrape:tavern": "node scripts/quests/scrapeTavern.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "serve": "python3 -m http.server 9000 --directory dist"
