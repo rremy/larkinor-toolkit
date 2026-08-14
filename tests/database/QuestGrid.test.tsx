@@ -300,3 +300,57 @@ describe('QuestGrid', () => {
     });
   });
 });
+
+describe('the quest objective tile', () => {
+  // Exactly one cell per quest carries the objective, in both sets. It is the
+  // point of the whole maze, so it gets a ring on the tile rather than only a
+  // corner badge, which is easy to miss at the smallest zoom.
+  const objectiveQuest = (set: 'royal' | 'tavern'): Quest => ({
+    id: set === 'royal' ? '1' : 'Zurkhas', set, title: set === 'royal' ? '1' : 'Zurkhas',
+    description: 'd', reward: 'r', rows: 1, cols: 2,
+    cells: [cell({ row: 0, col: 0, questItem: true }), cell({ row: 0, col: 1 })],
+  });
+
+  it.each(['royal', 'tavern'] as const)('marks the objective cell on the %s set', (set) => {
+    const { container } = render(
+      <QuestGrid quest={objectiveQuest(set)} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
+    const cells = container.querySelectorAll('.quest-cell');
+    expect(cells[0].classList.contains('objective')).toBe(true);
+    expect(cells[1].classList.contains('objective')).toBe(false);
+  });
+
+  it('keeps the badge legible by scaling it with the tile size', () => {
+    const { container: small } = render(
+      <QuestGrid quest={objectiveQuest('royal')} monsters={monsters} selected={null} onSelect={() => {}} tileSize={40} />,
+    );
+    const { container: large } = render(
+      <QuestGrid quest={objectiveQuest('royal')} monsters={monsters} selected={null} onSelect={() => {}} tileSize={72} />,
+    );
+    const px = (c: Element) =>
+      Number(/font-size:\s*([\d.]+)px/.exec(c.querySelector('.quest-badge.quest-item')!.getAttribute('style') ?? '')![1]);
+
+    // Bigger tiles, bigger badge — and never smaller than the floor that keeps
+    // it readable when the maze is zoomed all the way out.
+    expect(px(large)).toBeGreaterThan(px(small));
+    expect(px(small)).toBeGreaterThanOrEqual(11);
+  });
+
+  // The objective frequently shares its tile with other markers — 21 royal and
+  // 19 tavern objectives are also the exit, 25 royal ones are also a boss, and
+  // one in each set is also a question. The ring must not suppress those.
+  it('still shows the other markers it shares a tile with', () => {
+    const quest: Quest = {
+      id: '1', set: 'royal', title: '1', description: 'd', reward: 'r', rows: 1, cols: 1,
+      cells: [cell({ questItem: true, portal: 'exit', boss: true, hasQuestion: true })],
+    };
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
+    expect(container.querySelector('.quest-cell')!.classList.contains('objective')).toBe(true);
+    expect(container.querySelector('.quest-badge.quest-item')).not.toBeNull();
+    expect(container.querySelector('.quest-badge.exit')).not.toBeNull();
+    expect(container.querySelector('.quest-badge.boss')).not.toBeNull();
+    expect(container.querySelector('.quest-big-icon.question')).not.toBeNull();
+  });
+});

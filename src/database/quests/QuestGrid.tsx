@@ -51,6 +51,9 @@ export function QuestGrid(props: QuestGridProps): VNode {
           ? 'trap'
           : cell.hasQuestion ? 'question' : null;
         const classes = ['quest-cell'];
+        // The one tile the quest is about — exactly one per quest across both
+        // sets — gets a ring on the tile itself, not just a corner badge.
+        if (cell.questItem) classes.push('objective');
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
         // `narration === ''` alone is not a reliable "empty filler" proxy on
@@ -156,7 +159,16 @@ export function QuestGrid(props: QuestGridProps): VNode {
                 <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
               )}
               {cell.questItem && (
-                <span class="quest-badge quest-item" title="küldetés tárgy">{BADGE.questItem}</span>
+                // Scaled from the tile size for the same reason the big icon
+                // is: at the smallest zoom the shared 10px badge font makes
+                // the objective no more noticeable than an exit.
+                <span
+                  class="quest-badge quest-item"
+                  title="küldetés tárgy"
+                  style={{ fontSize: `${Math.max(11, Math.round(tileSize * 0.3))}px` }}
+                >
+                  {BADGE.questItem}
+                </span>
               )}
               {cell.death && !bigIcon && <span class="quest-badge death" title="halál">{BADGE.death}</span>}
               {/* No separate `!bigIcon` trap/question corner badges here: bigIcon

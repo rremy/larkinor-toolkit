@@ -57,6 +57,12 @@
   --quest-tile-bg: #40352a;
   --quest-badge-bg: rgba(0, 0, 0, 0.62);
   --quest-key-glow: rgba(212, 162, 89, 0.85);
+  /* The quest objective. Deliberately the one cool, saturated hue in an
+     otherwise warm palette, and unused by any lock — this is the single most
+     important tile in a quest (exactly one per quest in both sets), so it must
+     not read as "another key". */
+  --quest-item: #e766c0;
+  --quest-item-glow: rgba(231, 102, 192, 0.55);
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -881,6 +887,25 @@
   color: var(--text);
 }
 .lc-db .quest-cell.void { background: var(--quest-void); }
+/* The quest objective tile — the one cell the whole quest is about, and the
+   one marker that must survive being scanned at a glance.
+   Drawn as an ::after overlay rather than a box-shadow on the cell, for two
+   reasons found by looking at it: a sprite fills ~88% of the tile and paints
+   over any inset shadow, and giving `.quest-cell` its own `z-index` would make
+   it a stacking context — the same trap documented for `container-type`, where
+   a neighbour's background then clips the wall edge the two cells share.
+   The overlay is inset past those edges so it rings the tile without drawing
+   over the walls. */
+.lc-db .quest-cell.objective::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 3px solid var(--quest-item);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--quest-item-glow), inset 0 0 6px var(--quest-item-glow);
+  z-index: 5;
+  pointer-events: none;
+}
 .lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
 /* --hit is set inline per cell from the hovered door's lock colour
    (QuestGrid); --quest-key-glow is the fallback if that is ever absent. */
@@ -945,6 +970,17 @@
 }
 .lc-db .quest-badge {
   background: var(--quest-badge-bg); border-radius: 2px; padding: 1px;
+}
+/* The objective badge is scaled from the tile size inline (see QuestGrid) and
+   filled with its own colour rather than sharing the neutral badge background,
+   so the chip and the tile ring reinforce each other. Filled, not merely
+   outlined: the glyph is an emoji and ignores `color`, so the surface behind
+   it is the only thing that can carry the association. */
+.lc-db .quest-badge.quest-item {
+  background: var(--quest-item);
+  box-shadow: 0 0 6px var(--quest-item-glow);
+  border-radius: 3px;
+  padding: 0 3px;
 }
 /* The key glyph is an emoji and ignores `color`, so its lock association is
    carried by the border instead. */
