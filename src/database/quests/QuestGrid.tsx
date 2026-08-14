@@ -3,6 +3,13 @@ import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data'
 import { monsterImageUrl } from '@/components/MonsterCard';
 import { BADGE, DEFAULT_TILE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL, coordLabel } from './questMeta';
 
+/** Glyph and Hungarian label for each centred tile marker. */
+const BIG_ICON = {
+  objective: { glyph: BADGE.questItem, title: 'küldetés tárgy' },
+  trap: { glyph: BADGE.trap, title: 'csapda' },
+  question: { glyph: BADGE.question, title: 'kérdés' },
+} as const;
+
 interface QuestGridProps {
   quest: Quest;
   monsters: MonsterDatabase;
@@ -47,8 +54,13 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // Driven by `hasQuestion` (the source image), not `question !== null`
         // (whether the title text happened to parse) — the marker must
         // survive a parse miss (task 18).
-        const bigIcon: 'trap' | 'question' | null = cell.trap
-          ? 'trap'
+        // The objective outranks both: it is the one tile the quest exists
+        // for, and unlike a trap or a question it is unique per quest. When it
+        // wins, the marker it displaced falls back to a corner badge below, so
+        // no fact is lost.
+        const bigIcon: 'objective' | 'trap' | 'question' | null = cell.questItem
+          ? 'objective'
+          : cell.trap ? 'trap'
           : cell.hasQuestion ? 'question' : null;
         const classes = ['quest-cell'];
         // The one tile the quest is about — exactly one per quest across both
@@ -135,10 +147,10 @@ export function QuestGrid(props: QuestGridProps): VNode {
               // line it shares with the cell before it. See theme.css.
               <span
                 class={`quest-big-icon ${bigIcon}`}
-                title={bigIcon === 'trap' ? 'csapda' : 'kérdés'}
+                title={BIG_ICON[bigIcon].title}
                 style={{ fontSize: `${Math.round(tileSize * 0.55)}px` }}
               >
-                {bigIcon === 'trap' ? BADGE.trap : BADGE.question}
+                {BIG_ICON[bigIcon].glyph}
               </span>
             )}
             <div class="quest-badges">
@@ -158,22 +170,20 @@ export function QuestGrid(props: QuestGridProps): VNode {
               {cell.key && (
                 <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
               )}
-              {cell.questItem && (
-                // Scaled from the tile size for the same reason the big icon
-                // is: at the smallest zoom the shared 10px badge font makes
-                // the objective no more noticeable than an exit.
-                <span
-                  class="quest-badge quest-item"
-                  title="küldetés tárgy"
-                  style={{ fontSize: `${Math.max(11, Math.round(tileSize * 0.3))}px` }}
-                >
-                  {BADGE.questItem}
-                </span>
-              )}
+              {/* No quest-item chip: the objective is the centred glyph now,
+                  so a corner copy would be redundant clutter on the one tile
+                  that least needs it. */}
               {cell.death && !bigIcon && <span class="quest-badge death" title="halál">{BADGE.death}</span>}
-              {/* No separate `!bigIcon` trap/question corner badges here: bigIcon
-                  is truthy exactly when cell.trap or cell.hasQuestion is, so
-                  the big icon above always replaces them — nothing to guard. */}
+              {/* A trap or question displaced by the objective keeps a corner
+                  badge, so promoting the objective never hides a fact. Guarded
+                  on the big icon rather than on the objective so each marker is
+                  shown exactly once. */}
+              {cell.trap && bigIcon !== 'trap' && (
+                <span class="quest-badge trap" title="csapda">{BADGE.trap}</span>
+              )}
+              {cell.hasQuestion && bigIcon !== 'question' && (
+                <span class="quest-badge question" title="kérdés">{BADGE.question}</span>
+              )}
               {cell.boss && <span class="quest-badge boss" title="boss">{BADGE.boss}</span>}
             </div>
           </div>

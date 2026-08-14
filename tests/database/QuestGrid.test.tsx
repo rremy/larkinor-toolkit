@@ -178,7 +178,7 @@ describe('QuestGrid', () => {
       expect(questionCell.querySelector('.quest-badge.question')).toBeNull();
     });
 
-    it('suppresses the death and entrance badges on a big-icon tile, but keeps the quest-item badge', () => {
+    it('suppresses the death and entrance badges on a big-icon tile, but keeps the objective visible', () => {
       const clutteredQuest: Quest = {
         ...quest,
         cells: [
@@ -191,17 +191,20 @@ describe('QuestGrid', () => {
       const { container } = render(
         <QuestGrid quest={clutteredQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
       );
-      const trapCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
-      expect(trapCell.querySelector('.quest-badge.death')).toBeNull();
-      expect(trapCell.querySelector('.quest-badge.entrance')).toBeNull();
-      expect(trapCell.querySelector('.quest-badge.quest-item')).toBeTruthy();
+      const objectiveCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(objectiveCell.querySelector('.quest-badge.death')).toBeNull();
+      expect(objectiveCell.querySelector('.quest-badge.entrance')).toBeNull();
+      // The objective outranks the trap for the centred glyph, and the trap
+      // falls back to a corner badge rather than being lost.
+      expect(objectiveCell.querySelector('.quest-big-icon.objective')).toBeTruthy();
+      expect(objectiveCell.querySelector('.quest-badge.trap')).toBeTruthy();
     });
 
-    it('shows the quest-item badge on a big-icon tile that is also the objective, so it is not hidden (quest 27, cell 1,1)', () => {
+    it('keeps every marker on a tile that is question, objective and exit at once (quest 27, cell 1,1)', () => {
       // Real case: kerdes_kt_labikibe.jpg is simultaneously the question, the
-      // quest objective and the exit. Suppressing the objective badge here
-      // would silently hide the one item the player is there to collect —
-      // the same argument that already keeps key/exit/boss on a big-icon tile.
+      // quest objective and the exit. The objective takes the centred glyph;
+      // the question and the exit must still be represented, or the tile
+      // silently hides a choice point or the way out.
       const objectiveQuest: Quest = {
         ...quest,
         cells: [
@@ -213,8 +216,8 @@ describe('QuestGrid', () => {
         <QuestGrid quest={objectiveQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
       );
       const objectiveCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
-      expect(objectiveCell.querySelector('.quest-big-icon.question')).toBeTruthy();
-      expect(objectiveCell.querySelector('.quest-badge.quest-item')).toBeTruthy();
+      expect(objectiveCell.querySelector('.quest-big-icon.objective')).toBeTruthy();
+      expect(objectiveCell.querySelector('.quest-badge.question')).toBeTruthy();
       expect(objectiveCell.querySelector('.quest-badge.exit')).toBeTruthy();
     });
 
@@ -320,20 +323,16 @@ describe('the quest objective tile', () => {
     expect(cells[1].classList.contains('objective')).toBe(false);
   });
 
-  it('keeps the badge legible by scaling it with the tile size', () => {
-    const { container: small } = render(
-      <QuestGrid quest={objectiveQuest('royal')} monsters={monsters} selected={null} onSelect={() => {}} tileSize={40} />,
+  it('marks the objective with the centred glyph, not a corner chip', () => {
+    const { container } = render(
+      <QuestGrid quest={objectiveQuest('royal')} monsters={monsters} selected={null} onSelect={() => {}} />,
     );
-    const { container: large } = render(
-      <QuestGrid quest={objectiveQuest('royal')} monsters={monsters} selected={null} onSelect={() => {}} tileSize={72} />,
-    );
-    const px = (c: Element) =>
-      Number(/font-size:\s*([\d.]+)px/.exec(c.querySelector('.quest-badge.quest-item')!.getAttribute('style') ?? '')![1]);
-
-    // Bigger tiles, bigger badge — and never smaller than the floor that keeps
-    // it readable when the maze is zoomed all the way out.
-    expect(px(large)).toBeGreaterThan(px(small));
-    expect(px(small)).toBeGreaterThanOrEqual(11);
+    const icon = container.querySelector('.quest-big-icon.objective');
+    expect(icon).not.toBeNull();
+    expect(icon!.getAttribute('title')).toBe('küldetés tárgy');
+    // A corner copy of the same fact would be clutter on the one tile that
+    // least needs it.
+    expect(container.querySelector('.quest-badge.quest-item')).toBeNull();
   });
 
   // The objective frequently shares its tile with other markers — 21 royal and
@@ -348,9 +347,27 @@ describe('the quest objective tile', () => {
       <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
     );
     expect(container.querySelector('.quest-cell')!.classList.contains('objective')).toBe(true);
-    expect(container.querySelector('.quest-badge.quest-item')).not.toBeNull();
+    expect(container.querySelector('.quest-big-icon.objective')).not.toBeNull();
     expect(container.querySelector('.quest-badge.exit')).not.toBeNull();
     expect(container.querySelector('.quest-badge.boss')).not.toBeNull();
+    // Promoting the objective displaced the question glyph, so it must fall
+    // back to a corner badge rather than vanish — one such cell exists in each
+    // set, and losing it would silently hide a choice point.
+    expect(container.querySelector('.quest-badge.question')).not.toBeNull();
+    expect(container.querySelector('.quest-big-icon.question')).toBeNull();
+  });
+
+  // The reverse: a plain question tile must keep the centred glyph it had
+  // before the objective was promoted above it.
+  it('leaves a non-objective question tile on the centred glyph', () => {
+    const quest: Quest = {
+      id: '1', set: 'royal', title: '1', description: 'd', reward: 'r', rows: 1, cols: 1,
+      cells: [cell({ hasQuestion: true })],
+    };
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
     expect(container.querySelector('.quest-big-icon.question')).not.toBeNull();
+    expect(container.querySelector('.quest-badge.question')).toBeNull();
   });
 });
