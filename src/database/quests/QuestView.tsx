@@ -1,6 +1,6 @@
 import { h, type VNode } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
+import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
 import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
@@ -11,6 +11,12 @@ import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, hasSzelEdges, locksIn } from './q
 
 interface QuestViewProps {
   loader: DataLoader;
+  /**
+   * Which quest set the routed `questId` belongs to (`#quests/<set>/<id>`).
+   * Accepted but not yet consumed: this view still only loads the royal set
+   * via `loader.loadQuests()` — task 7 makes it set-aware.
+   */
+  questSet?: QuestSet | null;
   /** Routed quest id (`#quests/<id>`); null falls back to the first quest. */
   questId: string | null;
   /**
