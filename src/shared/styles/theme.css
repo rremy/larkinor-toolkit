@@ -985,9 +985,13 @@
   background: var(--quest-badge-bg); border-radius: 2px; padding: 1px;
 }
 /* The objective's centred glyph gets the same light-over-dark edge as its
-   ring, so the two read as one marker rather than two coincident ones. */
+   ring, so the two read as one marker rather than two coincident ones.
+   Half the disc of a trap or question: the ring already carries the tile, so
+   the glyph only has to name it — at full size it buried the sprite. */
 .lc-db .quest-big-icon.objective {
-  box-shadow: 0 0 0 2px var(--quest-item-ring), 0 0 0 4px var(--quest-item-edge);
+  width: 35%;
+  height: 35%;
+  box-shadow: 0 0 0 2px var(--quest-item-ring), 0 0 0 3px var(--quest-item-edge);
 }
 /* The key glyph is an emoji and ignores `color`, so its lock association is
    carried by the border instead. */

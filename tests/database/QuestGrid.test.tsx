@@ -371,3 +371,25 @@ describe('the quest objective tile', () => {
     expect(container.querySelector('.quest-badge.question')).toBeNull();
   });
 });
+
+// The objective's glyph is deliberately half the size of a trap's or a
+// question's: its ring already carries the tile, so the glyph only names it,
+// and at full size it buried the sprite underneath.
+it('draws the objective glyph at half the size of a trap or question glyph', () => {
+  const build = (partial: Partial<QuestCell>): Quest => ({
+    id: '1', set: 'royal', title: '1', description: 'd', reward: 'r', rows: 1, cols: 1,
+    cells: [cell(partial)],
+  });
+  const fontPx = (q: Quest) => {
+    const { container } = render(
+      <QuestGrid quest={q} monsters={monsters} selected={null} onSelect={() => {}} tileSize={72} />,
+    );
+    const style = container.querySelector('.quest-big-icon')!.getAttribute('style') ?? '';
+    return Number(/font-size:\s*([\d.]+)px/.exec(style)![1]);
+  };
+
+  const objective = fontPx(build({ questItem: true }));
+  const question = fontPx(build({ hasQuestion: true }));
+  expect(objective).toBeLessThan(question);
+  expect(objective).toBeCloseTo(question / 2, 0);
+});

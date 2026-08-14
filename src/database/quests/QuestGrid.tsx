@@ -148,7 +148,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
               <span
                 class={`quest-big-icon ${bigIcon}`}
                 title={BIG_ICON[bigIcon].title}
-                style={{ fontSize: `${Math.round(tileSize * 0.55)}px` }}
+                style={{ fontSize: `${Math.round(tileSize * (bigIcon === 'objective' ? 0.275 : 0.55))}px` }}
               >
                 {BIG_ICON[bigIcon].glyph}
               </span>
