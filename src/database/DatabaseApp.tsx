@@ -102,6 +102,18 @@ export interface DatabaseAppProps {
    * effect to run again regardless of whether `initialTab` itself changed.
    */
   initialTabKey?: number;
+  /**
+   * Open `initialTab: 'quests'` on one specific quest rather than on whatever
+   * the quest tab last remembered.
+   *
+   * Needed because the remembered selection is not reliable at this moment:
+   * `QuestView` reads the stored set once at mount and restores at most once
+   * per mount, so a caller that writes those preferences and *then* opens the
+   * overlay races an already-mounted view. The pub's quest-offer note is
+   * exactly that caller. Naming the target explicitly makes the navigation
+   * deterministic instead of timing-dependent.
+   */
+  initialQuest?: { set: QuestSet; id: string } | null;
 }
 
 type Tab = EntityTab | 'map' | 'quests';
@@ -186,7 +198,7 @@ function hashFor(tab: Tab, first: string | null, second: string | null): string 
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab, initialTabKey } = props;
+  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab, initialTabKey, initialQuest } = props;
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
@@ -294,6 +306,12 @@ export function DatabaseApp(props: DatabaseAppProps) {
   // ordering guaranteed rather than incidental.
   useEffect(() => {
     if (!initialTab || initialItemId != null || initialItemName) return;
+    // An explicit target beats the quest tab's remembered selection — see
+    // `initialQuest` for why the remembered one cannot be relied on here.
+    if (initialTab === 'quests' && initialQuest) {
+      navigate('quests', initialQuest.set, initialQuest.id);
+      return;
+    }
     navigate(initialTab, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab, initialTabKey]);

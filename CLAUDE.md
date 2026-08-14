@@ -192,6 +192,27 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     browsing, and switching back returns you to the royal quest you left, and so the
     stale-id fallback lands in the right set — a forgotten id falls back to the first quest of
     the *set the user was in*, which one key alone cannot tell you.
+  - **The pub pre-selects the quest it hands you** (`src/utils/questOffer.ts` +
+    `activateQuestOffer.ts`). The Kocsma page (`oldalTipus=otKocsma` → `PageType.Tavern`)
+    prints the quest brief inside its narration, and that brief is the same text the fan
+    site publishes as the quest's description — so a note the player has just accepted is
+    identifiable. On a match the two prefs above are written, and the quests tab therefore
+    opens on that quest. Desktop additionally appends a clickable *„Küldetés felismerve"*
+    note under the narration (`src/desktop/questOfferNote.ts`, driven through the dock's
+    `openQuestsSignal` nonce); mobile activates silently, since it does not mount any UI on
+    the pub page and so has no overlay for the note to open.
+    - Matching is **signature-first**: the folded description's opening 60 characters
+      appearing verbatim in the folded narration. Word-overlap (≥0.6, and ≥2× the runner-up)
+      is only the fallback for a lightly reworded brief. No match ⇒ **no write**, so an
+      ordinary pint never clobbers the quest the player was reading.
+    - **The stated size is written width×height — the transpose of our `rows`×`cols`.**
+      Measured over the 13 descriptions carrying a `(NxN)` hint: 5 non-square ones match only
+      when transposed, 0 match as `rows`×`cols`, 7 are square and prove nothing. The hint is
+      also unreliable in its own right — 6 of those 13 disagree with the maze actually drawn,
+      and `ki_vagyok_ne_erdekeljen` states `10x10` for a 9×10 grid. So it vetoes only the
+      fuzzy path, never a verbatim signature match.
+    - Only pub pages load `tavern-quests.json` (~1.4MB, then GM-cached), which is why this
+      hangs off the page type rather than running everywhere.
 - Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)

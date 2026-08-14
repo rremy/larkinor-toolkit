@@ -1419,3 +1419,15 @@
 .lc-home-act:hover { border-color: var(--accent); background: var(--panel-2); }
 .lc-home-trap { display: flex; align-items: center; gap: 9px; font-size: 13.5px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; }
 .lc-home-trap-str { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+/* Pub quest-offer note. Appended after the game's own narration block on the
+   Kocsma page, so it is not inside `.lc-db` and needs its own scope — but for
+   the same quirks-mode reason as everything else here, the button must set
+   `color` explicitly rather than inherit it from a coloured ancestor. */
+.lc-quest-offer { margin: 6px 0 0; }
+.lc-quest-offer-btn {
+  display: inline-block; padding: 4px 12px; border-radius: 3px;
+  border: 1px solid var(--accent); background: var(--accent-dim);
+  color: var(--accent); font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.lc-quest-offer-btn:hover { background: var(--panel-2); }

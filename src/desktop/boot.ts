@@ -17,6 +17,10 @@ import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
+import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { renderQuestOfferNote } from '@/desktop/questOfferNote';
+import { extractNarration } from '@/utils/domExtract';
+import { setPref } from '@/utils/config';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
 
@@ -232,16 +236,39 @@ export function bootDesktop(doc: Document): void {
   if (!root) return;
 
   let db: MonsterDatabase | null = null;
+  let openQuestsSignal = 0;
+  let openQuestTarget: { set: 'tavern'; id: string } | null = null;
 
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon }), root);
+      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget }), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
   };
 
   renderDock();
+
+  // The pub hands out tavern quests by printing the brief in its narration.
+  // Recognising it pre-selects that quest in the database, so opening the
+  // quests tab lands on the one just accepted, and offers a link straight to
+  // it. Fire-and-forget: nothing else on the page waits for this.
+  if (pageType === PageType.Tavern) {
+    activateQuestOffer(extractNarration(doc), createDataLoader(gmSource(), DATA_BASE_URL), setPref)
+      .then((match) => {
+        if (!match) return;
+        // Route to the quest explicitly rather than leaning on the
+        // preferences just written: QuestView reads the stored set once at
+        // mount, so an overlay already open when this resolves would never
+        // see them.
+        openQuestTarget = { set: 'tavern', id: match.quest.id };
+        renderQuestOfferNote(doc, {
+          title: match.quest.title,
+          onOpen: () => { openQuestsSignal += 1; renderDock(); },
+        });
+      })
+      .catch((err) => console.warn('[Larkinor UI] Quest offer failed:', err));
+  }
 
   // The free-move narration and the battle screen's monster sheet are the two
   // things needing monster data up front; every other panel loads its own on

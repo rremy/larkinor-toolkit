@@ -4,6 +4,7 @@ export enum PageType {
   Shop = 'Shop',
   Market = 'Market',
   Church = 'Church',
+  Tavern = 'Tavern',
   Login = 'Login',
   Dungeon = 'Dungeon',
   Home = 'Home',
@@ -27,6 +28,10 @@ export function detectPage(doc: Document): PageType {
       return PageType.Battle;
     case 'otTemplom':
       return PageType.Church;
+    // The pub is where tavern quests are handed out: its narration embeds the
+    // quest brief, which `questOffer` matches against the quest database.
+    case 'otKocsma':
+      return PageType.Tavern;
     case 'otLogin':
       return PageType.Login;
     case 'otLabirintus':

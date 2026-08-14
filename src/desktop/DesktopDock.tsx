@@ -2,6 +2,7 @@ import { h, type JSX } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import type { FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
+import type { QuestSet } from '@/shared/data';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY } from '@/utils/config';
@@ -42,6 +43,24 @@ export interface DesktopDockProps {
    * and nothing about the dock changes.
    */
   inDungeon?: boolean;
+  /**
+   * Nonce that opens the database on the quests view when it increases.
+   *
+   * The pub's "quest recognised" note lives in the game's own DOM, outside
+   * this Preact tree, so it cannot call `openQuests` directly. Boot bumps
+   * this instead and re-renders. A counter rather than a boolean for the same
+   * reason `initialTabKey` is one: pressing the note twice must re-navigate
+   * even if the overlay is already showing quests. Starts at 0, which never
+   * fires — only an increase does.
+   */
+  openQuestsSignal?: number;
+  /**
+   * Which quest `openQuestsSignal` should land on. Named explicitly rather
+   * than left to the quest tab's remembered selection, which a caller that
+   * has just written that selection cannot rely on — see DatabaseApp's
+   * `initialQuest`.
+   */
+  openQuestTarget?: { set: QuestSet; id: string } | null;
 }
 
 /**
@@ -58,7 +77,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -77,7 +96,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // 'quests' would be a no-op state update (same value in, same value out) —
   // exactly the bug where pressing the dungeon shortcut a second time after
   // navigating away inside the overlay did nothing.
-  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests'; seq: number } | null>(null);
+  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
@@ -124,11 +143,23 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // `seq` on every press (rather than just setting the 'quests' literal)
   // is what makes a second press re-navigate even if the overlay is already
   // showing quests and was then clicked away from — see the state comment.
-  const openQuests = () => {
+  // `quest` names a specific target when the caller has one (the pub's
+  // quest-offer note); null keeps the dungeon button's "restore whatever was
+  // last open" behaviour.
+  const openQuests = (quest: { set: QuestSet; id: string } | null = null) => {
     setDbItemId(null);
-    setDbInitialTab((prev) => ({ tab: 'quests', seq: (prev?.seq ?? 0) + 1 }));
+    setDbInitialTab((prev) => ({ tab: 'quests', seq: (prev?.seq ?? 0) + 1, quest }));
     setDatabase(true);
   };
+
+  // Drive `openQuests` from outside the tree — see `openQuestsSignal`. Guarded
+  // on > 0 so the initial render never opens the overlay by itself.
+  useEffect(() => {
+    if (openQuestsSignal > 0) openQuests(openQuestTarget);
+    // openQuests is recreated every render; depending on it would fire this
+    // on every render instead of only when the signal changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openQuestsSignal]);
 
   const setInventory = (open: boolean) => {
     setInventoryOpen(open);
@@ -248,7 +279,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
               ⚙
             </button>
             {inDungeon && (
-              <button class="lc-dock-btn lc-dock-quests" onClick={openQuests}>
+              <button class="lc-dock-btn lc-dock-quests" onClick={() => openQuests(null)}>
                 Küldetések
               </button>
             )}
@@ -283,6 +314,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         initialItemId={dbItemId ?? undefined}
         initialTab={dbInitialTab?.tab}
         initialTabKey={dbInitialTab?.seq}
+        initialQuest={dbInitialTab?.quest ?? null}
         onClose={() => setDatabase(false)}
       />
 
