@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { waitFor } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'node:fs';
 import { bootDesktop } from '../src/desktop/boot';
@@ -168,11 +169,17 @@ describe('the quest-offer note opens the quest it names', () => {
     const button = doc.querySelector<HTMLButtonElement>('.lc-quest-offer-btn');
     expect(button).not.toBeNull();
     button!.click();
-    await settle();
 
-    // The overlay's own route is the observable: it must name the tavern set
-    // and this quest, not the stored royal/GOMB pair.
-    const route = GM_getValue('lc-db-route', '');
-    expect(route).toBe('quests/tavern/Zurkhas');
+    // Polled rather than awaited for a fixed tick: the click crosses several
+    // async boundaries before the route is stored — Preact's effect flush, the
+    // overlay mount, the quest fetch, then the write — and the number of
+    // macrotasks that takes varies with how warm the module and JIT state is.
+    // A single `settle()` happened to suffice only after the tests above had
+    // warmed it, so the test passed locally and failed on the slower CI runner.
+    await waitFor(() => {
+      // The overlay's own route is the observable: it must name the tavern set
+      // and this quest, not the stored royal/GOMB pair.
+      expect(GM_getValue('lc-db-route', '')).toBe('quests/tavern/Zurkhas');
+    });
   });
 });
