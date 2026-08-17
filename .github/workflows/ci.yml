@@ -21,9 +21,9 @@ jobs:
     name: Typecheck, test, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -66,9 +66,9 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -81,7 +81,7 @@ jobs:
       # "GitHub Actions" as the source (one-time, see README).
       - name: Configure Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       # LC_PUBLIC_BASE_URL is baked into the userscript as its data URL,
       # @connect host and @updateURL (see vite.config.ts). Taking it from the
@@ -91,11 +91,15 @@ jobs:
         env:
           LC_PUBLIC_BASE_URL: ${{ steps.pages.outputs.base_url }}
 
+      # Since v4 this action drops hidden files from the artifact, so a dotfile
+      # added to the build output (a .nojekyll, say) would silently not deploy.
+      # Nothing in dist/ is hidden today; if that changes, set
+      # include-hidden-files: true rather than wondering where the file went.
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
