@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LOCK_LABEL, SZEL_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn, hasSzelEdges,
+  outsideMazeCells, cellKey,
 } from '@/database/quests/questMeta';
 import type { Quest, QuestCell, Edge } from '@/shared/data';
 
@@ -108,5 +109,85 @@ describe('keyCellsFor / locksIn', () => {
     expect(keyCellsFor(q, 'platina')).toEqual([]);
     // Only locks that actually gate a door, deduped.
     expect(locksIn(q)).toEqual(['vas']);
+  });
+});
+
+describe('outsideMazeCells', () => {
+  /** 3×3 grid built from the `room`/`blank` helpers below. */
+  function grid(cells: QuestCell[]): Quest {
+    return { id: '1', set: 'royal', title: '1', description: '', reward: '', rows: 3, cols: 3, cells };
+  }
+  const room = (row: number, col: number, partial: Partial<QuestCell> = {}): QuestCell =>
+    cell({ row, col, narration: 'Egy szoba.', ...partial });
+  const blank = (row: number, col: number, partial: Partial<QuestCell> = {}): QuestCell =>
+    cell({ row, col, ...partial });
+
+  it('treats a blank cell that draws none of its own edges and touches off-grid space as outside', () => {
+    const q = grid([
+      blank(0, 0), room(0, 1), room(0, 2),
+      room(1, 0), room(1, 1), room(1, 2),
+      room(2, 0), room(2, 1), room(2, 2),
+    ]);
+    expect([...outsideMazeCells(q)]).toEqual(['0,0']);
+  });
+
+  it('spreads inwards through undrawn blanks, so a notch cut into the shape is outside too', () => {
+    // The shape of royal quest 30's column 4: an undrawn strip running from
+    // the top edge into the grid.
+    const q = grid([
+      room(0, 0), blank(0, 1), room(0, 2),
+      room(1, 0), blank(1, 1), room(1, 2),
+      room(2, 0), room(2, 1), room(2, 2),
+    ]);
+    expect([...outsideMazeCells(q)].sort()).toEqual(['0,1', '1,1']);
+  });
+
+  it('stops at a drawn wall, so a blank room walled off from the canvas stays a room', () => {
+    const q = grid([
+      room(0, 0), blank(0, 1, { edges: { ...openEdges(), S: { kind: 'wall' } } }), room(0, 2),
+      room(1, 0), blank(1, 1), room(1, 2),
+      room(2, 0), room(2, 1), room(2, 2),
+    ]);
+    // (0,1) draws its own south wall, so it is part of the maze and never a
+    // stepping stone; (1,1) is then enclosed by rooms and is a room itself.
+    expect([...outsideMazeCells(q)]).toEqual([]);
+  });
+
+  it('keeps a blank cell a locked door opens into inside the maze', () => {
+    // `demon_hadur` cell 6,3 (labelled 7:4): no monster, no marker, and the
+    // far side of a platinum door. A door is never drawn into empty canvas.
+    const q = grid([
+      room(0, 0), room(0, 1), room(0, 2),
+      room(1, 0), room(1, 1), room(1, 2),
+      room(2, 0), room(2, 1),
+      blank(2, 2, {
+        edges: { N: { kind: 'door', lock: 'platina' }, E: { kind: 'wall' }, S: { kind: 'wall' }, W: { kind: 'wall' } },
+      }),
+    ]);
+    expect([...outsideMazeCells(q)]).toEqual([]);
+  });
+
+  it('treats a blank pocket its neighbours mark off with szel as outside', () => {
+    // Royal quest 39's cell (3,10): a one-cell hole ringed by four szel edges.
+    // Fully enclosed, so the flood cannot reach it from off-grid, but szel
+    // means the drawing stops there — what lies beyond is canvas.
+    const q = grid([
+      room(0, 0), room(0, 1, { edges: { ...openEdges(), S: { kind: 'szel' } } }), room(0, 2),
+      room(1, 0, { edges: { ...openEdges(), E: { kind: 'szel' } } }),
+      blank(1, 1),
+      room(1, 2, { edges: { ...openEdges(), W: { kind: 'szel' } } }),
+      room(2, 0), room(2, 1, { edges: { ...openEdges(), N: { kind: 'szel' } } }), room(2, 2),
+    ]);
+    expect([...outsideMazeCells(q)]).toEqual(['1,1']);
+  });
+
+  it('never reports a cell holding content, however walled in the canvas around it', () => {
+    const q = grid([
+      blank(0, 0), blank(0, 1), blank(0, 2),
+      blank(1, 0), room(1, 1), blank(1, 2),
+      blank(2, 0), blank(2, 1), blank(2, 2),
+    ]);
+    expect(outsideMazeCells(q).has(cellKey({ row: 1, col: 1 }))).toBe(false);
+    expect(outsideMazeCells(q).size).toBe(8);
   });
 });

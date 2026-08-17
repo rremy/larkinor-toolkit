@@ -1,7 +1,11 @@
 import { h, type VNode } from 'preact';
+import { useMemo } from 'preact/hooks';
 import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { BADGE, DEFAULT_TILE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL, coordLabel } from './questMeta';
+import {
+  BADGE, DEFAULT_TILE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL,
+  cellKey, coordLabel, outsideMazeCells,
+} from './questMeta';
 
 /** Glyph and Hungarian label for each centred tile marker. */
 const BIG_ICON = {
@@ -36,6 +40,10 @@ export function QuestGrid(props: QuestGridProps): VNode {
     highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE,
   } = props;
 
+  // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
+  // memoised because the grid re-renders on every door hover.
+  const outside = useMemo(() => outsideMazeCells(quest), [quest]);
+
   return (
     <div
       class="quest-grid"
@@ -68,19 +76,12 @@ export function QuestGrid(props: QuestGridProps): VNode {
         if (cell.questItem) classes.push('objective');
         if (isSelected) classes.push('selected');
         if (keyHit) classes.push('key-hit');
-        // `narration === ''` alone is not a reliable "empty filler" proxy on
-        // the tavern set: `parseTavernTitle` moves all text into `question`
-        // and leaves `narration: ''` on every question tile, so without these
-        // extra exclusions 141 question tiles, 9 key tiles and 1 quest-item
-        // tile painted as void even though they carry real content. Royal
-        // cells are unaffected — none of them combine an empty narration with
-        // any of these markers, since the royal parser always leaves some
-        // narration behind on a real room.
-        if (
-          cell.narration === '' && !monster && !cell.portal
-          && !cell.hasQuestion && !cell.key && !cell.questItem
-          && !cell.trap && !cell.death && !cell.boss
-        ) classes.push('void');
+        // Void is a fact about the maze's *shape*, not about this cell being
+        // empty: the source's blank tile marks both an empty room and the
+        // canvas around an irregular maze, and only `outsideMazeCells` tells
+        // them apart. Deciding it here from emptiness alone painted 200 royal
+        // and 537 tavern rooms black — see that function's doc comment.
+        if (outside.has(cellKey(cell))) classes.push('void');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit
         // without a highlightLock.

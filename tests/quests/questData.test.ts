@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseImage } from '../../scripts/quests/parseQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
+import { cellKey, outsideMazeCells } from '@/database/quests/questMeta';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
@@ -98,5 +99,29 @@ describe('static/db/quests.json', () => {
       '41:bronz',
       '42:rez',
     ]);
+  });
+});
+
+describe('maze shape of static/db/quests.json', () => {
+  it('counts the cells outside the drawn maze, and never one holding content', () => {
+    // The royal mazes are drawn inside a bounding grid that is often larger
+    // than the shape, and the leftover cells render as void. Pinned to the
+    // measured total so a re-scrape that changes a maze's outline fails here
+    // rather than silently blacking out rooms — the bug this replaced painted
+    // all 576 blank cells void, 200 of them real rooms.
+    let outside = 0;
+    const withContent: string[] = [];
+    for (const quest of quests) {
+      for (const key of outsideMazeCells(quest)) {
+        outside++;
+        const cell = quest.cells.find((c) => cellKey(c) === key);
+        if (cell === undefined) throw new Error(`quest ${quest.id}: unknown cell ${key}`);
+        const empty = cell.monsterId == null && !cell.key && !cell.questItem && !cell.portal
+          && !cell.hasQuestion && !cell.trap && !cell.death && !cell.boss && cell.narration === '';
+        if (!empty) withContent.push(`${quest.id}:${key}`);
+      }
+    }
+    expect(withContent).toEqual([]);
+    expect(outside).toBe(377);
   });
 });

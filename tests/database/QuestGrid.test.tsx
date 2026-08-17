@@ -135,7 +135,37 @@ describe('QuestGrid', () => {
       expect(questionCell.classList.contains('void')).toBe(false);
     });
 
-    it('still paints an actually-empty filler cell as void', () => {
+    it('does not paint an empty room as void just because it holds nothing', () => {
+      // `demon_hadur` cell 6,3, labelled 7:4 in the UI: empty, but the far
+      // side of a platinum door, so unmistakably part of the maze. It rendered
+      // as solid black while `void` was decided from emptiness alone.
+      const behindADoorQuest: Quest = {
+        ...quest,
+        cells: [
+          ...quest.cells.slice(0, 3),
+          cell({
+            row: 1,
+            col: 1,
+            narration: '',
+            edges: {
+              N: { kind: 'door', lock: 'platina' },
+              E: { kind: 'wall' },
+              S: { kind: 'wall' },
+              W: { kind: 'wall' },
+            },
+          }),
+        ],
+      };
+      const { container } = render(
+        <QuestGrid quest={behindADoorQuest} monsters={monsters} selected={null} onSelect={() => {}} />,
+      );
+      const roomCell = container.querySelector('[data-row="1"][data-col="1"]') as HTMLElement;
+      expect(roomCell.classList.contains('void')).toBe(false);
+    });
+
+    it('still paints canvas outside the drawn maze as void', () => {
+      // Empty, and the source drew none of its sides, on the grid's rim: the
+      // blank space left around a maze narrower than its bounding box.
       const emptyQuest: Quest = {
         ...quest,
         cells: [

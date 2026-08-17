@@ -124,6 +124,25 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - Quest 27 ships **seven** `<table>`s on one page. They are not seven floors — they are
     seven alternate views of the *same* maze (a hand-made "where is each key" overlay); the
     parser takes the first table and drops the rest.
+  - **The blank tile is ambiguous, and only the drawn walls resolve it.** `nop.jpg` is a plain
+    white image (`black.jpg` in the tavern set behaves the same), and both sources use it for
+    two unrelated things: an empty room *inside* the maze, and the untouched canvas *around* a
+    maze whose drawn shape is smaller than its bounding grid. Only the canvas may render as
+    void (near-black); an empty room must render as a normal tile. `outsideMazeCells` in
+    `src/database/quests/questMeta.ts` separates them — a cell that draws any side of its own
+    is inside (the source only writes side classes on cells it drew), and the rest are settled
+    by flooding inwards from every undrawn blank touching the grid's edge. A *neighbour's* wall
+    proves nothing about this cell: the maze's outer wall is drawn by the rooms along its rim,
+    so reading it as "inside" swallows the whole canvas next to it. A neighbour's `szel` is the
+    one exception and also seeds the flood — it says the drawing stops at that side, so an
+    enclosed pocket behind it is canvas (royal quest 39's cell (3,10), ringed by four `szel`
+    edges, is the only such cell; no `szel` edge in either set faces a cell holding content).
+    Concretely: royal quest 30's column 4 is an undrawn strip running in from the top edge
+    (canvas), while its cell (2,1) is an undrawn blank whose four walls are all drawn by
+    neighbours (a room). Deciding void from emptiness alone — the original bug, found via
+    `demon_hadur`, where 8 of 96 cells went black including two behind locked doors — painted
+    200 royal and 537 tavern rooms as solid rock. Totals are pinned in both data tests
+    (377 royal / 70 tavern outside cells).
   - The maze is rendered as CSS grid + `<div>`s, **never a `<table>`** — the in-game page runs
     in quirks mode, where table cells don't inherit `color` and render black-on-dark (see
     *quirks-mode inheritance holes* below). Rendering divs sidesteps that class of bug rather
@@ -178,8 +197,9 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     - Seven sprite basenames are misspelled or mis-encoded beyond what accent-folded name
       matching recovers on its own; `SPRITE_ALIASES` in `scrapeTavern.mjs` maps each by hand
       to a monster id.
-    - `black.jpg` is void filler, exactly like `nop.jpg` — both resolve to an empty cell with
-      no creature and no marker.
+    - `black.jpg` behaves exactly like `nop.jpg` — both resolve to an empty cell with no
+      creature and no marker. Neither means "outside the maze": see *the blank tile is
+      ambiguous* below.
     - Final data shape, and what `tests/quests/tavernQuestData.test.ts` locks in: 37 quests,
       2951 cells, 147 question tiles (132 with parsed options — the other 15 keep the marker
       but yield no card, same as the royal set), 0 unresolved sprites, every quest rectangular

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseTavernImage } from '../../scripts/quests/parseTavernQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
+import { outsideMazeCells } from '@/database/quests/questMeta';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/tavern-quests.json', 'utf-8'));
 const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
@@ -146,5 +147,26 @@ describe('static/db/tavern-quests.json', () => {
         }
       }
     }
+  });
+});
+
+describe('maze shape of static/db/tavern-quests.json', () => {
+  it('leaves Démon hadúr with no cell outside the maze', () => {
+    // The reported bug: 8 of this quest's 96 cells rendered as solid black,
+    // among them 1:1 and 7:4 — the far sides of a gold and a platinum door.
+    // Its grid is a full 12×8 rectangle of drawn rooms, so nothing here is
+    // canvas, and every blank cell is simply an empty room.
+    const quest = quests.find((q) => q.id === 'demon_hadur');
+    if (quest === undefined) throw new Error('demon_hadur missing from tavern-quests.json');
+    expect(quest.cells).toHaveLength(quest.rows * quest.cols);
+    expect([...outsideMazeCells(quest)]).toEqual([]);
+  });
+
+  it('counts the cells outside the drawn maze across the set', () => {
+    // Far fewer than the royal set's 376 despite a similar cell count: the
+    // tavern source draws nearly every cell of its bounding grid, which is
+    // exactly why blanking on emptiness alone blacked out 537 of its rooms.
+    const outside = quests.reduce((sum, q) => sum + outsideMazeCells(q).size, 0);
+    expect(outside).toBe(70);
   });
 });
