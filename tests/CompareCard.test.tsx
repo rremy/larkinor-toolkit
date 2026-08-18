@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import { CompareCard } from '../src/components/CompareCard';
 import type { CompareColumn } from '../src/shared/compare';
@@ -76,5 +76,69 @@ describe('CompareCard', () => {
     const { container } = render(<CompareCard name="kard" columns={twoHands} x={0} y={0} />);
     expect(container.querySelectorAll('tbody tr')[0].querySelectorAll('td')).toHaveLength(4);
     expect(container.querySelectorAll('thead tr')[0].querySelectorAll('th[colspan="2"]')).toHaveLength(2);
+  });
+});
+
+describe('CompareCard — staying inside the viewport', () => {
+  /**
+   * jsdom lays nothing out, so the card would always measure 0x0 and never
+   * adjust. Report a real size, positioned from the element's own inline style,
+   * which is what the component sets.
+   */
+  function stubGeometry(width: number, height: number, viewW: number, viewH: number): void {
+    Object.defineProperty(window, 'innerWidth', { value: viewW, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: viewH, configurable: true });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const left = parseFloat(this.style.left || '0');
+      const top = parseFloat(this.style.top || '0');
+      return {
+        left, top, width, height, right: left + width, bottom: top + height,
+        x: left, y: top, toJSON: () => ({}),
+      } as DOMRect;
+    });
+  }
+
+  const posOf = (container: Element) => {
+    const style = container.querySelector('.lc-cmp')!.getAttribute('style')!;
+    return {
+      left: parseFloat(/left: (-?[\d.]+)px/.exec(style)![1]),
+      top: parseFloat(/top: (-?[\d.]+)px/.exec(style)![1]),
+    };
+  };
+
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('leaves a card that fits exactly where it was put', () => {
+    stubGeometry(300, 200, 1400, 900);
+    const { container } = render(<CompareCard name="kard" columns={columns} x={100} y={100} />);
+    expect(posOf(container)).toEqual({ left: 100, top: 100 });
+  });
+
+  it('flips to the pointer\'s other side when it would overflow the right edge', () => {
+    stubGeometry(300, 200, 1000, 900);
+    // At x=900 the card would end at 1200, past the 1000px viewport.
+    const { container } = render(<CompareCard name="kard" columns={columns} x={900} y={100} />);
+    // Flipped: 900 - 300 - 24.
+    expect(posOf(container).left).toBe(576);
+  });
+
+  it('clamps instead of flipping when it is too wide to fit on either side', () => {
+    stubGeometry(700, 200, 800, 900);
+    const { container } = render(<CompareCard name="kard" columns={columns} x={400} y={100} />);
+    // Flipping would land at -324, so clamp to the right edge: 800 - 8 - 700.
+    expect(posOf(container).left).toBe(92);
+  });
+
+  it('never leaves the left edge, even on a viewport narrower than the card', () => {
+    stubGeometry(600, 200, 400, 900);
+    const { container } = render(<CompareCard name="kard" columns={columns} x={300} y={100} />);
+    expect(posOf(container).left).toBe(8);
+  });
+
+  it('lifts a card that would overflow the bottom edge', () => {
+    stubGeometry(300, 400, 1400, 600);
+    const { container } = render(<CompareCard name="kard" columns={columns} x={100} y={500} />);
+    // 600 - 8 - 400.
+    expect(posOf(container).top).toBe(192);
   });
 });
