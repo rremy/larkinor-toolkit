@@ -4,6 +4,7 @@
 
 import type { Platform } from '@/utils/platform';
 import { QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
+import { LOADOUT_PREF_KEY, parseLoadout, type Loadout } from '@/shared/loadout';
 
 /** GM storage key holding the JSON array of enabled hotkey tevFajta values. */
 export const ENABLED_HOTKEYS_KEY = 'lc-enabled-hotkeys';
@@ -139,4 +140,12 @@ export function getPref(key: string): string | null {
 
 export function setPref(key: string, value: string): void {
   GM_setValue(key, value);
+}
+
+/**
+ * The stored loadout, or null when nothing usable is stored. The read side of
+ * `captureLoadout` — every compare surface goes through this.
+ */
+export function readLoadout(): Loadout | null {
+  return parseLoadout(getPref(LOADOUT_PREF_KEY));
 }

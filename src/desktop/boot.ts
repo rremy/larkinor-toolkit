@@ -18,6 +18,7 @@ import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data'
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { captureLoadout } from '@/utils/captureLoadout';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
 import { extractNarration } from '@/utils/domExtract';
 import { setPref } from '@/utils/config';
@@ -248,6 +249,11 @@ export function bootDesktop(doc: Document): void {
   };
 
   renderDock();
+
+  // The character page is the only page that prints the worn equipment set, and
+  // the only place it can be changed, so capturing on every visit keeps the
+  // stored loadout current by construction.
+  if (pageType === PageType.Character) captureLoadout(doc, setPref);
 
   // The pub hands out tavern quests by printing the brief in its narration.
   // Recognising it pre-selects that quest in the database, so opening the

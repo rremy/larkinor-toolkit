@@ -12,7 +12,7 @@
 
 import { parseCuccDetail } from '@/utils/homeExtract';
 import {
-  emptySlots, equippedFromDetail, LABEL_TO_SLOT, SLOT_LABEL,
+  emptySlots, equippedFromDetail, LABEL_TO_SLOT, SLOT_LABEL, SLOT_ORDER,
   type EquippedItem, type Loadout, type Slot,
 } from '@/shared/loadout';
 
@@ -49,15 +49,32 @@ export function alertPayload(onclick: string): string | null {
   return null;
 }
 
-/** The `<td>` holding the equipment slots: the smallest one that lists them. */
+/** How many distinct slot labels (`Bal kéz:`, `Fej:`, …) a cell prints. */
+function slotLabelCount(el: Element): number {
+  const text = el.textContent ?? '';
+  return SLOT_ORDER.filter((slot) => text.includes(`${SLOT_LABEL[slot]}:`)).length;
+}
+
+/**
+ * The `<td>` holding the equipment slots: the cell printing the most slot
+ * labels, breaking ties towards the smallest (the innermost cell, not a
+ * wrapper). Scored rather than keyed off one particular label, so an unrelated
+ * cell that happens to print `Test:` cannot win against the real block, and a
+ * page listing a different subset of slots is still found.
+ */
 function equipmentBlock(doc: Document): Element | null {
-  const marker = `${SLOT_LABEL.leftHand}:`; // "Bal kéz:"
-  const candidates = Array.from(doc.querySelectorAll('td')).filter(
-    (td) => (td.textContent ?? '').includes(marker),
-  );
-  if (candidates.length === 0) return null;
-  return candidates.reduce((best, td) =>
-    (td.textContent ?? '').length < (best.textContent ?? '').length ? td : best);
+  let best: Element | null = null;
+  let bestScore = 0;
+  for (const td of Array.from(doc.querySelectorAll('td'))) {
+    const score = slotLabelCount(td);
+    if (score === 0) continue;
+    const smaller = best !== null && (td.textContent ?? '').length < (best.textContent ?? '').length;
+    if (score > bestScore || (score === bestScore && smaller)) {
+      best = td;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 /** The stat block behind a slot's link, mapped to an EquippedItem. */

@@ -2,6 +2,7 @@ import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { captureLoadout } from '@/utils/captureLoadout';
 import { setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
@@ -87,6 +88,13 @@ export function bootMobile(doc: Document): void {
     activateQuestOffer(extractNarration(doc), createDataLoader(gmSource(), DATA_BASE_URL), setPref)
       .catch((err) => console.warn('[Larkinor UI] Quest offer failed:', err));
   }
+
+  // The character page is the only page that prints the worn equipment set, and
+  // the only place it can be changed — so capturing on every visit keeps the
+  // stored loadout current by construction. Like the quest offer above, this
+  // runs before the early return: the page has no state of its own and mobile
+  // deliberately renders nothing on it.
+  if (pageType === PageType.Character) captureLoadout(doc, setPref);
 
   const pageState = extractPageState(pageType, doc);
   if (!pageState) return;
