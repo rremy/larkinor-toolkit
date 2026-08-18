@@ -46,6 +46,9 @@ labels: `Típus` (`fegyver` | `vért`), `Név`, `Súly`, `Ár`, `Extra`, `Min. s
 
 Consequences worth stating, because each removes a failure mode:
 
+- **The `onclick` is exactly `alert('…');return false;`** on every slot
+  (verified across all five, in two captures), so the extractor anchors its
+  match rather than searching loosely for a quote.
 - **The payload is a JS single-quoted string literal**, not text — `\n` is two
   characters in the attribute. It must be decoded before parsing, the same
   concern `decodeJsString` handles for the Home page's `hazbanCucc[i]="…"` array.
@@ -73,10 +76,14 @@ parsed `Fajta` (Home and Market rows, which are `ParsedDetail`):
 | `Páncél`  | `testre` | Test        |
 | `Sisak`   | `fejre`  | Fej         |
 | `Csizma`  | `lábra`  | Láb         |
-| `Pajzs`   | *(unobserved)* | a hand |
+| `Pajzs`   | `kézbe`  | a hand      |
 
 Shields occupy a hand, which is why the weapon side needed a decision of its
-own. The `Fajta` string a shield prints has **not** been observed — see *Risks*.
+own. Verified on the live page with a shield equipped (`bőrpajzs`, `Bal kéz`).
+
+That capture also showed a shield printing **no `Min. szint` line at all** — so
+`level` is genuinely nullable, and the `Szint` row is absent for shields rather
+than diffed against a missing value.
 
 ## Architecture
 
@@ -130,10 +137,16 @@ interface EquippedItem {
 interface Loadout {
   version: 1;
   playerLevel: number | null;
-  capturedAt: number;
+  capturedAt: number;  // diagnostics only — see the freshness invariant below
   slots: Record<Slot, EquippedItem | null>;
 }
 ```
+
+**Freshness is an invariant, not a hope.** Equipment can only be changed on the
+character page itself, so a capture written on every visit to that page is by
+construction current — there is no path by which the worn set changes while the
+stored loadout does not. `capturedAt` is kept for diagnostics, not shown in the
+UI; the compare card needs no staleness caveat.
 
 `LOADOUT_PREF_KEY = 'lc-loadout'` joins the other keys in `prefKeys.ts`, holding
 the JSON. Written with the existing `setPref`, read through `PrefStore` — no new
@@ -180,9 +193,7 @@ interface CompareColumn { slot: Slot; slotLabel: string; currentName: string | n
 
 ### 5. Presentation — `src/components/CompareCard.tsx`, `src/hooks/useCompareTrigger.ts`
 
-`CompareCard` renders the candidate's name, the columns as a small table, and
-the loadout's capture time as a footnote (so a stale comparison is visibly
-stale).
+`CompareCard` renders the candidate's name and the columns as a small table.
 Because it can render inside the quirks-mode game page it **sets `color`
 explicitly** (the documented inheritance hole: quirks mode does not inherit
 `color` into tables). Colours come from the theme's existing `--good` / `--bad`
@@ -217,7 +228,8 @@ pages are out of scope.
 Following the existing `tests/` patterns (Vitest + `@testing-library/preact`).
 
 - `characterExtract`: against markup taken from the real captured page — all five
-  slots, an empty slot, a missing equipment block, and the alert-string decoder
+  slots, a shield in a hand (`Fajta: kézbe`, no `Min. szint`, so `level` is
+  null), an empty slot, a missing equipment block, and the alert-string decoder
   (`\n` escapes, an apostrophe inside the payload).
 - `pageDetector`: `otPlayerSettings` → `PageType.Character`.
 - `mobileBoot`: the character page is left untouched (no `#lc-root`, original DOM
@@ -232,15 +244,11 @@ Following the existing `tests/` patterns (Vitest + `@testing-library/preact`).
 
 ## Risks and accepted limits
 
-- **A shield's `Fajta` string is unobserved.** An unrecognised `Fajta` yields no
-  compare card and one `console.warn` naming the value — the same
-  abort-as-drift-detector convention the quest parsers use. Guessing a mapping
-  would silently compare against the wrong slot. Shields hovered in the
-  *explorer* work regardless, since those resolve via the DB's `type: 'Pajzs'`.
-- **The loadout is a snapshot.** It only refreshes when the character page is
-  visited; equipping something elsewhere leaves it stale. Accepted: the card
-  shows its capture time, and the alternative (scraping equipment from other
-  pages) has no source — no other page prints the worn set.
+- **An unrecognised `Fajta` yields no compare card**, plus one `console.warn`
+  naming the value — the same abort-as-drift-detector convention the quest
+  parsers use. All four armour values are now observed (`testre`, `fejre`,
+  `lábra`, `kézbe`), so this is drift detection rather than a known gap:
+  guessing at a new value would silently compare against the wrong slot.
 - **No compare in the standalone site**, as decided above.
 - **Items (`tárgy`) are not compared**, per the agreed field list, even though
   some carry `Védelem`.
