@@ -562,9 +562,16 @@
   background: var(--panel-2);
   border-bottom: 2px solid var(--border);
 }
+/* The tiles carry the game's own z-index values (3..6). Those must stay inside
+   the picture: `position: relative` alone is not a stacking context, so they
+   would resolve against the root and paint over the stat bar floated across the
+   hero's bottom edge — which is positioned but z-index auto, i.e. level 0.
+   Hiding the HP/MP bars, the gold row and the config gear, and eating their
+   clicks with them. */
 .lc-dungeon-cell {
   position: relative;
   max-width: 100%;
+  isolation: isolate;
 }
 .lc-dungeon-tile {
   position: absolute;
