@@ -2,7 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -66,6 +66,10 @@ export function QuestView(props: QuestViewProps): VNode {
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
   const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(QUEST_TILE_PREF_KEY) ?? null));
+  // Only narrow viewports act on this (the stylesheet keeps the details block
+  // and hides the toggle at full width), so anything but a stored '1' —
+  // missing, or a value from some other build — means collapsed.
+  const [detailsOpen, setDetailsOpen] = useState(() => prefStore?.read(QUEST_DETAILS_PREF_KEY) === '1');
   // Guards the restore-from-store effect below so it fires at most once per
   // active set, regardless of how many times its other dependencies change.
   const restoredQuestRef = useRef(false);
@@ -92,6 +96,12 @@ export function QuestView(props: QuestViewProps): VNode {
   function changeTileSize(next: number) {
     setTileSize(next);
     prefStore?.write(QUEST_TILE_PREF_KEY, String(next));
+  }
+
+  function toggleDetails() {
+    const next = !detailsOpen;
+    setDetailsOpen(next);
+    prefStore?.write(QUEST_DETAILS_PREF_KEY, next ? '1' : '0');
   }
 
   function fetchSet(set: QuestSet): Promise<Quest[]> {
@@ -301,13 +311,28 @@ export function QuestView(props: QuestViewProps): VNode {
 
       <div class="quest-layout">
         <div class="quest-main">
-          <div class="quest-header">
+          <div class={`quest-header${detailsOpen ? '' : ' details-collapsed'}`}>
             <h2>{quest.set === 'royal' ? `${quest.title}. küldetés` : quest.title}</h2>
-            <p class="quest-description">{quest.description}</p>
-            <p class="quest-reward"><strong>Jutalom:</strong> {quest.reward}</p>
-            <div class="quest-stats">
-              {quest.rows}×{quest.cols} · {monsterCount} szörny · {keyCount} kulcs ·{' '}
-              {lockCount} zártípus · {questionCount} kérdés · {trapCount} csapda
+            {/* Shown only on narrow viewports, where the brief, the reward and
+                the stats together cost more screen than the maze they
+                describe. The zoom stays outside the fold: resizing the maze is
+                what you reach for *while* walking it. */}
+            <button
+              type="button"
+              class="quest-details-toggle"
+              aria-expanded={detailsOpen}
+              aria-controls="quest-details"
+              onClick={toggleDetails}
+            >
+              <span class="quest-details-caret" aria-hidden="true">▸</span> Részletek
+            </button>
+            <div id="quest-details" class="quest-details">
+              <p class="quest-description">{quest.description}</p>
+              <p class="quest-reward"><strong>Jutalom:</strong> {quest.reward}</p>
+              <div class="quest-stats">
+                {quest.rows}×{quest.cols} · {monsterCount} szörny · {keyCount} kulcs ·{' '}
+                {lockCount} zártípus · {questionCount} kérdés · {trapCount} csapda
+              </div>
             </div>
             <div class="field quest-zoom">
               <label for="quest-zoom-select">Méret</label>

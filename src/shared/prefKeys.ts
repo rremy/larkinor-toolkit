@@ -20,6 +20,14 @@ export const QUEST_TILE_PREF_KEY = 'lc-quest-tile-size';
 export const QUEST_SET_PREF_KEY = 'lc-quest-set';
 
 /**
+ * PrefStore key holding whether the quest's details block — the brief, the
+ * reward and the stats line — is expanded. Only narrow viewports can collapse
+ * it (see theme.css), so an absent value means collapsed: together those three
+ * push the maze off a phone screen, and the maze is what the tab is for.
+ */
+export const QUEST_DETAILS_PREF_KEY = 'lc-quest-details-open';
+
+/**
  * PrefStore key holding the last selected quest *within one set*.
  *
  * Per-set rather than a single key so switching to tavern, browsing, and

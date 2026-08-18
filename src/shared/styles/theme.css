@@ -1129,6 +1129,11 @@
 .lc-db .quest-header { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .lc-db .quest-header h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
 .lc-db .quest-description { margin: 0 0 4px; font-size: 12px; }
+/* The collapse is a narrow-viewport affair: at full width there is room for
+   the brief, the reward and the stats, so the control is absent and the
+   `details-collapsed` state the component always carries has nothing to act
+   on. */
+.lc-db .quest-details-toggle { display: none; }
 .lc-db .quest-reward { margin: 0 0 4px; font-size: 12px; color: var(--good); }
 .lc-db .quest-stats { color: var(--muted); font-size: 11px; }
 .lc-db .quest-zoom { margin-top: 6px; }
@@ -1146,6 +1151,28 @@
     border-right: none; border-left: none;
     border-bottom: 1px solid var(--border);
   }
+
+  /* The brief, the reward and the stats fold away here, so the maze is on
+     screen without scrolling. Colour is set explicitly: a button never
+     inherits it (see the quirks-mode notes above), and this one renders inside
+     the in-game overlay too. */
+  .lc-db .quest-details-toggle {
+    display: flex; align-items: center; gap: 5px;
+    margin: 0 0 4px; padding: 0;
+    background: none; border: none;
+    font: inherit; font-size: 12px; color: var(--muted);
+    cursor: pointer;
+  }
+  .lc-db .quest-details-toggle:hover { color: var(--accent); }
+  .lc-db .quest-details-caret { transition: transform 0.15s ease; }
+  .lc-db .quest-details-toggle[aria-expanded="true"] .quest-details-caret { transform: rotate(90deg); }
+  .lc-db .quest-header.details-collapsed .quest-details { display: none; }
+}
+
+/* Must follow the block above, not join the earlier reduced-motion one: the
+   rules carry equal specificity, so source order is what settles them. */
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .lc-db .quest-details-caret { transition: none; }
 }
 
 /* ===== In-game DB overlay =====

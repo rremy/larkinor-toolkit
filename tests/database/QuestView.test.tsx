@@ -488,4 +488,101 @@ describe('QuestView', () => {
     expect(stats.textContent).toMatch(/1 kulcs/);
     expect(stats.textContent).toMatch(/1×2/);
   });
+
+  describe('collapsible details', () => {
+    // The collapse itself is a media-query affair — the toggle is display:none
+    // at full width and only the narrow-viewport block hides the folded block.
+    // So these assert the state the stylesheet keys off (the
+    // `details-collapsed` class and `aria-expanded`), which is all jsdom can
+    // see.
+    it('starts collapsed, with a toggle offering the details', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      const toggle = container.querySelector('.quest-details-toggle') as HTMLButtonElement;
+      expect(toggle).not.toBeNull();
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      expect(container.querySelector('.quest-header')!.classList.contains('details-collapsed')).toBe(true);
+    });
+
+    it('expands and re-collapses on the toggle', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      const toggle = container.querySelector('.quest-details-toggle') as HTMLButtonElement;
+      const header = container.querySelector('.quest-header')!;
+
+      fireEvent.click(toggle);
+      expect(header.classList.contains('details-collapsed')).toBe(false);
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+      fireEvent.click(toggle);
+      expect(header.classList.contains('details-collapsed')).toBe(true);
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('points the toggle at the block it controls', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      const controls = container.querySelector('.quest-details-toggle')!.getAttribute('aria-controls');
+      expect(controls).toBeTruthy();
+      expect(container.querySelector('.quest-details')!.id).toBe(controls);
+    });
+
+    it('folds the description, the reward and the stats away together', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      const details = container.querySelector('.quest-details')!;
+      expect(details.querySelector('.quest-description')).not.toBeNull();
+      expect(details.querySelector('.quest-reward')).not.toBeNull();
+      expect(details.querySelector('.quest-stats')).not.toBeNull();
+    });
+
+    it('keeps the zoom control out of the fold, so the maze stays resizable while collapsed', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      expect(container.querySelector('.quest-details .quest-zoom')).toBeNull();
+      expect(container.querySelector('.quest-header .quest-zoom')).not.toBeNull();
+    });
+
+    it('survives an unmount/remount through the same store (the reload on every game action)', async () => {
+      const prefStore = makePrefStore();
+      const first = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      fireEvent.click(first.container.querySelector('.quest-details-toggle') as HTMLButtonElement);
+      first.unmount();
+
+      const second = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      expect(second.container.querySelector('.quest-header')!.classList.contains('details-collapsed')).toBe(false);
+    });
+
+    it('collapses by default when no store is wired up at all', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      expect(container.querySelector('.quest-header')!.classList.contains('details-collapsed')).toBe(true);
+    });
+  });
 });
