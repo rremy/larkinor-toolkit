@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/preact';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/preact';
 import { Dungeon } from '../src/pages/Dungeon';
 import type { DungeonState } from '../src/utils/domExtract';
 import { setEnabledHotkeys } from '../src/utils/config';
+import { USERSCRIPT_DATA_BASE_URL } from '../src/shared/publicUrl';
 
 function buildState(overrides: Partial<DungeonState> = {}): DungeonState {
   return {
@@ -100,5 +101,86 @@ describe('Dungeon', () => {
     const btnLabels = Array.from(container.querySelectorAll('.lc-btn')).map(b => b.textContent);
     expect(btnLabels).not.toContain('kajálsz');
     expect(btnLabels).toContain('imádkozol');
+  });
+
+  describe('database and quests buttons', () => {
+    // The loader caches quests.json/monsters.json under a fixed GM key in tests
+    // (no `?v=` tag), so clear it before stubbing a fresh response — otherwise a
+    // stale response cached by an earlier test could satisfy this block's own
+    // stub without the mock ever being called.
+    function stubQuestData() {
+      const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
+      for (const file of ['quests.json', 'monsters.json']) {
+        GM_setValue(`${base}/${file}`, '');
+        GM_setValue(`${base}/${file}:v`, '');
+      }
+      const stubQuest = {
+        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
+        cells: [{
+          row: 0, col: 0,
+          edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+          monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+          portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+          question: null, rawImage: '',
+        }],
+      };
+      vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+        url: string;
+        onload?: (res: { status: number; responseText: string }) => void;
+      }) => {
+        if (opts.url.includes('quests.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+        } else if (opts.url.includes('monsters.json')) {
+          opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+        }
+      }) as unknown as typeof GM_xmlhttpRequest);
+    }
+
+    afterEach(() => {
+      vi.mocked(GM_xmlhttpRequest).mockReset();
+    });
+
+    it('opens the database overlay from the Adatbázis icon button, and closes it', () => {
+      const { container } = render(<Dungeon state={buildState()} />);
+      expect(container.querySelector('.lc-db-overlay')).toBeNull();
+
+      fireEvent.click(screen.getByLabelText('Adatbázis'));
+      expect(document.querySelector('.lc-db-overlay')).toBeTruthy();
+
+      fireEvent.click(screen.getByLabelText('Bezárás'));
+      expect(document.querySelector('.lc-db-overlay')).toBeNull();
+    });
+
+    it('opens the database overlay on the quests view, not merely the panel', async () => {
+      stubQuestData();
+      render(<Dungeon state={buildState()} />);
+
+      fireEvent.click(screen.getByLabelText('Küldetések'));
+
+      // Assert on the rendered quest content, not just that the panel opened —
+      // a bug that opened the overlay on the wrong tab would still leave the
+      // panel visible.
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+    });
+
+    it('re-navigates to quests on a second press, even after the overlay moved to another tab', async () => {
+      // The press has to carry a nonce, not just the 'quests' literal: setting
+      // the same value again is a no-op state update, so DatabaseApp's landing
+      // effect would never re-fire and the overlay would stay wherever the
+      // player had navigated inside it.
+      stubQuestData();
+      render(<Dungeon state={buildState()} />);
+
+      fireEvent.click(screen.getByLabelText('Küldetések'));
+      expect((await screen.findAllByText('Teszt küldetés')).length).toBeGreaterThan(0);
+
+      const monstersTab = [...document.querySelectorAll('.lc-db .tab')]
+        .find((t) => t.textContent === 'Szörnyek') as HTMLElement;
+      fireEvent.click(monstersTab);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
+
+      fireEvent.click(screen.getByLabelText('Küldetések'));
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Küldetések');
+    });
   });
 });

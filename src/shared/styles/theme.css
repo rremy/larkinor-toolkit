@@ -298,7 +298,7 @@
   place-items: center;
 }
 .lc-statbar-btn:active { color: var(--accent); border-color: var(--accent); }
-.lc-statbar-db svg { display: block; }
+.lc-statbar-btn svg { display: block; }
 
 /* Free-move hotkey icon row (enabled + available quick actions) */
 .lc-hotkeys { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

@@ -54,4 +54,27 @@ describe('StatBar', () => {
     const { container } = render(<StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} />);
     expect(container.querySelector('.lc-statbar-gear')).toBeNull();
   });
+
+  it('renders the quests button when onQuests is provided, and calls it on click', () => {
+    const onQuests = vi.fn();
+    const { container } = render(<StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} onQuests={onQuests} />);
+    const quests = container.querySelector('.lc-stat-gold .lc-statbar-quests') as HTMLButtonElement;
+    expect(quests).not.toBeNull();
+    fireEvent.click(quests);
+    expect(onQuests).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no quests button when onQuests is omitted', () => {
+    const { container } = render(<StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} onDatabase={vi.fn()} onConfig={vi.fn()} />);
+    expect(container.querySelector('.lc-statbar-quests')).toBeNull();
+  });
+
+  it('orders the cluster quests, database, gear so the gear keeps the outer edge', () => {
+    const { container } = render(
+      <StatBar hp={100} hpMax={100} mp={50} mpMax={100} gold={42} onQuests={vi.fn()} onDatabase={vi.fn()} onConfig={vi.fn()} />
+    );
+    const classes = Array.from(container.querySelectorAll('.lc-statbar-btns .lc-statbar-btn'))
+      .map(b => b.className.replace('lc-statbar-btn ', ''));
+    expect(classes).toEqual(['lc-statbar-quests', 'lc-statbar-db', 'lc-statbar-gear']);
+  });
 });
