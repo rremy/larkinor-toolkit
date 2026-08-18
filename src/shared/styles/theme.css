@@ -211,11 +211,23 @@
   to   { transform: translateY(0); }
 }
 
-/* Desktop variant: the same drawer components as a centered modal dialog. */
+/* Desktop variant: the same drawer components as a centered modal dialog,
+   centred over the *game* rather than over the window. The backdrop still
+   covers the whole viewport — everything dims and a click anywhere closes —
+   but its content box is pulled in to the game's own column (0 .. the right
+   edge published as --lc-game-right), so the dialog lands in the middle of
+   what the player is actually looking at. On a wide monitor the empty page
+   beside the game is most of the width, and centring on the viewport put the
+   card well to the right of the thing it describes.
+
+   Percentage padding resolves against the containing block, which for a fixed
+   element is the viewport, so this needs no measurement; max() collapses it
+   back to the plain inset once the window is no wider than the game. */
 .lc-drawer-backdrop--center {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  padding-right: max(24px, calc(100% - var(--lc-game-right, 791px) + 24px));
 }
 
 .lc-drawer-backdrop--center > .lc-drawer {
