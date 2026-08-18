@@ -86,4 +86,8 @@ describe('detectPage', () => {
   it('detects the home page from otSajathaz', () => {
     expect(detectPage(makeDoc('otSajathaz'))).toBe(PageType.Home);
   });
+
+  it('detects the character page from otPlayerSettings', () => {
+    expect(detectPage(makeDoc('otPlayerSettings'))).toBe(PageType.Character);
+  });
 });

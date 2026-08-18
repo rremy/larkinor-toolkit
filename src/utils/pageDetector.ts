@@ -8,6 +8,7 @@ export enum PageType {
   Login = 'Login',
   Dungeon = 'Dungeon',
   Home = 'Home',
+  Character = 'Character',
   Unknown = 'Unknown',
 }
 
@@ -45,6 +46,11 @@ export function detectPage(doc: Document): PageType {
       return PageType.Market;
     case 'otSajathaz':
       return PageType.Home;
+    // The character page ("karakterlap"): the only page that prints the worn
+    // equipment set, and the only place equipment can be changed. Nothing is
+    // rendered on it — the boots capture the loadout and leave the page alone.
+    case 'otPlayerSettings':
+      return PageType.Character;
     default:
       console.warn(`[Larkinor UI] Unrecognised oldalTipus "${oldalTipus ?? '(missing)'}" — rendering skipped`);
       return PageType.Unknown;
