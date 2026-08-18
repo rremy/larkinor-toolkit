@@ -37,11 +37,18 @@ export function CompareCard({ name, columns, x, y }: CompareCardProps): JSX.Elem
           <tr>
             <th />
             {columns.map((col) => (
-              <th key={col.slot}>
-                <span class="lc-cmp-slot">{col.slotLabel}</span>
-                <span class="lc-cmp-current">{col.currentName}</span>
-              </th>
+              <th key={col.slot} colSpan={2} class="lc-cmp-slot">{col.slotLabel}</th>
             ))}
+          </tr>
+          <tr>
+            {/* The equipped item, then the hovered one. Labelled "új" rather
+                than repeated by name: the title already names it, and with two
+                hands the name would appear three times over. */}
+            <th />
+            {columns.map((col) => [
+              <th key={`${col.slot}-cur`} class="lc-cmp-sub">{col.currentName}</th>,
+              <th key={`${col.slot}-new`} class="lc-cmp-sub">új</th>,
+            ])}
           </tr>
         </thead>
         <tbody>
@@ -50,14 +57,13 @@ export function CompareCard({ name, columns, x, y }: CompareCardProps): JSX.Elem
               <th scope="row">{label}</th>
               {columns.map((col) => {
                 const row = col.rows[i];
-                return (
-                  <td key={col.slot} class={`lc-cmp-${row.direction}`}>
-                    <span class="lc-cmp-from">{renderValue(row.current)}</span>
-                    <span class="lc-cmp-arrow" aria-hidden="true">→</span>
-                    <span class="lc-cmp-to">{renderValue(row.candidate)}</span>
-                    {row.delta && <span class="lc-cmp-delta">{row.delta}</span>}
-                  </td>
-                );
+                return [
+                  <td key={`${col.slot}-cur`} class="lc-cmp-cur">{renderValue(row.current)}</td>,
+                  <td key={`${col.slot}-new`} class={`lc-cmp-${row.direction}`}>
+                    {renderValue(row.candidate)}
+                    {row.delta && <span class="lc-cmp-delta">{`(${row.delta})`}</span>}
+                  </td>,
+                ];
               })}
             </tr>
           ))}

@@ -1539,12 +1539,21 @@
    UI, so: every selector is .lc-* scoped, colours come from the
    palette variables, and the table sets `color` inline (quirks mode
    does not inherit it into table cells).
+
+   Values sit in real bordered cells, left-aligned including the
+   numbers: the columns are read across (current vs new), not summed
+   down, so a shared left edge lines the pairs up where an arrow in
+   one right-aligned cell just crowded them together.
    ================================================================ */
 .lc-cmp {
   position: fixed;
   z-index: 10002; /* above the database overlay's own close button (10001) */
-  max-width: min(92vw, 420px);
-  padding: 8px 10px;
+  /* Sized to its content: a two-hand weapon diff is six columns, and a fixed
+     cap would clip it. */
+  width: max-content;
+  max-width: 92vw;
+  overflow-x: auto;
+  padding: 8px 10px 9px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -1553,21 +1562,40 @@
   font: 12px/1.35 -apple-system, 'Segoe UI', sans-serif;
   pointer-events: none; /* never swallows the hover it was opened by */
 }
-.lc-cmp-title { font-weight: bold; margin-bottom: 6px; }
+/* On touch there is no hover to swallow, and a six-column diff can be wider
+   than the screen — so let the card take events and be scrolled. Tapping it
+   counts as inside the trigger, so scrolling does not dismiss it. */
+@media (pointer: coarse) {
+  .lc-cmp { pointer-events: auto; }
+}
+.lc-cmp-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
 .lc-cmp table { border-collapse: collapse; }
 .lc-cmp th,
-.lc-cmp td { padding: 2px 6px; text-align: right; white-space: nowrap; }
-.lc-cmp thead th { color: var(--muted); font-weight: normal; text-align: right; }
-.lc-cmp tbody th { color: var(--muted); font-weight: normal; text-align: left; }
-.lc-cmp-slot { display: block; color: var(--text); }
-.lc-cmp-current { display: block; font-size: 11px; color: var(--muted); }
-.lc-cmp-from { color: var(--muted); }
-.lc-cmp-arrow { margin: 0 3px; color: var(--muted); }
-.lc-cmp-delta { margin-left: 4px; font-weight: bold; }
-.lc-cmp-better .lc-cmp-to,
+.lc-cmp td {
+  padding: 3px 8px;
+  text-align: left;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+/* The corner cells above the field names carry no label and no grid. */
+.lc-cmp thead th:empty { border: 0; }
+.lc-cmp-slot {
+  color: var(--text);
+  font-weight: bold;
+  text-align: center;
+}
+.lc-cmp-sub { color: var(--muted); font-weight: normal; }
+.lc-cmp tbody th { color: var(--muted); font-weight: normal; }
+.lc-cmp-cur { color: var(--muted); }
+.lc-cmp-delta { margin-left: 6px; font-weight: bold; }
+.lc-cmp-better,
 .lc-cmp-better .lc-cmp-delta { color: var(--good); }
-.lc-cmp-worse .lc-cmp-to,
+.lc-cmp-worse,
 .lc-cmp-worse .lc-cmp-delta { color: var(--bad); }
-.lc-cmp-blocked .lc-cmp-to,
+.lc-cmp-blocked,
 .lc-cmp-blocked .lc-cmp-delta { color: var(--bad); }
-.lc-cmp-same .lc-cmp-to { color: var(--text); }
+.lc-cmp-same { color: var(--text); }

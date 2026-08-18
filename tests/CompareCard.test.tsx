@@ -33,7 +33,7 @@ describe('CompareCard', () => {
 
   it('shows the delta and renders booleans in Hungarian', () => {
     render(<CompareCard name="kard" columns={columns} x={0} y={0} />);
-    expect(screen.getByText('+10')).toBeTruthy();
+    expect(screen.getByText('(+10)')).toBeTruthy();
     expect(screen.getAllByText('igen').length).toBeGreaterThan(0);
     expect(screen.getAllByText('nem').length).toBeGreaterThan(0);
   });
@@ -53,5 +53,28 @@ describe('CompareCard', () => {
   it('renders nothing without columns', () => {
     const { container } = render(<CompareCard name="kard" columns={[]} x={0} y={0} />);
     expect(container.querySelector('.lc-cmp')).toBeNull();
+  });
+
+  it('puts the current and candidate values in their own cells, left-aligned', () => {
+    const { container } = render(<CompareCard name="kard" columns={columns} x={0} y={0} />);
+    const first = container.querySelectorAll('tbody tr')[0];
+    const cells = [...first.querySelectorAll('td')];
+    expect(first.querySelector('th')!.textContent).toBe('Max sebzés');
+    expect(cells).toHaveLength(2);
+    expect(cells[0].textContent).toBe('90');       // current, its own cell
+    expect(cells[1].textContent).toBe('100(+10)'); // candidate + delta, its own cell
+  });
+
+  it('gives each compared slot its own pair of columns', () => {
+    const twoHands: CompareColumn[] = [
+      { ...columns[0] },
+      {
+        slot: 'rightHand', slotLabel: 'Jobb kéz', currentName: 'jobbos',
+        rows: columns[0].rows.map((r) => ({ ...r })),
+      },
+    ];
+    const { container } = render(<CompareCard name="kard" columns={twoHands} x={0} y={0} />);
+    expect(container.querySelectorAll('tbody tr')[0].querySelectorAll('td')).toHaveLength(4);
+    expect(container.querySelectorAll('thead tr')[0].querySelectorAll('th[colspan="2"]')).toHaveLength(2);
   });
 });
