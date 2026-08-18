@@ -1532,3 +1532,42 @@
   color: var(--accent); font-family: inherit; font-size: 13px; cursor: pointer;
 }
 .lc-quest-offer-btn:hover { background: var(--panel-2); }
+
+/* ================================================================
+   Equipment compare card — the hover/long-press diff against the
+   worn set. Rendered inside the live game page as well as our own
+   UI, so: every selector is .lc-* scoped, colours come from the
+   palette variables, and the table sets `color` inline (quirks mode
+   does not inherit it into table cells).
+   ================================================================ */
+.lc-cmp {
+  position: fixed;
+  z-index: 10002; /* above the database overlay's own close button (10001) */
+  max-width: min(92vw, 420px);
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px var(--quest-badge-bg);
+  color: var(--text);
+  font: 12px/1.35 -apple-system, 'Segoe UI', sans-serif;
+  pointer-events: none; /* never swallows the hover it was opened by */
+}
+.lc-cmp-title { font-weight: bold; margin-bottom: 6px; }
+.lc-cmp table { border-collapse: collapse; }
+.lc-cmp th,
+.lc-cmp td { padding: 2px 6px; text-align: right; white-space: nowrap; }
+.lc-cmp thead th { color: var(--muted); font-weight: normal; text-align: right; }
+.lc-cmp tbody th { color: var(--muted); font-weight: normal; text-align: left; }
+.lc-cmp-slot { display: block; color: var(--text); }
+.lc-cmp-current { display: block; font-size: 11px; color: var(--muted); }
+.lc-cmp-from { color: var(--muted); }
+.lc-cmp-arrow { margin: 0 3px; color: var(--muted); }
+.lc-cmp-delta { margin-left: 4px; font-weight: bold; }
+.lc-cmp-better .lc-cmp-to,
+.lc-cmp-better .lc-cmp-delta { color: var(--good); }
+.lc-cmp-worse .lc-cmp-to,
+.lc-cmp-worse .lc-cmp-delta { color: var(--bad); }
+.lc-cmp-blocked .lc-cmp-to,
+.lc-cmp-blocked .lc-cmp-delta { color: var(--bad); }
+.lc-cmp-same .lc-cmp-to { color: var(--text); }
