@@ -19,9 +19,10 @@ import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
 import { extractNarration } from '@/utils/domExtract';
-import { setPref } from '@/utils/config';
+import { readLoadout, setPref } from '@/utils/config';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
 
@@ -240,9 +241,13 @@ export function bootDesktop(doc: Document): void {
   let openQuestsSignal = 0;
   let openQuestTarget: { set: 'tavern'; id: string } | null = null;
 
+  // The worn set, for the compare card on the inventory and market rows and in
+  // the database overlay. Read once at boot: the game reloads on every action.
+  const loadout = readLoadout();
+
   const renderDock = () => {
     try {
-      render(h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget }), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

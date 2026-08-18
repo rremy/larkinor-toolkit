@@ -1,8 +1,10 @@
-import { h, render } from 'preact';
+import { h, render, type ComponentChildren } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { LoadoutContext } from '@/components/LoadoutContext';
+import { readLoadout } from '@/utils/config';
 import { setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
@@ -109,22 +111,28 @@ export function bootMobile(doc: Document): void {
 
   let db: MonsterDatabase | null = null;
 
+  // The worn set, for the compare card on the inventory rows and in the
+  // database overlay. Provided around every page we render, so an overlay
+  // opened from any of them inherits it.
+  const loadout = readLoadout();
+
   const renderPage = () => {
+    const provide = (page: ComponentChildren) => h(LoadoutContext.Provider, { value: loadout }, page);
     switch (pageState.pageType) {
       case PageType.FreeMove:
-        render(h(FreeMove, { state: pageState.state, db }), root);
+        render(provide(h(FreeMove, { state: pageState.state, db })), root);
         break;
       case PageType.Battle:
-        render(h(Battle, { state: pageState.state, db }), root);
+        render(provide(h(Battle, { state: pageState.state, db })), root);
         break;
       case PageType.Login:
-        render(h(Login, { state: pageState.state }), root);
+        render(provide(h(Login, { state: pageState.state })), root);
         break;
       case PageType.Dungeon:
-        render(h(Dungeon, { state: pageState.state }), root);
+        render(provide(h(Dungeon, { state: pageState.state })), root);
         break;
       case PageType.Home:
-        render(h(Home, { state: pageState.state }), root);
+        render(provide(h(Home, { state: pageState.state })), root);
         break;
     }
   };

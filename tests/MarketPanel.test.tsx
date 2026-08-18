@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/preact';
 import { MarketPanel } from '../src/desktop/MarketPanel';
 import { MARKET_MINIMIZED_KEY } from '../src/utils/config';
 import type { MarketItem, MarketListing, MarketState } from '../src/utils/marketExtract';
+import { LoadoutContext } from '../src/components/LoadoutContext';
+import { emptySlots, type Loadout } from '../src/shared/loadout';
 
 function item(name: string, amount: number, price: number | null, percent: number | null, index: number): MarketItem {
   const suggestedPrice = price === null ? null : Math.round((price * (percent ?? 500)) / 100);
@@ -489,5 +491,39 @@ describe('MarketPanel', () => {
     render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
     fireEvent.click(screen.getByLabelText('Kis méret'));
     expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
+  });
+
+  it('diffs an offerable armour against the worn one on hover', async () => {
+    vi.useFakeTimers();
+    try {
+      const loadout: Loadout = {
+        version: 1, playerLevel: 30, capturedAt: 1,
+        slots: {
+          ...emptySlots(),
+          head: { name: 'ent sisak', kind: 'vért', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
+        },
+      };
+      // An armour in the backpack, carrying the stat block the game prints for one.
+      const helmet: MarketItem = {
+        name: 'jobb sisak', amount: 1, index: 5, price: 1457, pricePercent: null, suggestedPrice: null,
+        type: 'vért', weight: 1.4, totalWeight: 1.4, magical: false,
+        attrs: [['Név', 'jobb sisak'], ['Min. szint', '21'], ['Védelem', '20'], ['Fajta', 'fejre']],
+      };
+      const { container } = render(
+        <LoadoutContext.Provider value={loadout}>
+          <MarketPanel open state={makeState({ items: [helmet] })} onClose={vi.fn()} />
+        </LoadoutContext.Provider>,
+      );
+
+      fireEvent.mouseEnter(rowFor(container, 'jobb sisak').querySelector('.lc-mkt-name-line')!, { clientX: 5, clientY: 5 });
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(document.querySelector('.lc-cmp')).not.toBeNull();
+      expect(screen.getByText('Fej')).toBeTruthy();
+      // Védelem 16 -> 20 is an upgrade.
+      expect(document.querySelector('.lc-cmp-better')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

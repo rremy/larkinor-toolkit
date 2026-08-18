@@ -6,6 +6,9 @@ import { MARKET_MINIMIZED_KEY } from '@/utils/config';
 import { matchesSearch } from '@/shared/text';
 import { MARKET_SORT_OPTIONS, sortItems, sortListings, type MarketSortKey } from '@/desktop/marketSort';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { useCompare } from '@/hooks/useCompare';
+import { fromDetail } from '@/shared/compare';
+import type { DetailLike } from '@/shared/loadout';
 
 export interface MarketPanelProps {
   open: boolean;
@@ -27,14 +30,20 @@ interface NameLineProps {
   /** True when a price exists but the market quotes no rate for it. */
   assumedRate: boolean;
   onOpenDetail: (name: string) => void;
+  /** Parsed stat block, when there is one, for the compare card. */
+  detail?: DetailLike | null;
   /** Extra badges for one column only, rendered after the rate. */
   children?: ComponentChildren;
 }
 
 /** Item name plus its market rate. Shared so both columns read identically. */
-function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail, children }: NameLineProps): JSX.Element {
+function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail, detail, children }: NameLineProps): JSX.Element {
+  // Here rather than in each row, so both columns get the compare card from one
+  // wiring — offerable backpack items and standing offers alike.
+  const cmp = useCompare(detail ? fromDetail(detail) : null);
   return (
-    <div class="lc-mkt-name-line">
+    <div class="lc-mkt-name-line" {...cmp.props}>
+      {cmp.card}
       {detailName ? (
         <button
           class="lc-mkt-name lc-mkt-name--link"
@@ -135,6 +144,7 @@ function OfferRow({ item, offered, onOffer, onOpenDetail }: OfferRowProps): JSX.
           pricePercent={item.pricePercent}
           assumedRate={item.suggestedPrice !== null}
           onOpenDetail={onOpenDetail}
+          detail={item}
         >
           {/* The backpack keeps listing an item you have already offered, so
               without this the two columns read as unrelated and the same stack
@@ -254,6 +264,7 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
           pricePercent={listing.pricePercent}
           assumedRate={listing.suggestedPrice !== null}
           onOpenDetail={onOpenDetail}
+          detail={listing.detail}
         />
         <div class="lc-mkt-meta">
           {listing.shopPrice !== null && <span>bolti ár {silver(listing.shopPrice)}</span>}

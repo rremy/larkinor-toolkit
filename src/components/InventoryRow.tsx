@@ -1,6 +1,8 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { HomeItem } from '@/utils/homeExtract';
+import { useCompare } from '@/hooks/useCompare';
+import { fromDetail } from '@/shared/compare';
 
 export interface InventoryRowProps {
   item: HomeItem;
@@ -21,15 +23,19 @@ const TYPE_LABEL: Record<string, string> = { fegyver: 'fegyver', vért: 'vért' 
 export function InventoryRow({ item, moveGlyph, moveTitle, onMove, onOpenDetail }: InventoryRowProps): JSX.Element {
   const [qty, setQty] = useState<number>(item.amount);
   const single = item.amount <= 1;
+  // A weapon or armour in the house or backpack diffs against the worn set;
+  // fromDetail returns null for a plain item, which disables the trigger.
+  const cmp = useCompare(fromDetail(item));
   const clamp = (n: number): number => Math.max(1, Math.min(item.amount, n));
 
   return (
     <div class="lc-inv-row">
       <div class="lc-inv-cell">
-        <div class="lc-inv-name-line">
+        <div class="lc-inv-name-line" {...cmp.props}>
           <button class="lc-inv-name" onClick={onOpenDetail}>{item.name}</button>
           {TYPE_LABEL[item.type] && <span class="lc-inv-badge">{TYPE_LABEL[item.type]}</span>}
           {item.magical && <span class="lc-inv-badge">mágikus</span>}
+          {cmp.card}
         </div>
         <div class="lc-inv-meta">
           <span>×<b>{item.amount.toLocaleString('hu-HU')}</b></span>
