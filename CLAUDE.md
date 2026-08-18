@@ -256,6 +256,58 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - **Form controls never inherit `color`** in any mode, so `input`/`select`/`option`/`button`/`textarea` need it set explicitly too.
   - Practical rule: an in-game component that renders a `<table>` or a form control must set `color` explicitly rather than relying on a coloured ancestor. Everything else (divs, spans) inherits normally.
 - **Geometry of the desktop chat panel** (`#mydiv`, measured live at both 1440×900 and 1280×720): `left: 60, top: 473, 500×300`, absolutely positioned, `z-index: 10`, with its own text input occupying the top ~22px. It is laid out in fixed pixels and **does not move with the window**, which is why `src/desktop/boot.ts`'s `alignDock` can measure once at boot with no resize listener. Its parent is the 633px game content column at `0,−97` — note the negative top, i.e. the column starts above the viewport.
+- **The character page (`oldalTipus=otPlayerSettings`, title `karakterlap`) is the
+  only page that prints the worn equipment set — and the only place equipment can
+  be changed**, which is why capturing on every visit keeps the stored loadout
+  current by construction rather than approximately. Its five slots (`Bal kéz`,
+  `Jobb kéz`, `Test`, `Fej`, `Láb`) each carry the item's **full stat block inside
+  the link's `onclick="alert('…')"`**, in the same `label: value` per-line grammar
+  as the Home page's inventory — so `src/utils/characterExtract.ts` decodes the
+  single-quoted payload (never executes it) and reuses `parseCuccDetail`. Facts
+  that cost measurement to establish:
+  - `Átlag sebzés` is never printed and never needs to be: `avgDamage ===
+    maxDamage - spread/2` for all 1220 weapons carrying both fields, so the stored
+    loadout is self-contained — the compare path does no database lookup and
+    cannot fail to resolve a name.
+  - `level` and `minLevel` are one quantity (0 mismatches across 1216 weapons and
+    1279 armours), so the page's `Min. szint` compares directly against the
+    database's `level`.
+  - A shield prints `Fajta: kézbe` **and no `Min. szint` at all**, so `level` is
+    genuinely nullable; shields occupy a hand, beside weapons.
+  - Armour slots resolve from either vocabulary — database `type`
+    (`Páncél`/`Sisak`/`Csizma`/`Pajzs`) or the page's `Fajta`
+    (`testre`/`fejre`/`lábra`/`kézbe`) — via `armorTarget` in
+    `src/shared/loadout.ts`. An unrecognised value yields **no** comparison, not a
+    guessed slot.
+  - The equipment cell is found by **scoring every `<td>` on how many slot labels
+    it prints**, not by looking for `Bal kéz:`. Keying off one label means a page
+    printing a different subset of slots finds nothing at all, and scoring also
+    stops an unrelated cell that happens to print `Test:` from winning.
+  - A capture saved through Playwright's `browser_evaluate` is a **JSON-encoded
+    string**, not HTML. Feeding it to JSDOM finds no anchors and reads every slot
+    as null, which looks exactly like an extractor bug; `JSON.parse` it first.
+- **The compare card** (`src/hooks/useCompare.tsx` + `CompareCard`) diffs a hovered
+  weapon or armour against the worn set on the explorer tables, the Home inventory
+  and the Market panel, reading the loadout from a `LoadoutContext` that both
+  boots and `DatabaseOverlay` provide. Deliberate choices, not to be relitigated:
+  - A weapon shows **one column per equipped hand**; a shield compares only
+    against a hand that holds a shield, since `Védelem` against `Maximum sebzés`
+    is not a comparison.
+  - **Lower `Szórás` is better** (`avgDamage = maxDamage − szórás/2`), and `Szint`
+    is never "better" — only neutral, or red when it exceeds the player's level.
+  - The trigger uses **mouse events for hover and touch events for long-press,
+    not pointer events**: jsdom ships no `PointerEvent`, so a pointer-based
+    trigger could only be tested against a fabricated event. A tap's emulated
+    `mouseenter` is suppressed for 800ms, or tapping a row would open the hover
+    card on touch. Tests must drive it with `vi.advanceTimersByTimeAsync` — a
+    re-render triggered from inside a timer lands on the microtask queue, which
+    the synchronous timer API never flushes.
+  - A table row is its own component (`DataRow`) because `useCompare` is a hook:
+    calling it inside the rows' `.map()` would change the hook count whenever the
+    filtered row count does.
+  - **The standalone site never shows it.** It is a different origin with its own
+    `localStorage` and cannot see the in-game loadout, so `LoadoutContext`
+    defaults to null and every consumer renders normally without one.
 - **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow
