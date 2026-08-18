@@ -655,19 +655,47 @@ Expected: PASS, no type errors.
 
 - [ ] **Step 5: Cross-check against the real captured page**
 
-Confirms the extractor works on the actual markup, not just the fixture:
+Confirms the extractor works on the actual markup, not just the fixture.
+
+**First decode the capture.** Playwright's `browser_evaluate` saves the
+*evaluation result* — a JSON-encoded string, starting with `"` and with every
+quote and newline escaped — not raw HTML. Feeding it to JSDOM straight finds no
+anchors at all and every slot reads null, which looks exactly like an extractor
+bug and is not one:
 
 ```bash
-node --input-type=module -e '
-import { JSDOM } from "jsdom";
-import { readFileSync } from "node:fs";
-const { window } = new JSDOM(readFileSync(".tmp/karakterlap.html", "utf8"));
-const tds = [...window.document.querySelectorAll("td")].filter(td => (td.textContent||"").includes("Bal kéz:"));
-const block = tds.reduce((b,t) => (t.textContent||"").length < (b.textContent||"").length ? t : b);
-console.log("slots found:", block.querySelectorAll("a[onclick]").length, "(expected 5)");
-'
+python3 -c "
+import json,io
+raw=io.open('.tmp/karakterlap.html',encoding='utf-8').read()
+html=json.loads(raw) if raw.lstrip().startswith('\"') else raw
+io.open('.tmp/karakterlap.real.html','w',encoding='utf-8').write(html)
+print('decoded chars:', len(html))
+"
 ```
-Expected: `slots found: 5`. If the file is absent (a fresh clone), skip this step — the unit tests cover the logic.
+
+Then run the extractor over it in a scratch test (`tests/zz-realpage.test.ts`,
+deleted immediately afterwards — vitest only collects from `tests/`):
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { JSDOM } from 'jsdom';
+import { extractCharacter } from '@/utils/characterExtract';
+
+describe('extractCharacter against the real captured page', () => {
+  it('reads the live markup', () => {
+    const html = readFileSync('.tmp/karakterlap.real.html', 'utf8');
+    const loadout = extractCharacter(new JSDOM(html).window.document as unknown as Document)!;
+    console.log('playerLevel:', loadout.playerLevel);
+    console.log(JSON.stringify(loadout.slots));
+    expect(loadout).not.toBeNull();
+  });
+});
+```
+
+Expected: `playerLevel: 23` and all five slots populated — the two hand weapons
+with their damage and spread, and defences on body/head/legs. If the capture is
+absent (a fresh clone), skip this step; the unit tests cover the logic.
 
 - [ ] **Step 6: Commit**
 
