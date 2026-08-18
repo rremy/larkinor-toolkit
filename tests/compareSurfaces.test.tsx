@@ -7,10 +7,10 @@ import { emptySlots, type Loadout } from '../src/shared/loadout';
 import type { HomeItem } from '../src/utils/homeExtract';
 
 const loadout: Loadout = {
-  version: 1, playerLevel: 30, capturedAt: 1,
+  version: 2, playerLevel: 30, capturedAt: 1,
   slots: {
     ...emptySlots(),
-    head: { name: 'ent sisak', kind: 'vért', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
+    head: { name: 'ent sisak', kind: 'vért', type: 'fejre', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
   },
 };
 

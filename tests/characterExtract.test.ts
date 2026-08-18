@@ -53,8 +53,8 @@ describe('extractCharacter', () => {
   it("reads every occupied slot, keyed by the page's own labels", () => {
     const loadout = extractCharacter(FULL)!;
     expect(loadout.slots.leftHand).toEqual({
-      name: 'Kaltenekker íj', kind: 'fegyver', level: 21, maxDamage: 133,
-      spread: 7, defense: null, magical: true, vampiric: true,
+      name: 'Kaltenekker íj', kind: 'fegyver', type: 'távolsági', level: 21,
+      maxDamage: 133, spread: 7, defense: null, magical: true, vampiric: true,
     });
     expect(loadout.slots.body?.defense).toBe(21);
     expect(loadout.slots.head?.name).toBe('ent sisak');
@@ -72,7 +72,7 @@ describe('extractCharacter', () => {
   it('captures the player level and a timestamp', () => {
     const loadout = extractCharacter(FULL)!;
     expect(loadout.playerLevel).toBe(23);
-    expect(loadout.version).toBe(1);
+    expect(loadout.version).toBe(2);
     expect(loadout.capturedAt).toBeGreaterThan(0);
   });
 

@@ -1599,3 +1599,5 @@
 .lc-cmp-blocked,
 .lc-cmp-blocked .lc-cmp-delta { color: var(--bad); }
 .lc-cmp-same { color: var(--text); }
+/* Shown, never judged (a weapon's class) — same weight as an unchanged value. */
+.lc-cmp-info { color: var(--text); }

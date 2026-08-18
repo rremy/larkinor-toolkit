@@ -117,7 +117,7 @@ export function extractCharacter(doc: Document): Loadout | null {
   const levelMatch = (doc.body.textContent ?? '').match(/(?:^|\s)Szint:\s*(\d+)/);
 
   return {
-    version: 1,
+    version: 2,
     playerLevel: levelMatch ? parseInt(levelMatch[1], 10) : null,
     capturedAt: Date.now(),
     slots,

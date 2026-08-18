@@ -295,6 +295,17 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     is not a comparison.
   - **Lower `Szórás` is better** (`avgDamage = maxDamage − szórás/2`), and `Szint`
     is never "better" — only neutral, or red when it exceeds the player's level.
+  - A weapon's `Típus` is **shown but never judged** (direction `info`): no class
+    beats another. It is lower-cased on the way out because the two sources
+    disagree on capitalisation for the same value — the page prints
+    `szúró/vágó`, the database `Szúró/Vágó` — which side by side would read as
+    two different types. Armour gets no such row: its slot header already says
+    where it goes. `EquippedItem.type` carries the page's `Fajta` or the
+    database's `type` in one field, since for armour that same string is what
+    `armorTarget` resolves to a slot.
+  - **`Loadout.version` is the drift gate.** It went to 2 when `type` was added:
+    a version-1 item carries none, and reading its absence would mean guarding
+    every consumer. A discarded loadout costs one visit to the character page.
   - The trigger uses **mouse events for hover and touch events for long-press,
     not pointer events**: jsdom ships no `PointerEvent`, so a pointer-based
     trigger could only be tested against a fabricated event. A tap's emulated

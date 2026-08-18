@@ -51,14 +51,14 @@ describe('equippedFromDetail', () => {
       ['Maximum sebzés', '133'], ['Sebzés szórás', '7'], ['Fajta', 'távolsági'],
     ], 'fegyver', true));
     expect(item).toEqual({
-      name: 'Kaltenekker íj', kind: 'fegyver', level: 21, maxDamage: 133,
-      spread: 7, defense: null, magical: true, vampiric: true,
+      name: 'Kaltenekker íj', kind: 'fegyver', type: 'távolsági', level: 21,
+      maxDamage: 133, spread: 7, defense: null, magical: true, vampiric: true,
     });
   });
 
   it("reads an armour's defence", () => {
     expect(equippedFromDetail(detail([['Név', 'ent sisak'], ['Min. szint', '20'], ['Védelem', '16'], ['Fajta', 'fejre']])))
-      .toEqual({ name: 'ent sisak', kind: 'vért', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false });
+      .toEqual({ name: 'ent sisak', kind: 'vért', type: 'fejre', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false });
   });
 
   it('leaves level null for a shield, which prints no Min. szint', () => {
@@ -80,12 +80,12 @@ describe('equippedFromDetail', () => {
 
 describe('serializeLoadout / parseLoadout', () => {
   const loadout: Loadout = {
-    version: 1,
+    version: 2,
     playerLevel: 23,
     capturedAt: 1_700_000_000_000,
     slots: {
       ...emptySlots(),
-      body: { name: 'Zamárdi felsője', kind: 'vért', level: 19, maxDamage: null, spread: null, defense: 21, magical: false, vampiric: false },
+      body: { name: 'Zamárdi felsője', kind: 'vért', type: 'testre', level: 19, maxDamage: null, spread: null, defense: 21, magical: false, vampiric: false },
     },
   };
 
@@ -97,8 +97,10 @@ describe('serializeLoadout / parseLoadout', () => {
     expect(parseLoadout(null)).toBeNull();
     expect(parseLoadout('')).toBeNull();
     expect(parseLoadout('{ not json')).toBeNull();
-    expect(parseLoadout(JSON.stringify({ ...loadout, version: 2 }))).toBeNull();
-    expect(parseLoadout(JSON.stringify({ version: 1 }))).toBeNull();
+    expect(parseLoadout(JSON.stringify({ ...loadout, version: 3 }))).toBeNull();
+    // A version-1 loadout predates EquippedItem.type and is discarded, not read.
+    expect(parseLoadout(JSON.stringify({ ...loadout, version: 1 }))).toBeNull();
+    expect(parseLoadout(JSON.stringify({ version: 2 }))).toBeNull();
   });
 
   it('starts every slot empty', () => {

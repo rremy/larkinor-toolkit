@@ -23,6 +23,7 @@ export interface CompareCardProps {
 function renderValue(value: CompareValue): string {
   if (value === null) return '—';
   if (typeof value === 'boolean') return value ? 'igen' : 'nem';
+  if (typeof value === 'string') return value;
   return value.toLocaleString('hu');
 }
 

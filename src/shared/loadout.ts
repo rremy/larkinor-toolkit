@@ -37,6 +37,14 @@ export type ItemKind = 'fegyver' | 'vért';
 export interface EquippedItem {
   name: string;
   kind: ItemKind;
+  /**
+   * The raw kind-of-thing string: the page's `Fajta` or the database's `type`.
+   * For a weapon that is its class (`szúró/vágó`, `távolsági`, `ütő/zúzó`) and
+   * is shown in the compare card; for armour it is the slot word
+   * (`testre`, `Sisak`, …) that `armorTarget` resolves. One field for both,
+   * because both sources print it in one place.
+   */
+  type: string | null;
   /** `Min. szint` — null for items that print none (shields). */
   level: number | null;
   maxDamage: number | null;
@@ -47,7 +55,12 @@ export interface EquippedItem {
 }
 
 export interface Loadout {
-  version: 1;
+  /**
+   * Bumped to 2 when `EquippedItem.type` was added: a version-1 item carries no
+   * type at all, and rendering its absence would mean guarding every read. A
+   * discarded loadout costs one visit to the character page to recapture.
+   */
+  version: 2;
   playerLevel: number | null;
   /**
    * Diagnostics only. Equipment can only be changed on the character page, so
@@ -135,6 +148,7 @@ export function equippedFromDetail(d: DetailLike): EquippedItem | null {
   return {
     name: attrOf(d, 'Név') ?? '?',
     kind: d.type,
+    type: attrOf(d, 'Fajta'),
     level: intOf(attrOf(d, 'Min. szint')),
     maxDamage: intOf(attrOf(d, 'Maximum sebzés')),
     spread: intOf(attrOf(d, 'Sebzés szórás')),
@@ -157,9 +171,9 @@ export function parseLoadout(raw: string | null): Loadout | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<Loadout>;
-    if (parsed?.version !== 1 || typeof parsed.slots !== 'object' || parsed.slots === null) return null;
+    if (parsed?.version !== 2 || typeof parsed.slots !== 'object' || parsed.slots === null) return null;
     return {
-      version: 1,
+      version: 2,
       playerLevel: typeof parsed.playerLevel === 'number' ? parsed.playerLevel : null,
       capturedAt: typeof parsed.capturedAt === 'number' ? parsed.capturedAt : 0,
       slots: { ...emptySlots(), ...parsed.slots },

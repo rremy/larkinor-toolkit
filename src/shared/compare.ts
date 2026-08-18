@@ -9,14 +9,17 @@
 
 import type { Armor, Weapon } from '@/shared/data';
 import {
-  armorTarget, attrOf, avgDamageOf, equippedFromDetail, HAND_SLOTS, SLOT_LABEL, SLOT_ORDER,
+  armorTarget, avgDamageOf, equippedFromDetail, HAND_SLOTS, SLOT_LABEL, SLOT_ORDER,
   type DetailLike, type EquippedItem, type Loadout, type Slot,
 } from '@/shared/loadout';
 
-export type CompareValue = number | boolean | null;
+export type CompareValue = number | boolean | string | null;
 
-/** `blocked` is the candidate's level exceeding the player's — unwearable. */
-export type Direction = 'better' | 'worse' | 'same' | 'blocked';
+/**
+ * `blocked` is the candidate's level exceeding the player's — unwearable.
+ * `info` is shown but never judged, for a field with no better or worse.
+ */
+export type Direction = 'better' | 'worse' | 'same' | 'blocked' | 'info';
 
 export interface CompareRow {
   label: string;
@@ -34,31 +37,31 @@ export interface CompareColumn {
   rows: CompareRow[];
 }
 
-/** A candidate item, plus the raw type string its slot is resolved from. */
-export interface CompareSubject extends EquippedItem {
-  /** Database `type` or the page's `Fajta`; null for weapons. */
-  armorType: string | null;
-}
+/**
+ * A candidate item. Structurally identical to an equipped one — both carry the
+ * `type` string that resolves an armour slot or names a weapon's class — so this
+ * is an alias rather than an extension, kept for readable signatures.
+ */
+export type CompareSubject = EquippedItem;
 
 export function fromWeapon(w: Weapon): CompareSubject {
   return {
-    name: w.name, kind: 'fegyver', level: w.level, maxDamage: w.maxDamage,
-    spread: w.spread, defense: null, magical: w.magical, vampiric: w.vampiric,
-    armorType: null,
+    name: w.name, kind: 'fegyver', type: w.type, level: w.level,
+    maxDamage: w.maxDamage, spread: w.spread, defense: null,
+    magical: w.magical, vampiric: w.vampiric,
   };
 }
 
 export function fromArmor(a: Armor): CompareSubject {
   return {
-    name: a.name, kind: 'vért', level: a.level, maxDamage: null, spread: null,
-    defense: a.defense, magical: a.magical, vampiric: false, armorType: a.type,
+    name: a.name, kind: 'vért', type: a.type, level: a.level, maxDamage: null,
+    spread: null, defense: a.defense, magical: a.magical, vampiric: false,
   };
 }
 
 export function fromDetail(d: DetailLike): CompareSubject | null {
-  const item = equippedFromDetail(d);
-  if (!item) return null;
-  return { ...item, armorType: attrOf(d, 'Fajta') };
+  // equippedFromDetail already reads `Fajta` into `type`.
+  return equippedFromDetail(d);
 }
 
 export function formatDelta(n: number): string {
@@ -99,6 +102,24 @@ function numericRow(field: NumericField, current: EquippedItem, candidate: Compa
   };
 }
 
+/**
+ * A weapon's class, shown but never judged — one class is not better than
+ * another, so this row is `info`. Rendered lower-cased because the two sources
+ * disagree on capitalisation for the same value (the page prints
+ * `szúró/vágó`, the database `Szúró/Vágó`), which would otherwise read as two
+ * different types side by side.
+ */
+function typeRow(current: EquippedItem, candidate: CompareSubject): CompareRow | null {
+  if (current.type === null && candidate.type === null) return null;
+  return {
+    label: 'Típus',
+    current: current.type?.toLowerCase() ?? null,
+    candidate: candidate.type?.toLowerCase() ?? null,
+    delta: null,
+    direction: 'info',
+  };
+}
+
 function boolRow(label: string, a: boolean, b: boolean): CompareRow {
   return { label, current: a, candidate: b, delta: null, direction: a === b ? 'same' : b ? 'better' : 'worse' };
 }
@@ -127,6 +148,11 @@ function column(slot: Slot, current: EquippedItem, candidate: CompareSubject, pl
 
   const level = levelRow(current, candidate, playerLevel);
   if (level) rows.push(level);
+  if (candidate.kind === 'fegyver') {
+    // Armour needs no type row: the slot header already says where it goes.
+    const type = typeRow(current, candidate);
+    if (type) rows.push(type);
+  }
   for (const field of fields) {
     const row = numericRow(field, current, candidate);
     if (row) rows.push(row);
@@ -154,7 +180,7 @@ function targetSlots(subject: CompareSubject, loadout: Loadout): Slot[] {
     return HAND_SLOTS.filter((slot) => at(slot)?.kind === 'fegyver');
   }
 
-  const target = armorTarget(subject.armorType);
+  const target = armorTarget(subject.type);
   if (!target) return [];
   if (target.kind === 'hand') {
     return HAND_SLOTS.filter((slot) => {

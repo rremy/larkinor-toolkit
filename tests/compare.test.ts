@@ -3,17 +3,18 @@ import { compareToLoadout, formatDelta, fromArmor, fromDetail, fromWeapon, type 
 import { emptySlots, type EquippedItem, type Loadout } from '../src/shared/loadout';
 
 const weapon = (over: Partial<EquippedItem> = {}): EquippedItem => ({
-  name: 'kard', kind: 'fegyver', level: 20, maxDamage: 100, spread: 10,
-  defense: null, magical: false, vampiric: false, ...over,
+  name: 'kard', kind: 'fegyver', type: 'szúró/vágó', level: 20, maxDamage: 100,
+  spread: 10, defense: null, magical: false, vampiric: false, ...over,
 });
 const armor = (over: Partial<EquippedItem> = {}): EquippedItem => ({
-  name: 'vért', kind: 'vért', level: 20, maxDamage: null, spread: null,
-  defense: 10, magical: false, vampiric: false, ...over,
+  name: 'vért', kind: 'vért', type: 'testre', level: 20, maxDamage: null,
+  spread: null, defense: 10, magical: false, vampiric: false, ...over,
 });
-const subject = (item: EquippedItem, armorType: string | null = null): CompareSubject => ({ ...item, armorType });
+/** The candidate's `type` is what resolves its slot, so it is set per case. */
+const subject = (item: EquippedItem, type: string | null = item.type): CompareSubject => ({ ...item, type });
 
 const loadoutWith = (slots: Partial<Loadout['slots']>, playerLevel: number | null = 30): Loadout => ({
-  version: 1, playerLevel, capturedAt: 1, slots: { ...emptySlots(), ...slots },
+  version: 2, playerLevel, capturedAt: 1, slots: { ...emptySlots(), ...slots },
 });
 
 const rowsOf = (cols: ReturnType<typeof compareToLoadout>, label: string) =>
@@ -74,6 +75,45 @@ describe('compareToLoadout — weapons', () => {
   });
 });
 
+describe("compareToLoadout — a weapon's type", () => {
+  const loadout = loadoutWith({ leftHand: weapon({ name: 'balos', type: 'ütő/zúzó' }) });
+
+  it('shows both types, judging neither', () => {
+    const cols = compareToLoadout(subject(weapon({ type: 'Távolsági' })), loadout);
+    expect(cols[0].rows.find((r) => r.label === 'Típus')).toEqual({
+      label: 'Típus',
+      current: 'ütő/zúzó',
+      // Lower-cased: the page prints `szúró/vágó`, the database `Szúró/Vágó`,
+      // and the two would otherwise read as different types side by side.
+      candidate: 'távolsági',
+      delta: null,
+      direction: 'info',
+    });
+  });
+
+  it('places it right after Szint, as the explorer orders its columns', () => {
+    const labels = compareToLoadout(subject(weapon()), loadout)[0].rows.map((r) => r.label);
+    expect(labels.slice(0, 3)).toEqual(['Szint', 'Típus', 'Max sebzés']);
+  });
+
+  it('omits the row when neither side has a type', () => {
+    const bare = loadoutWith({ leftHand: weapon({ type: null }) });
+    const cols = compareToLoadout(subject(weapon({ type: null })), bare);
+    expect(cols[0].rows.some((r) => r.label === 'Típus')).toBe(false);
+  });
+
+  it('still shows the row when only one side has a type', () => {
+    const cols = compareToLoadout(subject(weapon({ type: null })), loadout);
+    expect(cols[0].rows.find((r) => r.label === 'Típus')).toMatchObject({ current: 'ütő/zúzó', candidate: null });
+  });
+
+  it('adds no type row to armour, whose slot header already says where it goes', () => {
+    const armed = loadoutWith({ head: armor({ name: 'sisak' }) });
+    const cols = compareToLoadout(subject(armor({ defense: 20 }), 'Sisak'), armed);
+    expect(cols[0].rows.some((r) => r.label === 'Típus')).toBe(false);
+  });
+});
+
 describe('compareToLoadout — armour', () => {
   it('compares against the one slot the type maps to', () => {
     const loadout = loadoutWith({ head: armor({ name: 'sisak', defense: 16 }), body: armor({ name: 'páncél', defense: 21 }) });
@@ -110,21 +150,21 @@ describe('compareToLoadout — armour', () => {
 
 describe('adapters', () => {
   it('reads a database weapon', () => {
-    const w = { name: 'íj', level: 21, maxDamage: 133, spread: 7, magical: true, vampiric: true } as never;
+    const w = { name: 'íj', type: 'Távolsági', level: 21, maxDamage: 133, spread: 7, magical: true, vampiric: true } as never;
     expect(fromWeapon(w)).toEqual({
-      name: 'íj', kind: 'fegyver', level: 21, maxDamage: 133, spread: 7,
-      defense: null, magical: true, vampiric: true, armorType: null,
+      name: 'íj', kind: 'fegyver', type: 'Távolsági', level: 21, maxDamage: 133,
+      spread: 7, defense: null, magical: true, vampiric: true,
     });
   });
 
   it('reads a database armour, keeping its type for slot resolution', () => {
     const a = { name: 'sisak', level: 20, defense: 16, magical: false, type: 'Sisak' } as never;
-    expect(fromArmor(a)).toMatchObject({ kind: 'vért', defense: 16, armorType: 'Sisak' });
+    expect(fromArmor(a)).toMatchObject({ kind: 'vért', defense: 16, type: 'Sisak' });
   });
 
   it('reads a parsed stat block, keeping Fajta as the type', () => {
     const d = { type: 'vért', magical: false, attrs: [['Név', 'bőrpajzs'], ['Védelem', '1'], ['Fajta', 'kézbe']] as Array<[string, string]> };
-    expect(fromDetail(d)).toMatchObject({ name: 'bőrpajzs', defense: 1, armorType: 'kézbe' });
+    expect(fromDetail(d)).toMatchObject({ name: 'bőrpajzs', defense: 1, type: 'kézbe' });
   });
 
   it('rejects a plain item', () => {

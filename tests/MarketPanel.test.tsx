@@ -497,10 +497,10 @@ describe('MarketPanel', () => {
     vi.useFakeTimers();
     try {
       const loadout: Loadout = {
-        version: 1, playerLevel: 30, capturedAt: 1,
+        version: 2, playerLevel: 30, capturedAt: 1,
         slots: {
           ...emptySlots(),
-          head: { name: 'ent sisak', kind: 'vért', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
+          head: { name: 'ent sisak', kind: 'vért', type: 'fejre', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
         },
       };
       // An armour in the backpack, carrying the stat block the game prints for one.

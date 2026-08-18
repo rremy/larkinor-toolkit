@@ -7,16 +7,16 @@ import { emptySlots, type Loadout } from '../src/shared/loadout';
 import type { CompareSubject } from '../src/shared/compare';
 
 const loadout: Loadout = {
-  version: 1, playerLevel: 30, capturedAt: 1,
+  version: 2, playerLevel: 30, capturedAt: 1,
   slots: {
     ...emptySlots(),
-    head: { name: 'sisak', kind: 'vért', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
+    head: { name: 'sisak', kind: 'vért', type: 'fejre', level: 20, maxDamage: null, spread: null, defense: 16, magical: false, vampiric: false },
   },
 };
 
 const candidate: CompareSubject = {
-  name: 'jobb sisak', kind: 'vért', level: 21, maxDamage: null, spread: null,
-  defense: 20, magical: false, vampiric: false, armorType: 'Sisak',
+  name: 'jobb sisak', kind: 'vért', type: 'Sisak', level: 21, maxDamage: null,
+  spread: null, defense: 20, magical: false, vampiric: false,
 };
 
 function Row({ subject }: { subject: CompareSubject | null }) {
@@ -135,7 +135,7 @@ describe('useCompare — when there is nothing to compare', () => {
   });
 
   it('does nothing when the comparison yields no column', async () => {
-    mount(loadout, { ...candidate, armorType: 'Nyaklánc' });
+    mount(loadout, { ...candidate, type: 'Nyaklánc' });
     fireEvent.mouseEnter(row(), { clientX: 5, clientY: 5 });
     await vi.advanceTimersByTimeAsync(600);
     expect(card()).toBeNull();
