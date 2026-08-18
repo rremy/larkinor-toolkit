@@ -37,3 +37,10 @@ export function questSelectedKey(set: QuestSet): string {
  * upgrading does not lose the user's position. Never written.
  */
 export const LEGACY_QUEST_SELECTED_PREF_KEY = 'lc-quest-selected';
+
+/**
+ * PrefStore key holding the serialised `Loadout` — what the player is wearing,
+ * captured on every character-page visit. Read by the compare card on every
+ * surface; written only by the boots' loadout capture.
+ */
+export const LOADOUT_PREF_KEY = 'lc-loadout';
