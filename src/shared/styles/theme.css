@@ -1347,7 +1347,10 @@
 /* Market panel — offerable backpack items and standing offers. Shares the split
    layout above, since the task is the same shape: move things between two
    lists. */
-.lc-mkt-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+/* A size container, so a row reacts to its own column's width rather than the
+   window's: the panel is half the width when docked beside the game, and the
+   viewport says nothing about that. */
+.lc-mkt-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; container-type: inline-size; }
 
 .lc-mkt-row {
   display: grid;
@@ -1359,10 +1362,28 @@
 }
 .lc-mkt-row:last-child { border-bottom: 0; }
 
+/* Docked beside the game a column is only ~290px: name, both fields and the
+   button do not fit on one line, and the name would be squeezed to nothing.
+   The name and its details take the first line, the fields and the button the
+   second — the same three columns, one row lower, placed by grid flow. */
+@container (max-width: 420px) {
+  .lc-mkt-row { grid-template-columns: 58px 74px auto; }
+  .lc-mkt-cell { grid-column: 1 / -1; }
+}
+
+/* Fields and buttons share a bottom edge. A field is taller than a button — it
+   carries its own caption above the input — so centring them in the row left the
+   button's bottom sitting above the input's. */
+.lc-mkt-field, .lc-mkt-offer-btn, .lc-mkt-revoke-btn { align-self: end; }
+
 /* A disabled field reads as inert rather than merely grey. */
 .lc-mkt-field input:disabled { color: var(--muted); cursor: default; opacity: 1; }
 
 .lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* One line: name, then its badges. The name is what shrinks (and ellipsises) when
+   the line runs short — the badges are short and fixed. A narrow column is
+   handled by moving the fields off this row entirely, see the container query
+   below, not by wrapping this line. */
 .lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 
@@ -1394,6 +1415,39 @@
 /* An assumed rate, not one the market quoted — muted so it does not read as
    authoritative. */
 .lc-mkt-pct--assumed { color: var(--muted); border-color: var(--border); }
+
+/* Already on offer in the other column. Muted rather than accented: it is a note
+   about the offers list, not a figure to price against. */
+.lc-mkt-offered {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+/* Search, sort key and direction on one line, per column. */
+.lc-mkt-toolbar { display: flex; align-items: stretch; gap: 6px; }
+.lc-mkt-toolbar .lc-inv-sort, .lc-mkt-toolbar .lc-inv-dir { flex-shrink: 0; font-size: 12px; padding: 4px 6px; }
+
+/* The search boxes are inputs in their own right, not the inventory's <label>
+   wrapper — .lc-inv-search keeps its text colour on the input inside it, so
+   borrowing that class here left the text at the browser default (black), a form
+   control inheriting no colour. */
+.lc-mkt-search {
+  min-width: 0;
+  flex: 1;
+  padding: 5px 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.lc-mkt-search:focus { outline: none; border-color: var(--accent); }
 
 .lc-mkt-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .lc-mkt-total { color: var(--good); }

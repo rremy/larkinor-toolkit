@@ -1,9 +1,10 @@
-import { h, type JSX } from 'preact';
+import { h, type ComponentChildren, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import { DEFAULT_PRICE_PERCENT, type MarketItem, type MarketListing, type MarketState } from '@/utils/marketExtract';
 import { DockedPanel } from '@/components/DockedPanel';
 import { MARKET_MINIMIZED_KEY } from '@/utils/config';
 import { matchesSearch } from '@/shared/text';
+import { MARKET_SORT_OPTIONS, sortItems, sortListings, type MarketSortKey } from '@/desktop/marketSort';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 
 export interface MarketPanelProps {
@@ -26,10 +27,12 @@ interface NameLineProps {
   /** True when a price exists but the market quotes no rate for it. */
   assumedRate: boolean;
   onOpenDetail: (name: string) => void;
+  /** Extra badges for one column only, rendered after the rate. */
+  children?: ComponentChildren;
 }
 
 /** Item name plus its market rate. Shared so both columns read identically. */
-function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail }: NameLineProps): JSX.Element {
+function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail, children }: NameLineProps): JSX.Element {
   return (
     <div class="lc-mkt-name-line">
       {detailName ? (
@@ -55,6 +58,7 @@ function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail }:
           {DEFAULT_PRICE_PERCENT}%?
         </span>
       )}
+      {children}
     </div>
   );
 }
@@ -85,8 +89,27 @@ function NumberField({ label, value, min, max, disabled, onInput }: NumberFieldP
   );
 }
 
+/**
+ * How much of each item already has a standing offer, keyed by lower-cased name:
+ * the backpack and the offers list are not cased alike, the same reason
+ * marketExtract lower-cases its rate map. An offer whose label yielded no
+ * quantity still puts its item in the map, contributing 0 — the offer's
+ * existence is the point, and the count is secondary.
+ */
+function offeredAmounts(listings: MarketListing[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const listing of listings) {
+    const name = listing.detail?.name.toLowerCase();
+    if (name === undefined) continue;
+    totals.set(name, (totals.get(name) ?? 0) + (listing.quantity ?? 0));
+  }
+  return totals;
+}
+
 interface OfferRowProps {
   item: MarketItem;
+  /** Units of this item already on offer, or undefined when there are none. */
+  offered: number | undefined;
   onOffer: (item: MarketItem, qty: number, price: number) => void;
   onOpenDetail: (name: string) => void;
 }
@@ -96,7 +119,7 @@ interface OfferRowProps {
  * price at what the market pays — the two values you would otherwise type by
  * hand every time — so offering is a single click unless you want to change one.
  */
-function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
+function OfferRow({ item, offered, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
   const [qty, setQty] = useState(item.amount);
   const [price, setPrice] = useState(item.suggestedPrice ?? 0);
 
@@ -112,7 +135,16 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
           pricePercent={item.pricePercent}
           assumedRate={item.suggestedPrice !== null}
           onOpenDetail={onOpenDetail}
-        />
+        >
+          {/* The backpack keeps listing an item you have already offered, so
+              without this the two columns read as unrelated and the same stack
+              gets offered twice. */}
+          {offered !== undefined && (
+            <span class="lc-mkt-offered" title="Már van felkínált tételed ebből a piacon">
+              🏷 {offered > 0 && `${offered} db `}felkínálva
+            </span>
+          )}
+        </NameLine>
         <div class="lc-mkt-meta">
           <span>{item.amount} db</span>
           {/* Both prices, side by side: the shop's is the alternative to selling
@@ -141,6 +173,63 @@ function OfferRow({ item, onOffer, onOpenDetail }: OfferRowProps): JSX.Element {
   );
 }
 
+/** A column's control labels, spelled out so each one is separately addressable. */
+interface ColumnLabels {
+  search: string;
+  sort: string;
+  direction: string;
+}
+
+const OFFERABLE_LABELS: ColumnLabels = {
+  search: 'Keresés a felkínálható tárgyak között',
+  sort: 'Felkínálható tárgyak rendezése',
+  direction: 'Felkínálható tárgyak sorrendje',
+};
+
+const OFFERED_LABELS: ColumnLabels = {
+  search: 'Keresés a felkínált tárgyaim között',
+  sort: 'Felkínált tárgyaim rendezése',
+  direction: 'Felkínált tárgyaim sorrendje',
+};
+
+interface ToolbarProps {
+  labels: ColumnLabels;
+  search: string;
+  onSearch: (value: string) => void;
+  sortKey: MarketSortKey;
+  onSortKey: (key: MarketSortKey) => void;
+  asc: boolean;
+  onFlip: () => void;
+}
+
+/**
+ * Search, sort key and direction — the home view's toolbar, one per column, with
+ * that view's own select and button classes so the two read alike.
+ */
+function Toolbar({ labels, search, onSearch, sortKey, onSortKey, asc, onFlip }: ToolbarProps): JSX.Element {
+  return (
+    <div class="lc-mkt-toolbar">
+      <input
+        class="lc-mkt-search"
+        type="search"
+        placeholder="keresés…"
+        aria-label={labels.search}
+        value={search}
+        onInput={(e) => onSearch((e.target as HTMLInputElement).value)}
+      />
+      <select
+        class="lc-inv-sort"
+        aria-label={labels.sort}
+        value={sortKey}
+        onChange={(e) => onSortKey((e.target as HTMLSelectElement).value as MarketSortKey)}
+      >
+        {MARKET_SORT_OPTIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+      </select>
+      <button class="lc-inv-dir" aria-label={labels.direction} onClick={onFlip}>{asc ? '↓' : '↑'}</button>
+    </div>
+  );
+}
+
 interface ListingRowProps {
   listing: MarketListing;
   onOpenDetail: (name: string) => void;
@@ -154,8 +243,13 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
   return (
     <div class="lc-mkt-row">
       <div class="lc-mkt-cell">
+        {/* Titled by the item's own name, not the game's label: the label's
+            quantity and price already sit in this row's fields, and it read as a
+            sentence where the other column reads as a name. Falls back to the
+            label when the offer's detail block gave us no name, so no row
+            renders nameless. */}
         <NameLine
-          text={listing.label}
+          text={name ?? listing.label}
           detailName={name}
           pricePercent={listing.pricePercent}
           assumedRate={listing.suggestedPrice !== null}
@@ -195,11 +289,23 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
   const [itemSearch, setItemSearch] = useState('');
   const [offerSearch, setOfferSearch] = useState('');
   const [detailName, setDetailName] = useState<string | undefined>(undefined);
+  // Per column, and by name ascending to begin with, as in the home view.
+  const [itemSort, setItemSort] = useState<MarketSortKey>('name');
+  const [itemAsc, setItemAsc] = useState(true);
+  const [offerSort, setOfferSort] = useState<MarketSortKey>('name');
+  const [offerAsc, setOfferAsc] = useState(true);
 
-  const items = state.items.filter((i) => matchesSearch(i.name, itemSearch));
-  // Matched against the offer's whole label, so a price or a quantity narrows it
-  // down as well as a name.
-  const listings = state.listings.filter((l) => matchesSearch(l.label, offerSearch));
+  const items = sortItems(state.items.filter((i) => matchesSearch(i.name, itemSearch)), itemSort, itemAsc);
+  // Matched against the item's name, not the offer's whole label: every label
+  // ends "… ezüst/db. áron", so a label search returned the entire column for
+  // anything price-shaped. An offer with no name falls back to its label, which
+  // is all such a row shows.
+  const listings = sortListings(
+    state.listings.filter((l) => matchesSearch(l.detail?.name ?? l.label, offerSearch)),
+    offerSort,
+    offerAsc,
+  );
+  const offered = offeredAmounts(state.listings);
 
   return (
     <DockedPanel title="Piac" open={open} onClose={onClose} storageKey={MARKET_MINIMIZED_KEY} minimizable>
@@ -212,18 +318,25 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
                 <span class="lc-home-count">{state.items.length}</span>
               </header>
               {state.items.length > 0 && (
-                <input
-                  class="lc-inv-search"
-                  type="search"
-                  placeholder="keresés…"
-                  aria-label="Keresés a felkínálható tárgyak között"
-                  value={itemSearch}
-                  onInput={(e) => setItemSearch((e.target as HTMLInputElement).value)}
+                <Toolbar
+                  labels={OFFERABLE_LABELS}
+                  search={itemSearch}
+                  onSearch={setItemSearch}
+                  sortKey={itemSort}
+                  onSortKey={setItemSort}
+                  asc={itemAsc}
+                  onFlip={() => setItemAsc((v) => !v)}
                 />
               )}
               <div class="lc-mkt-list">
                 {items.map((item) => (
-                  <OfferRow key={item.index} item={item} onOffer={state.offer} onOpenDetail={setDetailName} />
+                  <OfferRow
+                    key={item.index}
+                    item={item}
+                    offered={offered.get(item.name.toLowerCase())}
+                    onOffer={state.offer}
+                    onOpenDetail={setDetailName}
+                  />
                 ))}
                 {items.length === 0 && (
                   <p class="lc-mkt-empty">
@@ -239,13 +352,14 @@ export function MarketPanel({ open, onClose, state }: MarketPanelProps): JSX.Ele
                 <span class="lc-home-count">{state.listings.length}</span>
               </header>
               {state.listings.length > 0 && (
-                <input
-                  class="lc-inv-search"
-                  type="search"
-                  placeholder="keresés…"
-                  aria-label="Keresés a felkínált tárgyaim között"
-                  value={offerSearch}
-                  onInput={(e) => setOfferSearch((e.target as HTMLInputElement).value)}
+                <Toolbar
+                  labels={OFFERED_LABELS}
+                  search={offerSearch}
+                  onSearch={setOfferSearch}
+                  sortKey={offerSort}
+                  onSortKey={setOfferSort}
+                  asc={offerAsc}
+                  onFlip={() => setOfferAsc((v) => !v)}
                 />
               )}
               <div class="lc-mkt-list">

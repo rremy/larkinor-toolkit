@@ -70,7 +70,10 @@ describe('MarketPanel', () => {
     const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
     expect(container.querySelectorAll('.lc-home-col').length).toBe(2);
     expect(screen.getByText('jáspis')).toBeTruthy();
-    expect(screen.getByText('6 db. agyar 700 ezüst/db. áron')).toBeTruthy();
+    // An offer is titled by its item, not by the game's own prose label: the
+    // label's quantity and price are already in this row's fields.
+    expect(screen.getByText('agyar')).toBeTruthy();
+    expect(screen.queryByText('6 db. agyar 700 ezüst/db. áron')).toBeNull();
   });
 
   it('pre-fills the price from the market percentage and the quantity from the stack', () => {
@@ -306,13 +309,27 @@ describe('MarketPanel', () => {
       expect(offers[0].textContent).toContain('acélpajzs');
     });
 
-    it('matches on the price too, the whole label being searched', () => {
+    it('matches the item name only, not the label around it', () => {
+      // Every label ends "… ezüst/db. áron", so searching the whole label made
+      // "ezüst" — or any price — match every offer at once.
       const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
-      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: '7000' } });
+      const offers = container.querySelectorAll('.lc-home-col')[1];
+
+      for (const term of ['ezüst', '7000']) {
+        fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: term } });
+        expect(offers.querySelectorAll('.lc-mkt-row')).toHaveLength(0);
+      }
+    });
+
+    it('falls back to the label for an offer with no name to match', () => {
+      // Such a row shows its label, so that is the only thing there is to search.
+      const state = makeState({ listings: [listing('valami furcsa sor', 0), ...OFFERS] });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+      fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'furcsa' } });
 
       const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
       expect(offers).toHaveLength(1);
-      expect(offers[0].textContent).toContain('acélpajzs');
+      expect(offers[0].textContent).toContain('valami furcsa sor');
     });
 
     it('says when nothing matched, distinctly from having nothing offered', () => {
@@ -338,9 +355,134 @@ describe('MarketPanel', () => {
     });
   });
 
+  describe('marking backpack items that are already on offer', () => {
+    /** The badge in a given backpack row, or null. */
+    function badge(container: Element, name: string): Element | null {
+      return rowFor(container, name).querySelector('.lc-mkt-offered');
+    }
+
+    it('badges an item that has a standing offer, with how much of it', () => {
+      // The backpack keeps listing an item you have already offered, so without
+      // this the two columns read as unrelated and you offer the same stack twice.
+      const state = makeState({
+        listings: [listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 })],
+      });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+      expect(badge(container, 'jáspis')!.textContent).toContain('4 db');
+      expect(badge(container, 'jáspis')!.textContent).toContain('felkínálva');
+    });
+
+    it('leaves an item with no standing offer unbadged', () => {
+      const state = makeState({
+        listings: [listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 })],
+      });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+      expect(badge(container, 'gyíkbőr')).toBeNull();
+    });
+
+    it('matches the two lists case-insensitively', () => {
+      // The game does not case the backpack and the offers list alike.
+      const state = makeState({
+        listings: [listing('4 db. Jáspis 85 ezüst/db. áron', 0, 'Jáspis', 170, { quantity: 4, unitPrice: 85 })],
+      });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+      expect(badge(container, 'jáspis')!.textContent).toContain('4 db');
+    });
+
+    it('sums two offers of the same item', () => {
+      const state = makeState({
+        listings: [
+          listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 }),
+          listing('3 db. jáspis 90 ezüst/db. áron', 1, 'jáspis', 170, { quantity: 3, unitPrice: 90 }),
+        ],
+      });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+      expect(badge(container, 'jáspis')!.textContent).toContain('7 db');
+    });
+
+    it('badges without a count when no quantity could be read', () => {
+      const state = makeState({ listings: [listing('jáspis, valahány', 0, 'jáspis', 170)] });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+      const text = badge(container, 'jáspis')!.textContent!;
+      expect(text).toContain('felkínálva');
+      expect(text).not.toContain('db');
+    });
+  });
+
   it('says so when there is nothing offered yet', () => {
     render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
     expect(screen.getByText('Nincs felkínált tárgyad.')).toBeTruthy();
+  });
+
+  describe('ordering, as the home view offers it', () => {
+    /** The names a column currently lists, in render order. */
+    function shown(container: Element, col: 0 | 1): string[] {
+      return [...container.querySelectorAll('.lc-home-col')[col].querySelectorAll('.lc-mkt-name')]
+        .map((e) => e.textContent!.trim());
+    }
+
+    const OFFERS = [
+      listing('6 db. agyar 700 ezüst/db. áron', 0, 'agyar', 565, { quantity: 6, unitPrice: 700, shopPrice: 124 }),
+      listing('1 db. acélpajzs 7000 ezüst/db. áron', 1, 'acélpajzs', 2258, { quantity: 1, unitPrice: 7000, shopPrice: 310 }),
+    ];
+
+    it('sorts the offerable column by the chosen key', () => {
+      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      fireEvent.change(screen.getByLabelText('Felkínálható tárgyak rendezése'), { target: { value: 'amount' } });
+
+      // 7 gyíkbőr, 19 jáspis, 5725 ezüst.
+      expect(shown(container, 0)).toEqual(['gyíkbőr', 'jáspis', 'ezüst']);
+    });
+
+    it('flips the direction', () => {
+      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      fireEvent.click(screen.getByLabelText('Felkínálható tárgyak sorrendje'));
+
+      // Name order reversed: the default is ascending, as in the home view.
+      expect(shown(container, 0)).toEqual(['jáspis', 'gyíkbőr', 'ezüst']);
+    });
+
+    it('sorts the standing offers too', () => {
+      const state = makeState({ listings: OFFERS });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+      fireEvent.change(screen.getByLabelText('Felkínált tárgyaim rendezése'), { target: { value: 'total' } });
+
+      // 6 x 700 = 4200 against 1 x 7000.
+      expect(shown(container, 1)).toEqual(['agyar', 'acélpajzs']);
+    });
+
+    it('keeps each column\'s ordering to itself', () => {
+      const state = makeState({ listings: OFFERS });
+      const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+      fireEvent.click(screen.getByLabelText('Felkínált tárgyaim sorrendje'));
+
+      expect(shown(container, 1)).toEqual(['agyar', 'acélpajzs']);   // reversed
+      expect(shown(container, 0)).toEqual(['ezüst', 'gyíkbőr', 'jáspis']); // untouched
+    });
+
+    it('offers no toolbar for an empty column', () => {
+      render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+
+      expect(screen.queryByLabelText('Felkínált tárgyaim rendezése')).toBeNull();
+      expect(screen.queryByLabelText('Felkínálható tárgyak rendezése')).not.toBeNull();
+    });
+  });
+
+  it('styles the search boxes as inputs of their own', () => {
+    // .lc-inv-search is the inventory's <label> wrapper, and its text colour
+    // lives on the input inside it — borrowing it here left the field's text at
+    // the browser default, i.e. black on black, since a form control inherits
+    // no colour.
+    render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const search = screen.getByLabelText('Keresés a felkínálható tárgyak között');
+
+    expect(search.classList.contains('lc-mkt-search')).toBe(true);
+    expect(search.classList.contains('lc-inv-search')).toBe(false);
   });
 
   it('docks beside the game like the other panels', () => {
