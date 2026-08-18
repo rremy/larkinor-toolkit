@@ -2,6 +2,8 @@ import { h, type VNode } from 'preact';
 import { useState } from 'preact/hooks';
 import type { ColumnDef } from './columns';
 import { sortRows } from './filters';
+import { useCompare } from '@/hooks/useCompare';
+import type { CompareSubject } from '@/shared/compare';
 
 interface DataTableProps<T> {
   columns: ColumnDef[];
@@ -12,6 +14,12 @@ interface DataTableProps<T> {
   defaultSortKey?: string;
   /** Initial sort direction (default ascending). */
   defaultSortAsc?: boolean;
+  /**
+   * Turns a row into a compare subject, enabling the hover/long-press diff
+   * against the worn set. Omitted for tabs with nothing to compare (items,
+   * monsters), and inert in the standalone site, which has no loadout.
+   */
+  subjectOf?: (row: T) => CompareSubject | null;
 }
 
 const ROW_CAP = 2000;
@@ -28,10 +36,39 @@ function formatCell(value: unknown, col: ColumnDef): VNode | string {
   return String(value);
 }
 
+interface DataRowProps<T> {
+  row: T;
+  columns: ColumnDef[];
+  selected: boolean;
+  onSelect: (row: T) => void;
+  subject: CompareSubject | null;
+}
+
+/**
+ * One table row. Its own component because `useCompare` is a hook: calling it
+ * inside the rows' `.map()` would change the hook count whenever the filtered
+ * row count changes.
+ */
+function DataRow<T extends Record<string, unknown>>(
+  { row, columns, selected, onSelect, subject }: DataRowProps<T>,
+): VNode {
+  const cmp = useCompare(subject);
+  return (
+    <tr class={`row${selected ? ' selected' : ''}`} onClick={() => onSelect(row)} {...cmp.props}>
+      {columns.map((c, i) => (
+        <td key={c.key} class={c.cls || ''}>
+          {formatCell(row[c.key], c)}
+          {i === 0 && cmp.card}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 export function DataTable<T extends Record<string, unknown>>(
   props: DataTableProps<T>,
 ): VNode {
-  const { columns, rows, onSelect, selected, defaultSortKey, defaultSortAsc } = props;
+  const { columns, rows, onSelect, selected, defaultSortKey, defaultSortAsc, subjectOf } = props;
   const firstSortable = columns.find((c) => !c.num) ?? columns[0];
   const [sortKey, setSortKey] = useState<string>(
     defaultSortKey ?? (firstSortable ? firstSortable.key : ''),
@@ -66,20 +103,16 @@ export function DataTable<T extends Record<string, unknown>>(
         </tr>
       </thead>
       <tbody>
-        {slice.map((row) => {
-          const isSelected = selected != null && selected.id === row.id;
-          return (
-            <tr
-              key={String(row.id)}
-              class={`row${isSelected ? ' selected' : ''}`}
-              onClick={() => onSelect(row)}
-            >
-              {columns.map((c) => (
-                <td key={c.key} class={c.cls || ''}>{formatCell(row[c.key], c)}</td>
-              ))}
-            </tr>
-          );
-        })}
+        {slice.map((row) => (
+          <DataRow
+            key={String(row.id)}
+            row={row}
+            columns={columns}
+            selected={selected != null && selected.id === row.id}
+            onSelect={onSelect}
+            subject={subjectOf?.(row) ?? null}
+          />
+        ))}
         {sorted.length > ROW_CAP && (
           <tr>
             <td colSpan={columns.length} class="dim center">

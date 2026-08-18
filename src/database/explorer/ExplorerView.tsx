@@ -9,6 +9,7 @@ import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
 import { DetailPanel } from './DetailPanel';
 import { buildLookups, type DetailLookups } from './lookups';
+import { fromArmor, fromWeapon, type CompareSubject } from '@/shared/compare';
 
 type Row = Record<string, unknown>;
 type Entity = Weapon | Armor | Item | Monster;
@@ -69,6 +70,14 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
     ? rows.find((r) => r.id === selectedId) ?? null
     : null;
 
+  // Only weapons and armours have a worn counterpart to diff against; items
+  // and monsters get no trigger at all.
+  const subjectOf = tab === 'weapons'
+    ? (row: Row): CompareSubject => fromWeapon(row as unknown as Weapon)
+    : tab === 'armors'
+      ? (row: Row): CompareSubject => fromArmor(row as unknown as Armor)
+      : undefined;
+
   return (
     <div class={`db-view${selected ? ' has-selection' : ''}`}>
       <Filters defs={FILTERS[tab]} state={filterState} onChange={setFilterState} />
@@ -87,6 +96,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
             onSelect={(row) => onSelect(row.id as number)}
             defaultSortKey={DEFAULT_SORT[tab].key}
             defaultSortAsc={DEFAULT_SORT[tab].asc}
+            subjectOf={subjectOf}
           />
         </div>
         <DetailPanel

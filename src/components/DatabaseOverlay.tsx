@@ -5,7 +5,8 @@ import type { QuestSet } from '@/shared/data';
 import { createDataLoader, gmSource } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DockedPanel } from '@/components/DockedPanel';
-import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute, getPref, setPref } from '@/utils/config';
+import { LoadoutContext } from '@/components/LoadoutContext';
+import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute, getPref, setPref, readLoadout } from '@/utils/config';
 
 // Resolved once in @/shared/publicUrl and shared with both boot modules. Note
 // this is the *userscript* data URL (`/static/db`); the standalone database app
@@ -73,19 +74,26 @@ export function DatabaseOverlay({
   // zoom) can remember a value under its own key, surviving the same reload.
   const prefStore = useMemo<PrefStore>(() => ({ read: getPref, write: setPref }), []);
 
+  // The worn set, for the explorer's compare card. Read once per mount: the
+  // game reloads the page on every action, so nothing can go stale within the
+  // panel's own lifetime.
+  const loadout = useMemo(() => readLoadout(), []);
+
   return (
     <DockedPanel title="Adatbázis" open={open} onClose={onClose} storageKey={DB_MINIMIZED_KEY} minimizable={minimizable}>
-      <DatabaseApp
-        loader={loader}
-        routing="memory"
-        routeStore={routeStore}
-        prefStore={prefStore}
-        initialItemId={initialItemId}
-        initialItemName={initialItemName}
-        initialTab={initialTab}
-        initialTabKey={initialTabKey}
-        initialQuest={initialQuest}
-      />
+      <LoadoutContext.Provider value={loadout}>
+        <DatabaseApp
+          loader={loader}
+          routing="memory"
+          routeStore={routeStore}
+          prefStore={prefStore}
+          initialItemId={initialItemId}
+          initialItemName={initialItemName}
+          initialTab={initialTab}
+          initialTabKey={initialTabKey}
+          initialQuest={initialQuest}
+        />
+      </LoadoutContext.Provider>
     </DockedPanel>
   );
 }
