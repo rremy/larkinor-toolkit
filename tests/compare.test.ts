@@ -91,9 +91,15 @@ describe("compareToLoadout — a weapon's type", () => {
     });
   });
 
-  it('places it right after Szint, as the explorer orders its columns', () => {
+  it('leads the rows with it', () => {
     const labels = compareToLoadout(subject(weapon()), loadout)[0].rows.map((r) => r.label);
-    expect(labels.slice(0, 3)).toEqual(['Szint', 'Típus', 'Max sebzés']);
+    expect(labels.slice(0, 3)).toEqual(['Típus', 'Szint', 'Max sebzés']);
+  });
+
+  it('leaves armour led by Szint, having no type row of its own', () => {
+    const armed = loadoutWith({ head: armor({ name: 'sisak' }) });
+    const labels = compareToLoadout(subject(armor({ defense: 20 }), 'Sisak'), armed)[0].rows.map((r) => r.label);
+    expect(labels).toEqual(['Szint', 'Védelem', 'Mágikus']);
   });
 
   it('omits the row when neither side has a type', () => {

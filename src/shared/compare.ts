@@ -146,13 +146,15 @@ function column(slot: Slot, current: EquippedItem, candidate: CompareSubject, pl
   const fields = candidate.kind === 'fegyver' ? WEAPON_FIELDS : ARMOR_FIELDS;
   const rows: CompareRow[] = [];
 
-  const level = levelRow(current, candidate, playerLevel);
-  if (level) rows.push(level);
+  // Type leads: it says what kind of thing this is, which frames every number
+  // under it. Armour needs no such row — the slot header already says where it
+  // goes.
   if (candidate.kind === 'fegyver') {
-    // Armour needs no type row: the slot header already says where it goes.
     const type = typeRow(current, candidate);
     if (type) rows.push(type);
   }
+  const level = levelRow(current, candidate, playerLevel);
+  if (level) rows.push(level);
   for (const field of fields) {
     const row = numericRow(field, current, candidate);
     if (row) rows.push(row);
