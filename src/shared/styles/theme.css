@@ -1146,8 +1146,12 @@
 /* Narrow viewports — mobile and the docked in-game overlay. */
 @media (max-width: 900px) {
   .lc-db .quest-layout { flex-direction: column; }
+  /* One scroll, not two: stacked under the maze, the cell detail and the key
+     legend flow into the page's own scroll. Capping the height here made this
+     a nested scroller inside that one — the maze itself is not (it grows to
+     its content and only scrolls sideways), so the panel was the odd one out. */
   .lc-db .quest-side {
-    width: auto; max-height: 220px;
+    width: auto; overflow: visible;
     border-right: none; border-left: none;
     border-bottom: 1px solid var(--border);
   }
