@@ -15,6 +15,9 @@ import {
   getPref,
   setPref,
   QUEST_TILE_KEY,
+  getMarketTab,
+  setMarketTab,
+  MARKET_TAB_KEY,
 } from '../src/utils/config';
 import { QUEST_TILE_PREF_KEY } from '../src/shared/prefKeys';
 
@@ -120,5 +123,25 @@ describe('generic pref config', () => {
   // notice. This is the one test that actually compares the two.
   it('is the same key QuestView reads and writes through its own PrefStore', () => {
     expect(QUEST_TILE_KEY).toBe(QUEST_TILE_PREF_KEY);
+  });
+});
+
+describe('market-tab config', () => {
+  it('remembers the tab across the reload a market search causes', () => {
+    // The game answers a purchase search by reloading the page, so without this
+    // every search would drop the player back on the selling tab.
+    setMarketTab('buy');
+    expect(GM_getValue(MARKET_TAB_KEY, '')).toBe('buy');
+    expect(getMarketTab()).toBe('buy');
+  });
+
+  it('has no opinion before a tab has ever been chosen', () => {
+    GM_setValue(MARKET_TAB_KEY, '');
+    expect(getMarketTab()).toBeNull();
+  });
+
+  it('degrades to no opinion on a value it does not know', () => {
+    GM_setValue(MARKET_TAB_KEY, 'nonsense');
+    expect(getMarketTab()).toBeNull();
   });
 });

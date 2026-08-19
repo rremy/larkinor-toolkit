@@ -53,6 +53,24 @@ describe('bootMobile', () => {
     expect(doc.getElementById('lc-dock-root')).toBeNull();
   });
 
+  it('takes over the market page', () => {
+    const doc = new JSDOM(`<html><head></head><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otPiac"></form>
+      <form name="eladasUrlap">
+        <select name="hatizsak"><option value="30">19 jáspis</option></select>
+        <input type="text" name="mennyiseg" value="1"><input type="text" name="ar" value="1">
+        <select name="felkinalt"></select>
+      </form>
+      <form name="vetelUrlap"><select name="melyik"><option value="37">jáspis (170%)</option></select></form>
+      <script>hatizsakTargyak[0] = "Név: jáspis\\nSúly: 0.04 kg.\\nÁr: 50 ezüst\\nMennyiség: 19\\n";</script>
+    </body></html>`).window.document;
+
+    bootMobile(doc);
+
+    expect(doc.getElementById('lc-offscreen')).not.toBeNull();
+    expect(doc.querySelector('#lc-root .lc-mkt-row')).not.toBeNull();
+  });
+
   it('captures the loadout on the character page and renders nothing there', () => {
     const doc = new JSDOM(`<html><head></head><body>
       <form name="urlap"><input type="hidden" name="oldalTipus" value="otPlayerSettings"></form>

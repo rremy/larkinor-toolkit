@@ -158,6 +158,14 @@ describe('extractFreeMove', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('reads the money without swallowing a figure printed after it', () => {
+    // The market page prints "0 ezüstöt kerestél az eladásokból" in the next
+    // positioned div, which is only a newline away in the flattened text — a
+    // whitespace-tolerant digit run would read the two figures as one.
+    const doc = makeDoc('<div>Pénz:\n1 979</div>\n<div>7810\nezüstöt kerestél az eladásokból</div>');
+    expect(extractFreeMove(doc).gold).toBe(1979);
+  });
+
   it('returns no actions when there is no ok button/select', () => {
     const html = FREEMOVE_HTML.replace(
       /<form name="specTevUrlap">[\s\S]*?<\/form>/,

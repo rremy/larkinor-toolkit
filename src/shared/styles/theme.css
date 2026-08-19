@@ -1535,6 +1535,110 @@
 
 .lc-mkt-empty { margin: 0; padding: 10px 8px; font-size: 12px; color: var(--muted); }
 
+/* A column of the market: its toolbar and its list. Its own element so the two
+   platforms can place it differently — a split column on the desktop panel, a
+   whole tab on the phone — without either repeating the spacing. */
+.lc-mkt-column { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* Vétel — the buy side. Two halves: find an item, then buy from the offers the
+   game sent back for it. */
+.lc-mkt-buy { display: flex; flex-direction: column; gap: 12px; padding: 10px 0 0; }
+.lc-mkt-buy-find, .lc-mkt-buy-offers { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.lc-mkt-buy-search {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.lc-mkt-buy-search:focus { outline: none; border-color: var(--accent); }
+
+/* The matches. Capped in the component, so this list stays short by
+   construction and needs no scroller of its own. */
+.lc-mkt-cat-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.lc-mkt-cat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--row-border);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-mkt-cat-row:last-child { border-bottom: 0; }
+.lc-mkt-cat-row:hover { background: var(--panel-2); }
+.lc-mkt-more { margin: 0; font-size: 11px; color: var(--muted); }
+
+.lc-mkt-buy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lc-mkt-buy-head h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+.lc-mkt-buy-btn {
+  align-self: end;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+.lc-mkt-buy-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+/* A total the player cannot cover. Marked rather than blocked: the money is
+   parsed off the page, and a bad parse must not stop a trade the game allows. */
+.lc-mkt-total--short { color: var(--bad); }
+
+/* The market's own buttons (leave, collect earnings, character page, and
+   whatever specTevUrlap offers). A slim wrapping row by default: in the docked
+   panel these sit above both tabs, where a grid of full-width buttons would eat
+   the height the lists need. */
+.lc-mkt-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+/* On the phone they are a tab to themselves, with the room to be the same
+   two-column grid of tap targets as the home page's actions. */
+.lc-mkt-body .lc-mkt-actions { display: grid; grid-template-columns: 1fr 1fr; }
+.lc-mkt-act-icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: 7px; }
+
+/* Money and load, above the tabs on the phone: both apply to every tab, and a
+   purchase is decided against them. */
+.lc-mkt-stats { display: flex; align-items: center; gap: 12px; padding: 8px 10px; }
+/* The phone page's tab body. The rows come from the desktop panel, which
+   supplies its own padding; on a phone the page has none, so without this the
+   lists run to both screen edges. */
+.lc-mkt-body { padding: 10px 10px 16px; }
+.lc-mkt-stats .lc-cap { flex: 1; min-width: 0; }
+.lc-mkt-gold { font-size: 14px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Uncollected earnings. Rendered as a button because it collects on tap, and
+   coloured as a gain rather than as an accent — it is money waiting, not a
+   figure to read past. */
+.lc-mkt-earnings {
+  background: var(--panel);
+  border: 1px solid var(--good);
+  border-radius: 9px;
+  color: var(--good);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+.lc-mkt-earnings:hover { background: var(--panel-2); }
+/* The same badge with no control behind it — nothing to press, so nothing that
+   looks pressable. */
+.lc-mkt-earnings--static { cursor: default; }
+
 .lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
 .lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
 .lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }
@@ -1567,7 +1671,19 @@
 .lc-home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .lc-home-act { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; text-align: left; color: var(--text); cursor: pointer; font-size: 13.5px; }
 .lc-home-act--wide { grid-column: 1 / -1; }
-.lc-home-act:hover { border-color: var(--accent); background: var(--panel-2); }
+.lc-home-act:hover:not(:disabled) { border-color: var(--accent); background: var(--panel-2); }
+/* A disabled action must read as inert. Without this it was indistinguishable
+   from a working button — and on a phone, where the explanatory title never
+   appears, appearance is all there is to go on. */
+.lc-home-act:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  /* Dimmed as a whole, not merely recoloured: on a phone this is the only signal
+     there is — the explanatory title never appears on a touch screen. */
+  opacity: 0.55;
+  background: none;
+  border-style: dashed;
+}
 .lc-home-trap { display: flex; align-items: center; gap: 9px; font-size: 13.5px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; }
 .lc-home-trap-str { margin-left: auto; color: var(--muted); font-size: 12px; }
 

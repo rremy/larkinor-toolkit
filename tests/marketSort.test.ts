@@ -85,12 +85,55 @@ describe('sortItems', () => {
   });
 
   it('counts a missing figure as zero, keeping the row in the list', () => {
-    // Silver has no Ár at all; the inventory's sort treats such a gap as 0 and
-    // this one follows, so the row stays visible.
-    const priceless = item('ezüst', { price: null, pricePercent: null, suggestedPrice: null });
-    const rows = sortItems([item('agyar', { price: 124 }), priceless], 'price', true);
+    // The market quotes no rate for some items it will still price; the
+    // inventory's sort treats such a gap as 0 and this one follows, so the row
+    // stays visible rather than dropping out of sight. (An item with no price at
+    // all is a different case — it cannot be offered, and sinks; see below.)
+    const unquoted = item('agyar', { pricePercent: null });
+    const rows = sortItems([item('bőr', { pricePercent: 120 }), unquoted], 'percent', true);
 
-    expect(names(rows)).toEqual(['ezüst', 'agyar']);
+    expect(names(rows)).toEqual(['agyar', 'bőr']);
+  });
+
+  it('sinks an item the market will not price to the end of the list', () => {
+    // Silver, and anything else the game gives no Ár: the row cannot be offered
+    // at all (its Felkínál is dead), so it has no business sitting among the
+    // items you came to sell.
+    const rows = sortItems(
+      [item('ezüst', { price: null, suggestedPrice: null }), item('agyar'), item('bőr')],
+      'name',
+      true,
+    );
+    expect(rows.map(i => i.name)).toEqual(['agyar', 'bőr', 'ezüst']);
+  });
+
+  it('keeps them at the end when the order is reversed', () => {
+    // Reversing the order the list is read in must not promote rows that cannot
+    // be acted on at all — "last" here is a class, not a position in the sort.
+    const rows = sortItems(
+      [item('ezüst', { price: null, suggestedPrice: null }), item('agyar'), item('bőr')],
+      'name',
+      false,
+    );
+    expect(rows.map(i => i.name)).toEqual(['bőr', 'agyar', 'ezüst']);
+  });
+
+  it('keeps them at the end whichever figure is sorted on', () => {
+    const rows = sortItems(
+      [item('drága', { price: 900, suggestedPrice: 900 }), item('ezüst', { price: null, suggestedPrice: null }), item('olcsó', { price: 5, suggestedPrice: 5 })],
+      'price',
+      true,
+    );
+    expect(rows.map(i => i.name)).toEqual(['olcsó', 'drága', 'ezüst']);
+  });
+
+  it('still orders the unpriced ones among themselves', () => {
+    const rows = sortItems(
+      [item('csőkulcs', { price: null, suggestedPrice: null }), item('alakváltókő', { price: null, suggestedPrice: null })],
+      'name',
+      true,
+    );
+    expect(rows.map(i => i.name)).toEqual(['alakváltókő', 'csőkulcs']);
   });
 
   it('leaves the given array untouched', () => {

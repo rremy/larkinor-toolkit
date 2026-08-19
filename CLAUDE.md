@@ -19,8 +19,9 @@ larkinor-toolkit/
 │   │   ├── boot.ts · DesktopDock.tsx
 │   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
 │   │   └── desktop.css
-│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx (mobile)
+│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
+│   │                        #   MarketRows/MarketBuy/MarketActions (shared by both platforms)
 │   ├── hooks/               # useHotkeyConfig
 │   ├── utils/               # platform, pageDetector, domExtract, narration, hotkeys, config
 │   ├── shared/
@@ -81,7 +82,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
 - **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`/`otPiac`→Shop, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon and Home, and leaves the rest untouched; desktop adds its dock to every page.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home and Market, and leaves the rest untouched; desktop adds its dock to every page.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
@@ -320,6 +321,45 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - **The standalone site never shows it.** It is a different origin with its own
     `localStorage` and cannot see the in-game loadout, so `LoadoutContext`
     defaults to null and every consumer renders normally without one.
+- **The market (`otPiac`) is two trades and a reload.** Selling is direct — the
+  `eladasUrlap` offer/revoke handlers index parallel script arrays by
+  `selectedIndex`, so setting the index (never just the value) is what identifies
+  the item. Buying is not:
+  - It is **two steps with a page load between them**. `vetelUrlap.melyik` is the
+    whole catalogue — 1424 options, `value` = the game's item id, label
+    `"name (pct%)"` — and the `keresel` button submits `svMelyik`, which **reloads
+    the page** with that item's standing offers in `vetelUrlap.vetel`. There is no
+    way to list offers for an item without that reload, which is why the market UI
+    has to survive one: the tab is persisted (`lc-market-tab`, one vocabulary for
+    both platforms) so a search comes back where it left.
+  - **The search handler is the one that reads `melyik.value`**, not an index —
+    the opposite of every other control on the page.
+  - The game **re-selects the searched item** in `melyik` on the page it hands
+    back, so what the visible offers are for is read off the page rather than
+    remembered across the reload.
+  - Each offer carries `vetelTargyak[i]` (a detail block in the same
+    `label: value` grammar as the Home inventory) and
+    `vetelTargyakInfo[i]` = `itemId,unitPrice,quantity,offerId`. The Info array is
+    machine-formatted, so quantity and price come from it, with the prose label
+    (`"7 db. jáspis 80 ezüst/db. áron"`) only as a fallback. Buying sets
+    `vetel.selectedIndex` + `mennyit` and clicks `piacvesz` (`svVasarol`).
+  - The page prints **no stat block** — only `Pénz:` and a `<b>` load line reading
+    `hátizsákjában 43.5953/114.2 kg` (no `és testén`, unlike the Home page's
+    wording of the same figure). Its other controls are the plain image inputs
+    `vissza` / `penztkap` / `klap`, plus the usual `specTevUrlap` select + `ok`.
+  - **Uncollected sale earnings live in their own positioned div** beside the
+    `penztkap` button, reading `7810\nezüstöt kerestél az eladásokból` — not in
+    the narration, and only a newline away from `Pénz:` in the flattened text,
+    which is what made `parseGold`'s old `[\d\s]+` run straight from one figure
+    into the other (`853` + `7810` → `8537810`). Both parsers now consume in-line
+    separators only once the digits start. Measured live, collecting **does not
+    remove the line** — it leaves it printing `0`, and the button stays — so zero
+    is a state the page states outright, and a missing line means the page was not
+    recognised. `earnings` is therefore `number | null`: zero disables the collect
+    button, null never does.
+  - Mobile shows the four jobs as tabs (Felkínálható / Felkínált / Vétel / Egyéb);
+    the desktop panel has two (Eladás keeps the two-column split, Vétel is the
+    same shared buy view), with the page's own actions in a bar above both.
 - **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow

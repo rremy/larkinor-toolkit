@@ -58,6 +58,35 @@ export const INVENTORY_OPEN_KEY = 'lc-inventory-open';
 export const MARKET_MINIMIZED_KEY = 'lc-market-minimized';
 export const MARKET_OPEN_KEY = 'lc-market-open';
 
+/** GM storage key holding the market view's last selected tab. */
+export const MARKET_TAB_KEY = 'lc-market-tab';
+
+/**
+ * The market tabs, in one vocabulary for both platforms. Mobile shows all four;
+ * desktop groups the three selling tabs behind its own Eladás tab, so a player
+ * switching between phone and desktop keeps a consistent place either way.
+ */
+export type MarketTab = 'offer' | 'listings' | 'buy' | 'other';
+
+const MARKET_TABS: MarketTab[] = ['offer', 'listings', 'buy', 'other'];
+
+/**
+ * The tab the market was last left on, or null when there is none stored.
+ *
+ * Remembered because the game answers a purchase search by reloading the whole
+ * page: without this, every search would hand the player back the selling tab
+ * and hide the offers it had just fetched. A value we do not recognise is
+ * treated as none, so a stale or hand-edited key degrades to the default tab.
+ */
+export function getMarketTab(): MarketTab | null {
+  const raw = GM_getValue(MARKET_TAB_KEY, '') as string;
+  return MARKET_TABS.includes(raw as MarketTab) ? (raw as MarketTab) : null;
+}
+
+export function setMarketTab(tab: MarketTab): void {
+  GM_setValue(MARKET_TAB_KEY, tab);
+}
+
 /**
  * The user's manual platform choice, or null for automatic detection. Values
  * other than the two known platforms are treated as "no override" so a stale or

@@ -1,56 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { MarketPanel } from '../src/desktop/MarketPanel';
-import { MARKET_MINIMIZED_KEY } from '../src/utils/config';
-import type { MarketItem, MarketListing, MarketState } from '../src/utils/marketExtract';
+import { MARKET_MINIMIZED_KEY, MARKET_TAB_KEY } from '../src/utils/config';
+import type { MarketItem, MarketState } from '../src/utils/marketExtract';
+import { item, listing, makeMarketState } from './support/marketState';
 import { LoadoutContext } from '../src/components/LoadoutContext';
 import { emptySlots, type Loadout } from '../src/shared/loadout';
-
-function item(name: string, amount: number, price: number | null, percent: number | null, index: number): MarketItem {
-  const suggestedPrice = price === null ? null : Math.round((price * (percent ?? 500)) / 100);
-  return {
-    name, amount, index, price, pricePercent: percent, suggestedPrice,
-    type: 'tárgy', weight: 0.04, totalWeight: 0.04 * amount, magical: false, attrs: [],
-  };
-}
-
-function listing(
-  label: string,
-  index: number,
-  name?: string,
-  percent: number | null = null,
-  opts: { quantity?: number; unitPrice?: number; shopPrice?: number | null } = {},
-): MarketListing {
-  const shopPrice = opts.shopPrice ?? null;
-  const detail = name
-    ? { name, type: 'tárgy' as const, weight: 1, amount: 1, totalWeight: 1, price: shopPrice, magical: false, attrs: [] }
-    : null;
-  return {
-    label,
-    index,
-    detail,
-    pricePercent: percent,
-    quantity: opts.quantity ?? null,
-    unitPrice: opts.unitPrice ?? null,
-    shopPrice,
-    suggestedPrice: shopPrice === null ? null : Math.round((shopPrice * (percent ?? 500)) / 100),
-    revoke: vi.fn(),
-  };
-}
-
-/** Real figures from the live page: jáspis 50 ezüst at 170% → 85. */
-function makeState(overrides: Partial<MarketState> = {}): MarketState {
-  return {
-    items: [
-      item('ezüst', 5725, null, null, 0),
-      item('jáspis', 19, 50, 170, 2),
-      item('gyíkbőr', 7, 10, 120, 3),
-    ],
-    listings: [listing('6 db. agyar 700 ezüst/db. áron', 1, 'agyar', 565, { quantity: 6, unitPrice: 700, shopPrice: 124 })],
-    offer: vi.fn(),
-    ...overrides,
-  };
-}
 
 /** The row for a given item name. */
 function rowFor(container: Element, name: string): Element {
@@ -61,15 +16,18 @@ function rowFor(container: Element, name: string): Element {
 }
 
 describe('MarketPanel', () => {
-  beforeEach(() => { GM_setValue(MARKET_MINIMIZED_KEY, ''); });
+  beforeEach(() => {
+    GM_setValue(MARKET_MINIMIZED_KEY, '');
+    GM_setValue(MARKET_TAB_KEY, '');
+  });
 
   it('renders nothing when closed', () => {
-    const { container } = render(<MarketPanel open={false} state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open={false} state={makeMarketState()} onClose={vi.fn()} />);
     expect(container.querySelector('.lc-db-overlay')).toBeNull();
   });
 
   it('shows what can be offered and what already is, side by side', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     expect(container.querySelectorAll('.lc-home-col').length).toBe(2);
     expect(screen.getByText('jáspis')).toBeTruthy();
     // An offer is titled by its item, not by the game's own prose label: the
@@ -79,7 +37,7 @@ describe('MarketPanel', () => {
   });
 
   it('pre-fills the price from the market percentage and the quantity from the stack', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const inputs = rowFor(container, 'jáspis').querySelectorAll<HTMLInputElement>('input');
 
     expect(inputs[0].value).toBe('19'); // whole stack
@@ -89,7 +47,7 @@ describe('MarketPanel', () => {
   it('shows the shop price and the market price side by side', () => {
     // The shop price is the alternative to selling here, so the two need to be
     // comparable without reading the market figure out of the Ár input.
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const meta = rowFor(container, 'jáspis').querySelector('.lc-mkt-meta')!.textContent!;
 
     expect(meta).toContain('bolti ár 50');
@@ -97,7 +55,7 @@ describe('MarketPanel', () => {
   });
 
   it('shows no market price for an item the market does not price', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const meta = rowFor(container, 'ezüst').querySelector('.lc-mkt-meta')!.textContent!;
 
     expect(meta).not.toContain('piaci ár');
@@ -107,7 +65,7 @@ describe('MarketPanel', () => {
   it('marks an assumed rate as ours rather than the market\'s', () => {
     // bölényszakáll is priced but unquoted on the live page: the suggestion is
     // then a guess and must not read as the game's own figure.
-    const state = makeState({ items: [item('bölényszakáll', 5, 40, null, 4)] });
+    const state = makeMarketState({ items: [item('bölényszakáll', 5, 40, null, 4)] });
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const badge = container.querySelector('.lc-mkt-pct')!;
 
@@ -118,17 +76,17 @@ describe('MarketPanel', () => {
   });
 
   it('shows no rate badge at all when there is no price to scale', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     expect(rowFor(container, 'ezüst').querySelector('.lc-mkt-pct')).toBeNull();
   });
 
   it('shows the market percentage so the suggested price is explainable', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     expect(rowFor(container, 'jáspis').querySelector('.lc-mkt-pct')!.textContent).toBe('170%');
   });
 
   it('offers the pre-filled values in one click', () => {
-    const state = makeState();
+    const state = makeMarketState();
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
 
     fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-offer-btn')!);
@@ -141,7 +99,7 @@ describe('MarketPanel', () => {
   });
 
   it('offers the edited values', () => {
-    const state = makeState();
+    const state = makeMarketState();
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const row = rowFor(container, 'jáspis');
     const inputs = row.querySelectorAll<HTMLInputElement>('input');
@@ -156,7 +114,7 @@ describe('MarketPanel', () => {
   });
 
   it('clamps a quantity above the stack', () => {
-    const state = makeState();
+    const state = makeMarketState();
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const row = rowFor(container, 'jáspis');
 
@@ -168,7 +126,7 @@ describe('MarketPanel', () => {
 
   it('will not offer an item it cannot price', () => {
     // Silver has no Ár, so there is nothing to suggest and no valid offer.
-    const state = makeState();
+    const state = makeMarketState();
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const button = rowFor(container, 'ezüst').querySelector<HTMLButtonElement>('.lc-mkt-offer-btn')!;
 
@@ -178,7 +136,7 @@ describe('MarketPanel', () => {
   });
 
   it('revokes a standing offer', () => {
-    const state = makeState();
+    const state = makeMarketState();
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
 
     fireEvent.click(container.querySelector<HTMLElement>('.lc-mkt-revoke-btn')!);
@@ -186,7 +144,7 @@ describe('MarketPanel', () => {
   });
 
   it('filters the offerable list', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     fireEvent.input(screen.getByLabelText('Keresés a felkínálható tárgyak között'), { target: { value: 'jás' } });
 
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
@@ -195,7 +153,7 @@ describe('MarketPanel', () => {
   });
 
   it('finds an accented name typed without accents', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     fireEvent.input(screen.getByLabelText('Keresés a felkínálható tárgyak között'), { target: { value: 'gyikbor' } });
 
     const names = [...container.querySelectorAll('.lc-mkt-name')].map(e => e.textContent?.trim());
@@ -205,7 +163,7 @@ describe('MarketPanel', () => {
 
   describe('item names open the item detail', () => {
     it('opens the database on an offerable item', () => {
-      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
       expect(document.querySelectorAll('.lc-db-overlay').length).toBe(1);
 
       fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-name--link')!);
@@ -216,7 +174,7 @@ describe('MarketPanel', () => {
     });
 
     it('opens the database from a standing offer', () => {
-      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
       const offersCol = container.querySelectorAll('.lc-home-col')[1];
 
       fireEvent.click(offersCol.querySelector<HTMLElement>('.lc-mkt-name--link')!);
@@ -224,7 +182,7 @@ describe('MarketPanel', () => {
     });
 
     it('leaves an offer we could not parse a name from as plain text', () => {
-      const state = makeState({ listings: [listing('valami furcsa sor', 0)] });
+      const state = makeMarketState({ listings: [listing('valami furcsa sor', 0)] });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
       const offersCol = container.querySelectorAll('.lc-home-col')[1];
 
@@ -234,7 +192,7 @@ describe('MarketPanel', () => {
 
     it('closes the detail and leaves the market open', () => {
       const onClose = vi.fn();
-      const { container } = render(<MarketPanel open state={makeState()} onClose={onClose} />);
+      const { container } = render(<MarketPanel open state={makeMarketState()} onClose={onClose} />);
       fireEvent.click(rowFor(container, 'jáspis').querySelector<HTMLElement>('.lc-mkt-name--link')!);
 
       const closers = document.querySelectorAll('.lc-db-overlay-close');
@@ -248,14 +206,14 @@ describe('MarketPanel', () => {
   it('shows the market percentage on a standing offer, as the offerable rows do', () => {
     // Same badge, so an asking price in the label can be judged against what the
     // market actually pays.
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const offers = container.querySelectorAll('.lc-home-col')[1];
 
     expect(offers.querySelector('.lc-mkt-pct')!.textContent).toBe('565%');
   });
 
   it('omits the badge on an offer with no percentage to show', () => {
-    const state = makeState({ listings: [listing('valami furcsa sor', 0)] });
+    const state = makeMarketState({ listings: [listing('valami furcsa sor', 0)] });
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const offers = container.querySelectorAll('.lc-home-col')[1];
 
@@ -263,7 +221,7 @@ describe('MarketPanel', () => {
   });
 
   it('renders offers in the same shape as the offerable rows, but inert', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const offer = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-row')!;
     const inputs = offer.querySelectorAll<HTMLInputElement>('.lc-mkt-field input');
 
@@ -277,7 +235,7 @@ describe('MarketPanel', () => {
   });
 
   it('compares an offer\'s asking price against the shop and market prices', () => {
-    const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const meta = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-meta')!.textContent!;
 
     expect(meta).toContain('bolti ár 124');
@@ -294,7 +252,7 @@ describe('MarketPanel', () => {
     ];
 
     it('filters the offers by name', () => {
-      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState({ listings: OFFERS })} onClose={vi.fn()} />);
       fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'agyar' } });
 
       const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
@@ -303,7 +261,7 @@ describe('MarketPanel', () => {
     });
 
     it('ignores accents, like every other search', () => {
-      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState({ listings: OFFERS })} onClose={vi.fn()} />);
       fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'acelpajzs' } });
 
       const offers = container.querySelectorAll('.lc-home-col')[1].querySelectorAll('.lc-mkt-row');
@@ -314,7 +272,7 @@ describe('MarketPanel', () => {
     it('matches the item name only, not the label around it', () => {
       // Every label ends "… ezüst/db. áron", so searching the whole label made
       // "ezüst" — or any price — match every offer at once.
-      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState({ listings: OFFERS })} onClose={vi.fn()} />);
       const offers = container.querySelectorAll('.lc-home-col')[1];
 
       for (const term of ['ezüst', '7000']) {
@@ -325,7 +283,7 @@ describe('MarketPanel', () => {
 
     it('falls back to the label for an offer with no name to match', () => {
       // Such a row shows its label, so that is the only thing there is to search.
-      const state = makeState({ listings: [listing('valami furcsa sor', 0), ...OFFERS] });
+      const state = makeMarketState({ listings: [listing('valami furcsa sor', 0), ...OFFERS] });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
       fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'furcsa' } });
 
@@ -335,7 +293,7 @@ describe('MarketPanel', () => {
     });
 
     it('says when nothing matched, distinctly from having nothing offered', () => {
-      render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      render(<MarketPanel open state={makeMarketState({ listings: OFFERS })} onClose={vi.fn()} />);
       fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'zzz' } });
 
       expect(screen.getByText('Nincs találat.')).toBeTruthy();
@@ -343,12 +301,12 @@ describe('MarketPanel', () => {
     });
 
     it('offers no search box when there is nothing to search', () => {
-      render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+      render(<MarketPanel open state={makeMarketState({ listings: [] })} onClose={vi.fn()} />);
       expect(screen.queryByLabelText('Keresés a felkínált tárgyaim között')).toBeNull();
     });
 
     it('filters the two columns independently', () => {
-      const { container } = render(<MarketPanel open state={makeState({ listings: OFFERS })} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState({ listings: OFFERS })} onClose={vi.fn()} />);
       fireEvent.input(screen.getByLabelText('Keresés a felkínált tárgyaim között'), { target: { value: 'agyar' } });
 
       // The offerable column keeps its full list.
@@ -366,7 +324,7 @@ describe('MarketPanel', () => {
     it('badges an item that has a standing offer, with how much of it', () => {
       // The backpack keeps listing an item you have already offered, so without
       // this the two columns read as unrelated and you offer the same stack twice.
-      const state = makeState({
+      const state = makeMarketState({
         listings: [listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 })],
       });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
@@ -376,7 +334,7 @@ describe('MarketPanel', () => {
     });
 
     it('leaves an item with no standing offer unbadged', () => {
-      const state = makeState({
+      const state = makeMarketState({
         listings: [listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 })],
       });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
@@ -386,7 +344,7 @@ describe('MarketPanel', () => {
 
     it('matches the two lists case-insensitively', () => {
       // The game does not case the backpack and the offers list alike.
-      const state = makeState({
+      const state = makeMarketState({
         listings: [listing('4 db. Jáspis 85 ezüst/db. áron', 0, 'Jáspis', 170, { quantity: 4, unitPrice: 85 })],
       });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
@@ -395,7 +353,7 @@ describe('MarketPanel', () => {
     });
 
     it('sums two offers of the same item', () => {
-      const state = makeState({
+      const state = makeMarketState({
         listings: [
           listing('4 db. jáspis 85 ezüst/db. áron', 0, 'jáspis', 170, { quantity: 4, unitPrice: 85 }),
           listing('3 db. jáspis 90 ezüst/db. áron', 1, 'jáspis', 170, { quantity: 3, unitPrice: 90 }),
@@ -407,7 +365,7 @@ describe('MarketPanel', () => {
     });
 
     it('badges without a count when no quantity could be read', () => {
-      const state = makeState({ listings: [listing('jáspis, valahány', 0, 'jáspis', 170)] });
+      const state = makeMarketState({ listings: [listing('jáspis, valahány', 0, 'jáspis', 170)] });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
 
       const text = badge(container, 'jáspis')!.textContent!;
@@ -417,7 +375,7 @@ describe('MarketPanel', () => {
   });
 
   it('says so when there is nothing offered yet', () => {
-    render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+    render(<MarketPanel open state={makeMarketState({ listings: [] })} onClose={vi.fn()} />);
     expect(screen.getByText('Nincs felkínált tárgyad.')).toBeTruthy();
   });
 
@@ -434,7 +392,7 @@ describe('MarketPanel', () => {
     ];
 
     it('sorts the offerable column by the chosen key', () => {
-      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
       fireEvent.change(screen.getByLabelText('Felkínálható tárgyak rendezése'), { target: { value: 'amount' } });
 
       // 7 gyíkbőr, 19 jáspis, 5725 ezüst.
@@ -442,7 +400,7 @@ describe('MarketPanel', () => {
     });
 
     it('flips the direction', () => {
-      const { container } = render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+      const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
       fireEvent.click(screen.getByLabelText('Felkínálható tárgyak sorrendje'));
 
       // Name order reversed: the default is ascending, as in the home view.
@@ -450,7 +408,7 @@ describe('MarketPanel', () => {
     });
 
     it('sorts the standing offers too', () => {
-      const state = makeState({ listings: OFFERS });
+      const state = makeMarketState({ listings: OFFERS });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
       fireEvent.change(screen.getByLabelText('Felkínált tárgyaim rendezése'), { target: { value: 'total' } });
 
@@ -459,16 +417,18 @@ describe('MarketPanel', () => {
     });
 
     it('keeps each column\'s ordering to itself', () => {
-      const state = makeState({ listings: OFFERS });
+      const state = makeMarketState({ listings: OFFERS });
       const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
       fireEvent.click(screen.getByLabelText('Felkínált tárgyaim sorrendje'));
 
       expect(shown(container, 1)).toEqual(['agyar', 'acélpajzs']);   // reversed
-      expect(shown(container, 0)).toEqual(['ezüst', 'gyíkbőr', 'jáspis']); // untouched
+      // Untouched: its own default order, in which silver — which the game gives
+      // no price and so cannot be offered — sits at the end.
+      expect(shown(container, 0)).toEqual(['gyíkbőr', 'jáspis', 'ezüst']);
     });
 
     it('offers no toolbar for an empty column', () => {
-      render(<MarketPanel open state={makeState({ listings: [] })} onClose={vi.fn()} />);
+      render(<MarketPanel open state={makeMarketState({ listings: [] })} onClose={vi.fn()} />);
 
       expect(screen.queryByLabelText('Felkínált tárgyaim rendezése')).toBeNull();
       expect(screen.queryByLabelText('Felkínálható tárgyak rendezése')).not.toBeNull();
@@ -480,7 +440,7 @@ describe('MarketPanel', () => {
     // lives on the input inside it — borrowing it here left the field's text at
     // the browser default, i.e. black on black, since a form control inherits
     // no colour.
-    render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const search = screen.getByLabelText('Keresés a felkínálható tárgyak között');
 
     expect(search.classList.contains('lc-mkt-search')).toBe(true);
@@ -488,7 +448,7 @@ describe('MarketPanel', () => {
   });
 
   it('docks beside the game like the other panels', () => {
-    render(<MarketPanel open state={makeState()} onClose={vi.fn()} />);
+    render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     fireEvent.click(screen.getByLabelText('Kis méret'));
     expect(document.querySelector('.lc-db-overlay')!.classList.contains('lc-db-overlay--minimized')).toBe(true);
   });
@@ -511,7 +471,7 @@ describe('MarketPanel', () => {
       };
       const { container } = render(
         <LoadoutContext.Provider value={loadout}>
-          <MarketPanel open state={makeState({ items: [helmet] })} onClose={vi.fn()} />
+          <MarketPanel open state={makeMarketState({ items: [helmet] })} onClose={vi.fn()} />
         </LoadoutContext.Provider>,
       );
 
@@ -525,5 +485,70 @@ describe('MarketPanel', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+/** The panel's tab strip button whose label matches. */
+function panelTab(name: RegExp): HTMLButtonElement {
+  const found = [...document.querySelectorAll<HTMLButtonElement>('.lc-home-tab')]
+    .find(b => name.test(b.textContent ?? ''));
+  if (!found) throw new Error(`no market panel tab matching ${name}`);
+  return found;
+}
+
+describe('MarketPanel tabs', () => {
+  beforeEach(() => {
+    GM_setValue(MARKET_MINIMIZED_KEY, '');
+    GM_setValue(MARKET_TAB_KEY, '');
+  });
+
+  it('opens on the selling split', () => {
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-home-split')).toBeTruthy();
+    expect(container.querySelector('.lc-mkt-buy-search')).toBeNull();
+  });
+
+  it('swaps the split for the purchase view', () => {
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+
+    fireEvent.click(panelTab(/Vétel/));
+
+    expect(container.querySelector('.lc-mkt-buy-search')).toBeTruthy();
+    expect(container.querySelector('.lc-home-split')).toBeNull();
+  });
+
+  it('comes back on the purchase view after the reload a search causes', () => {
+    const { unmount } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+    fireEvent.click(panelTab(/Vétel/));
+    unmount();
+
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-mkt-buy-search')).toBeTruthy();
+  });
+
+  it('opens on the selling split when the phone was last left on one of its selling tabs', () => {
+    // Mobile has three selling tabs where the panel has one, so any of them maps
+    // to the split rather than to a tab the panel does not have.
+    GM_setValue(MARKET_TAB_KEY, 'listings');
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-home-split')).toBeTruthy();
+  });
+
+  it('keeps the market\'s own actions reachable from either tab', () => {
+    const trigger = vi.fn();
+    const state = makeMarketState({
+      actions: {
+        exit: null,
+        collectMoney: { label: 'Felveszed a pénzt', iconUrl: 'p.gif', trigger },
+        settings: null,
+        special: [],
+      },
+    });
+    render(<MarketPanel open state={state} onClose={vi.fn()} />);
+
+    fireEvent.click(panelTab(/Vétel/));
+    fireEvent.click(screen.getByTitle('Felveszed a pénzt'));
+
+    expect(trigger).toHaveBeenCalledTimes(1);
   });
 });

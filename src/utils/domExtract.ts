@@ -159,8 +159,17 @@ function parseStatPair(text: string, label: string): [number, number] {
   return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : [0, 0];
 }
 
-function parseGold(text: string): number {
-  const m = text.match(/Pénz:\s*([\d\s]+)/);
+/**
+ * The money figure the game prints as `Pénz: 1 234`. Exported because the market
+ * page prints it too and has no stat block of its own to extract.
+ */
+export function parseGold(text: string): number {
+  // The label and its figure can be a line apart, so any whitespace is skipped
+  // before the first digit — but once the figure starts, only in-line separators
+  // continue it. Crossing a newline would join it to whatever the next block
+  // prints, which on the market page is the uncollected-earnings figure sitting
+  // in the very next positioned div.
+  const m = text.match(/Pénz:\s*(\d[\d \t\u00a0]*)/);
   if (!m) return 0;
   const digits = m[1].replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
@@ -330,7 +339,12 @@ function extractAttack(doc: Document): BuildingOption | null {
   };
 }
 
-function extractFreeMoveActions(doc: Document): Action[] {
+/**
+ * The `specTevUrlap` action select plus its OK button, as one Action per option.
+ * Shared with the market page, which carries the same form (with its own,
+ * shorter option list) — the grammar is the page's, not free-move's.
+ */
+export function extractSpecialActions(doc: Document): Action[] {
   const select = doc.querySelector<HTMLSelectElement>('select[name="tevFajta"]');
   const okButton =
     doc.querySelector<HTMLInputElement>('form[name="specTevUrlap"] input[type="image"][src*="ok.gif"]') ??
@@ -368,7 +382,7 @@ export function extractFreeMove(doc: Document): FreeMoveState {
     settingsButton: extractImageControl(doc, SETTINGS_BASENAME),
     restButton: extractImageControl(doc, REST_BASENAME),
     statusIcons: extractStatusIcons(doc),
-    actions: extractFreeMoveActions(doc),
+    actions: extractSpecialActions(doc),
     narration: extractNarration(doc),
     narrationLinks: extractNarrationLinks(doc),
   };
@@ -607,7 +621,7 @@ export function extractDungeon(doc: Document): DungeonState {
     buildings: extractBuildings(doc, isCornerOrShortcut),
     settingsButton: extractImageControl(doc, SETTINGS_BASENAME),
     restButton: extractImageControl(doc, REST_BASENAME),
-    actions: extractFreeMoveActions(doc),
+    actions: extractSpecialActions(doc),
     // The prompt already carries the movement/question text, so suppress the
     // duplicate narration while a question is active.
     narration: question ? '' : extractNarration(doc),

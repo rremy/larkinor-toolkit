@@ -29,16 +29,39 @@ const MARKET_HTML = `
 
   <form name="vetelUrlap">
     <select name="melyik">
-      <option value="37">jáspis (170%)</option>
+      <option value="37" selected>jáspis (170%)</option>
       <option value="41">vámpír kard (300%)</option>
       <option value="338">1 hetes kenyér (3000%)</option>
       <option value="94">agyar (565%)</option>
     </select>
     <input type="text" name="mennyit">
+    <select name="vetel">
+      <option>7 db. jáspis 80 ezüst/db. áron</option>
+      <option>2 db. jáspis 95 ezüst/db. áron</option>
+    </select>
   </form>
+
+  <form name="specTevUrlap">
+    <select name="tevFajta">
+      <option value="kilep">kilépsz a játékból</option>
+    </select>
+    <input type="image" src="/2/ikon/ok.gif">
+  </form>
+
+  <font face="Comic sans MS">Szétnézel a piacon...<br>Megvették a következő cuccaidat: 1 démongyapjú</font>
+
+  <b>Remy hátizsákjában 43.5953/114.2 kg tömegű tárgy van</b>
+  Pénz: 853
+  <div>7810
+ezüstöt kerestél az eladásokból</div>
 
   <input type="image" src="/2/ikon/felkinal.gif" title="Felkínálod">
   <input type="image" src="/2/ikon/visszavon.gif" title="Visszavonod">
+  <input type="image" src="/2/ikon/keresel.gif" title="Keresel">
+  <input type="image" src="/2/ikon/piacvesz.gif" title="Megveszed">
+  <input type="image" src="/2/ikon/vissza.gif" title="Elhagyod a piacot">
+  <input type="image" src="/2/ikon/penztkap.gif" title="Felveszed a pénzt">
+  <input type="image" src="/2/ikon/klap.gif" title="Beállítások">
 
   <script>
     hatizsakTargyak[0] = "Név: ezüst\\nSúly: 0.0001 kg.\\nMennyiség: 5725\\n";
@@ -48,6 +71,10 @@ const MARKET_HTML = `
     felkinaltTargyak[1] = "Név: agyar\\nSúly: 4 kg.\\nÁr: 124 ezüst\\nMennyiség: 6\\n";
     felkinaltTargyakInfo[0] = "281";
     felkinaltTargyakInfo[1] = "94";
+    vetelTargyak[0] = "Név: jáspis\\nSúly: 0.04 kg.\\nÁr: 50 ezüst\\nMennyiség: 7\\nÖsszár: 560 ezüst\\n";
+    vetelTargyak[1] = "Név: jáspis\\nSúly: 0.04 kg.\\nÁr: 50 ezüst\\nMennyiség: 2\\nÖsszár: 190 ezüst\\n";
+    vetelTargyakInfo[0] = "37,80,7,4284";
+    vetelTargyakInfo[1] = "37,95,2,4747";
   </script>
 `;
 
@@ -219,5 +246,171 @@ describe('extractMarket', () => {
     const state = extractMarket(doc);
     expect(state.items).toEqual([]);
     expect(state.listings).toEqual([]);
+  });
+});
+
+describe('extractMarket — vétel', () => {
+  it('lists the searchable catalogue with each item id and rate', () => {
+    const { catalogue } = extractMarket(marketDoc());
+
+    expect(catalogue).toHaveLength(4);
+    // The id is the option's value — what the game's search submits, and the
+    // only stable handle on an item across the reload the search causes.
+    expect(catalogue[0]).toEqual({ id: '37', name: 'jáspis', pricePercent: 170 });
+    expect(catalogue[3]).toEqual({ id: '94', name: 'agyar', pricePercent: 565 });
+  });
+
+  it('searches for an item by driving the game\'s own search button', () => {
+    const doc = marketDoc();
+    const { catalogue, search } = extractMarket(doc);
+    const button = doc.querySelector<HTMLInputElement>('input[src*="keresel"]')!;
+    const clicked = vi.fn();
+    button.addEventListener('click', clicked);
+
+    search(catalogue[3]);
+
+    // The search handler reads melyik.value (not its index), so the value is
+    // what has to be set.
+    const select = doc.forms.namedItem('vetelUrlap')!.elements.namedItem('melyik') as HTMLSelectElement;
+    expect(select.value).toBe('94');
+    expect(clicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('names the item the visible offers belong to', () => {
+    // After a search the game re-selects the searched item, so the selection is
+    // what the offers below it are for.
+    expect(extractMarket(marketDoc()).searchedName).toBe('jáspis');
+  });
+
+  it('lists the offers on sale with their quantity and unit price', () => {
+    const { purchases } = extractMarket(marketDoc());
+
+    expect(purchases).toHaveLength(2);
+    // Read from vetelTargyakInfo ("itemId,unitPrice,quantity,offerId"), which is
+    // machine-formatted, rather than from the game's prose label.
+    expect(purchases[0].quantity).toBe(7);
+    expect(purchases[0].unitPrice).toBe(80);
+    expect(purchases[0].detail?.name).toBe('jáspis');
+    expect(purchases[0].shopPrice).toBe(50);
+    expect(purchases[0].pricePercent).toBe(170);
+  });
+
+  it('falls back to the label when the info array is missing an entry', () => {
+    const doc = marketDoc();
+    const script = Array.from(doc.querySelectorAll('script'))
+      .find(s => /vetelTargyakInfo/.test(s.textContent ?? ''))!;
+    script.textContent = (script.textContent ?? '').replace(/vetelTargyakInfo\[1\][^\n]*\n/, '');
+
+    const { purchases } = extractMarket(doc);
+    expect(purchases[1].quantity).toBe(2);
+    expect(purchases[1].unitPrice).toBe(95);
+  });
+
+  it('buys an offer by its index, with the quantity the caller asked for', () => {
+    const doc = marketDoc();
+    const { purchases } = extractMarket(doc);
+    const button = doc.querySelector<HTMLInputElement>('input[src*="piacvesz"]')!;
+    const clicked = vi.fn();
+    button.addEventListener('click', clicked);
+
+    purchases[1].buy(2);
+
+    // The buy handler indexes vetelTargyakInfo by selectedIndex, exactly as the
+    // revoke handler does — so the index is what identifies the offer.
+    const form = doc.forms.namedItem('vetelUrlap')!;
+    expect((form.elements.namedItem('vetel') as HTMLSelectElement).selectedIndex).toBe(1);
+    expect((form.elements.namedItem('mennyit') as HTMLInputElement).value).toBe('2');
+    expect(clicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('clamps the bought quantity to what is on offer', () => {
+    const doc = marketDoc();
+    extractMarket(doc).purchases[0].buy(999);
+
+    const form = doc.forms.namedItem('vetelUrlap')!;
+    expect((form.elements.namedItem('mennyit') as HTMLInputElement).value).toBe('7');
+  });
+
+  it('has no offers to show before anything has been searched for', () => {
+    const doc = marketDoc();
+    doc.querySelector('select[name="vetel"]')!.remove();
+    expect(extractMarket(doc).purchases).toEqual([]);
+  });
+});
+
+describe('extractMarket — actions and stats', () => {
+  it('offers the page\'s own market actions', () => {
+    const { actions } = extractMarket(marketDoc());
+
+    expect(actions.exit?.label).toBe('Elhagyod a piacot');
+    expect(actions.collectMoney?.label).toBe('Felveszed a pénzt');
+    expect(actions.settings?.label).toBe('Beállítások');
+    expect(actions.special.map(a => a.label)).toEqual(['kilépsz a játékból']);
+  });
+
+  it('triggers a special action through the page\'s select and OK button', () => {
+    const doc = marketDoc();
+    const { actions } = extractMarket(doc);
+    const ok = doc.querySelector<HTMLInputElement>('form[name="specTevUrlap"] input[src*="ok.gif"]')!;
+    const clicked = vi.fn();
+    // Replacing click, not listening for it: the OK button sits inside a form,
+    // and a real click would have jsdom attempt a submit it cannot perform.
+    ok.click = clicked;
+
+    actions.special[0].trigger();
+
+    const select = doc.forms.namedItem('specTevUrlap')!.elements.namedItem('tevFajta') as HTMLSelectElement;
+    expect(select.value).toBe('kilep');
+    expect(clicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads the money and the backpack load the page prints', () => {
+    const state = extractMarket(marketDoc());
+    expect(state.gold).toBe(853);
+    expect(state.weight).toEqual({ used: 43.5953, max: 114.2 });
+  });
+
+  it('carries the narration, which is where a completed sale is reported', () => {
+    // The mobile page replaces the whole market page, so this text has nowhere
+    // else to come from — and it is how the player learns a sale went through.
+    expect(extractMarket(marketDoc()).narration)
+      .toBe('Szétnézel a piacon...\nMegvették a következő cuccaidat: 1 démongyapjú');
+  });
+
+  it('reads what the sales have earned but not yet been collected', () => {
+    // Its own positioned div beside the collect button, not part of the
+    // narration: "7810\nezüstöt kerestél az eladásokból".
+    expect(extractMarket(marketDoc()).earnings).toBe(7810);
+  });
+
+  it('reads a collected balance as nothing left to take', () => {
+    // Measured on the live page: collecting leaves the line in place printing 0,
+    // rather than removing it — so zero is a state the page states outright.
+    const doc = marketDoc();
+    const div = [...doc.querySelectorAll('div')].find(d => /kerestél/.test(d.textContent ?? ''))!;
+    div.textContent = '0\nezüstöt kerestél az eladásokból';
+    expect(extractMarket(doc).earnings).toBe(0);
+  });
+
+  it('reads a grouped amount', () => {
+    const doc = marketDoc();
+    const div = [...doc.querySelectorAll('div')].find(d => /kerestél/.test(d.textContent ?? ''))!;
+    div.textContent = '1 234 567\nezüstöt kerestél az eladásokból';
+    expect(extractMarket(doc).earnings).toBe(1234567);
+  });
+
+  it('says it does not know rather than guessing zero when the line is missing', () => {
+    // Null and zero must stay distinguishable: zero disables the collect button,
+    // and a page whose wording we failed to match must not disable a button that
+    // works.
+    const doc = marketDoc();
+    [...doc.querySelectorAll('div')].find(d => /kerestél/.test(d.textContent ?? ''))!.remove();
+    expect(extractMarket(doc).earnings).toBeNull();
+  });
+
+  it('leaves an absent action null rather than inventing one', () => {
+    const doc = marketDoc();
+    doc.querySelector('input[src*="penztkap"]')!.remove();
+    expect(extractMarket(doc).actions.collectMoney).toBeNull();
   });
 });

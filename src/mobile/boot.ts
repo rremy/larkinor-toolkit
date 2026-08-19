@@ -7,6 +7,7 @@ import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
 import { setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
+import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { FreeMove } from '@/pages/FreeMove';
@@ -14,6 +15,7 @@ import { Battle } from '@/pages/Battle';
 import { Login } from '@/pages/Login';
 import { Dungeon } from '@/pages/Dungeon';
 import { Home } from '@/pages/Home';
+import { Market } from '@/pages/Market';
 import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Mobile boot (proxy-DOM pattern): extract the game state, move the original
@@ -34,7 +36,8 @@ type PageState =
   | { pageType: PageType.Battle; state: BattleState }
   | { pageType: PageType.Login; state: LoginState }
   | { pageType: PageType.Dungeon; state: DungeonState }
-  | { pageType: PageType.Home; state: HomeState };
+  | { pageType: PageType.Home; state: HomeState }
+  | { pageType: PageType.Market; state: MarketState };
 
 /**
  * The game page ships no viewport meta, so mobile browsers assume a ~980px
@@ -65,6 +68,8 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractDungeon(doc) };
     case PageType.Home:
       return { pageType, state: extractHome(doc) };
+    case PageType.Market:
+      return { pageType, state: extractMarket(doc) };
     default:
       return null; // v1 leaves other pages untouched
   }
@@ -134,14 +139,23 @@ export function bootMobile(doc: Document): void {
       case PageType.Home:
         render(provide(h(Home, { state: pageState.state })), root);
         break;
+      case PageType.Market:
+        render(provide(h(Market, { state: pageState.state })), root);
+        break;
     }
   };
 
   renderPage(); // immediate render (db=null; login/dungeon never need it)
 
-  // The login and dungeon screens have no monster references, and Home uses
-  // the DB overlay's own on-demand loader, so skip the shared monster fetch.
-  if (pageState.pageType === PageType.Login || pageState.pageType === PageType.Dungeon || pageState.pageType === PageType.Home) return;
+  // The login and dungeon screens have no monster references, and Home and the
+  // market use the DB overlay's own on-demand loader, so skip the shared monster
+  // fetch.
+  if (
+    pageState.pageType === PageType.Login
+    || pageState.pageType === PageType.Dungeon
+    || pageState.pageType === PageType.Home
+    || pageState.pageType === PageType.Market
+  ) return;
 
   createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()
     .then((loaded) => {

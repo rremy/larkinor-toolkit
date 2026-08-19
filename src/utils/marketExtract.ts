@@ -11,11 +11,25 @@
 // Actions drive the game's own forms and buttons, never a reconstructed onclick:
 //   offer  — set eladasUrlap.hatizsak / mennyiseg / ar, then click `felkinal`
 //   revoke — set eladasUrlap.felkinalt, then click `visszavon`
-// Both game handlers read the select by `selectedIndex` to look up a parallel
-// array, so the index is what must be set, not just the value.
+//   buy    — set vetelUrlap.vetel / mennyit, then click `piacvesz`
+// Those three game handlers read the select by `selectedIndex` to look up a
+// parallel array, so the index is what must be set, not just the value.
+//   search — set vetelUrlap.melyik, then click `keresel`
+// The search is the exception on both counts: its handler reads the select's
+// *value*, and it navigates — the game answers a search by reloading the page
+// with the matching offers in `vetelUrlap.vetel`. There is no way to list offers
+// for an item without that reload, which is why the UI has to survive one.
 
 import { parseCuccArray, parseCuccDetail, type ParsedDetail } from '@/utils/homeExtract';
-import { basename } from '@/utils/domExtract';
+import {
+  basename,
+  extractImageControl,
+  extractNarration,
+  extractSpecialActions,
+  parseGold,
+  type Action,
+  type BuildingOption,
+} from '@/utils/domExtract';
 
 export interface MarketItem extends ParsedDetail {
   /** Position in the backpack select — the offer form's index. */
@@ -53,6 +67,47 @@ export interface MarketListing {
   revoke: () => void;
 }
 
+/** One entry of the market's searchable item catalogue (`vetelUrlap.melyik`). */
+export interface MarketCatalogueEntry {
+  /**
+   * The game's own item id — the option's value, and what the search submits.
+   * A string because that is what the form carries; nothing here does arithmetic
+   * on it.
+   */
+  id: string;
+  name: string;
+  /** What the market pays for it, as a percentage. Null when unlabelled. */
+  pricePercent: number | null;
+}
+
+/** One standing offer by another player, buyable. */
+export interface MarketPurchase {
+  /** Position in the offers select — what the buy handler indexes by. */
+  index: number;
+  /** The offer as the game labels it, e.g. "7 db. jáspis 80 ezüst/db. áron". */
+  label: string;
+  detail: ParsedDetail | null;
+  /** Units on offer. */
+  quantity: number | null;
+  /** Asking price per unit. */
+  unitPrice: number | null;
+  /** What the market pays for the item, for judging the asking price. */
+  pricePercent: number | null;
+  /** The item's shop price, likewise. */
+  shopPrice: number | null;
+  /** Buys `qty` units of this offer. */
+  buy: (qty: number) => void;
+}
+
+/** The market page's own buttons, beside the two trading forms. */
+export interface MarketActions {
+  exit: BuildingOption | null;
+  collectMoney: BuildingOption | null;
+  settings: BuildingOption | null;
+  /** The `specTevUrlap` options — one on the live page ("kilépsz a játékból"). */
+  special: Action[];
+}
+
 export interface MarketState {
   /** Backpack contents, offerable to the market. */
   items: MarketItem[];
@@ -60,10 +115,47 @@ export interface MarketState {
   listings: MarketListing[];
   /** Offers `qty` of `item` at `price` each. */
   offer: (item: MarketItem, qty: number, price: number) => void;
+  /** Every item the market can be searched for. */
+  catalogue: MarketCatalogueEntry[];
+  /**
+   * Searches the market for `entry`. This **navigates**: the game answers a
+   * search by reloading the page with the offers in place, so there is no way to
+   * list them without leaving the current one.
+   */
+  search: (entry: MarketCatalogueEntry) => void;
+  /**
+   * The item the visible offers are for, or null when nothing has been searched.
+   * Read from the catalogue select's own selection: the game re-selects the
+   * searched item on the page it hands back, so the page states this itself and
+   * we need not remember it across the reload.
+   */
+  searchedName: string | null;
+  /** Standing offers for the searched item. */
+  purchases: MarketPurchase[];
+  actions: MarketActions;
+  /** The player's money, for judging what a purchase costs. */
+  gold: number;
+  /** Backpack load in kg — what a purchase has to fit into. */
+  weight: { used: number; max: number };
+  /**
+   * What the sales have earned and nobody has collected yet, in ezüst — the
+   * figure the `penztkap` button hands over. Null when the page did not print
+   * the line at all, which is deliberately distinct from zero: zero disables the
+   * collect button, and wording we failed to match must not.
+   */
+  earnings: number | null;
+  /**
+   * The page's narration. Carried here because the mobile page replaces the
+   * market page outright, and this is where the game reports a sale going
+   * through ("Megvették a következő cuccaidat…").
+   */
+  narration: string;
 }
 
 const OFFER_BUTTON = 'felkinal';
 const REVOKE_BUTTON = 'visszavon';
+const SEARCH_BUTTON = 'keresel';
+const BUY_BUTTON = 'piacvesz';
 
 /** The inline script defining the market's arrays (or ''). */
 function marketScriptText(doc: Document): string {
@@ -93,15 +185,72 @@ function inputIn(doc: Document, formName: string, fieldName: string): HTMLInputE
  */
 export function parsePricePercents(doc: Document): Map<string, number> {
   const percents = new Map<string, number>();
-  const select = selectIn(doc, 'vetelUrlap', 'melyik');
-  if (!select) return percents;
-
-  for (const option of Array.from(select.options)) {
-    const match = option.text.match(/^(.*)\s*\((\d+)%\)\s*$/);
-    if (!match) continue;
-    percents.set(match[1].trim().toLowerCase(), Number(match[2]));
+  for (const entry of extractCatalogue(doc)) {
+    if (entry.pricePercent !== null) percents.set(entry.name.toLowerCase(), entry.pricePercent);
   }
   return percents;
+}
+
+/**
+ * Splits a catalogue label ("jáspis (170%)") into the item's name and the rate.
+ * A label without a rate keeps its whole text as the name rather than being
+ * dropped: the catalogue is the only list of what the market can be searched
+ * for, so an unlabelled entry is still worth searching.
+ */
+function parseCatalogueLabel(text: string): { name: string; pricePercent: number | null } {
+  const match = text.match(/^(.*)\s*\((\d+)%\)\s*$/);
+  if (!match) return { name: text.trim(), pricePercent: null };
+  return { name: match[1].trim(), pricePercent: Number(match[2]) };
+}
+
+/** Every item the market can be searched for, in the page's own order. */
+export function extractCatalogue(doc: Document): MarketCatalogueEntry[] {
+  const select = selectIn(doc, 'vetelUrlap', 'melyik');
+  return Array.from(select?.options ?? []).map((option) => ({
+    id: option.value,
+    ...parseCatalogueLabel(option.text),
+  }));
+}
+
+/**
+ * Reads one `vetelTargyakInfo` entry — "itemId,unitPrice,quantity,offerId". The
+ * offer's own numbers, so they are preferred over parsing them back out of the
+ * game's prose label; the label stays the fallback for an entry the array is
+ * missing.
+ */
+function parsePurchaseInfo(raw: string | undefined): { quantity: number | null; unitPrice: number | null } {
+  const parts = (raw ?? '').split(',');
+  if (parts.length < 3) return { quantity: null, unitPrice: null };
+  const num = (part: string): number | null => {
+    const n = parseInt(part.trim(), 10);
+    return Number.isFinite(n) ? n : null;
+  };
+  return { unitPrice: num(parts[1]), quantity: num(parts[2]) };
+}
+
+/**
+ * Uncollected sale earnings, from the line the market prints in its own
+ * positioned div beside the collect button: "7810\nezüstöt kerestél az
+ * eladásokból". Measured live, collecting does not remove that line — it leaves
+ * it printing 0 — so zero is a state the page states outright rather than one we
+ * infer from the line's absence. A missing line therefore means we did not
+ * recognise the page, and yields null.
+ */
+function parseEarnings(text: string): number | null {
+  const m = text.match(/(\d[\d \t\u00a0]*)\s*ezüstöt kerestél/);
+  if (!m) return null;
+  const digits = m[1].replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) : null;
+}
+
+/**
+ * Backpack load in kg, as the market page prints it ("Remy hátizsákjában
+ * 43.5953/114.2 kg tömegű tárgy van"). The Home page words the same figure with
+ * "és testén", so both spellings are accepted.
+ */
+function parseWeight(text: string): { used: number; max: number } {
+  const m = text.match(/hátizsákjában(?:\s+és testén)?\s*([\d.]+)\s*\/\s*([\d.]+)\s*kg/);
+  return { used: m ? parseFloat(m[1]) : 0, max: m ? parseFloat(m[2]) : 0 };
 }
 
 /**
@@ -193,5 +342,74 @@ export function extractMarket(doc: Document): MarketState {
     button.click();
   };
 
-  return { items, listings, offer };
+  const catalogue = extractCatalogue(doc);
+
+  const search = (entry: MarketCatalogueEntry): void => {
+    const select = selectIn(doc, 'vetelUrlap', 'melyik');
+    const button = imageButtonByBasename(doc, SEARCH_BUTTON);
+    if (!select || !button) return;
+    // The search handler reads `melyik.value`, unlike the offer and revoke
+    // handlers which index parallel arrays — so here the value is what counts.
+    select.value = entry.id;
+    button.click();
+  };
+
+  const searchSelect = selectIn(doc, 'vetelUrlap', 'melyik');
+  const searchedOption = searchSelect?.selectedIndex !== undefined && searchSelect.selectedIndex >= 0
+    ? searchSelect.options[searchSelect.selectedIndex]
+    : undefined;
+  const searchedName = searchedOption ? parseCatalogueLabel(searchedOption.text).name : null;
+
+  const buySelect = selectIn(doc, 'vetelUrlap', 'vetel');
+  const buyDetails = parseCuccArray(scriptText, 'vetelTargyak');
+  const buyInfo = parseCuccArray(scriptText, 'vetelTargyakInfo');
+  const purchases: MarketPurchase[] = Array.from(buySelect?.options ?? []).map((option, index) => {
+    const detail = buyDetails[index] !== undefined ? parseCuccDetail(buyDetails[index]) : null;
+    const label = option.text.trim();
+    const info = parsePurchaseInfo(buyInfo[index]);
+    const fromLabel = parseOfferLabel(label);
+    return {
+      index,
+      label,
+      detail,
+      quantity: info.quantity ?? fromLabel.quantity,
+      unitPrice: info.unitPrice ?? fromLabel.unitPrice,
+      pricePercent: detail ? percents.get(detail.name.toLowerCase()) ?? null : null,
+      shopPrice: detail?.price ?? null,
+      buy: (qty: number) => {
+        const select = selectIn(doc, 'vetelUrlap', 'vetel');
+        const qtyInput = inputIn(doc, 'vetelUrlap', 'mennyit');
+        const button = imageButtonByBasename(doc, BUY_BUTTON);
+        if (!select || !qtyInput || !button) return;
+        // Like the revoke handler, the game's buy handler looks the offer up in
+        // vetelTargyakInfo by selectedIndex.
+        select.selectedIndex = index;
+        const stock = info.quantity ?? fromLabel.quantity;
+        qtyInput.value = String(Math.max(1, stock === null ? qty : Math.min(qty, stock)));
+        button.click();
+      },
+    };
+  });
+
+  const bodyText = doc.body.textContent ?? '';
+
+  return {
+    items,
+    listings,
+    offer,
+    catalogue,
+    search,
+    searchedName,
+    purchases,
+    actions: {
+      exit: extractImageControl(doc, 'vissza'),
+      collectMoney: extractImageControl(doc, 'penztkap'),
+      settings: extractImageControl(doc, 'klap'),
+      special: extractSpecialActions(doc),
+    },
+    gold: parseGold(bodyText),
+    weight: parseWeight(bodyText),
+    earnings: parseEarnings(bodyText),
+    narration: extractNarration(doc),
+  };
 }

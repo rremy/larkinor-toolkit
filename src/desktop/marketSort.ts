@@ -80,8 +80,24 @@ function sortBy<T>(
   ));
 }
 
+/**
+ * Whether the market will price this item at all. The game gives some backpack
+ * contents no Ár — silver itself, quest pieces — and with no price there is
+ * nothing to scale into an offer: the row renders with an empty Ár and a dead
+ * Felkínál button. See `suggestPrice`, which is what returns null here.
+ */
+function offerable(item: MarketItem): boolean {
+  return item.suggestedPrice !== null;
+}
+
 export function sortItems(items: MarketItem[], key: MarketSortKey, asc: boolean): MarketItem[] {
-  return sortBy(items, key, asc, (item) => item.name, itemNumber);
+  // Rows that cannot be offered sink to the end, ahead of the chosen ordering
+  // and regardless of its direction: they are dead weight in a list you are
+  // reading to decide what to sell, and reversing the order is no reason to
+  // promote them. They keep the chosen ordering among themselves, so the tail is
+  // still a list rather than a heap.
+  const ordered = sortBy(items, key, asc, (item) => item.name, itemNumber);
+  return [...ordered.filter(offerable), ...ordered.filter((item) => !offerable(item))];
 }
 
 export function sortListings(listings: MarketListing[], key: MarketSortKey, asc: boolean): MarketListing[] {
