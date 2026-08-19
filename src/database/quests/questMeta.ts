@@ -32,7 +32,13 @@ export const BADGE = {
   death: '💀',
   question: '❓',
   boss: '★',
+  /** The player's detected cell. Distinct from every marker above. */
+  here: '📍',
 } as const;
+
+/** Tooltip for a cell the player was pinned to, and for one of several candidates. */
+export const HERE_LABEL = 'itt vagy';
+export const MAYBE_HERE_LABEL = 'talán itt vagy';
 
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
 

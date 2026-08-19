@@ -1,11 +1,12 @@
 import { h, render, type ComponentChildren } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
+import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractDungeonSides, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
-import { setPref } from '@/utils/config';
+import { getPref, setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
@@ -102,6 +103,24 @@ export function bootMobile(doc: Document): void {
   // runs before the early return: the page has no state of its own and mobile
   // deliberately renders nothing on it.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // Inside a labyrinth, work out which maze cell the player is standing in and
+  // store it, so the quests tab can mark it. Anywhere else, forget it — a
+  // position that outlives the visit reads exactly like a live one.
+  //
+  // Like the quest offer above, this runs before the page-state early return so
+  // it fires on every page, not only the ones mobile takes over.
+  if (pageType === PageType.Dungeon) {
+    activateDungeonPosition(
+      extractNarration(doc),
+      extractDungeonSides(doc),
+      createDataLoader(gmSource(), DATA_BASE_URL),
+      getPref,
+      setPref,
+    ).catch((err) => console.warn('[Larkinor UI] Dungeon position failed:', err));
+  } else {
+    clearDungeonPosition(setPref);
+  }
 
   const pageState = extractPageState(pageType, doc);
   if (!pageState) return;

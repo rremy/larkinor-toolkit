@@ -18,11 +18,12 @@ import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data'
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
-import { extractNarration } from '@/utils/domExtract';
-import { readLoadout, setPref } from '@/utils/config';
+import { extractDungeonSides, extractNarration } from '@/utils/domExtract';
+import { getPref, readLoadout, setPref } from '@/utils/config';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
 
@@ -259,6 +260,25 @@ export function bootDesktop(doc: Document): void {
   // the only place it can be changed, so capturing on every visit keeps the
   // stored loadout current by construction.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // Inside a labyrinth, work out which maze cell the player is standing in and
+  // store it, so the quests tab marks it. Anywhere else, forget it — a position
+  // that outlives the visit reads exactly like a live one.
+  //
+  // No note under the narration the way the pub's quest offer gets one: the
+  // dock's "Küldetések" button is already right there on a dungeon page, and the
+  // marker is the affordance rather than something to be announced.
+  if (pageType === PageType.Dungeon) {
+    activateDungeonPosition(
+      extractNarration(doc),
+      extractDungeonSides(doc),
+      createDataLoader(gmSource(), DATA_BASE_URL),
+      getPref,
+      setPref,
+    ).catch((err) => console.warn('[Larkinor UI] Dungeon position failed:', err));
+  } else {
+    clearDungeonPosition(setPref);
+  }
 
   // The pub hands out tavern quests by printing the brief in its narration.
   // Recognising it pre-selects that quest in the database, so opening the

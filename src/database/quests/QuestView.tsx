@@ -2,7 +2,8 @@ import { h, type VNode } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { parseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -70,6 +71,20 @@ export function QuestView(props: QuestViewProps): VNode {
   // and hides the toggle at full width), so anything but a stored '1' —
   // missing, or a value from some other build — means collapsed.
   const [detailsOpen, setDetailsOpen] = useState(() => prefStore?.read(QUEST_DETAILS_PREF_KEY) === '1');
+  /**
+   * The player's detected maze cell, as the dungeon page last stored it.
+   *
+   * Read from the store rather than passed in as a prop, so nothing new has to
+   * be threaded through DatabaseOverlay and DatabaseApp — the same reason the
+   * pub's quest pre-selection travels this way. Re-read when the quest data
+   * arrives (below) because the boot's detection is asynchronous: it must load
+   * the same quest file this view does, so a tab opened immediately can mount
+   * before the write lands.
+   */
+  const [position, setPosition] = useState<QuestPosition | null>(
+    () => parseQuestPosition(prefStore?.read(QUEST_POSITION_PREF_KEY) ?? null),
+  );
+  const gridWrapRef = useRef<HTMLDivElement | null>(null);
   // Guards the restore-from-store effect below so it fires at most once per
   // active set, regardless of how many times its other dependencies change.
   const restoredQuestRef = useRef(false);
@@ -182,6 +197,60 @@ export function QuestView(props: QuestViewProps): VNode {
   // resulting navigation supplies a non-null `questId`, the restore effect's
   // own guard clause stops it regardless of this ref's value.
   useEffect(() => { restoredQuestRef.current = false; }, [activeSet]);
+
+  /**
+   * Re-read the detected position once the quest data has arrived — see the
+   * state declaration for why a single read at mount can be too early.
+   */
+  useEffect(() => {
+    if (!quests || !prefStore) return;
+    setPosition(parseQuestPosition(prefStore.read(QUEST_POSITION_PREF_KEY)));
+  }, [quests, prefStore]);
+
+  /**
+   * The detected position, but only when it belongs to the maze on screen.
+   *
+   * QuestGrid cannot tell a foreign coordinate from a local one, and a position
+   * detected in quest 35 drawn onto quest 12's grid would be a confident lie
+   * about a cell nobody visited.
+   */
+  const questPosition = position !== null
+    && quest !== null
+    && position.set === activeSet
+    && position.questId === quest.id
+    ? position
+    : null;
+
+  /**
+   * Select the detected cell and scroll it into view — but only for an exact
+   * hit, and only once per detection.
+   *
+   * Selecting gives the player the cell's own detail panel (its monster, its
+   * text, its key) for free, which is the thing they would click next anyway.
+   * An ambiguous match deliberately selects nothing: there is no single cell to
+   * show, and picking one would undo the honesty of the tentative marker.
+   *
+   * The effect does not re-fire on re-renders, so a later manual click stands:
+   * `position` is state and `questPosition` is either that same object or null.
+   */
+  useEffect(() => {
+    if (!questPosition?.exact || !quest) return;
+    const [target] = questPosition.cells;
+    const cell = quest.cells.find((c) => c.row === target.row && c.col === target.col);
+    if (!cell) return;
+    setSelectedCell(cell);
+
+    const raf = requestAnimationFrame(() => {
+      const el = gridWrapRef.current
+        ?.querySelector(`.quest-cell[data-row="${target.row}"][data-col="${target.col}"]`);
+      // Guarded rather than optional-chained: jsdom ships no scrollIntoView, and
+      // a missing scroll must not break the selection that matters.
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [questPosition, quest]);
 
   /** Remember whichever set and quest end up shown. */
   useEffect(() => {
@@ -346,7 +415,7 @@ export function QuestView(props: QuestViewProps): VNode {
             </div>
           </div>
 
-          <div class="quest-grid-wrap">
+          <div class="quest-grid-wrap" ref={gridWrapRef}>
             <QuestGrid
               quest={quest}
               monsters={monsters}
@@ -355,6 +424,7 @@ export function QuestView(props: QuestViewProps): VNode {
               highlightLock={highlightLock}
               onProbeLock={setHighlightLock}
               tileSize={tileSize}
+              position={questPosition}
             />
           </div>
           {hasSzelEdges(quest) && (

@@ -10,6 +10,9 @@
 //
 // See docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md.
 
+import type { Side } from '@/shared/data';
+import type { SideObservation, SideObservations } from '@/utils/dungeonPosition';
+
 export type Direction = 'north' | 'south' | 'east' | 'west';
 
 /** Battle actions are classed so the UI can group them (e.g. attacks in a row). */
@@ -112,6 +115,14 @@ const DIRECTION_BY_BASENAME: Record<string, Direction> = {
   del: 'south',
   kelet: 'east',
   nyugat: 'west',
+};
+
+/** Nav directions in the quest data's compass vocabulary. */
+const SIDE_BY_DIRECTION: Record<Direction, Side> = {
+  north: 'N',
+  south: 'S',
+  east: 'E',
+  west: 'W',
 };
 
 /** Image basename of the free-move "engage the monster" button. */
@@ -558,6 +569,62 @@ function extractDungeonTiles(doc: Document): DungeonTile[] {
   const minLeft = Math.min(...raw.map(t => t.left));
   const minTop = Math.min(...raw.map(t => t.top));
   return raw.map(t => ({ ...t, left: t.left - minLeft, top: t.top - minTop }));
+}
+
+/**
+ * One side of the composed cell picture: `<dir>/<kind>/<kind>_<side>_<n>.gif`.
+ *
+ * The directory is the discriminator, not the basename prefix — the same
+ * picture ships `ellenfel/ellenfel_b.gif`, whose basename would otherwise read
+ * as "side b" when it is simply the enemy silhouette.
+ *
+ * The side letter is Hungarian direction shorthand, not a compass letter:
+ * `f` = fel (north), `j` = jobb (east), `l` = le (south), `b` = bal (west).
+ */
+const DUNGEON_SIDE_RE = /\/labirintus\/(?:[^/]+\/)?(fal|folyoso|ajto)\/(?:fal|foly|ajto)_([fjlb])_\d+\.gif/;
+
+const SIDE_BY_LETTER: Record<string, Side> = { f: 'N', j: 'E', l: 'S', b: 'W' };
+
+const OBSERVATION_BY_KIND: Record<string, SideObservation> = {
+  fal: 'wall',
+  folyoso: 'open',
+  ajto: 'door',
+};
+
+/**
+ * What the dungeon page says about the four sides of the cell the player is in
+ * — the second signal `locateDungeonPosition` uses to pin a position, after the
+ * narration text.
+ *
+ * Two independent sources, in order of authority:
+ *
+ * 1. **The drawn tiles**, which describe every side (verified live: `fal_f_8`
+ *    and `fal_j_8` for two walls, `foly_b_3` and `foly_l_3` for two corridors).
+ * 2. **The nav buttons**, which only ever reveal *open* sides, and so fill in a
+ *    side whose tile we failed to recognise rather than overruling one.
+ *
+ * The precedence matters for doors: a locked door is drawn but offers no button,
+ * and letting the missing button win would report it as a wall. A side neither
+ * source describes is left absent — the matcher treats an absent side as a
+ * wildcard, so an unrecognised tile costs precision and never correctness.
+ */
+export function extractDungeonSides(doc: Document): SideObservations {
+  const sides: SideObservations = {};
+
+  doc.querySelectorAll<HTMLImageElement>('img').forEach(img => {
+    const match = DUNGEON_SIDE_RE.exec(img.getAttribute('src') ?? '');
+    if (!match) return;
+    const side = SIDE_BY_LETTER[match[2]];
+    const observation = OBSERVATION_BY_KIND[match[1]];
+    if (side && observation) sides[side] = observation;
+  });
+
+  for (const { dir } of extractDirections(doc)) {
+    const side = SIDE_BY_DIRECTION[dir];
+    sides[side] ??= 'open';
+  }
+
+  return sides;
 }
 
 /** Text following a radio up to the next <br>/input — its answer label. */

@@ -1,9 +1,10 @@
 import { h, type VNode } from 'preact';
 import { useMemo } from 'preact/hooks';
 import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data';
+import type { QuestPosition } from '@/shared/questPosition';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import {
-  BADGE, DEFAULT_TILE, LOCK_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL,
+  BADGE, DEFAULT_TILE, HERE_LABEL, LOCK_LABEL, MAYBE_HERE_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL,
   cellKey, coordLabel, outsideMazeCells,
 } from './questMeta';
 
@@ -25,6 +26,12 @@ interface QuestGridProps {
   onProbeLock?(lock: LockType | null): void;
   /** Tile edge length in px, driven by the zoom control. */
   tileSize?: number;
+  /**
+   * Where the player was detected in *this* quest, or null. The caller is
+   * responsible for only passing a position belonging to the quest on screen —
+   * this component has no way to tell a foreign coordinate from a local one.
+   */
+  position?: QuestPosition | null;
 }
 
 /**
@@ -37,12 +44,19 @@ interface QuestGridProps {
 export function QuestGrid(props: QuestGridProps): VNode {
   const {
     quest, monsters, selected, onSelect,
-    highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE,
+    highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE, position = null,
   } = props;
 
   // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
   // memoised because the grid re-renders on every door hover.
   const outside = useMemo(() => outsideMazeCells(quest), [quest]);
+
+  // Detected cells as a key set, so the per-cell loop stays a lookup rather
+  // than a scan of the candidate list.
+  const detected = useMemo(
+    () => new Set((position?.cells ?? []).map(cellKey)),
+    [position],
+  );
 
   return (
     <div
@@ -82,6 +96,11 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // them apart. Deciding it here from emptiness alone painted 200 royal
         // and 537 tavern rooms black — see that function's doc comment.
         if (outside.has(cellKey(cell))) classes.push('void');
+        // Where the player is. An exact hit is drawn confidently; a candidate
+        // from an ambiguous match is drawn tentatively, because saying "one of
+        // these three" is useful and saying "this one" would be a guess.
+        const isHere = detected.has(cellKey(cell));
+        if (isHere) classes.push(position?.exact ? 'here' : 'maybe-here');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit
         // without a highlightLock.
@@ -97,7 +116,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
             data-col={cell.col}
             style={cellStyle}
             onClick={() => onSelect(cell)}
-            title={coordLabel(cell)}
+            title={isHere ? `${coordLabel(cell)} — ${position?.exact ? HERE_LABEL : MAYBE_HERE_LABEL}` : coordLabel(cell)}
           >
             {SIDES.map((side) => {
               const edge = cell.edges[side];
@@ -186,6 +205,12 @@ export function QuestGrid(props: QuestGridProps): VNode {
                 <span class="quest-badge question" title="kérdés">{BADGE.question}</span>
               )}
               {cell.boss && <span class="quest-badge boss" title="boss">{BADGE.boss}</span>}
+              {/* Only a confident position gets a badge. On an ambiguous match
+                  the ring alone carries it: three pins would read as three
+                  players rather than as one uncertainty. */}
+              {isHere && position?.exact && (
+                <span class="quest-badge here" title={HERE_LABEL}>{BADGE.here}</span>
+              )}
             </div>
           </div>
         );

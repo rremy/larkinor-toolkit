@@ -234,6 +234,68 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       fuzzy path, never a verbatim signature match.
     - Only pub pages load `tavern-quests.json` (~1.4MB, then GM-cached), which is why this
       hangs off the page type rather than running everywhere.
+  - **The labyrinth marks where you are standing** (`src/utils/dungeonPosition.ts` +
+    `activateDungeonPosition.ts` + `extractDungeonSides` in `domExtract.ts`). A dungeon page
+    never states a coordinate, but it prints the cell's own narration and draws the cell's
+    four sides, and together those pin the position. The boot writes it to
+    `lc-quest-position` (a `QuestPosition`, see `src/shared/questPosition.ts`) on every
+    dungeon page and **clears it on every other page**; `QuestView` reads it from the
+    `prefStore` it already has, so nothing new is threaded through `DatabaseOverlay` or
+    `DatabaseApp` — the same route the pub's quest pre-selection takes. Facts worth not
+    rediscovering:
+    - **The narration's *last* line is the cell's text; the lines before it narrate the
+      player's last action.** Resting printed three lines ahead of the cell text. So matching
+      is per line, never against the flattened block — an action's wording must never decide
+      a position. Two length-gated loose rules (a long text as a suffix of the last line, or
+      contained in a line) cover a cell text the game ran together with something else, and
+      they are consulted **only when no cell matches a whole line**: mixing the tiers lets a
+      cell whose text is a long tail of another's tag along on every one of that cell's hits,
+      turning exact positions into ambiguous ones.
+    - **The side tiles use a different direction vocabulary from the quest source.** The
+      composed picture ships `<kind>/<kind>_<side>_<n>.gif` — `fal` = wall, `folyoso` = open,
+      `ajto` = door — where the side letter is `f` = fel (north), `j` = jobb (east),
+      `l` = le (south), `b` = bal (west). The scraped source pages use `f`/`j`/`a`/`b` for
+      north/east/south/west, so **`b` means west in both but south is `l` here and `a`
+      there**. The *directory* is the discriminator, not the basename prefix: the same
+      picture ships `ellenfel/ellenfel_b.gif`, whose basename would otherwise read as
+      "side b" when it is only the enemy silhouette.
+    - **A door in the data agrees with any observation.** The door sprite grammar is the one
+      part not verified against the live game, so a door must never be why a cell is
+      rejected — being lenient costs 0.4 percentage points of precision and cannot cost
+      correctness. Likewise a side neither the tiles nor the nav buttons describe is left
+      absent, and an absent side never rejects a candidate.
+    - **The nav buttons are a second, independent read of the open sides** and only ever
+      reveal *open* ones, so they fill in a side whose tile went unrecognised rather than
+      overruling one. Precedence matters for doors: a locked door is drawn but offers no
+      button, and letting the missing button win would report it as a wall. Measured live at
+      quest 35 cell (0,6): tiles said N/E wall + S/W corridor, and the page offered exactly
+      `nyugat` and `del`.
+    - **The enemy sprite never names the monster** — `ellenfel_b.gif` is a generic
+      silhouette — so the creature cannot be used as a third signal, however tempting the
+      quest data's `monsterName` makes it. (The seven "Fekete szűz" mentions found on the
+      live page during the investigation were our own dock's `alt` text, not the game's.)
+    - **Measured match rates, pinned in `tests/dungeonPosition.test.ts`** so a data refresh
+      that degrades detection fails loudly: of narrated cells, the narration alone pins
+      78.1% royal / 98.4% tavern uniquely, and adding the sides lifts that to 90.5% / 99.2%.
+      That gap is the whole argument for reading the walls. Roughly a quarter of cells carry
+      no text at all, so detecting nothing is routine — and must **clear** the stored
+      position rather than leave the previous cell's marker standing, which would read
+      exactly like a live one.
+    - Only the **stored set** is loaded (`lc-quest-set`), not both: covering the rarer case of
+      being in the other kind of labyrinth would mean fetching ~1.2MB more on every dungeon
+      page. Within that set the search is self-correcting — the remembered quest first, then
+      the rest of the set — and a hit elsewhere moves `lc-quest-selected-<set>` too, so
+      walking into a different labyrinth fixes a stale store instead of silently detecting
+      nothing. Verified live: the store said 34 while the player was in 35.
+    - An exact hit is drawn as a solid pulsing ring plus a `📍` badge and **selects** the cell
+      (handing over its detail panel for free); an ambiguous match draws a dashed dimmed ring
+      on each candidate, no badge and no selection. Three pins would read as three players
+      rather than one uncertainty. The ring is inset past the wall edges — like the objective
+      ring, and for a sharper reason: on the tile the player is standing on, which way they
+      can go is the whole point, so the marker must not cover its own walls.
+    - **The standalone site never shows a marker.** It is a different origin with its own
+      `localStorage` and cannot see the in-game store, so the pref reads null and the grid
+      renders normally — the same situation as the compare card.
 - Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)
@@ -257,6 +319,12 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - **Form controls never inherit `color`** in any mode, so `input`/`select`/`option`/`button`/`textarea` need it set explicitly too.
   - Practical rule: an in-game component that renders a `<table>` or a form control must set `color` explicitly rather than relying on a coloured ancestor. Everything else (divs, spans) inherits normally.
 - **Geometry of the desktop chat panel** (`#mydiv`, measured live at both 1440×900 and 1280×720): `left: 60, top: 473, 500×300`, absolutely positioned, `z-index: 10`, with its own text input occupying the top ~22px. It is laid out in fixed pixels and **does not move with the window**, which is why `src/desktop/boot.ts`'s `alignDock` can measure once at boot with no resize listener. Its parent is the 633px game content column at `0,−97` — note the negative top, i.e. the column starts above the viewport.
+- **The dungeon page describes its own cell.** The composed picture draws one tile per side
+  (`fal`/`folyoso`/`ajto` directories, side letters `f`/`j`/`l`/`b` = north/east/south/west),
+  the nav buttons independently reveal the open sides, and the narration's **last** line is
+  the cell's text. `extractDungeonSides` reads the first two; together with the third they
+  identify which maze cell the player is in — see *the labyrinth marks where you are
+  standing* under the quest viewer above, which records the traps in each of those three.
 - **The character page (`oldalTipus=otPlayerSettings`, title `karakterlap`) is the
   only page that prints the worn equipment set — and the only place equipment can
   be changed**, which is why capturing on every visit keeps the stored loadout

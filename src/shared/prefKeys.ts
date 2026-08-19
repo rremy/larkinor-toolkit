@@ -47,6 +47,18 @@ export function questSelectedKey(set: QuestSet): string {
 export const LEGACY_QUEST_SELECTED_PREF_KEY = 'lc-quest-selected';
 
 /**
+ * PrefStore key holding the serialised `QuestPosition` — which maze cell the
+ * player was last detected in, written by the boots on every dungeon page and
+ * cleared on every other page.
+ *
+ * Cleared rather than left to age out: a marker that outlives the labyrinth
+ * visit would point at wherever the player was last seen, which reads exactly
+ * like a live position. There is deliberately no timestamp — the page type is a
+ * sharper answer to "are they still in there?" than any expiry could be.
+ */
+export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
+
+/**
  * PrefStore key holding the serialised `Loadout` — what the player is wearing,
  * captured on every character-page visit. Read by the compare card on every
  * surface; written only by the boots' loadout capture.

@@ -63,6 +63,12 @@
      background, which no single colour does. */
   --quest-item-ring: #fff6e0;
   --quest-item-edge: rgba(0, 0, 0, 0.85);
+  /* The detected player position. A hue is affordable here where the objective
+     ring could not afford one, because this marker also carries a pin badge —
+     the colour only has to draw the eye, not carry the meaning on its own. Cyan
+     is the one direction the lock palette does not already use. */
+  --quest-here-ring: #4fd6ee;
+  --quest-here-dim: rgba(79, 214, 238, 0.55);
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -938,6 +944,48 @@
   /* The double stroke alone still carries it — only the motion is dropped. */
   .lc-db .quest-cell.objective::after { animation: none; }
 }
+/* Where the player is standing, as detected from the dungeon page's narration
+   and walls (see src/utils/dungeonPosition.ts).
+   Drawn as ::before for the same reasons the objective ring is drawn as ::after
+   — a sprite fills ~88% of the tile and would paint over an inset shadow, and
+   giving `.quest-cell` a z-index would make it a stacking context and let a
+   neighbour's background clip the shared wall edge. The two rings coexist on a
+   tile that is both, inset differently so neither hides the other. */
+.lc-db .quest-cell.here::before,
+.lc-db .quest-cell.maybe-here::before {
+  content: '';
+  position: absolute;
+  /* Inset past the wall edges, exactly as the objective ring is, so the marker
+     never hides the walls of the cell it marks — on the tile the player is
+     standing on, which way they can go is the whole point. */
+  inset: 3px;
+  border: 3px solid var(--quest-here-ring);
+  /* Dark stroke outside the bright one, so the ring holds its contrast over a
+     pale sprite as well as a dark tile. */
+  box-shadow: inset 0 0 0 2px var(--quest-item-edge);
+  /* Above the objective ring (5): if a cell is both, where the player *is* is
+     the more urgent fact. Below the badges (6) so the pin stays readable. */
+  z-index: 5;
+  pointer-events: none;
+}
+/* One of several candidates the narration could not separate. Dashed and dimmed
+   so it reads as "possibly", and unanimated so it never competes with a
+   confident position for attention. */
+.lc-db .quest-cell.maybe-here::before {
+  border-style: dashed;
+  border-color: var(--quest-here-dim);
+  box-shadow: none;
+}
+.lc-db .quest-cell.here::before { animation: lc-here-pulse 1.4s ease-in-out infinite; }
+@keyframes lc-here-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The ring and the pin badge carry it without the motion. */
+  .lc-db .quest-cell.here::before { animation: none; }
+}
+.lc-db .quest-badge.here { background: var(--quest-here-ring); color: var(--quest-void); }
 .lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
 /* --hit is set inline per cell from the hovered door's lock colour
    (QuestGrid); --quest-key-glow is the fallback if that is ever absent. */
