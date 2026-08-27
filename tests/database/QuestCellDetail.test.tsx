@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { QuestCellDetail } from '@/database/quests/QuestCellDetail';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { QuestCell, Edge } from '@/shared/data';
+import { CLEARED_LABEL } from '@/database/quests/questMeta';
 
 const openEdges = (): Record<'N'|'E'|'S'|'W', Edge> => ({
   N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' },
@@ -86,10 +87,16 @@ describe('QuestCellDetail', () => {
     expect(onToggle).toHaveBeenCalledWith(target);
   });
 
+  // The label says what the click does — `Visszavonás`, exactly, not the grid's
+  // state word with the action appended to it (`teljesítve — Visszavonás`).
+  // `CLEARED_LABEL` stays the state vocabulary, on the tooltip.
   it('offers to undo it when the cell is already cleared', () => {
     render(<QuestCellDetail cell={cell({ row: 2, col: 3 })} monsters={monsters}
       onJumpToMonster={() => {}} cleared onToggleCleared={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /Visszavonás/ })).toBeTruthy();
+
+    const button = screen.getByRole('button', { name: 'Visszavonás' });
+    expect(button.textContent).toBe('Visszavonás');
+    expect(button.getAttribute('title')).toBe(CLEARED_LABEL);
   });
 
   it('omits the toggle when no handler is supplied (standalone read-only use)', () => {

@@ -54,9 +54,12 @@ export function QuestCellDetail(props: QuestCellDetailProps): VNode {
           type="button"
           class={`quest-clear-toggle${cleared ? ' active' : ''}`}
           aria-pressed={cleared === true}
+          // The grid's own vocabulary for the state, kept as the tooltip while
+          // the label says what the click does.
+          title={cleared ? CLEARED_LABEL : undefined}
           onClick={() => onToggleCleared(cell)}
         >
-          {cleared ? `${CLEARED_LABEL} — Visszavonás` : 'Teljesítve'}
+          {cleared ? 'Visszavonás' : 'Teljesítve'}
         </button>
       )}
 
