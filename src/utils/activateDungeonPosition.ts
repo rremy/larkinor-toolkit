@@ -6,14 +6,11 @@
 // and the same reasons, as `activateQuestOffer`.
 
 import type { DataLoader, Quest, QuestSet } from '@/shared/data';
-import { QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey, type ReadPref, type WritePref } from '@/shared/prefKeys';
 import { serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import { locateDungeonPosition, type SideObservations } from './dungeonPosition';
 
-/** Writes one preference. In the userscript this is `setPref` (GM-backed). */
-export type WritePref = (key: string, value: string) => void;
-/** Reads one preference. In the userscript this is `getPref` (GM-backed). */
-export type ReadPref = (key: string) => string | null;
+export type { ReadPref, WritePref } from '@/shared/prefKeys';
 
 function isQuestSet(value: string | null): value is QuestSet {
   return value === 'royal' || value === 'tavern';

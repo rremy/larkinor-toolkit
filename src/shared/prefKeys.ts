@@ -75,3 +75,20 @@ export const LOADOUT_PREF_KEY = 'lc-loadout';
  * selection move when the *active* quest changes and stay put otherwise.
  */
 export const ACTIVE_ROYAL_QUEST_PREF_KEY = 'lc-quest-active-royal';
+
+/**
+ * PrefStore key holding one quest's cleared cells (see `questCleared.ts`).
+ *
+ * One key per quest rather than a single blob: a quest holds at most ~150
+ * cells so each value stays small, resetting a quest is a single write, and no
+ * write ever has to merge against another quest's progress. Only quests
+ * actually walked get a key.
+ */
+export function questClearedKey(set: QuestSet, questId: string): string {
+  return `lc-quest-cleared-${set}-${questId}`;
+}
+
+/** Writes one preference. In the userscript this is `setPref` (GM-backed). */
+export type WritePref = (key: string, value: string) => void;
+/** Reads one preference. In the userscript this is `getPref` (GM-backed). */
+export type ReadPref = (key: string) => string | null;
