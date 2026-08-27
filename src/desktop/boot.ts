@@ -20,7 +20,7 @@ import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
-import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
+import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
@@ -300,7 +300,14 @@ export function bootDesktop(doc: Document): void {
       getPref,
       setPref,
     ).catch((err) => console.warn('[Larkinor UI] Dungeon position failed:', err));
-  } else if (pageType !== PageType.Battle) {
+  } else if (pageType === PageType.Battle) {
+    // A fight is the game's answer to stepping onto a live monster, so the step
+    // already happened and the fight is in the destination cell. Carrying the
+    // position here — rather than leaving the step pending — is what lets the
+    // page after the kill mark the tile: that page carries no narration at all,
+    // so it could never confirm a movement.
+    advancePositionThroughBattle(getPref, setPref);
+  } else {
     // Every other page forgets the position — a marker that outlives the visit
     // reads exactly like a live one. A **battle** is the exception: it happens
     // *in* the labyrinth cell the player is standing in, and clearing there

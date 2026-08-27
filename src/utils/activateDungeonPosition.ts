@@ -235,6 +235,48 @@ function recordClearedCells(
 }
 
 /**
+ * Carry the stored position into the cell a fight is happening in, and spend the
+ * step that led there.
+ *
+ * Called on **battle** pages. Stepping onto a field that holds a live monster
+ * makes the creature attack, so the game answers a direction click with a battle
+ * page: the step *did* happen, and the fight is in the destination cell. Leaving
+ * the step pending instead — which is what the first version did — made the page
+ * after the kill resolve as `'move'`, and a `'move'` position needs the page to
+ * confirm the movement. Measured live on 2026-08-27: the page after a kill
+ * carries **no narration at all**, so it can confirm nothing, and the tile the
+ * creature died on stayed unmarked. Consuming the step here turns that page into
+ * a plain `'stay'`, which the underfoot rule can act on.
+ *
+ * Deliberately arithmetic, with no quest data and no validation: a battle page
+ * draws none of the cell's sides, so there is nothing to check the target
+ * against. The next dungeon page validates it — `stayCells` drops a remembered
+ * cell whose walls no longer agree — which also covers a flee that puts the
+ * player somewhere else.
+ *
+ * A fight with no step pending needs nothing done: it started where the player
+ * already stood.
+ */
+export function advancePositionThroughBattle(readPref: ReadPref, writePref: WritePref): void {
+  try {
+    const move = takePendingMove(readPref, writePref);
+    if (!move) return;
+
+    const previous = parseQuestPosition(readPref(QUEST_POSITION_PREF_KEY));
+    if (!previous) return;
+
+    const delta = NEIGHBOUR[move];
+    writePref(QUEST_POSITION_PREF_KEY, serialiseQuestPosition({
+      ...previous,
+      cells: previous.cells.map((c) => ({ row: c.row + delta.row, col: c.col + delta.col })),
+      source: 'move',
+    }));
+  } catch (err) {
+    console.warn('[Larkinor UI] Dungeon position: could not carry the position through a fight:', err);
+  }
+}
+
+/**
  * Forget any stored position.
  *
  * Called from every page that is not a dungeon, which is what keeps the marker

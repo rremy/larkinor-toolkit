@@ -310,9 +310,15 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
         The drawn walls are still the guard — fleeing a fight may relocate the player, and a
         remembered cell the page contradicts is dropped rather than asserted.
       - **A battle page (`otHarc`) is the one non-dungeon page that must NOT clear the stored
-        position.** A fight happens *in* the cell; clearing there broke the chain across every
-        fight, which is precisely the moment a monster stops being alive and its tile becomes
-        clearable. Every other page still forgets the position.
+        position** — it must *advance* it. A fight is the game's answer to stepping onto a live
+        monster, so the step already happened and the fight is in the destination cell:
+        `advancePositionThroughBattle` applies the pending step arithmetically (a battle page
+        draws no sides to validate against; the next dungeon page's `stayCells` validates it,
+        which also covers a flee) and **spends** the step. Leaving it pending instead made the
+        page after a kill resolve as `'move'`, and `'move'` needs the page to confirm the
+        movement — while that page, measured live, carries **no narration at all**
+        (`"\n\n\n"`), so the tile the creature died on stayed unmarked. Every other page still
+        forgets the position.
       Together these are what make the auto-clear reachable at all: `source === 'stay'` is
       admitted alongside `'narration'` for that reason.
       - **A `'move'` position may clear too, but only when the page confirms the step**

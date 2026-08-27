@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { bootDesktop } from '../src/desktop/boot';
-import { ACTIVE_ROYAL_QUEST_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '../src/shared/prefKeys';
+import { ACTIVE_ROYAL_QUEST_PREF_KEY, QUEST_MOVE_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '../src/shared/prefKeys';
+import { parseQuestPosition, serialiseQuestPosition } from '../src/shared/questPosition';
 
 const GAME_URL = 'https://l2.larkinor.hu/cgi-bin/larkinor';
 
@@ -77,6 +78,28 @@ describe('bootDesktop and the position across a fight', () => {
   it('keeps the stored position on a battle page', () => {
     bootDesktop(battleDoc());
     expect(GM_setValue).not.toHaveBeenCalledWith(QUEST_POSITION_PREF_KEY, '');
+  });
+
+  // The step that started the fight is spent there, so the page after the kill —
+  // which carries no narration at all — resolves as a plain held position.
+  it('carries the position through the fight and spends the pending step', () => {
+    const store = new Map<string, string>([
+      [QUEST_POSITION_PREF_KEY, serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'narration',
+      })],
+      [QUEST_MOVE_PREF_KEY, 'W'],
+    ]);
+    vi.mocked(GM_getValue).mockImplementation(((key: string, fallback: string) =>
+      store.get(key) ?? fallback) as unknown as typeof GM_getValue);
+    vi.mocked(GM_setValue).mockImplementation(((key: string, value: string) => {
+      store.set(key, value);
+    }) as unknown as typeof GM_setValue);
+
+    bootDesktop(battleDoc());
+
+    expect(parseQuestPosition(store.get(QUEST_POSITION_PREF_KEY)!)?.cells)
+      .toEqual([{ row: 9, col: 2 }]);
+    expect(store.get(QUEST_MOVE_PREF_KEY)).toBe('');
   });
 
   it('still forgets it on an ordinary page', () => {

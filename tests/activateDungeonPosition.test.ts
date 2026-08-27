@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { activateDungeonPosition, clearDungeonPosition } from '../src/utils/activateDungeonPosition';
+import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '../src/utils/activateDungeonPosition';
 import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   QUEST_MOVE_PREF_KEY,
@@ -576,6 +576,87 @@ describe('activateDungeonPosition', () => {
 
     expect(position?.exact).toBe(false);
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '16')) ?? null)).toEqual(new Set());
+  });
+});
+
+/**
+ * The battle page, and the page that follows a kill.
+ *
+ * Measured live on 2026-08-27: stepping west from quest 39's (9,3) into the
+ * "600 éves vámpír" at (9,2) started a fight, and the page after winning was a
+ * dungeon page with a **completely empty narration** (`"\n\n\n"`). The step
+ * that started the fight was still pending, so the position resolved as
+ * `'move'` — and `'move'` needs the page to confirm the movement, which an empty
+ * narration cannot. The tile stayed unmarked even though the kill had just
+ * happened on it.
+ */
+describe('advancePositionThroughBattle', () => {
+  it('carries the position into the cell the fight is in, and spends the step', () => {
+    const prefs = makePrefs({
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'narration',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'W',
+    });
+
+    advancePositionThroughBattle(prefs.read, prefs.write);
+
+    expect(parseQuestPosition(prefs.stored.get(QUEST_POSITION_PREF_KEY)!)).toEqual({
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 2 }], exact: true, source: 'move',
+    });
+    // Spent here, so the page after the fight does not replay it.
+    expect(prefs.stored.get(QUEST_MOVE_PREF_KEY)).toBe('');
+  });
+
+  // A fight can also start where the player already stands; then there is
+  // nothing to carry and the remembered cell is already right.
+  it('leaves the position alone when no step is pending', () => {
+    const stored = serialiseQuestPosition({
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'narration',
+    });
+    const prefs = makePrefs({ [QUEST_POSITION_PREF_KEY]: stored });
+
+    advancePositionThroughBattle(prefs.read, prefs.write);
+
+    expect(prefs.stored.get(QUEST_POSITION_PREF_KEY)).toBe(stored);
+  });
+
+  it('does nothing, and throws nothing, with no stored position', () => {
+    const prefs = makePrefs({ [QUEST_MOVE_PREF_KEY]: 'W' });
+    expect(() => advancePositionThroughBattle(prefs.read, prefs.write)).not.toThrow();
+    expect(parseQuestPosition(prefs.stored.get(QUEST_POSITION_PREF_KEY) ?? null)).toBeNull();
+  });
+
+  /**
+   * The whole sequence, end to end: the step is spent on the battle page, so the
+   * page after the kill has no pending move, holds the position it was handed,
+   * and the underfoot rule marks the creature dead — with no narration at all to
+   * work from, which is what the live page actually served.
+   */
+  it('marks the tile after a kill, from a page with no narration whatsoever', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const here = quest.cells.find((c) => c.row === 9 && c.col === 2)!;
+    expect(here.monsterId).not.toBeNull();
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '39',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'narration',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'W',
+    });
+
+    advancePositionThroughBattle(prefs.read, prefs.write);      // the battle page
+    const position = await activateDungeonPosition(             // the page after it
+      '', { sides: observed(here).sides, enemySides: {}, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 2 }], exact: true, source: 'stay',
+    });
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toContain('9,2');
   });
 });
 
