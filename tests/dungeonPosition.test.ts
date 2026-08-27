@@ -496,11 +496,26 @@ describe('corpus walk rates', () => {
     ]),
   ) as SideObservations;
 
-  /** Share of steps resolved to a single cell, walking each quest once. */
-  function walkRate(quests: Quest[], useMoves: boolean): number {
+  /**
+   * Walks each quest once and reports two independent shares of its steps:
+   *
+   * - `correct`: the resolved position is unique **and** actually names the
+   *   cell the walker is standing on, in its own quest. `exact: true` alone
+   *   is not enough to credit a step — a match that is unique but wrong (a
+   *   narration collision that locks onto a *different* quest's cell) must
+   *   not count as a win, or the rate would reward confidently wrong answers
+   *   the same as correct ones.
+   * - `wrongLock`: the resolved position is unique but names the wrong cell
+   *   or the wrong quest. This is the failure `correct` alone would hide —
+   *   pinning it separately means a data refresh that grows this class of
+   *   collision fails loudly instead of vanishing into a rounding error next
+   *   to a rate near 1.00.
+   */
+  function walkRates(quests: Quest[], useMoves: boolean): { correct: number; wrongLock: number } {
     const random = rng(20260827);
     let steps = 0;
-    let exact = 0;
+    let correct = 0;
+    let wrongLock = 0;
 
     for (const quest of quests) {
       const byPosition = new Map(quest.cells.map((c) => [`${c.row},${c.col}`, c]));
@@ -514,7 +529,13 @@ describe('corpus walk rates', () => {
           useMoves ? previous : null, useMoves ? move : null,
         );
         steps += 1;
-        if (resolved?.exact) exact += 1;
+        if (resolved?.exact) {
+          const hit = resolved.questId === quest.id
+            && resolved.cells[0].row === at.row
+            && resolved.cells[0].col === at.col;
+          if (hit) correct += 1;
+          else wrongLock += 1;
+        }
         previous = resolved;
 
         const exits = (['N', 'E', 'S', 'W'] as const).filter((s) => {
@@ -529,30 +550,62 @@ describe('corpus walk rates', () => {
       }
     }
 
-    return exact / steps;
+    return { correct: correct / steps, wrongLock: wrongLock / steps };
   }
 
-  // 93% of steps resolve to a single cell from the narration and sides alone
-  // (`sidesOf` is passed on every call, tracked or not); knowing the step
-  // taken closes nearly all of the remaining gap, to 100%.
+  // 92.6% (rounds to 0.93) of steps resolve, correctly and uniquely, from the
+  // narration and sides alone (`sidesOf` is passed on every call, tracked or
+  // not — this is the walk-level analogue of the *with-sides* per-page rate,
+  // 90.5%, not the narration-only 78.1%). Knowing the step taken closes
+  // nearly all of the remaining gap — measured at 99.56% correct-and-unique,
+  // which rounds to the `1` pinned below — but not literally all of it: a
+  // small share of steps lock onto a unique cell in the *wrong* quest (see
+  // the wrong-lock rate pinned separately, next).
   it('pins how much the step adds on a royal walk', () => {
-    const withoutMoves = walkRate(royal, false);
-    const withMoves = walkRate(royal, true);
-    expect(withoutMoves).toBeCloseTo(0.93, 2);
-    expect(withMoves).toBeCloseTo(1, 2);
-    expect(withMoves).toBeGreaterThan(withoutMoves);
+    const withoutMoves = walkRates(royal, false);
+    const withMoves = walkRates(royal, true);
+    expect(withoutMoves.correct).toBeCloseTo(0.93, 2);
+    expect(withMoves.correct).toBeCloseTo(1, 2);
+    expect(withMoves.correct).toBeGreaterThan(withoutMoves.correct);
   });
 
-  // 83% of steps resolve without the step taken, 100% with it — a bigger gap
-  // than the royal walk, even though the tavern's per-page rates (98.4%/99.2%)
-  // are higher than royal's: this walk revisits cells at different frequencies
-  // than the per-page measurement, so the two numbers are not directly
-  // comparable across quest sets.
+  // A step can also *lock onto the wrong cell*: `resolveDungeonPosition`
+  // searches the whole corpus for a narration match, so a wall-consistent
+  // phrase that happens to be unique in some *other* quest can win outright
+  // even though the walker's own quest still reads as ambiguous. Pinned
+  // separately from `correct` above so growth in this class of collision
+  // fails loudly rather than hiding inside a rounded 1.00 — measured at 0.28%
+  // without the step and 0.33% with it, both of which round to the `0`
+  // pinned below, but a materially larger rate would not.
+  it('pins the wrong-lock rate on a royal walk', () => {
+    const withoutMoves = walkRates(royal, false);
+    const withMoves = walkRates(royal, true);
+    expect(withoutMoves.wrongLock).toBeCloseTo(0, 2);
+    expect(withMoves.wrongLock).toBeCloseTo(0, 2);
+  });
+
+  // 82.6% of steps resolve correctly without the step taken, 99.9% with it —
+  // a bigger gap than the royal walk, even though the tavern's per-page rates
+  // (98.4%/99.2%) are higher than royal's: this walk revisits cells at
+  // different frequencies than the per-page measurement (and, again,
+  // `withoutMoves` here is the with-sides analogue, 99.2%, not the
+  // narration-only 98.4%), so the two are not directly comparable.
   it('pins the tavern walk', () => {
-    const withoutMoves = walkRate(tavern, false);
-    const withMoves = walkRate(tavern, true);
-    expect(withoutMoves).toBeCloseTo(0.83, 2);
-    expect(withMoves).toBeCloseTo(1, 2);
-    expect(withMoves).toBeGreaterThanOrEqual(withoutMoves);
+    const withoutMoves = walkRates(tavern, false);
+    const withMoves = walkRates(tavern, true);
+    expect(withoutMoves.correct).toBeCloseTo(0.83, 2);
+    expect(withMoves.correct).toBeCloseTo(1, 2);
+    expect(withMoves.correct).toBeGreaterThanOrEqual(withoutMoves.correct);
+  });
+
+  // The tavern corpus has no cross-quest collision at all on this walk (0 of
+  // 1480 steps either way) — its narrations are near-unique to begin with
+  // (see the per-page rates, 98.4%/99.2%), leaving little room for one
+  // quest's wording to also match another's uniquely.
+  it('pins the wrong-lock rate on a tavern walk', () => {
+    const withoutMoves = walkRates(tavern, false);
+    const withMoves = walkRates(tavern, true);
+    expect(withoutMoves.wrongLock).toBeCloseTo(0, 2);
+    expect(withMoves.wrongLock).toBeCloseTo(0, 2);
   });
 });
