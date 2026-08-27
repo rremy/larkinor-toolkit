@@ -340,7 +340,15 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     clears the position, so within a chain of consecutive dungeon pages the quest cannot change
     and is proven rather than guessed. That inversion was measured: it took the royal walk's
     wrong-lock rate from 6 of 1800 steps to 0, and those collisions cascade — a wrong lock
-    corrupts the next step's propagation too. Where the step and the narration agree, or are
+    corrupts the next step's propagation too. **That fix reaches only the tracked-move path,
+    not the failure mode itself.** The very first narrated dungeon page of every labyrinth
+    visit — the routine case every time a player walks in — has no previous position and no
+    step to give `resolveDungeonPosition`, so it runs as `locateDungeonPosition` alone, exactly
+    the `withoutMoves` path pinned in `tests/dungeonPosition.test.ts`, and that still measures
+    ≈0.28% (5 of 1800) confidently-wrong cross-quest locks on the royal set, unmoved by this
+    rule because the rule has nothing to invert on that page. Landing on one of those can
+    silently mis-write `lc-quest-selected-<set>` and, if the wrong lock also happens to be
+    exact, a cleared-tile mark. Where the step and the narration agree, or are
     both ambiguous, they intersect, which is what collapses candidate sets a single page cannot
     separate alone; where the page prints nothing, the step is all there is. Rates are pinned in
     `tests/dungeonPosition.test.ts` — per-page (78.1%/90.5% royal, 98.4%/99.2% tavern, over
