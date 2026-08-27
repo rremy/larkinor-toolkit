@@ -240,16 +240,33 @@ export function propagatePosition(
  *
  * Order of authority, and why:
  *
- * 1. **An exact narration match wins outright.** A click on a direction is not
- *    proof of a move — a locked door in a maze is drawn *and* offered, and
- *    clicking it without the key leaves the player where they were. The
- *    narration then still describes the old cell, so believing the page is what
- *    keeps the marker honest. A disagreement drops the chain rather than
- *    averaging two incompatible answers.
- * 2. **They intersect when both are ambiguous or agree**, which is where the
- *    tracking earns its keep: a step filtered by the drawn walls routinely
- *    collapses several candidates to one.
- * 3. **Either fills in for the other's silence.** Roughly a quarter of cells
+ * 1. **An exact narration match in the *same* quest wins outright.** A click
+ *    on a direction is not proof of a move — a locked door in a maze is drawn
+ *    *and* offered, and clicking it without the key leaves the player where
+ *    they were. The narration then still describes the old cell, so
+ *    believing the page is what keeps the marker honest. A disagreement
+ *    drops the chain rather than averaging two incompatible answers.
+ * 2. **A step confirmed within the previous exact quest beats an exact
+ *    narration match found in a *different* quest.** Within a chain of
+ *    consecutive dungeon pages the quest cannot change: reaching a different
+ *    labyrinth means walking through a non-dungeon page first, and every
+ *    non-dungeon page clears the stored position (see
+ *    `clearDungeonPosition`), so a stored `previous` position always belongs
+ *    to the maze the player is still standing in. If that `previous` was
+ *    itself exact and the step propagates to a cell inside its own quest,
+ *    that quest is proven, not merely guessed — so an exact narration hit
+ *    turned up *elsewhere* in the corpus is a coincidence of wording, not
+ *    evidence: `locateDungeonPosition` searches the whole corpus, so an
+ *    unrelated quest's phrasing can happen to be unique even while the
+ *    walker's own quest still reads as ambiguous (measured on the committed
+ *    corpus in `tests/dungeonPosition.test.ts`'s wrong-lock rate). An
+ *    *ambiguous* `previous` carries no such proof — it has not yet pinned
+ *    down which maze the player is in — so this rule applies only when it
+ *    was exact.
+ * 3. **They intersect when both are ambiguous or agree, within the same
+ *    quest**, which is where the tracking earns its keep: a step filtered by
+ *    the drawn walls routinely collapses several candidates to one.
+ * 4. **Either fills in for the other's silence.** Roughly a quarter of cells
  *    print no text at all, and that is exactly where a step is the only thing
  *    that knows anything.
  */
@@ -280,8 +297,13 @@ export function resolveDungeonPosition(
   };
 
   if (!detected) return walked;
-  // A step out of one maze cannot narrow a match in another.
-  if (detected.set !== walked.set || detected.questId !== walked.questId) return detected;
+  if (detected.set !== walked.set || detected.questId !== walked.questId) {
+    // Rule 2 above: a step confirmed within the quest `previous` was
+    // exactly in outranks an exact narration match that only turned up in a
+    // different quest. An ambiguous `previous` gets no such benefit — the
+    // match elsewhere in the corpus is all either signal has to go on.
+    return previous.exact ? walked : detected;
+  }
 
   const both = walked.cells.filter((c) =>
     detected.cells.some((d) => d.row === c.row && d.col === c.col));

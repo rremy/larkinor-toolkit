@@ -412,6 +412,11 @@ describe('resolveDungeonPosition', () => {
   // detected;` and never reaches this rule at all. (9,8) steps north cleanly
   // to (8,8), a real corridor the data agrees with even under `OBSERVED_AT_0_6`
   // — it is simply the wrong cell once the narration is consulted.
+  //
+  // This is the **same-quest** counterpart of rule 2 in the doc comment
+  // above: `detected` and `walked` both name quest 35 here, so the
+  // cross-quest guard never engages and the narration keeps outranking the
+  // step exactly as before the fix below.
   it('believes the narration when the step disagrees, and drops the chain', () => {
     const resolved = resolveDungeonPosition(
       RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35',
@@ -442,13 +447,20 @@ describe('resolveDungeonPosition', () => {
    * *is* present in `royal`, so the step actually resolves (unlike the test
    * above, which never gets past the `!quest` guard). Quest 24's (8,7) steps
    * north to (7,7) — the very coordinate quest 16's ambiguous dead-end match
-   * also names, purely by coincidence of numbering. Only the `set`/`questId`
-   * guard stops that coincidence from being read as agreement: without it, the
-   * quest-24 step would "confirm" one of quest 16's candidates and the result
-   * would wrongly claim to be standing in quest 24 at (7,7), narrowed and
-   * marked exact, instead of quest 16's genuine (still ambiguous) match.
+   * also names, purely by coincidence of numbering.
+   *
+   * This used to be the test for a `set`/`questId` guard that refused the step
+   * outright on any cross-quest mismatch. That guard was too strong: it also
+   * discarded a step whose *own* quest was proven — see rule 2 in the doc
+   * comment on `resolveDungeonPosition`, which the corpus walk in
+   * `describe('corpus walk rates', ...)` showed producing 6 wrong-quest locks
+   * in 1800 royal steps. Here `previous` is exact and the step to (7,7)
+   * succeeds inside quest 24 itself, so quest 24 is proven — a non-dungeon
+   * page would have cleared the stored position before any other maze could
+   * be reached — and quest 16's same-numbered match is rightly read as the
+   * coincidence it is.
    */
-  it('refuses to let a step from a different quest of the same set narrow the match', () => {
+  it('lets a step confirmed within the previous exact quest win over a match named elsewhere', () => {
     const quest24 = royal.find((q) => q.id === '24')!;
     expect(quest24.cells.find((c) => c.row === 8 && c.col === 7)?.edges.N.kind).not.toBe('wall');
     expect(quest16.cells.find((c) => c.row === 7 && c.col === 7)).toBeDefined();
@@ -459,10 +471,82 @@ describe('resolveDungeonPosition', () => {
     const resolved = resolveDungeonPosition(DEAD_END_NARRATION, {}, royal, '16', previous, 'N');
     expect(resolved).toEqual({
       set: 'royal',
+      questId: '24',
+      cells: [{ row: 7, col: 7 }],
+      exact: true,
+      source: 'move',
+    });
+  });
+
+  // An *ambiguous* `previous` gets none of rule 2's benefit: it has not yet
+  // proven which maze the player is in, so a step from it cannot outrank a
+  // narration match elsewhere either. Quest 16's own dead-end match stays
+  // ambiguous (not exact) here on purpose — `resolved` must still be the
+  // `detected` narration result, not `walked`, because `previous.exact` is
+  // false.
+  it('gives an ambiguous previous position no cross-quest precedence', () => {
+    const previous: QuestPosition = {
+      set: 'royal', questId: '24', cells: [{ row: 8, col: 7 }, { row: 8, col: 6 }], exact: false, source: 'narration',
+    };
+    const resolved = resolveDungeonPosition(DEAD_END_NARRATION, {}, royal, '16', previous, 'N');
+    expect(resolved).toEqual({
+      set: 'royal',
       questId: '16',
       cells: [{ row: 7, col: 7 }, { row: 8, col: 7 }],
       exact: false,
       source: 'narration',
+    });
+  });
+
+  /**
+   * A real collision, not a constructed one: found by instrumenting this same
+   * corpus walk before the fix. Quest 18's (4,6) prints "7 db patkányzsír",
+   * text that also happens to be `locateDungeonPosition`'s unique match for
+   * quest 42's (0,3) — that layer is untouched by the fix and still gets it
+   * wrong on narration alone, asserted below as documentation of the bug this
+   * guards against. `previous` is quest 18's (4,7), exact from an earlier
+   * step, and a west move is a real corridor there, landing on the true cell.
+   */
+  it('wins over a real cross-quest collision from the corpus (quest 18 vs quest 42)', () => {
+    const quest18 = royal.find((q) => q.id === '18')!;
+    const trueCell = quest18.cells.find((c) => c.row === 4 && c.col === 6)!;
+    const observed: SideObservations = { N: 'wall', E: 'open', S: 'wall', W: 'open' };
+
+    // The bug this guards against is real at the untouched detection layer.
+    expect(locateDungeonPosition(trueCell.narration, observed, royal, '18')).toEqual({
+      set: 'royal', questId: '42', cells: [{ row: 0, col: 3 }], exact: true, source: 'narration',
+    });
+
+    const previous: QuestPosition = {
+      set: 'royal', questId: '18', cells: [{ row: 4, col: 7 }], exact: true, source: 'move',
+    };
+    const resolved = resolveDungeonPosition(trueCell.narration, observed, royal, '18', previous, 'W');
+    expect(resolved).toEqual({
+      set: 'royal', questId: '18', cells: [{ row: 4, col: 6 }], exact: true, source: 'move',
+    });
+  });
+
+  /**
+   * A second real collision from the same instrumentation: quest 19's trap at
+   * (4,6) prints text that also uniquely matches quest 13's (3,7). `previous`
+   * is quest 19's (5,6), exact from narration, and a north move is a real
+   * corridor there, landing on the true cell.
+   */
+  it('wins over a second real cross-quest collision from the corpus (quest 19 vs quest 13)', () => {
+    const quest19 = royal.find((q) => q.id === '19')!;
+    const trueCell = quest19.cells.find((c) => c.row === 4 && c.col === 6)!;
+    const observed: SideObservations = { N: 'open', E: 'wall', S: 'open', W: 'wall' };
+
+    expect(locateDungeonPosition(trueCell.narration, observed, royal, '19')).toEqual({
+      set: 'royal', questId: '13', cells: [{ row: 3, col: 7 }], exact: true, source: 'narration',
+    });
+
+    const previous: QuestPosition = {
+      set: 'royal', questId: '19', cells: [{ row: 5, col: 6 }], exact: true, source: 'narration',
+    };
+    const resolved = resolveDungeonPosition(trueCell.narration, observed, royal, '19', previous, 'N');
+    expect(resolved).toEqual({
+      set: 'royal', questId: '19', cells: [{ row: 4, col: 6 }], exact: true, source: 'move',
     });
   });
 });
@@ -556,11 +640,13 @@ describe('corpus walk rates', () => {
   // 92.6% (rounds to 0.93) of steps resolve, correctly and uniquely, from the
   // narration and sides alone (`sidesOf` is passed on every call, tracked or
   // not — this is the walk-level analogue of the *with-sides* per-page rate,
-  // 90.5%, not the narration-only 78.1%). Knowing the step taken closes
-  // nearly all of the remaining gap — measured at 99.56% correct-and-unique,
-  // which rounds to the `1` pinned below — but not literally all of it: a
-  // small share of steps lock onto a unique cell in the *wrong* quest (see
-  // the wrong-lock rate pinned separately, next).
+  // 90.5%, not the narration-only 78.1%). `withoutMoves` never has a
+  // `previous`/`move` to give `resolveDungeonPosition`, so it exercises only
+  // `locateDungeonPosition` and is unaffected by the cross-quest precedence
+  // rule below — the fix is purely about what a *step* is allowed to do.
+  // Knowing the step taken closes nearly all of the remaining gap — measured
+  // at 99.94% correct-and-unique (1799 of 1800 steps), which rounds to the
+  // `1` pinned below.
   it('pins how much the step adds on a royal walk', () => {
     const withoutMoves = walkRates(royal, false);
     const withMoves = walkRates(royal, true);
@@ -571,12 +657,16 @@ describe('corpus walk rates', () => {
 
   // A step can also *lock onto the wrong cell*: `resolveDungeonPosition`
   // searches the whole corpus for a narration match, so a wall-consistent
-  // phrase that happens to be unique in some *other* quest can win outright
-  // even though the walker's own quest still reads as ambiguous. Pinned
-  // separately from `correct` above so growth in this class of collision
-  // fails loudly rather than hiding inside a rounded 1.00 — measured at 0.28%
-  // without the step and 0.33% with it, both of which round to the `0`
-  // pinned below, but a materially larger rate would not.
+  // phrase that happens to be unique in some *other* quest could in
+  // principle win outright even though the walker's own quest still reads as
+  // ambiguous. Before the cross-quest precedence rule in
+  // `resolveDungeonPosition` (rule 2 in its doc comment), this walk actually
+  // hit that failure mode — 0.28% of steps without the tracked move, 0.33%
+  // with it (6 of 1800), both rounding to the `0` pinned below only by
+  // accident of scale. With the rule in place the *measured* rate on this
+  // corpus is exactly 0 either way; pinned as its own assertion — rather than
+  // folded into `correct` above — so a future collision fails loudly instead
+  // of hiding inside a rounded 1.00.
   it('pins the wrong-lock rate on a royal walk', () => {
     const withoutMoves = walkRates(royal, false);
     const withMoves = walkRates(royal, true);
