@@ -593,9 +593,17 @@ describe('corpus walk rates', () => {
    *   or the wrong quest. This is the failure `correct` alone would hide —
    *   pinning it separately means a data refresh that grows this class of
    *   collision fails loudly instead of vanishing into a rounding error next
-   *   to a rate near 1.00.
+   *   to a rate near 1.00. `wrongLockCount` carries the same failure as a raw
+   *   count rather than a share of ~1800 steps, because at that sample size a
+   *   single collision (≈0.06%) still rounds to 0.00 at `toBeCloseTo`'s
+   *   two-decimal precision — a regression test on the path the cross-quest
+   *   precedence rule actually reaches (`useMoves: true`) needs the count to
+   *   fail on one bad lock rather than average it away.
    */
-  function walkRates(quests: Quest[], useMoves: boolean): { correct: number; wrongLock: number } {
+  function walkRates(
+    quests: Quest[],
+    useMoves: boolean,
+  ): { correct: number; wrongLock: number; wrongLockCount: number } {
     const random = rng(20260827);
     let steps = 0;
     let correct = 0;
@@ -634,7 +642,7 @@ describe('corpus walk rates', () => {
       }
     }
 
-    return { correct: correct / steps, wrongLock: wrongLock / steps };
+    return { correct: correct / steps, wrongLock: wrongLock / steps, wrongLockCount: wrongLock };
   }
 
   // 92.6% (rounds to 0.93) of steps resolve, correctly and uniquely, from the
@@ -661,17 +669,21 @@ describe('corpus walk rates', () => {
   // principle win outright even though the walker's own quest still reads as
   // ambiguous. Before the cross-quest precedence rule in
   // `resolveDungeonPosition` (rule 2 in its doc comment), this walk actually
-  // hit that failure mode — 0.28% of steps without the tracked move, 0.33%
-  // with it (6 of 1800), both rounding to the `0` pinned below only by
-  // accident of scale. With the rule in place the *measured* rate on this
-  // corpus is exactly 0 either way; pinned as its own assertion — rather than
-  // folded into `correct` above — so a future collision fails loudly instead
-  // of hiding inside a rounded 1.00.
+  // hit that failure mode — 0.28% of steps without the tracked move (5 of
+  // 1800), 0.33% with it (6 of 1800) — both rounding to the `0` a
+  // `toBeCloseTo(0, 2)` assertion would check only by accident of scale, so
+  // that assertion could never fail on a single future wrong lock (≈0.06%).
+  // The rule only reaches the `useMoves: true` path — `withoutMoves` never
+  // gives `resolveDungeonPosition` a previous position or step to apply it
+  // to — so it is `withMoves` alone that the rule drives to exactly 0, and
+  // only `withMoves` gets the strict count gate below; `withoutMoves` keeps
+  // the tolerant check since its small measured rate (5 of 1800, unaffected
+  // by the fix) was never the invariant this rule proves.
   it('pins the wrong-lock rate on a royal walk', () => {
     const withoutMoves = walkRates(royal, false);
     const withMoves = walkRates(royal, true);
     expect(withoutMoves.wrongLock).toBeCloseTo(0, 2);
-    expect(withMoves.wrongLock).toBeCloseTo(0, 2);
+    expect(withMoves.wrongLockCount).toBe(0);
   });
 
   // 82.6% of steps resolve correctly without the step taken, 99.9% with it —
@@ -691,11 +703,13 @@ describe('corpus walk rates', () => {
   // The tavern corpus has no cross-quest collision at all on this walk (0 of
   // 1480 steps either way) — its narrations are near-unique to begin with
   // (see the per-page rates, 98.4%/99.2%), leaving little room for one
-  // quest's wording to also match another's uniquely.
+  // quest's wording to also match another's uniquely. Unlike the royal walk,
+  // that 0 holds on *both* branches — `withoutMoves` never trips the
+  // collision the royal corpus does — so both get the strict count gate.
   it('pins the wrong-lock rate on a tavern walk', () => {
     const withoutMoves = walkRates(tavern, false);
     const withMoves = walkRates(tavern, true);
-    expect(withoutMoves.wrongLock).toBeCloseTo(0, 2);
-    expect(withMoves.wrongLock).toBeCloseTo(0, 2);
+    expect(withoutMoves.wrongLockCount).toBe(0);
+    expect(withMoves.wrongLockCount).toBe(0);
   });
 });
