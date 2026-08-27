@@ -133,15 +133,31 @@ describe('activateDungeonPosition', () => {
     expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), expect.anything());
   });
 
-  it('survives the quest data being unavailable', async () => {
-    const prefs = makePrefs();
+  // A failed fetch must also *forget* where the player was. The pending step is
+  // consumed before the load is attempted, so the chain is already broken: were
+  // the previous cell left standing, the next page would propagate from a
+  // two-page-old position in the direction of the step after the one that
+  // reached it — and, if the walls happened to agree, report a cell the player
+  // has never visited as exact. This test used to pin the opposite (that
+  // nothing was written at all).
+  it('forgets the previous position when the quest data is unavailable', async () => {
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'narration',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'S',
+    });
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const loader = makeLoader({ loadQuests: async () => { throw new Error('offline'); } });
 
     await expect(
       activateDungeonPosition(RESTED_AT_0_6, observed(), loader, prefs.read, prefs.write),
     ).resolves.toBeNull();
-    expect(prefs.write).not.toHaveBeenCalled();
+    expect(prefs.write).toHaveBeenCalledWith(QUEST_POSITION_PREF_KEY, '');
+    expect(parseQuestPosition(prefs.stored.get(QUEST_POSITION_PREF_KEY)!)).toBeNull();
+    // Never a quest selection: nothing was detected to justify moving it.
+    expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), expect.anything());
     warn.mockRestore();
   });
 

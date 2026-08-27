@@ -48,7 +48,9 @@ function isQuestSet(value: string | null): value is QuestSet {
  *
  * Clears the stored position whenever nothing matches, which is a routine
  * outcome (about a quarter of cells print no text). A stale marker is worse than
- * no marker: it looks exactly like a live one.
+ * no marker: it looks exactly like a live one. The same goes for a quest-data
+ * fetch that fails: the pending step has been consumed by then, so the chain
+ * cannot be continued and the position it started from must not survive.
  *
  * Failures are swallowed. A position that cannot be detected is a missed
  * convenience, never a reason to break the page.
@@ -73,6 +75,12 @@ export async function activateDungeonPosition(
     quests = set === 'tavern' ? await loader.loadTavernQuests() : await loader.loadQuests();
   } catch (err) {
     console.warn('[Larkinor UI] Dungeon position: quest data unavailable:', err);
+    // The pending move was consumed above, so the chain is already broken:
+    // leaving the previous cell standing would let the *next* page propagate
+    // from a two-page-old position, in the direction of the step after the one
+    // that reached it — and report a cell the player has never been in as
+    // exact. A broken chain restarts rather than silently continuing.
+    clearDungeonPosition(writePref);
     return null;
   }
 
