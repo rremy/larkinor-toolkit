@@ -124,7 +124,7 @@ export async function activateDungeonPosition(
 
   // Only a position the page's own words pinned may write a permanent mark —
   // `exact` alone is not the gate, because a propagated step is exact too.
-  if (position?.exact && position.source === 'narration') {
+  if (position?.exact && (position.source === 'narration' || position.source === 'stay')) {
     recordClearedCell(position, quests, observation, readPref, writePref);
   }
 
@@ -135,19 +135,27 @@ export async function activateDungeonPosition(
  * Mark the cell the player is standing on as cleared, when the page proves its
  * work is done.
  *
- * Only ever called for an **exact** position the *narration* pinned: a mark on
- * the wrong cell is worse than no mark, an ambiguous match has no single cell to
- * credit, and a mark is permanent, so only the page's own account of where the
- * player is may justify one.
+ * Only ever called for an **exact** position that the page itself accounts for:
+ * one the narration pinned, or one *held over* because the player took no step
+ * (`source === 'stay'`). A mark on the wrong cell is worse than no mark, an
+ * ambiguous match has no single cell to credit, and a mark is permanent.
  *
  * `exact` stopped implying "the page said so" the moment movement tracking
- * landed: a propagated step is exact whenever the walls leave one candidate.
- * Trusting that here would mark cells nobody visited — the game refuses a move,
+ * landed: a **propagated step** is exact whenever the walls leave one candidate,
+ * and trusting that would mark cells nobody visited — the game refuses a move,
  * the cell the player is still standing in prints nothing (about a quarter do),
  * the prediction wins, and the monster on the *predicted* cell is recorded as
- * killed. That includes the trap rule, which loses almost nothing by it: a
- * sprung trap prints text, and a false trap mark would be as permanent as any
- * other.
+ * killed. So `'move'` stays excluded, and `'entrance'`, a class inference, with
+ * it.
+ *
+ * `'stay'` is admitted because excluding it made this whole feature
+ * unreachable, not as a convenience. Measured live: the game **never reprints a
+ * cell's text on re-entry** (royal quest 39, cell (9,5), after its monster was
+ * killed, printed only `"Továbbjöttél északra."`), and a battle page used to
+ * clear the stored position outright — so the one page that proves a kill could
+ * name neither its cell nor its own history. A held position is strong evidence
+ * in its own right: no direction was clicked, so the player cannot have moved,
+ * and `stayCells` drops the cell anyway if the drawn walls no longer agree.
  *
  * Three rules, each comparing the page against the data:
  *

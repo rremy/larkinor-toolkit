@@ -281,6 +281,26 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       no text at all, so detecting nothing is routine — and must **clear** the stored
       position rather than leave the previous cell's marker standing, which would read
       exactly like a live one.
+    - **The game never reprints a cell's text when you re-enter it, so most pages inside a
+      labyrinth cannot name their own cell.** Measured live on 2026-08-27: standing on royal
+      quest 39's cell (9,5) — the `800 éves vámpír` tile, its monster already killed — the
+      page printed only `Továbbjöttél északra.` and none of the cell's recorded description.
+      Two consequences, both load-bearing:
+      - **A page with no pending step holds the remembered cell** (`stayCells`): you cannot
+        leave a cell without clicking a direction, so a rest, a fight or an answered question
+        leaves you where you were. Implemented as a propagation with a delta of zero, so the
+        intersection, the cross-quest rule and the narration's precedence all apply unchanged.
+        The drawn walls are still the guard — fleeing a fight may relocate the player, and a
+        remembered cell the page contradicts is dropped rather than asserted.
+      - **A battle page (`otHarc`) is the one non-dungeon page that must NOT clear the stored
+        position.** A fight happens *in* the cell; clearing there broke the chain across every
+        fight, which is precisely the moment a monster stops being alive and its tile becomes
+        clearable. Every other page still forgets the position.
+      Together these are what make the auto-clear reachable at all: `source === 'stay'` is
+      admitted alongside `'narration'` for that reason, while `'move'` and `'entrance'` stay
+      excluded (a refused move carries a pending step, so it can never be mistaken for a
+      stay). Before this, the only page printing a cell's text was one where the monster was
+      still alive.
     - **A labyrinth's entry page states nothing about its cell, so the entrance is inferred
       from the game's own entry line.** Walking in prints `Sikerült bejutnod a labirintusba.`
       — an *action* line — and not the cell's text, so before this tier existed **no entry

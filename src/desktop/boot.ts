@@ -300,7 +300,12 @@ export function bootDesktop(doc: Document): void {
       getPref,
       setPref,
     ).catch((err) => console.warn('[Larkinor UI] Dungeon position failed:', err));
-  } else {
+  } else if (pageType !== PageType.Battle) {
+    // Every other page forgets the position — a marker that outlives the visit
+    // reads exactly like a live one. A **battle** is the exception: it happens
+    // *in* the labyrinth cell the player is standing in, and clearing there
+    // broke the chain across every fight, which is precisely when a monster
+    // stops being alive and the tile becomes clearable.
     clearDungeonPosition(setPref);
   }
 

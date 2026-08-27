@@ -373,6 +373,63 @@ describe('activateDungeonPosition', () => {
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', quest.id)) ?? null)).toEqual(new Set());
   });
 
+  /**
+   * The scenario this feature exists for, as measured live on 2026-08-27:
+   * royal quest 39's cell (9,5) holds the "800 éves vámpír", and the page
+   * standing on it after the kill printed only `"Továbbjöttél északra."` — the
+   * game does not reprint a cell's text on re-entry. With no step pending, the
+   * held position names the cell and the absent enemy proves the kill.
+   */
+  it('marks a monster cleared on the page after the kill, with no cell text', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const cell = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+    expect(cell.monsterId).not.toBeNull();
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '39',
+      // Where the player was before the fight — the battle page no longer
+      // clears this, which is what makes the kill attributable at all.
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'narration',
+      }),
+    });
+
+    const position = await activateDungeonPosition(
+      'Továbbjöttél északra.',                       // no cell text, no step
+      { sides: observed(cell).sides, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'stay',
+    });
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
+      .toEqual(new Set(['9,5']));
+  });
+
+  // The other half of the same page: while the creature is still drawn, standing
+  // on its tile must mark nothing.
+  it('leaves a held position alone while the enemy is still drawn', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const cell = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '39',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'narration',
+      }),
+    });
+
+    await activateDungeonPosition(
+      'Továbbjöttél északra.',
+      { sides: observed(cell).sides, enemy: true, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toEqual(new Set());
+  });
+
   it('clears nothing when the position is ambiguous', async () => {
     // Quest 16's narration "Hopp, zsákutca. Akkor vissza." is shared by two
     // cells, (7,7) and (8,7) — verified unique to this quest in the corpus —

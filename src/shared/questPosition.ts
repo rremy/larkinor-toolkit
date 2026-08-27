@@ -33,9 +33,9 @@ export interface QuestPosition {
   /**
    * How the position was arrived at: matched against the page's narration and
    * walls, carried forward from the previous cell through a step the player
-   * took, or — on a labyrinth's entry page, where the game prints its own "you
-   * got in" line instead of the cell's text — inferred from the quest's
-   * entrance tile.
+   * took, held over from the previous page because no step was taken at all, or
+   * — on a labyrinth's entry page, where the game prints its own "you got in"
+   * line instead of the cell's text — inferred from the quest's entrance tile.
    *
    * Not rendered — a step confirmed by the drawn walls is not a guess to be
    * hedged, and a second visual language for "you are here" would read as a
@@ -43,7 +43,7 @@ export interface QuestPosition {
    * auto-clear of finished tiles requires `'narration'`, because only the
    * page's own words about *this* cell justify writing permanent progress.
    */
-  source: 'narration' | 'move' | 'entrance';
+  source: 'narration' | 'move' | 'entrance' | 'stay';
 }
 
 /**
@@ -86,6 +86,7 @@ export function parseQuestPosition(raw: string | null): QuestPosition | null {
     // Defaulted rather than rejected: an unknown source is a diagnostic detail,
     // and the cells — the part that actually places a marker — are unaffected.
     const source = parsed.source === 'move' || parsed.source === 'entrance'
+      || parsed.source === 'stay'
       ? parsed.source
       : 'narration';
 

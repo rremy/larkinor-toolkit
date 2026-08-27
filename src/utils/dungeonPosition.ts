@@ -299,6 +299,32 @@ export function propagatePosition(
 }
 
 /**
+ * Where the player is when the page follows an action that was **not** a move.
+ *
+ * You cannot leave a cell without clicking a direction, so with no step pending
+ * the remembered cell still holds. This is not a nicety: measured live on royal
+ * quest 39's cell (9,5), the game prints only `"Továbbjöttél északra."` when you
+ * re-enter a cell and **never reprints the cell's own text**, so the page that
+ * proves a monster is dead cannot name its own cell from narration. Without this
+ * tier the auto-clear of finished tiles was effectively unreachable.
+ *
+ * The drawn walls are the guard. Fleeing a fight may well put the player
+ * somewhere else, and a remembered cell the page contradicts is dropped rather
+ * than asserted — the same asymmetry every other tier here uses.
+ */
+export function stayCells(
+  previous: QuestPosition,
+  quest: Quest,
+  observed: SideObservations,
+): QuestPositionCell[] {
+  const byPosition = new Map(quest.cells.map((c) => [`${c.row},${c.col}`, c]));
+  return previous.cells
+    .map((at) => byPosition.get(`${at.row},${at.col}`))
+    .filter((cell): cell is QuestCell => cell !== undefined && sidesAgree(cell, observed))
+    .map((cell) => ({ row: cell.row, col: cell.col }));
+}
+
+/**
  * The player's position from both signals the page offers: the text it printed,
  * and the step they took to get here.
  *
@@ -335,7 +361,10 @@ export function propagatePosition(
  *    the drawn walls routinely collapses several candidates to one.
  * 4. **Either fills in for the other's silence.** Roughly a quarter of cells
  *    print no text at all, and that is exactly where a step is the only thing
- *    that knows anything.
+ *    that knows anything. A page following a non-move — a rest, a fight, an
+ *    answered question — carries no step either, and there the remembered cell
+ *    itself is the answer (`stayCells`); the game never reprints a cell's text
+ *    on re-entry, so this is the common case rather than an edge one.
  */
 export function resolveDungeonPosition(
   narration: string,
@@ -347,12 +376,19 @@ export function resolveDungeonPosition(
 ): QuestPosition | null {
   const detected = locateDungeonPosition(narration, observed, quests, preferredQuestId);
 
-  const quest = previous && move
+  const quest = previous
     ? quests.find((q) => q.id === previous.questId && q.set === previous.set)
     : undefined;
-  if (!quest || !previous || !move) return detected;
+  if (!quest || !previous) return detected;
 
-  const stepped = propagatePosition(previous, move, quest, observed);
+  // A pending step carries the position one cell; no step at all means the
+  // player cannot have moved, so the remembered cell still holds. The two are
+  // the same operation with a delta of zero, so the intersection, the
+  // cross-quest rule and the narration's precedence below apply to both
+  // without a second code path.
+  const stepped = move
+    ? propagatePosition(previous, move, quest, observed)
+    : stayCells(previous, quest, observed);
   if (stepped.length === 0) return detected;
 
   const walked: QuestPosition = {
@@ -360,7 +396,7 @@ export function resolveDungeonPosition(
     questId: quest.id,
     cells: stepped,
     exact: stepped.length === 1,
-    source: 'move',
+    source: move ? 'move' : 'stay',
   };
 
   if (!detected) return walked;

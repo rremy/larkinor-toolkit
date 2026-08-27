@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { bootMobile } from '../src/mobile/boot';
-import { ACTIVE_ROYAL_QUEST_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '../src/shared/prefKeys';
+import { ACTIVE_ROYAL_QUEST_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '../src/shared/prefKeys';
 
 const GAME_URL = 'https://l2.larkinor.hu/cgi-bin/larkinor';
 
@@ -46,5 +46,42 @@ describe('bootMobile and the active royal quest', () => {
     bootMobile(doc);
 
     expect(GM_setValue).not.toHaveBeenCalledWith(ACTIVE_ROYAL_QUEST_PREF_KEY, expect.anything());
+  });
+});
+
+/**
+ * A battle happens *in* the labyrinth cell, so it is the one non-dungeon page
+ * that must not forget the position — clearing there broke the chain across
+ * every fight, which is exactly when a monster stops being alive.
+ */
+describe('bootMobile and the position across a fight', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // GM storage is mocked in tests/setup.ts; back it with a fresh map per test.
+    const store = new Map<string, string>();
+    vi.mocked(GM_getValue).mockImplementation(((key: string, fallback: string) =>
+      store.get(key) ?? fallback) as unknown as typeof GM_getValue);
+    vi.mocked(GM_setValue).mockImplementation(((key: string, value: string) => {
+      store.set(key, value);
+    }) as unknown as typeof GM_setValue);
+    vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+      onload?: (res: { status: number; responseText: string }) => void;
+    }) => opts.onload?.({ status: 200, responseText: '[]' })) as unknown as typeof GM_xmlhttpRequest);
+  });
+
+  it('keeps the stored position on a battle page', () => {
+    const doc = new JSDOM(`<html><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otHarc"></form>
+      <img title="életpontja: 40" src="/pic/szornyk/vampir_k.gif">
+      <font face="Comic sans MS">Megtámadtad a szörnyet.</font>
+    </body></html>`, { url: GAME_URL }).window.document;
+    bootMobile(doc);
+
+    expect(GM_setValue).not.toHaveBeenCalledWith(QUEST_POSITION_PREF_KEY, '');
+  });
+
+  it('still forgets it on an ordinary page', () => {
+    bootMobile(cityDoc());
+    expect(GM_setValue).toHaveBeenCalledWith(QUEST_POSITION_PREF_KEY, '');
   });
 });

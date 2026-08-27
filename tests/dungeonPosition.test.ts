@@ -7,6 +7,7 @@ import {
   locateDungeonPosition,
   matchCellsInQuest,
   narrationSaysEntered,
+  stayCells,
   propagatePosition,
   resolveDungeonPosition,
   sidesAgree,
@@ -792,5 +793,68 @@ describe('entering a labyrinth', () => {
   it('reports nothing for a quest whose entrance is missing from the data', () => {
     expect(royal.find((q) => q.id === '11')!.cells.some((c) => c.portal === 'entrance')).toBe(false);
     expect(locateDungeonPosition(ENTERED, ENTRY_SIDES, royal, '11')).toBeNull();
+  });
+});
+
+/**
+ * Standing still: the page after an action that was not a move.
+ *
+ * Measured live on 2026-08-27 (royal quest 39, cell (9,5), the "800 éves
+ * vámpír" tile after the monster had been killed): the game printed only
+ * `"Továbbjöttél északra."` and **not** the cell's own recorded text, so the
+ * narration tier had nothing to match. Together with the fact that a battle
+ * page clears the stored position, that made the page which proves a kill the
+ * one page unable to name its own cell — see `stayCells`.
+ */
+describe('standing still', () => {
+  const cellAt = (quest: Quest, row: number, col: number) =>
+    quest.cells.find((c) => c.row === row && c.col === col)!;
+  const sidesOf = (cell: QuestCell): SideObservations => Object.fromEntries(
+    (['N', 'E', 'S', 'W'] as const).map((s) => [s, cell.edges[s].kind === 'open' ? 'open' : 'wall']),
+  ) as SideObservations;
+  const at = (quest: Quest, cell: QuestCell): QuestPosition => ({
+    set: quest.set, questId: quest.id, cells: [{ row: cell.row, col: cell.col }], exact: true,
+    source: 'narration',
+  });
+
+  it('keeps the remembered cell when the walls still agree', () => {
+    const cell = cellAt(quest35, 0, 6);
+    expect(stayCells(at(quest35, cell), quest35, sidesOf(cell)))
+      .toEqual([{ row: 0, col: 6 }]);
+  });
+
+  // Fleeing a fight may put the player somewhere else; the walls are what
+  // catches that, so a cell the page contradicts is dropped rather than kept.
+  it('drops the remembered cell when the walls contradict it', () => {
+    const cell = cellAt(quest35, 0, 6);
+    const lying: SideObservations = { N: cell.edges.N.kind === 'open' ? 'wall' : 'open' };
+    expect(stayCells(at(quest35, cell), quest35, lying)).toEqual([]);
+  });
+
+  it('holds the position across a page with no move and no cell text', () => {
+    const cell = cellAt(quest35, 0, 6);
+    const resolved = resolveDungeonPosition(
+      'Pihensz egy kicsit...', sidesOf(cell), royal, '35', at(quest35, cell), null,
+    );
+    expect(resolved).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'stay',
+    });
+  });
+
+  // A page that does describe its cell is still believed over the memory.
+  it('never displaces a narration match', () => {
+    const remembered = cellAt(quest35, 0, 6);
+    const elsewhere = quest35.cells.find((c) =>
+      c.narration.trim() !== '' && !(c.row === 0 && c.col === 6)
+      && matchCellsInQuest(quest35, c.narration, {}).length === 1)!;
+    const resolved = resolveDungeonPosition(
+      elsewhere.narration, {}, royal, '35', at(quest35, remembered), null,
+    );
+    expect(resolved?.source).toBe('narration');
+    expect(resolved?.cells).toEqual([{ row: elsewhere.row, col: elsewhere.col }]);
+  });
+
+  it('has nothing to hold on the first dungeon page of a visit', () => {
+    expect(resolveDungeonPosition('Pihensz egy kicsit...', {}, royal, '35', null, null)).toBeNull();
   });
 });
