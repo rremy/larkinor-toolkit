@@ -5,8 +5,9 @@
 // GM_* — the same shape as `activateQuestOffer` and `activateDungeonPosition`.
 
 import { findActiveQuest, type ActiveQuestMention } from './activeQuest';
-import { ACTIVE_ROYAL_QUEST_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
-import type { ReadPref, WritePref } from './activateDungeonPosition';
+import {
+  ACTIVE_ROYAL_QUEST_PREF_KEY, questSelectedKey, type ReadPref, type WritePref,
+} from '@/shared/prefKeys';
 
 /**
  * Remember the active royal quest, and pre-select it **only when it changed**.

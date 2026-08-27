@@ -21,7 +21,6 @@ import { resolveDungeonPosition } from './dungeonPosition';
 import { takePendingMove } from './trackDungeonMove';
 import type { DungeonObservation } from './domExtract';
 
-export type { ReadPref, WritePref } from '@/shared/prefKeys';
 
 function isQuestSet(value: string | null): value is QuestSet {
   return value === 'royal' || value === 'tavern';
