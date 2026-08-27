@@ -104,7 +104,9 @@ export async function activateDungeonPosition(
     console.warn('[Larkinor UI] Dungeon position: could not store the position:', err);
   }
 
-  if (position?.exact) {
+  // Only a position the page's own words pinned may write a permanent mark —
+  // `exact` alone is not the gate, because a propagated step is exact too.
+  if (position?.exact && position.source === 'narration') {
     recordClearedCell(position, quests, observation, readPref, writePref);
   }
 
@@ -115,8 +117,19 @@ export async function activateDungeonPosition(
  * Mark the cell the player is standing on as cleared, when the page proves its
  * work is done.
  *
- * Only ever called for an **exact** position: a mark on the wrong cell is worse
- * than no mark, and an ambiguous match has no single cell to credit.
+ * Only ever called for an **exact** position the *narration* pinned: a mark on
+ * the wrong cell is worse than no mark, an ambiguous match has no single cell to
+ * credit, and a mark is permanent, so only the page's own account of where the
+ * player is may justify one.
+ *
+ * `exact` stopped implying "the page said so" the moment movement tracking
+ * landed: a propagated step is exact whenever the walls leave one candidate.
+ * Trusting that here would mark cells nobody visited — the game refuses a move,
+ * the cell the player is still standing in prints nothing (about a quarter do),
+ * the prediction wins, and the monster on the *predicted* cell is recorded as
+ * killed. That includes the trap rule, which loses almost nothing by it: a
+ * sprung trap prints text, and a false trap mark would be as permanent as any
+ * other.
  *
  * Three rules, each comparing the page against the data:
  *

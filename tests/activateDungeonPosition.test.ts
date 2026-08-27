@@ -12,7 +12,7 @@ import {
 import { parseQuestPosition, serialiseQuestPosition } from '@/shared/questPosition';
 import { parseCleared } from '@/shared/questCleared';
 import type { SideObservations } from '../src/utils/dungeonPosition';
-import type { DataLoader, Quest } from '@/shared/data';
+import type { DataLoader, Quest, QuestCell, Side } from '@/shared/data';
 
 const royal: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const tavern: Quest[] = JSON.parse(readFileSync('static/db/tavern-quests.json', 'utf-8'));
@@ -247,6 +247,47 @@ describe('activateDungeonPosition', () => {
 
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null))
       .toContain(`${trapCell.row},${trapCell.col}`);
+  });
+
+  // A step-propagated position is `exact` too, so `exact` alone can never be the
+  // gate for a permanent mark. Concretely: the game refuses a move, the cell the
+  // player is still standing in prints nothing, the prediction therefore wins —
+  // and the monster on the *predicted* cell would be recorded as killed without
+  // ever having been met.
+  it('clears nothing for a position carried by the step alone', async () => {
+    const STEP: Record<Side, [number, number]> = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] };
+    const at = (row: number, col: number) => quest35.cells.find((c) => c.row === row && c.col === col);
+    let step: { from: QuestCell; to: QuestCell; dir: Side } | null = null;
+    for (const from of quest35.cells) {
+      for (const dir of ['N', 'E', 'S', 'W'] as Side[]) {
+        if (from.edges[dir].kind === 'wall' || from.edges[dir].kind === 'szel') continue;
+        const to = at(from.row + STEP[dir][0], from.col + STEP[dir][1]);
+        if (to?.monsterId != null) { step = { from, to, dir }; break; }
+      }
+      if (step) break;
+    }
+    expect(step).not.toBeNull();
+    const { from, to, dir } = step!;
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '35',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '35', cells: [{ row: from.row, col: from.col }],
+        exact: true, source: 'narration',
+      }),
+      [QUEST_MOVE_PREF_KEY]: dir,
+    });
+
+    // No narration at all, so only the step can resolve the position.
+    const position = await activateDungeonPosition(
+      '', observed(to), makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: to.row, col: to.col }], exact: true, source: 'move',
+    });
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null)).toEqual(new Set());
   });
 
   it('clears nothing when the position is ambiguous', async () => {
