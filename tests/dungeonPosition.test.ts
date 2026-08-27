@@ -6,9 +6,11 @@ import {
   foldNarrationLines,
   locateDungeonPosition,
   matchCellsInQuest,
+  propagatePosition,
   sidesAgree,
   type SideObservations,
 } from '../src/utils/dungeonPosition';
+import type { QuestPosition } from '@/shared/questPosition';
 
 const royal: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const tavern: Quest[] = JSON.parse(readFileSync('static/db/tavern-quests.json', 'utf-8'));
@@ -290,5 +292,59 @@ describe('corpus match rates', () => {
         }
       }
     }
+  });
+});
+
+describe('propagatePosition', () => {
+  const at = (row: number, col: number, source: 'narration' | 'move' = 'narration'): QuestPosition => ({
+    set: 'royal', questId: quest35.id, cells: [{ row, col }], exact: true, source,
+  });
+  /** An open-sided cell of quest 35 and its northern neighbour, from the data. */
+  const openStep = quest35.cells.find((c) => c.edges.N.kind === 'open' && c.row > 0)!;
+
+  it('steps one cell in the moved direction', () => {
+    const cells = propagatePosition(at(openStep.row, openStep.col), 'N', quest35, {});
+    expect(cells).toEqual([{ row: openStep.row - 1, col: openStep.col }]);
+  });
+
+  // The data's own account of whether the step was even possible. A wall means
+  // the click cannot have moved the player, whatever the page then printed.
+  it('refuses a step through a wall or a szel edge', () => {
+    const walled = quest35.cells.find((c) => c.edges.N.kind === 'wall')!;
+    expect(propagatePosition(at(walled.row, walled.col), 'N', quest35, {})).toEqual([]);
+  });
+
+  // Quest 35's doors sit on N/S edges only (no E-side door exists in this
+  // maze), so this checks the direction the corpus actually has one for.
+  it('allows a step through a door', () => {
+    const doored = quest35.cells.find((c) => c.edges.S.kind === 'door')!;
+    expect(propagatePosition(at(doored.row, doored.col), 'S', quest35, {}))
+      .toEqual([{ row: doored.row + 1, col: doored.col }]);
+  });
+
+  it('refuses to step off the grid', () => {
+    const top = quest35.cells.find((c) => c.row === 0 && c.edges.N.kind === 'open');
+    if (top) expect(propagatePosition(at(0, top.col), 'N', quest35, {})).toEqual([]);
+    expect(propagatePosition(at(0, 0), 'W', quest35, {})).toEqual([]);
+  });
+
+  it('drops a target the page contradicts', () => {
+    const target = quest35.cells.find((c) => c.row === openStep.row - 1 && c.col === openStep.col)!;
+    // Claim the opposite of one of the target's real sides.
+    const lying: SideObservations = { S: target.edges.S.kind === 'open' ? 'wall' : 'open' };
+    expect(propagatePosition(at(openStep.row, openStep.col), 'N', quest35, lying)).toEqual([]);
+  });
+
+  // The whole point of propagating a *list*: several candidates stepped and
+  // filtered often leave one where no single page could.
+  it('propagates every candidate of an ambiguous position', () => {
+    const previous: QuestPosition = {
+      set: 'royal', questId: quest35.id, exact: false, source: 'narration',
+      cells: quest35.cells.filter((c) => c.edges.N.kind === 'open' && c.row > 0)
+        .slice(0, 3).map((c) => ({ row: c.row, col: c.col })),
+    };
+    const cells = propagatePosition(previous, 'N', quest35, {});
+    expect(cells.length).toBeGreaterThan(1);
+    expect(cells.every((c) => previous.cells.some((p) => p.row === c.row + 1 && p.col === c.col))).toBe(true);
   });
 });

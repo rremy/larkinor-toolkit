@@ -14,7 +14,7 @@
 
 import type { Quest, QuestCell, Side } from '@/shared/data';
 import { foldAccents } from '@/shared/text';
-import type { QuestPosition } from '@/shared/questPosition';
+import type { QuestPosition, QuestPositionCell } from '@/shared/questPosition';
 
 /** What the dungeon page says about one side of the cell the player is in. */
 export type SideObservation = 'open' | 'wall' | 'door';
@@ -183,4 +183,53 @@ export function locateDungeonPosition(
   }
 
   return ambiguous;
+}
+
+/** Row/column delta of one step towards each side. */
+const STEP: Record<Side, { row: number; col: number }> = {
+  N: { row: -1, col: 0 },
+  E: { row: 0, col: 1 },
+  S: { row: 1, col: 0 },
+  W: { row: 0, col: -1 },
+};
+
+/**
+ * Where the player can now be, having taken one step from a known position.
+ *
+ * Every candidate of `previous` is carried one cell in `dir` and kept only if
+ * three things hold: the source cell's own edge in that direction is passable
+ * (the data's account of whether the step was possible at all), the target
+ * exists in the grid, and the target's sides agree with what the page drew.
+ *
+ * Propagating the whole candidate list rather than only an exact position is
+ * the same code and strictly more useful: three candidates stepped north and
+ * filtered by the walls frequently leave one, which no single page could do.
+ *
+ * A `door` is passable here — a locked door offers no button and cannot have
+ * been the step taken, and the caller resolves a failed step by preferring the
+ * narration (see `resolveDungeonPosition`).
+ */
+export function propagatePosition(
+  previous: QuestPosition,
+  dir: Side,
+  quest: Quest,
+  observed: SideObservations,
+): QuestPositionCell[] {
+  const byPosition = new Map(quest.cells.map((c) => [`${c.row},${c.col}`, c]));
+  const delta = STEP[dir];
+  const out: QuestPositionCell[] = [];
+
+  for (const from of previous.cells) {
+    const source = byPosition.get(`${from.row},${from.col}`);
+    if (!source) continue;
+    const kind = source.edges[dir].kind;
+    if (kind === 'wall' || kind === 'szel') continue;
+
+    const target = byPosition.get(`${from.row + delta.row},${from.col + delta.col}`);
+    if (!target || !sidesAgree(target, observed)) continue;
+    if (out.some((c) => c.row === target.row && c.col === target.col)) continue;
+    out.push({ row: target.row, col: target.col });
+  }
+
+  return out;
 }
