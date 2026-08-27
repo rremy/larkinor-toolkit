@@ -734,22 +734,42 @@ describe('extractDungeonObservation', () => {
     `<html><body><form name="urlap"><input type="hidden" name="oldalTipus" value="otLabirintus">${inner}</form></body></html>`,
   ).window.document;
 
-  it('reports an enemy from the composed picture', () => {
-    const doc = dungeon('<img src="/pic/labirintus/ellenfel/ellenfel_b.gif">');
-    expect(extractDungeonObservation(doc).enemy).toBe(true);
+  /**
+   * The silhouettes name **neighbours**, not this cell. Verified live on royal
+   * quest 39's cell (9,3): the composed picture is a 3×3 grid of 50px slots
+   * with the player in the centre one and each `ellenfel_<side>.gif` in a
+   * neighbour slot, and the three sides drawing one were exactly the three
+   * whose neighbours hold live monsters.
+   */
+  it('reads a silhouette per side, by the same letters the wall tiles use', () => {
+    const doc = dungeon(`
+      <img src="/pic/labirintus/ellenfel/ellenfel_f.gif">
+      <img src="/pic/labirintus/ellenfel/ellenfel_l.gif">
+      <img src="/pic/labirintus/ellenfel/ellenfel_b.gif">`);
+    expect(extractDungeonObservation(doc).enemySides).toEqual({ N: true, S: true, W: true });
   });
 
-  // Two independent signals, because the monster rule is the one auto-clear
-  // rule that has not been watched across a kill: the game cannot offer an
-  // attack against a creature that is gone.
-  it('reports an enemy from the attack control alone', () => {
-    const doc = dungeon('<input type="image" src="/pic/tamadas.gif" title="Támadás">');
-    expect(extractDungeonObservation(doc).enemy).toBe(true);
-  });
-
-  it('reports no enemy when neither signal is present', () => {
+  it('reports no silhouettes when none are drawn', () => {
     const doc = dungeon('<img src="/pic/labirintus/fal/fal_f_8.gif">');
-    expect(extractDungeonObservation(doc).enemy).toBe(false);
+    expect(extractDungeonObservation(doc).enemySides).toEqual({});
+  });
+
+  // The directory is what separates a silhouette from a wall or corridor tile,
+  // so the two patterns can never claim the same image.
+  it('does not mistake a wall tile for a silhouette, or the reverse', () => {
+    const doc = dungeon(`
+      <img src="/pic/labirintus/fal/fal_j_8.gif">
+      <img src="/pic/labirintus/ellenfel/ellenfel_j.gif">`);
+    const obs = extractDungeonObservation(doc);
+    expect(obs.enemySides).toEqual({ E: true });
+    expect(obs.sides).toEqual({ E: 'wall' });
+  });
+
+  // Never observed on a dungeon page — verified live while standing beside
+  // three live monsters — so it must not be read as an enemy signal.
+  it('ignores an attack control', () => {
+    const doc = dungeon('<input type="image" src="/pic/tamadas.gif" title="Támadás">');
+    expect(extractDungeonObservation(doc).enemySides).toEqual({});
   });
 
   it('reports a pending question from its answer radios', () => {

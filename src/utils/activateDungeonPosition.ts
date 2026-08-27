@@ -5,7 +5,7 @@
 // collaborators so it stays testable without GM_* or the network. Same shape,
 // and the same reasons, as `activateQuestOffer`.
 
-import type { DataLoader, Quest, QuestSet } from '@/shared/data';
+import type { DataLoader, Quest, QuestSet, Side } from '@/shared/data';
 import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   QUEST_POSITION_PREF_KEY,
@@ -21,6 +21,16 @@ import { resolveDungeonPosition, movementConfirmed } from './dungeonPosition';
 import { takePendingMove } from './trackDungeonMove';
 import type { DungeonObservation } from './domExtract';
 
+
+const SIDES: Side[] = ['N', 'E', 'S', 'W'];
+
+/** Row/column delta towards each side's neighbour. */
+const NEIGHBOUR: Record<Side, { row: number; col: number }> = {
+  N: { row: -1, col: 0 },
+  E: { row: 0, col: 1 },
+  S: { row: 1, col: 0 },
+  W: { row: 0, col: -1 },
+};
 
 function isQuestSet(value: string | null): value is QuestSet {
   return value === 'royal' || value === 'tavern';
@@ -131,50 +141,41 @@ export async function activateDungeonPosition(
     || position?.source === 'stay'
     || (position?.source === 'move' && movedAsAsked);
   if (position?.exact && pageAccountsForIt) {
-    recordClearedCell(position, quests, observation, readPref, writePref);
+    recordClearedCells(position, quests, observation, readPref, writePref);
   }
 
   return position;
 }
 
 /**
- * Mark the cell the player is standing on as cleared, when the page proves its
- * work is done.
+ * Record what the page proves is finished.
  *
- * Only ever called for an **exact** position that the page itself accounts for:
- * one the narration pinned, or one *held over* because the player took no step
- * (`source === 'stay'`). A mark on the wrong cell is worse than no mark, an
- * ambiguous match has no single cell to credit, and a mark is permanent.
+ * Only ever called for an **exact** position the page accounts for — one the
+ * narration pinned, one held over because no step was taken, or one walked to
+ * with the move confirmed. A mark is permanent, so a wrong one is worse than a
+ * missing one.
  *
- * `exact` stopped implying "the page said so" the moment movement tracking
- * landed: a **propagated step** is exact whenever the walls leave one candidate,
- * and trusting that would mark cells nobody visited — the game refuses a move,
- * the cell the player is still standing in prints nothing (about a quarter do),
- * the prediction wins, and the monster on the *predicted* cell is recorded as
- * killed. So `'move'` stays excluded, and `'entrance'`, a class inference, with
- * it.
+ * Three rules, and they do **not** all speak about the same cell:
  *
- * `'stay'` is admitted because excluding it made this whole feature
- * unreachable, not as a convenience. Measured live: the game **never reprints a
- * cell's text on re-entry** (royal quest 39, cell (9,5), after its monster was
- * killed, printed only `"Továbbjöttél északra."`), and a battle page used to
- * clear the stored position outright — so the one page that proves a kill could
- * name neither its cell nor its own history. A held position is strong evidence
- * in its own right: no direction was clicked, so the player cannot have moved,
- * and `stayCells` drops the cell anyway if the drawn walls no longer agree.
- *
- * Three rules, each comparing the page against the data:
- *
- * - a monster the data knows about, with neither the enemy silhouette nor an
- *   attack control on the page → killed;
- * - a question cell with no answer radios → answered;
- * - a trap cell → sprung, on arrival: a trap fires on entry, so standing here
+ * - **Neighbours, from the silhouettes.** The composed picture draws
+ *   `ellenfel_<side>.gif` in a neighbour's slot when that neighbour still holds
+ *   a live monster. So for every side the player can see through, a neighbour
+ *   the data gives a monster and the page draws no silhouette for is a monster
+ *   already killed. This is the only monster evidence the page carries: it says
+ *   nothing at all about the cell being stood on. Measured live on royal quest
+ *   39's cell (9,3), where three sides drew silhouettes for their live
+ *   neighbours and the fourth — the vampire the player had killed — drew none.
+ * - **This cell's question**, from the answer radios: a question cell with no
+ *   radios has been answered. Unlike the silhouettes, the radios are about the
+ *   cell the player is in.
+ * - **This cell's trap**, on arrival: a trap fires on entry, so standing here
  *   *is* the evidence.
  *
- * Nothing is written when the cell holds none of those, so an ordinary empty
- * room never accumulates a mark it does not deserve.
+ * Sight is limited to `open` sides. A wall obviously blocks it, and a door is
+ * excluded too: the game cannot draw what is behind a closed door, so "no
+ * silhouette" there is not evidence of anything.
  */
-function recordClearedCell(
+function recordClearedCells(
   position: QuestPosition,
   quests: readonly Quest[],
   observation: DungeonObservation,
@@ -184,22 +185,38 @@ function recordClearedCell(
   const quest = quests.find((q) => q.id === position.questId && q.set === position.set);
   const [at] = position.cells;
   const cell = quest?.cells.find((c) => c.row === at.row && c.col === at.col);
-  if (!cell) return;
+  if (!quest || !cell) return;
 
-  const done = (cell.monsterId != null && !observation.enemy)
-    || (cell.hasQuestion && !observation.question)
-    || cell.trap;
-  if (!done) return;
+  const done: string[] = [];
+
+  // This cell: the two facts the page states about where the player is.
+  if ((cell.hasQuestion && !observation.question) || cell.trap) {
+    done.push(`${cell.row},${cell.col}`);
+  }
+
+  // The neighbours: a monster the data knows about, with no silhouette drawn
+  // for it through an open side, has been killed.
+  for (const side of SIDES) {
+    if (cell.edges[side].kind !== 'open') continue;
+    if (observation.enemySides[side]) continue;
+    const delta = NEIGHBOUR[side];
+    const neighbour = quest.cells.find(
+      (c) => c.row === cell.row + delta.row && c.col === cell.col + delta.col,
+    );
+    if (neighbour?.monsterId != null) done.push(`${neighbour.row},${neighbour.col}`);
+  }
+
+  if (done.length === 0) return;
 
   try {
     const key = questClearedKey(position.set, position.questId);
     const cleared = parseCleared(readPref(key));
-    const cellId = `${cell.row},${cell.col}`;
-    if (cleared.has(cellId)) return;
-    cleared.add(cellId);
+    const before = cleared.size;
+    for (const id of done) cleared.add(id);
+    if (cleared.size === before) return;
     writePref(key, serialiseCleared(cleared));
   } catch (err) {
-    console.warn('[Larkinor UI] Dungeon position: could not store the cleared cell:', err);
+    console.warn('[Larkinor UI] Dungeon position: could not store the cleared cells:', err);
   }
 }
 

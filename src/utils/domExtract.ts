@@ -542,8 +542,23 @@ export interface DungeonState {
 /** What the dungeon page reveals about the cell the player is standing in. */
 export interface DungeonObservation {
   sides: SideObservations;
-  /** An enemy is still present: the silhouette is drawn, or an attack is offered. */
-  enemy: boolean;
+  /**
+   * Which **neighbouring** cells still hold a live monster, by the side facing
+   * them. True where the page draws that neighbour's silhouette.
+   *
+   * Measured live on 2026-08-27 (royal quest 39, cell (9,3)): the composed
+   * picture is a 3×3 grid of 50px slots, the player figure occupies the centre
+   * one, and each `ellenfel_<f|j|l|b>.gif` is positioned in a **neighbour**
+   * slot — north, east, south, west by the same side letters the wall tiles
+   * use. Cross-checked against the data: silhouettes appeared on the three
+   * sides whose neighbours hold monsters and **not** on the fourth, whose
+   * monster the player had already killed.
+   *
+   * So the page says nothing about the cell the player is standing on, and
+   * everything about up to four cells they can see into. An earlier reading of
+   * this as "a monster is here" was wrong in both directions.
+   */
+  enemySides: Partial<Record<Side, boolean>>;
   /** A question is waiting to be answered (its answer radios are on the page). */
   question: boolean;
 }
@@ -636,35 +651,47 @@ export function extractDungeonSides(doc: Document): SideObservations {
   return sides;
 }
 
-/** Directory of the enemy silhouette in the composed cell picture. */
-const ENEMY_TILE_RE = /\/ellenfel\//;
+/**
+ * A neighbour's enemy silhouette: `ellenfel/ellenfel_<side>.gif`.
+ *
+ * The side letter is the same Hungarian shorthand the wall tiles use — `f` =
+ * fel (north), `j` = jobb (east), `l` = le (south), `b` = bal (west) — and it
+ * names **which neighbour** the silhouette stands in, not a property of this
+ * cell. The directory still discriminates it from a wall or corridor tile, so
+ * `DUNGEON_SIDE_RE` and this pattern cannot match the same image.
+ */
+const ENEMY_SIDE_RE = /\/ellenfel\/ellenfel_([fjlb])\.gif/;
 
 /**
- * What the dungeon page says about the cell the player is in: its sides, and
- * whether the cell still holds work.
+ * What the dungeon page reveals: the four sides of the cell the player is in,
+ * which neighbours still hold a live monster, and whether a question is waiting.
  *
  * `sides` is `extractDungeonSides` verbatim, so the corpus tests that pin the
  * matcher's rates keep testing exactly what they tested before.
  *
- * `enemy` reads **two** independent signals — the silhouette drawn in the
- * composed picture and the game's own attack control — and reports true if
- * either is present. The auto-clear rule that consumes it (a monster the data
- * knows about being gone) is the one rule not yet verified across a live kill,
- * so it is deliberately hard to trip: the game cannot offer an attack against a
- * creature that is no longer there.
+ * `enemySides` is per **neighbour**, for the reasons recorded on the field.
+ * There is deliberately no "is there a monster here" flag: the page does not
+ * carry one. The `tamadas` attack control, which an earlier version also read,
+ * has never been observed on a dungeon page at all — verified live standing
+ * beside three live monsters — so it never contributed anything and is no
+ * longer consulted.
  *
  * `question` is the presence of the answer radios, the same signal
  * `extractDungeonQuestion` reads — radios are how the live page asks, and their
- * absence is how it stops asking.
+ * absence is how it stops asking. Unlike the silhouettes, this one *is* about
+ * the current cell.
  */
 export function extractDungeonObservation(doc: Document): DungeonObservation {
-  const enemyTile = Array.from(doc.querySelectorAll<HTMLImageElement>('img'))
-    .some((img) => ENEMY_TILE_RE.test(img.getAttribute('src') ?? ''));
-  const attackControl = doc.querySelector(`input[type="image"][src*="${ATTACK_BASENAME}.gif"]`) !== null;
+  const enemySides: Partial<Record<Side, boolean>> = {};
+  doc.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+    const match = ENEMY_SIDE_RE.exec(img.getAttribute('src') ?? '');
+    const side = match ? SIDE_BY_LETTER[match[1]] : undefined;
+    if (side) enemySides[side] = true;
+  });
 
   return {
     sides: extractDungeonSides(doc),
-    enemy: enemyTile || attackControl,
+    enemySides,
     question: doc.querySelector('input[name="valasz"]') !== null,
   };
 }

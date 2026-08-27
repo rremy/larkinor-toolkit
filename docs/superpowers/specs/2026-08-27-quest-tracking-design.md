@@ -391,6 +391,29 @@ splice), `src/desktop/boot.ts` and `src/mobile/boot.ts` (activation + arming),
 - Both boots: the activation fires on the right pages, arming happens only in a
   dungeon, and the pending move is cleared on entry.
 
+## Corrected 2026-08-27 — the enemy silhouette
+
+> **Corrected after live testing.** *Automatic clearing* above reads the
+> `ellenfel/` silhouette as "a monster is still present **here**", with the
+> `tamadas` control as a second signal. Both halves were wrong, and only the
+> live page showed it:
+>
+> - The composed picture is a 3×3 grid of 50px slots with the player figure in
+>   the centre one, and each `ellenfel_<f|j|l|b>.gif` sits in a **neighbour**
+>   slot. Measured on royal quest 39 cell (9,3): silhouettes on the three sides
+>   whose neighbours hold monsters, none on the fourth whose monster the player
+>   had killed. A dungeon page therefore says nothing about the creature in the
+>   cell being stood on, and reports up to four neighbours.
+> - There is **no `tamadas` control on a dungeon page** — verified standing
+>   beside three live monsters — so the "two independent signals" mitigation
+>   never existed.
+>
+> The monster rule is now: a monster-bearing neighbour behind an **open** side
+> that draws no silhouette has been killed. The question and trap rules still
+> speak about the current cell. `extractDungeonObservation` returns `enemySides`
+> per side instead of one boolean. The upside is that walking a corridor now
+> clears what it can see, rather than only what is underfoot.
+
 ## Corrected 2026-08-27 — the entry page
 
 > **Corrected after live testing.** *Out of scope* below lists "seeding a

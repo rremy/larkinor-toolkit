@@ -257,8 +257,11 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       `l` = le (south), `b` = bal (west). The scraped source pages use `f`/`j`/`a`/`b` for
       north/east/south/west, so **`b` means west in both but south is `l` here and `a`
       there**. The *directory* is the discriminator, not the basename prefix: the same
-      picture ships `ellenfel/ellenfel_b.gif`, whose basename would otherwise read as
-      "side b" when it is only the enemy silhouette.
+      picture ships `ellenfel/ellenfel_b.gif`, which is a **neighbour's** enemy silhouette,
+      not this cell's west side. Its side letter is meaningful — it says which neighbour —
+      but it belongs to a different question, so only the directory may decide which pattern
+      claims an image. (An earlier note here claimed the letter was meaningless there; it is
+      not. See *the silhouettes are about the neighbours* below.)
     - **A door in the data agrees with any observation.** The door sprite grammar is the one
       part not verified against the live game, so a door must never be why a cell is
       rejected — being lenient costs 0.4 percentage points of precision and cannot cost
@@ -271,9 +274,23 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       quest 35 cell (0,6): tiles said N/E wall + S/W corridor, and the page offered exactly
       `nyugat` and `del`.
     - **The enemy sprite never names the monster** — `ellenfel_b.gif` is a generic
-      silhouette — so the creature cannot be used as a third signal, however tempting the
-      quest data's `monsterName` makes it. (The seven "Fekete szűz" mentions found on the
-      live page during the investigation were our own dock's `alt` text, not the game's.)
+      silhouette — so the creature cannot be used as a third signal for *position*, however
+      tempting the quest data's `monsterName` makes it. (The seven "Fekete szűz" mentions
+      found on the live page during the investigation were our own dock's `alt` text, not the
+      game's.)
+    - **The silhouettes are about the NEIGHBOURS, not this cell.** Measured live on
+      2026-08-27 (royal quest 39, cell (9,3)) by reading the inline styles: the composed
+      picture is a 3×3 grid of 50px slots at a fixed origin, the player figure
+      (`labirintus/figura_*.gif`) occupies the **centre** slot, and each
+      `ellenfel/ellenfel_<f|j|l|b>.gif` is positioned in a **neighbour** slot — north, east,
+      south, west by the same side letters the wall tiles use. Cross-checked against the
+      data: silhouettes were drawn on the three sides whose neighbours hold monsters and
+      **not** on the fourth, whose monster the player had already killed. So a dungeon page
+      says **nothing** about a creature in the cell being stood on, and reports up to four
+      neighbours — which is why `extractDungeonObservation` returns `enemySides` per side
+      rather than one boolean, and why the cleared-tile rule below marks *neighbours*. Sight
+      stops at anything but an `open` side: the game cannot draw what is behind a wall or a
+      closed door, so a missing silhouette there proves nothing.
     - **Measured match rates, pinned in `tests/dungeonPosition.test.ts`** so a data refresh
       that degrades detection fails loudly: of narrated cells, the narration alone pins
       78.1% royal / 98.4% tavern uniquely, and adding the sides lifts that to 90.5% / 99.2%.
@@ -379,32 +396,42 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     close, so its landing effect re-fires on every reopen. `QuestView` persisting the
     last-viewed quest means following the link also makes that quest "the remembered one" for
     the StatBar shortcut.
-  - **Cleared tiles are inferred, not tracked.** `extractDungeonObservation` reads two
-    independent enemy signals (the `ellenfel/` silhouette and the `tamadas` control) plus the
-    question radios: a monster the data knows about with **both** signals absent is dead, a
-    question cell with no radios is answered, and a trap cell is sprung by the act of standing
-    on it. Only a position the **narration** pinned exactly may write a mark — `exact` alone
-    stopped meaning "the page said so" the moment movement tracking landed, since a propagated
-    step is exact too, and a mark is permanent: a refused move on an unnarrated cell would
-    otherwise record the monster on the *predicted* cell as killed. Progress lives one key per
-    quest (`lc-quest-cleared-<set>-<id>`) and never expires — unlike a position it is progress, so an
-    unreadable value degrades to "nothing cleared" instead of stopping the caller. Dimming is
-    applied to the tile's *contents*, never to `.quest-cell` itself: `opacity` there would take
-    the walls with it, and the walls are what stays load-bearing on an emptied tile.
+  - **Cleared tiles are inferred, not tracked — and the monster half is inferred about the
+    NEIGHBOURS.** `extractDungeonObservation` returns `enemySides` (which neighbours still
+    draw a silhouette, see *the silhouettes are about the neighbours* above) plus the question
+    radios. Three rules, which deliberately do not all speak about the same cell: a
+    monster-bearing neighbour behind an **open** side that draws no silhouette has been
+    killed; a question cell with no radios has been answered; a trap cell is sprung by the act
+    of standing on it. The last two are about the cell being stood on, because the radios and
+    arrival are; the first cannot be, because the page carries no signal for it. **The
+    original rule read the silhouettes as "a monster is here" and was wrong in both
+    directions** — it refused to clear a finished tile whose neighbours were alive (the
+    symptom that surfaced this, live on quest 39 cell (9,3)) and cleared tiles whose own
+    monster it had no evidence about.
+    A mark may only be written from a position **the page accounts for**: one the narration
+    pinned, one held over because no step was taken (`'stay'`), or one walked to with the move
+    confirmed. `exact` alone stopped meaning "the page said so" the moment movement tracking
+    landed, and a mark is permanent. Progress lives one key per quest
+    (`lc-quest-cleared-<set>-<id>`) and never expires — unlike a position it is progress, so an
+    unreadable value degrades to "nothing cleared" instead of stopping the caller, and both
+    writers (the boot's activation and the tab's own toggle) **read the stored set first**:
+    building a write on component state dropped whatever the boot had recorded since the view
+    mounted, observed live as an auto-cleared tile reverting after a hand toggle elsewhere.
+    Dimming is applied to the tile's *contents*, never to `.quest-cell` itself: `opacity` there
+    would take the walls with it, and the walls are what stays load-bearing on an emptied tile.
     `--quest-cleared-bg` had to move away from `--quest-void` — canvas outside the maze and a
     finished room mean opposite things — and a cleared mark is never drawn on canvas at all:
     the toggle is withheld for `outsideMazeCells` (every tile is clickable, canvas included),
     `QuestGrid` drops the class for them, and the CSS carries `:not(.void)` because the two
-    rules have equal specificity and `.cleared` comes later. **The monster rule's assumption is unverified**: that
-    the enemy silhouette actually disappears after a kill has not been watched across a live
-    kill (Task 16 needed a live game session and did not run). It ships behind two signals plus
-    a manual toggle for exactly that reason; settling it needs two captures — a dungeon cell
-    with a live monster, and the same cell immediately after the kill — compared for which
-    `ellenfel`/`tamadas` tokens changed. **And the two signals may really be one**: nothing in
-    the toolkit has ever observed a `tamadas` control on a dungeon page (`extractDungeon` has
-    no attack field at all, unlike `extractFreeMove`), so the same captures should also settle
-    whether a dungeon page carries an attack control, and under what basename — if it does not,
-    the silhouette is the only signal and the mitigation is the manual toggle alone.
+    rules have equal specificity and `.cleared` comes later.
+    **The silhouette rule is now live-verified in both directions** — absent for two
+    neighbours whose monsters had been killed, drawn for three that were alive, cross-checked
+    against the data each time — which settles the assumption an earlier version of this note
+    flagged as unverified. **The `tamadas` control does not exist on a dungeon page**: verified
+    while standing beside three live monsters, no attack control was present, so it is no
+    longer read at all (`extractDungeon` has no attack field either, unlike
+    `extractFreeMove`). How a labyrinth fight is actually initiated is still unknown, and
+    worth finding out before anything else relies on it.
     **The standalone site does show and write these marks**, unlike the position marker and the
     compare card: `src/database/main.tsx` supplies a `localStorage`-backed `prefStore`, and
     progress is a preference the tab itself owns, so the toggle works there — in that origin's

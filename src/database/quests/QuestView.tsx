@@ -201,12 +201,24 @@ export function QuestView(props: QuestViewProps): VNode {
   }, [prefStore, activeSet, selectedQuestId, quests]);
 
   /** Toggle one cell's cleared mark, writing through to the store. */
+  /**
+   * Toggle one cell's cleared mark, writing through to the store.
+   *
+   * The set is re-read from the store rather than taken from `cleared` state:
+   * the userscript's own dungeon activation writes marks for the page the
+   * player is standing on, and it can land **after** this view mounted. Building
+   * the write on this component's state would then silently drop whatever the
+   * boot recorded in between — observed live, where an auto-cleared tile
+   * disappeared again after a hand toggle elsewhere. Read-modify-write, the
+   * same way `recordClearedCell` does it.
+   */
   function toggleCleared(cell: QuestCell) {
     if (selectedQuestId == null) return;
-    const next = new Set(cleared);
+    const key = questClearedKey(activeSet, selectedQuestId);
+    const next = parseCleared(prefStore?.read(key) ?? null);
     if (!next.delete(cellKey(cell))) next.add(cellKey(cell));
     setCleared(next);
-    prefStore?.write(questClearedKey(activeSet, selectedQuestId), serialiseCleared(next));
+    prefStore?.write(key, serialiseCleared(next));
   }
 
   /** Forget this quest's progress — for a repeat run of the same maze. */

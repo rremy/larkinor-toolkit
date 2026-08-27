@@ -30,7 +30,7 @@ const observed = (cell?: { edges: Record<'N' | 'E' | 'S' | 'W', { kind: string }
     ? Object.fromEntries((['N', 'E', 'S', 'W'] as const)
         .map((s) => [s, cell.edges[s].kind === 'open' ? 'open' : 'wall'])) as SideObservations
     : OBSERVED_AT_0_6,
-  enemy: false,
+  enemySides: {},
   question: false,
 });
 
@@ -128,7 +128,7 @@ describe('activateDungeonPosition', () => {
   // standing on an unnarrated cell of the quest they were reading.
   it('leaves the remembered quest alone when nothing matches', async () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
-    await activateDungeonPosition('Pihensz egy kicsit...', { sides: {}, enemy: false, question: false }, makeLoader(), prefs.read, prefs.write);
+    await activateDungeonPosition('Pihensz egy kicsit...', { sides: {}, enemySides: {}, question: false }, makeLoader(), prefs.read, prefs.write);
 
     expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), expect.anything());
   });
@@ -207,7 +207,7 @@ describe('activateDungeonPosition', () => {
     });
 
     const position = await activateDungeonPosition(
-      SHARED_TRAP, { sides: {}, enemy: false, question: false },
+      SHARED_TRAP, { sides: {}, enemySides: {}, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
@@ -223,7 +223,7 @@ describe('activateDungeonPosition', () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '12' });
 
     const position = await activateDungeonPosition(
-      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemy: false, question: false },
+      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemySides: {}, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
@@ -256,31 +256,79 @@ describe('activateDungeonPosition', () => {
     expect(prefs.stored.get(QUEST_MOVE_PREF_KEY)).toBe('');
   });
 
-  it('marks a killed monster cleared', async () => {
-    const monsterCell = quest35.cells.find((c) => c.monsterId != null && c.narration !== '')!;
-    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+  /**
+   * Monsters are read from the **neighbours**, because that is the only monster
+   * evidence a dungeon page carries: the composed picture draws
+   * `ellenfel_<side>.gif` in a neighbour's slot while that neighbour's creature
+   * is alive, and nothing at all about the cell being stood on.
+   *
+   * The fixture is the live measurement of 2026-08-27 — royal quest 39, cell
+   * (9,3), whose four neighbours all hold monsters in the data and which drew
+   * silhouettes on exactly three sides. The fourth, east, was the vampire the
+   * player had already killed.
+   */
+  it('marks a neighbour cleared when its silhouette is absent through an open side', async () => {
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '39' });
+    const here = royal.find((q) => q.id === '39')!.cells.find((c) => c.row === 9 && c.col === 3)!;
 
-    await activateDungeonPosition(
-      monsterCell.narration,
-      { sides: {}, enemy: false, question: false },
+    const position = await activateDungeonPosition(
+      here.narration,
+      { sides: observed(here).sides, enemySides: { N: true, S: true, W: true }, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
-    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null))
-      .toContain(`${monsterCell.row},${monsterCell.col}`);
+    expect(position?.cells).toEqual([{ row: 9, col: 3 }]);
+    // Only the east neighbour, whose creature is gone. The three that still draw
+    // one are alive, and (9,3) itself is not spoken for by this page at all.
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
+      .toEqual(new Set(['9,4']));
   });
 
-  it('leaves a monster that is still standing there alone', async () => {
-    const monsterCell = quest35.cells.find((c) => c.monsterId != null && c.narration !== '')!;
-    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+  it('leaves every neighbour alone while all four silhouettes are drawn', async () => {
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '39' });
+    const here = royal.find((q) => q.id === '39')!.cells.find((c) => c.row === 9 && c.col === 3)!;
 
     await activateDungeonPosition(
-      monsterCell.narration,
-      { sides: {}, enemy: true, question: false },
+      here.narration,
+      { sides: observed(here).sides, enemySides: { N: true, E: true, S: true, W: true }, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
-    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null)).toEqual(new Set());
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toEqual(new Set());
+  });
+
+  // Sight is limited to open sides: the game cannot draw what is behind a wall
+  // or a closed door, so an absent silhouette there proves nothing.
+  it('never reads through a wall or a door', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const walled = quest.cells.find((c) => {
+      const blocked = (['N', 'E', 'S', 'W'] as const).filter((s) => c.edges[s].kind !== 'open');
+      if (blocked.length === 0 || c.narration.trim() === '') return false;
+      // …with a monster-bearing neighbour behind one of those blocked sides.
+      const delta = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] } as const;
+      return blocked.some((s) => {
+        const n = quest.cells.find((o) => o.row === c.row + delta[s][0] && o.col === c.col + delta[s][1]);
+        return n?.monsterId != null;
+      });
+    });
+    if (!walled) return; // no such geometry in the corpus quest
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '39' });
+
+    await activateDungeonPosition(
+      walled.narration,
+      { sides: observed(walled).sides, enemySides: {}, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    const cleared = parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null);
+    const delta = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] } as const;
+    for (const side of ['N', 'E', 'S', 'W'] as const) {
+      if (walled.edges[side].kind === 'open') continue;
+      const n = quest.cells.find(
+        (o) => o.row === walled.row + delta[side][0] && o.col === walled.col + delta[side][1],
+      );
+      if (n) expect(cleared.has(`${n.row},${n.col}`)).toBe(false);
+    }
   });
 
   it('marks a trap cell cleared on arrival', async () => {
@@ -289,7 +337,7 @@ describe('activateDungeonPosition', () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
 
     await activateDungeonPosition(
-      trapCell.narration, { sides: {}, enemy: false, question: false },
+      trapCell.narration, { sides: {}, enemySides: {}, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
@@ -374,16 +422,15 @@ describe('activateDungeonPosition', () => {
   });
 
   /**
-   * The scenario this feature exists for, as measured live on 2026-08-27:
-   * royal quest 39's cell (9,5) holds the "800 éves vámpír", and the page
-   * standing on it after the kill printed only `"Továbbjöttél északra."` — the
-   * game does not reprint a cell's text on re-entry. With no step pending, the
-   * held position names the cell and the absent enemy proves the kill.
+   * The page after a kill, as measured live: the game prints only
+   * `"Továbbjöttél északra."` — it never reprints a cell's text — and no step is
+   * pending, because the battle page came in between and no direction was
+   * clicked since. The held position names the cell, and the neighbour that has
+   * stopped drawing a silhouette is the one that was killed.
    */
-  it('marks a monster cleared on the page after the kill, with no cell text', async () => {
+  it('marks a neighbour cleared from a position held across a fight', async () => {
     const quest = royal.find((q) => q.id === '39')!;
-    const cell = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
-    expect(cell.monsterId).not.toBeNull();
+    const here = quest.cells.find((c) => c.row === 9 && c.col === 3)!;
 
     const prefs = makePrefs({
       [QUEST_SET_PREF_KEY]: 'royal',
@@ -391,106 +438,73 @@ describe('activateDungeonPosition', () => {
       // Where the player was before the fight — the battle page no longer
       // clears this, which is what makes the kill attributable at all.
       [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
-        set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'narration',
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'narration',
       }),
     });
 
     const position = await activateDungeonPosition(
       'Továbbjöttél északra.',                       // no cell text, no step
-      { sides: observed(cell).sides, enemy: false, question: false },
+      { sides: observed(here).sides, enemySides: { N: true, S: true, W: true }, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
     expect(position).toEqual({
-      set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'stay',
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'stay',
     });
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
-      .toEqual(new Set(['9,5']));
+      .toEqual(new Set(['9,4']));
   });
 
   /**
-   * Walking onto a tile whose monster was killed on an earlier visit. The page
-   * prints no cell text — the game never reprints it — so the position comes
-   * from the step, and it is the movement confirmation (`"Továbbjöttél
-   * északra."`, naming the direction clicked) that makes it good enough to mark
-   * the tile cleared. Measured live on 2026-08-27: quest 39, (10,5) → (9,5).
+   * Arriving by a step the page confirms (`"Továbbjöttél nyugatra."`, naming the
+   * direction clicked) is trustworthy enough to write from — the live walk of
+   * 2026-08-27, (9,4) → (9,3).
    */
-  it('marks a monster cleared when the page confirms the step onto its tile', async () => {
+  it('marks a neighbour cleared after a step the page confirms', async () => {
     const quest = royal.find((q) => q.id === '39')!;
-    const from = quest.cells.find((c) => c.row === 10 && c.col === 5)!;
-    const to = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
-    expect(to.monsterId).not.toBeNull();
+    const to = quest.cells.find((c) => c.row === 9 && c.col === 3)!;
 
     const prefs = makePrefs({
       [QUEST_SET_PREF_KEY]: 'royal',
       [questSelectedKey('royal')]: '39',
       [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
-        set: 'royal', questId: '39', cells: [{ row: from.row, col: from.col }],
-        exact: true, source: 'entrance',
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 4 }], exact: true, source: 'narration',
       }),
-      [QUEST_MOVE_PREF_KEY]: 'N',
+      [QUEST_MOVE_PREF_KEY]: 'W',
     });
 
     const position = await activateDungeonPosition(
-      'Továbbjöttél északra.',
-      { sides: observed(to).sides, enemy: false, question: false },
+      'Továbbjöttél nyugatra.',
+      { sides: observed(to).sides, enemySides: { N: true, S: true, W: true }, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
-    expect(position).toEqual({
-      set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'move',
-    });
+    expect(position?.cells).toEqual([{ row: 9, col: 3 }]);
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
-      .toEqual(new Set(['9,5']));
+      .toEqual(new Set(['9,4']));
   });
 
   /**
-   * The refused move the gate exists for: the player clicks a direction, the
-   * game does not let them through, and the page says so instead of confirming
-   * the step. Nothing may be marked — the monster on the *predicted* cell was
-   * never fought.
+   * The refused move the gate exists for: a direction was clicked, the game did
+   * not let the player through, and the page never confirms the step. The
+   * predicted cell may be wrong, so none of its neighbours may be marked.
    */
   it('marks nothing when a step was clicked but the page never confirms it', async () => {
     const quest = royal.find((q) => q.id === '39')!;
-    const from = quest.cells.find((c) => c.row === 10 && c.col === 5)!;
-    const to = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+    const to = quest.cells.find((c) => c.row === 9 && c.col === 3)!;
 
     const prefs = makePrefs({
       [QUEST_SET_PREF_KEY]: 'royal',
       [questSelectedKey('royal')]: '39',
       [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
-        set: 'royal', questId: '39', cells: [{ row: from.row, col: from.col }],
-        exact: true, source: 'entrance',
+        set: 'royal', questId: '39', cells: [{ row: 9, col: 4 }], exact: true, source: 'narration',
       }),
-      [QUEST_MOVE_PREF_KEY]: 'N',
-    });
-
-    const position = await activateDungeonPosition(
-      'Az ajtó zárva van.',
-      { sides: observed(to).sides, enemy: false, question: false },
-      makeLoader(), prefs.read, prefs.write,
-    );
-
-    expect(position?.source).toBe('move');
-    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toEqual(new Set());
-  });
-
-  // The other half of the same page: while the creature is still drawn, standing
-  // on its tile must mark nothing.
-  it('leaves a held position alone while the enemy is still drawn', async () => {
-    const quest = royal.find((q) => q.id === '39')!;
-    const cell = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
-    const prefs = makePrefs({
-      [QUEST_SET_PREF_KEY]: 'royal',
-      [questSelectedKey('royal')]: '39',
-      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
-        set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'narration',
-      }),
+      [QUEST_MOVE_PREF_KEY]: 'W',
     });
 
     await activateDungeonPosition(
-      'Továbbjöttél északra.',
-      { sides: observed(cell).sides, enemy: true, question: false },
+      'Az ajtó zárva van.',
+      { sides: observed(to).sides, enemySides: { N: true, S: true, W: true }, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 
@@ -504,7 +518,7 @@ describe('activateDungeonPosition', () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal' });
 
     const position = await activateDungeonPosition(
-      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemy: false, question: false },
+      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemySides: {}, question: false },
       makeLoader(), prefs.read, prefs.write,
     );
 

@@ -615,7 +615,44 @@ describe('QuestView', () => {
       ).toEqual(new Set()));
     });
 
-    it('renders cells the store already marks as cleared', async () => {
+    /**
+   * The boot's auto-clear can write a mark *after* this view mounted — the
+   * dungeon activation loads its own copy of the quest data first. So the
+   * toggle must build its write from the **store**, not from component state,
+   * or it silently drops whatever the boot recorded in between. Observed live:
+   * an auto-cleared tile reverted the next time another cell was toggled.
+   *
+   * Asserted as "the click re-reads the cleared key", because that is the part
+   * that makes the write safe; a union assertion alone passes either way once
+   * the load effect happens to have re-run.
+   */
+  it('re-reads the stored set when a cell is toggled, rather than trusting state', async () => {
+    const backing: Record<string, string> = {
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '1',
+    };
+    const read = vi.fn((key: string) => backing[key] ?? null);
+    const prefStore: PrefStore = { read, write: (key, value) => { backing[key] = value; } };
+
+    const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+      prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+    const tile = await waitFor(() => {
+      const el = container.querySelector('.quest-cell[data-row="0"][data-col="0"]');
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    fireEvent.click(tile);
+
+    const clearedKey = questClearedKey('royal', '1');
+    const readsBefore = read.mock.calls.filter(([k]) => k === clearedKey).length;
+    fireEvent.click(screen.getByRole('button', { name: /Teljesítve/ }));
+
+    expect(read.mock.calls.filter(([k]) => k === clearedKey).length).toBeGreaterThan(readsBefore);
+    await waitFor(() => expect(parseCleared(backing[clearedKey] ?? null)).toEqual(new Set(['0,0'])));
+  });
+
+  it('renders cells the store already marks as cleared', async () => {
       const prefStore = makePrefStore({
         [QUEST_SET_PREF_KEY]: 'royal',
         [questSelectedKey('royal')]: '1',
