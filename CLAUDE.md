@@ -399,11 +399,17 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - **Cleared tiles are inferred, not tracked — and the monster half is inferred about the
     NEIGHBOURS.** `extractDungeonObservation` returns `enemySides` (which neighbours still
     draw a silhouette, see *the silhouettes are about the neighbours* above) plus the question
-    radios. Three rules, which deliberately do not all speak about the same cell: a
-    monster-bearing neighbour behind an **open** side that draws no silhouette has been
-    killed; a question cell with no radios has been answered; a trap cell is sprung by the act
-    of standing on it. The last two are about the cell being stood on, because the radios and
-    arrival are; the first cannot be, because the page carries no signal for it. **The
+    radios. The rules deliberately do not all speak about the same cell:
+    - **The cell underfoot: its monster is dead, proved by the page existing.** Stepping onto
+      a field holding a live monster makes the creature **attack automatically** (confirmed by
+      the player, 2026-08-27), so the game would have served a battle page instead of this
+      one. No silhouette is involved and none would help — the page draws those for
+      neighbours. This is the sharpest of the three rules and needs no extra signal.
+    - **A neighbour behind an open side that draws no silhouette has been killed** — the
+      silhouettes being per-neighbour, as above. Sight stops at walls and closed doors, where
+      an absent silhouette proves nothing.
+    - **A question cell with no radios has been answered**, and **a trap cell is sprung by
+      arrival** — both about the cell being stood on, because the radios and arrival are. **The
     original rule read the silhouettes as "a monster is here" and was wrong in both
     directions** — it refused to clear a finished tile whose neighbours were alive (the
     symptom that surfaced this, live on quest 39 cell (9,3)) and cleared tiles whose own
@@ -430,8 +436,8 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     flagged as unverified. **The `tamadas` control does not exist on a dungeon page**: verified
     while standing beside three live monsters, no attack control was present, so it is no
     longer read at all (`extractDungeon` has no attack field either, unlike
-    `extractFreeMove`). How a labyrinth fight is actually initiated is still unknown, and
-    worth finding out before anything else relies on it.
+    `extractFreeMove`). A labyrinth fight needs no control: the monster attacks on entry,
+    which is what makes the underfoot rule above sound.
     **The standalone site does show and write these marks**, unlike the position marker and the
     compare card: `src/database/main.tsx` supplies a `localStorage`-backed `prefStore`, and
     progress is a preference the tab itself owns, so the toggle works there — in that origin's

@@ -408,8 +408,11 @@ splice), `src/desktop/boot.ts` and `src/mobile/boot.ts` (activation + arming),
 >   beside three live monsters — so the "two independent signals" mitigation
 >   never existed.
 >
-> The monster rule is now: a monster-bearing neighbour behind an **open** side
-> that draws no silhouette has been killed. The question and trap rules still
+> The monster rule is now two rules. **The cell underfoot**: a monster the data
+> gives it is dead, because stepping onto a live monster triggers an automatic
+> attack (confirmed by the player) — so a dungeon page could not be on screen
+> otherwise. **Each neighbour**: one behind an open side that draws no
+> silhouette has been killed. The question and trap rules still
 > speak about the current cell. `extractDungeonObservation` returns `enemySides`
 > per side instead of one boolean. The upside is that walking a corridor now
 > clears what it can see, rather than only what is underfoot.

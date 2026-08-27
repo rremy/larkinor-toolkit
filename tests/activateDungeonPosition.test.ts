@@ -257,6 +257,55 @@ describe('activateDungeonPosition', () => {
   });
 
   /**
+   * The cell underfoot, proved by the page existing at all.
+   *
+   * Stepping onto a field that holds a live monster makes the creature attack
+   * automatically (stated by the player, 2026-08-27) — the game hands back a
+   * battle page, not a dungeon page. So being shown a dungeon page is itself
+   * evidence that nothing alive is standing here, and a monster the data gives
+   * this cell has already been killed. No silhouette is involved: the page
+   * draws those for the neighbours.
+   */
+  it('marks the cell underfoot when the data gives it a monster', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const here = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+    expect(here.monsterId).not.toBeNull();
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '39' });
+
+    await activateDungeonPosition(
+      here.narration,
+      { sides: observed(here).sides, enemySides: {}, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
+      .toContain('9,5');
+  });
+
+  // A cell the data gives no monster is not marked by merely standing on it —
+  // there is nothing there to have been killed.
+  it('marks nothing underfoot on an empty cell', async () => {
+    const quest = royal.find((q) => q.id === '35')!;
+    const here = quest.cells.find((c) =>
+      c.monsterId == null && !c.trap && !c.hasQuestion && c.narration.trim() !== ''
+      && (['N', 'E', 'S', 'W'] as const).every((sd) => {
+        if (c.edges[sd].kind !== 'open') return true;
+        const d = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] } as const;
+        const n = quest.cells.find((o) => o.row === c.row + d[sd][0] && o.col === c.col + d[sd][1]);
+        return n?.monsterId == null;   // and no neighbour whose mark would confuse this
+      }))!;
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+
+    await activateDungeonPosition(
+      here.narration,
+      { sides: observed(here).sides, enemySides: {}, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null)).toEqual(new Set());
+  });
+
+  /**
    * Monsters are read from the **neighbours**, because that is the only monster
    * evidence a dungeon page carries: the composed picture draws
    * `ellenfel_<side>.gif` in a neighbour's slot while that neighbour's creature
@@ -278,10 +327,11 @@ describe('activateDungeonPosition', () => {
     );
 
     expect(position?.cells).toEqual([{ row: 9, col: 3 }]);
-    // Only the east neighbour, whose creature is gone. The three that still draw
-    // one are alive, and (9,3) itself is not spoken for by this page at all.
+    // The east neighbour, whose creature is gone — the three that still draw a
+    // silhouette are alive — plus (9,3) itself, whose own monster the page
+    // proves dead simply by being a dungeon page rather than a battle.
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
-      .toEqual(new Set(['9,4']));
+      .toEqual(new Set(['9,3', '9,4']));
   });
 
   it('leaves every neighbour alone while all four silhouettes are drawn', async () => {
@@ -294,7 +344,9 @@ describe('activateDungeonPosition', () => {
       makeLoader(), prefs.read, prefs.write,
     );
 
-    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toEqual(new Set());
+    // Every neighbour is alive, so only the cell underfoot is marked.
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
+      .toEqual(new Set(['9,3']));
   });
 
   // Sight is limited to open sides: the game cannot draw what is behind a wall
@@ -452,7 +504,7 @@ describe('activateDungeonPosition', () => {
       set: 'royal', questId: '39', cells: [{ row: 9, col: 3 }], exact: true, source: 'stay',
     });
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
-      .toEqual(new Set(['9,4']));
+      .toEqual(new Set(['9,3', '9,4']));
   });
 
   /**
@@ -481,7 +533,7 @@ describe('activateDungeonPosition', () => {
 
     expect(position?.cells).toEqual([{ row: 9, col: 3 }]);
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
-      .toEqual(new Set(['9,4']));
+      .toEqual(new Set(['9,3', '9,4']));
   });
 
   /**

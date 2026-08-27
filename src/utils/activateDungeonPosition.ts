@@ -155,8 +155,13 @@ export async function activateDungeonPosition(
  * with the move confirmed. A mark is permanent, so a wrong one is worse than a
  * missing one.
  *
- * Three rules, and they do **not** all speak about the same cell:
+ * The rules do **not** all speak about the same cell:
  *
+ * - **The cell underfoot: its monster is dead.** Stepping onto a field that
+ *   holds a live monster makes the creature attack automatically, so the game
+ *   would have served a battle page rather than this one. Being shown a dungeon
+ *   page is therefore proof that nothing alive stands here — no silhouette
+ *   required, and none would help, since the page draws those for neighbours.
  * - **Neighbours, from the silhouettes.** The composed picture draws
  *   `ellenfel_<side>.gif` in a neighbour's slot when that neighbour still holds
  *   a live monster. So for every side the player can see through, a neighbour
@@ -189,8 +194,17 @@ function recordClearedCells(
 
   const done: string[] = [];
 
-  // This cell: the two facts the page states about where the player is.
-  if ((cell.hasQuestion && !observation.question) || cell.trap) {
+  // This cell. Three facts the page settles about where the player is standing:
+  //
+  // - **Its monster, if the data gives it one, is dead.** Stepping onto a field
+  //   holding a live monster makes the creature attack automatically, so the
+  //   game would have handed back a battle page instead of this one. The page
+  //   existing is the evidence; the silhouettes have nothing to do with it.
+  // - A question cell showing no answer radios has been answered.
+  // - A trap fires on entry, so standing here is the evidence.
+  if (cell.monsterId != null
+    || (cell.hasQuestion && !observation.question)
+    || cell.trap) {
     done.push(`${cell.row},${cell.col}`);
   }
 
