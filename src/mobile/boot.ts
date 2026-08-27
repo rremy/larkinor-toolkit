@@ -1,9 +1,10 @@
 import { h, render, type ComponentChildren } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractDungeonSides, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
+import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractDungeonObservation, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
+import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
@@ -117,9 +118,12 @@ export function bootMobile(doc: Document): void {
   // Like the quest offer above, this runs before the page-state early return so
   // it fires on every page, not only the ones mobile takes over.
   if (pageType === PageType.Dungeon) {
+    // Armed first, and synchronously: a step taken before the async detection
+    // resolves must still be recorded.
+    armDungeonMoveTracking(doc, setPref);
     activateDungeonPosition(
       extractNarration(doc),
-      extractDungeonSides(doc),
+      extractDungeonObservation(doc),
       createDataLoader(gmSource(), DATA_BASE_URL),
       getPref,
       setPref,

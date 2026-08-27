@@ -70,4 +70,19 @@ describe('trackDungeonMove', () => {
     armDungeonMoveTracking(doc, () => { throw new Error('quota'); });
     expect(() => doc.querySelector<HTMLInputElement>('input[src*="eszak"]')!.click()).not.toThrow();
   });
+
+  // Capture phase is load-bearing: the game's own inline handler submits the
+  // form and navigates away on the bubble phase, so a bubble-phase listener
+  // would lose the step on every real move. None of the tests above, which
+  // only assert what got stored, can tell a capture listener from a bubble
+  // one — this asserts the registration itself.
+  it('registers the click listener in the capture phase', () => {
+    const doc = dungeonDoc();
+    const input = doc.querySelector<HTMLInputElement>('input[src*="eszak"]')!;
+    const addEventListener = vi.spyOn(input, 'addEventListener');
+
+    armDungeonMoveTracking(doc, vi.fn());
+
+    expect(addEventListener).toHaveBeenCalledWith('click', expect.any(Function), true);
+  });
 });

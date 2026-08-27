@@ -21,10 +21,11 @@ import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
 import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
+import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
-import { extractDungeonSides, extractNarration } from '@/utils/domExtract';
+import { extractDungeonObservation, extractNarration } from '@/utils/domExtract';
 import { getPref, readLoadout, setPref } from '@/utils/config';
 import baseStyles from '@/shared/styles/theme.css?raw';
 import dockStyles from '@/desktop/desktop.css?raw';
@@ -286,9 +287,12 @@ export function bootDesktop(doc: Document): void {
   // dock's "Küldetések" button is already right there on a dungeon page, and the
   // marker is the affordance rather than something to be announced.
   if (pageType === PageType.Dungeon) {
+    // Armed first, and synchronously: a step taken before the async detection
+    // resolves must still be recorded.
+    armDungeonMoveTracking(doc, setPref);
     activateDungeonPosition(
       extractNarration(doc),
-      extractDungeonSides(doc),
+      extractDungeonObservation(doc),
       createDataLoader(gmSource(), DATA_BASE_URL),
       getPref,
       setPref,

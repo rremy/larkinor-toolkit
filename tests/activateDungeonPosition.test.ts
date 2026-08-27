@@ -1,8 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { activateDungeonPosition, clearDungeonPosition } from '../src/utils/activateDungeonPosition';
-import { QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
-import { parseQuestPosition } from '@/shared/questPosition';
+import {
+  ACTIVE_ROYAL_QUEST_PREF_KEY,
+  QUEST_MOVE_PREF_KEY,
+  QUEST_POSITION_PREF_KEY,
+  QUEST_SET_PREF_KEY,
+  questClearedKey,
+  questSelectedKey,
+} from '@/shared/prefKeys';
+import { parseQuestPosition, serialiseQuestPosition } from '@/shared/questPosition';
+import { parseCleared } from '@/shared/questCleared';
 import type { SideObservations } from '../src/utils/dungeonPosition';
 import type { DataLoader, Quest } from '@/shared/data';
 
@@ -15,6 +23,16 @@ Regenerálódott némi életpontod!
 ${royal.find((q) => q.id === '35')!.cells.find((c) => c.row === 0 && c.col === 6)!.narration}`;
 
 const OBSERVED_AT_0_6: SideObservations = { N: 'wall', E: 'wall', S: 'open', W: 'open' };
+
+const quest35 = royal.find((q) => q.id === '35')!;
+const observed = (cell?: { edges: Record<'N' | 'E' | 'S' | 'W', { kind: string }> }) => ({
+  sides: cell
+    ? Object.fromEntries((['N', 'E', 'S', 'W'] as const)
+        .map((s) => [s, cell.edges[s].kind === 'open' ? 'open' : 'wall'])) as SideObservations
+    : OBSERVED_AT_0_6,
+  enemy: false,
+  question: false,
+});
 
 function makeLoader(overrides: Partial<DataLoader> = {}): DataLoader {
   return {
@@ -45,7 +63,7 @@ describe('activateDungeonPosition', () => {
   it('stores the cell it detected in the remembered quest', async () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
     const position = await activateDungeonPosition(
-      RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader(), prefs.read, prefs.write,
+      RESTED_AT_0_6, observed(), makeLoader(), prefs.read, prefs.write,
     );
 
     expect(position).toEqual({
@@ -59,7 +77,7 @@ describe('activateDungeonPosition', () => {
   it('corrects a stale remembered quest and stores the new selection', async () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '34' });
     const position = await activateDungeonPosition(
-      RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader(), prefs.read, prefs.write,
+      RESTED_AT_0_6, observed(), makeLoader(), prefs.read, prefs.write,
     );
 
     expect(position?.questId).toBe('35');
@@ -70,7 +88,7 @@ describe('activateDungeonPosition', () => {
     const prefs = makePrefs();
     const loadTavernQuests = vi.fn(async () => tavern);
     const position = await activateDungeonPosition(
-      RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader({ loadTavernQuests }), prefs.read, prefs.write,
+      RESTED_AT_0_6, observed(), makeLoader({ loadTavernQuests }), prefs.read, prefs.write,
     );
 
     expect(position?.set).toBe('royal');
@@ -83,7 +101,7 @@ describe('activateDungeonPosition', () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'tavern' });
     const loadQuests = vi.fn(async () => royal);
     await activateDungeonPosition(
-      RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader({ loadQuests }), prefs.read, prefs.write,
+      RESTED_AT_0_6, observed(), makeLoader({ loadQuests }), prefs.read, prefs.write,
     );
 
     expect(loadQuests).not.toHaveBeenCalled();
@@ -98,7 +116,7 @@ describe('activateDungeonPosition', () => {
       [QUEST_POSITION_PREF_KEY]: '{"version":1,"set":"royal","questId":"35","cells":[{"row":9,"col":9}],"exact":true}',
     });
     const position = await activateDungeonPosition(
-      'Pihensz egy kicsit...', OBSERVED_AT_0_6, makeLoader(), prefs.read, prefs.write,
+      'Pihensz egy kicsit...', observed(), makeLoader(), prefs.read, prefs.write,
     );
 
     expect(position).toBeNull();
@@ -110,7 +128,7 @@ describe('activateDungeonPosition', () => {
   // standing on an unnarrated cell of the quest they were reading.
   it('leaves the remembered quest alone when nothing matches', async () => {
     const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
-    await activateDungeonPosition('Pihensz egy kicsit...', {}, makeLoader(), prefs.read, prefs.write);
+    await activateDungeonPosition('Pihensz egy kicsit...', { sides: {}, enemy: false, question: false }, makeLoader(), prefs.read, prefs.write);
 
     expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), expect.anything());
   });
@@ -121,7 +139,7 @@ describe('activateDungeonPosition', () => {
     const loader = makeLoader({ loadQuests: async () => { throw new Error('offline'); } });
 
     await expect(
-      activateDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, loader, prefs.read, prefs.write),
+      activateDungeonPosition(RESTED_AT_0_6, observed(), loader, prefs.read, prefs.write),
     ).resolves.toBeNull();
     expect(prefs.write).not.toHaveBeenCalled();
     warn.mockRestore();
@@ -133,11 +151,101 @@ describe('activateDungeonPosition', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const position = await activateDungeonPosition(
-      RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader(), prefs.read, prefs.write,
+      RESTED_AT_0_6, observed(), makeLoader(), prefs.read, prefs.write,
     );
 
     expect(position?.questId).toBe('35');
     warn.mockRestore();
+  });
+
+  it('prefers the quest the game names as active over the last browsed one', async () => {
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '12',
+      [ACTIVE_ROYAL_QUEST_PREF_KEY]: '35',
+    });
+    const position = await activateDungeonPosition(
+      RESTED_AT_0_6, observed(), makeLoader(), prefs.read, prefs.write,
+    );
+    expect(position?.questId).toBe('35');
+  });
+
+  it('carries the position through a pending step when the page prints no text', async () => {
+    const from = quest35.cells.find((c) => c.edges.N.kind === 'open' && c.row > 0)!;
+    const to = quest35.cells.find((c) => c.row === from.row - 1 && c.col === from.col)!;
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '35',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '35', cells: [{ row: from.row, col: from.col }],
+        exact: true, source: 'narration',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'N',
+    });
+
+    const position = await activateDungeonPosition('', observed(to), makeLoader(), prefs.read, prefs.write);
+
+    expect(position).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: to.row, col: to.col }], exact: true, source: 'move',
+    });
+    // Consumed, so the next page cannot replay it.
+    expect(prefs.stored.get(QUEST_MOVE_PREF_KEY)).toBe('');
+  });
+
+  it('marks a killed monster cleared', async () => {
+    const monsterCell = quest35.cells.find((c) => c.monsterId != null && c.narration !== '')!;
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+
+    await activateDungeonPosition(
+      monsterCell.narration,
+      { sides: {}, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null))
+      .toContain(`${monsterCell.row},${monsterCell.col}`);
+  });
+
+  it('leaves a monster that is still standing there alone', async () => {
+    const monsterCell = quest35.cells.find((c) => c.monsterId != null && c.narration !== '')!;
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+
+    await activateDungeonPosition(
+      monsterCell.narration,
+      { sides: {}, enemy: true, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null)).toEqual(new Set());
+  });
+
+  it('marks a trap cell cleared on arrival', async () => {
+    const trapCell = quest35.cells.find((c) => c.trap && c.narration !== '');
+    if (!trapCell) return; // the fixture quest has no narrated trap
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '35' });
+
+    await activateDungeonPosition(
+      trapCell.narration, { sides: {}, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null))
+      .toContain(`${trapCell.row},${trapCell.col}`);
+  });
+
+  it('clears nothing when the position is ambiguous', async () => {
+    // Quest 16's narration "Hopp, zsákutca. Akkor vissza." is shared by two
+    // cells, (7,7) and (8,7) — verified unique to this quest in the corpus —
+    // so no single cell can be credited with the clearing.
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal' });
+
+    const position = await activateDungeonPosition(
+      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position?.exact).toBe(false);
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '16')) ?? null)).toEqual(new Set());
   });
 });
 
