@@ -6,7 +6,7 @@
 // sentence, so the affordance belongs on the sentence. Nothing is reserialised,
 // so the game's own inline handlers survive.
 
-import type { ActiveQuestMention } from '@/utils/activeQuest';
+import { findActiveQuest } from '@/utils/activeQuest';
 import {
   flattenNarration, isInsideAnchor, narrationBlock, segmentFor, spliceIntoTextNode,
 } from './narrationSplice';
@@ -44,20 +44,32 @@ function buildLink(doc: Document, label: string, onOpen: () => void): HTMLAnchor
 /**
  * Wrap the active-quest phrase in a link that opens the quests tab.
  *
+ * The phrase is located here, in `flattenNarration`'s own text, rather than
+ * taken from the caller: offsets are only meaningful in the string they were
+ * measured in, and the boot's `extractNarration` is a *different* string — it
+ * trims and collapses whitespace, so any indentation inside the `<font>` block
+ * (the ordinary shape of server-generated HTML) shifts every offset. The
+ * invariant `enhanceNarration` keeps — match and splice against one and the
+ * same flattened text — is the only thing that makes the run land where the
+ * parser found it. The recognised quest id is handed to `onOpen` for the same
+ * reason: it comes from the match that was actually spliced.
+ *
  * Returns the link, or null when there is nothing to attach to: no narration
- * block, the phrase already linked, it spans element boundaries, or it sits
- * inside one of the game's own anchors. Each of those is a reason to leave the
- * text exactly as the game wrote it.
+ * block, no phrase in it, the phrase already linked, it spans element
+ * boundaries, or it sits inside one of the game's own anchors. Each of those is
+ * a reason to leave the text exactly as the game wrote it.
  */
 export function renderActiveQuestLink(
   doc: Document,
-  mention: ActiveQuestMention,
-  onOpen: () => void,
+  onOpen: (questId: string) => void,
 ): HTMLElement | null {
   const block = narrationBlock(doc);
   if (!block || block.hasAttribute(LINKED_ATTR)) return null;
 
-  const { segments } = flattenNarration(doc, block);
+  const { segments, text } = flattenNarration(doc, block);
+  const mention = findActiveQuest(text);
+  if (!mention) return null;
+
   const segment = segmentFor(segments, mention.index, mention.index + mention.length);
   if (!segment || isInsideAnchor(segment.node, block)) return null;
 
@@ -65,7 +77,7 @@ export function renderActiveQuestLink(
   spliceIntoTextNode(doc, segment.node, [{
     index: mention.index - segment.start,
     length: mention.length,
-    build: (label) => (created = buildLink(doc, label, onOpen)),
+    build: (label) => (created = buildLink(doc, label, () => onOpen(mention.questId))),
   }]);
 
   block.setAttribute(LINKED_ATTR, 'true');

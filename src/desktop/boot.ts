@@ -264,11 +264,14 @@ export function bootDesktop(doc: Document): void {
   // the sentence itself the way into the quests tab.
   const activeQuest = activateActiveQuest(extractNarration(doc), getPref, setPref);
   if (activeQuest) {
-    renderActiveQuestLink(doc, activeQuest, () => {
+    // The link finds the phrase itself, in the flattened block's own text: the
+    // string above is a trimmed, whitespace-collapsed copy, so its offsets
+    // would not survive the trip into the live DOM.
+    renderActiveQuestLink(doc, (questId) => {
       // Route explicitly rather than leaning on the preference just written:
       // QuestView reads the stored set once at mount, so an overlay already
       // open would never see it.
-      openQuestTarget = { set: 'royal', id: activeQuest.questId };
+      openQuestTarget = { set: 'royal', id: questId };
       openQuestsSignal += 1;
       renderDock();
     });
