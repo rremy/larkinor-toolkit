@@ -5,6 +5,9 @@ import {
   extractBattle,
   extractLogin,
   extractDungeon,
+  extractDungeonSides,
+  extractDungeonObservation,
+  dungeonDirectionInputs,
   LOGIN_USERNAME_KEY,
   hideOriginalDOM,
 } from '../src/utils/domExtract';
@@ -723,5 +726,55 @@ describe('hideOriginalDOM', () => {
     expect(offscreen).not.toBeNull();
     expect(doc.getElementById('game')).not.toBeNull(); // still in DOM
     expect(offscreen?.contains(doc.getElementById('game'))).toBe(true);
+  });
+});
+
+describe('extractDungeonObservation', () => {
+  const dungeon = (inner: string) => new JSDOM(
+    `<html><body><form name="urlap"><input type="hidden" name="oldalTipus" value="otLabirintus">${inner}</form></body></html>`,
+  ).window.document;
+
+  it('reports an enemy from the composed picture', () => {
+    const doc = dungeon('<img src="/pic/labirintus/ellenfel/ellenfel_b.gif">');
+    expect(extractDungeonObservation(doc).enemy).toBe(true);
+  });
+
+  // Two independent signals, because the monster rule is the one auto-clear
+  // rule that has not been watched across a kill: the game cannot offer an
+  // attack against a creature that is gone.
+  it('reports an enemy from the attack control alone', () => {
+    const doc = dungeon('<input type="image" src="/pic/tamadas.gif" title="Támadás">');
+    expect(extractDungeonObservation(doc).enemy).toBe(true);
+  });
+
+  it('reports no enemy when neither signal is present', () => {
+    const doc = dungeon('<img src="/pic/labirintus/fal/fal_f_8.gif">');
+    expect(extractDungeonObservation(doc).enemy).toBe(false);
+  });
+
+  it('reports a pending question from its answer radios', () => {
+    expect(extractDungeonObservation(dungeon('<input type="radio" name="valasz" value="1">')).question).toBe(true);
+    expect(extractDungeonObservation(dungeon('')).question).toBe(false);
+  });
+
+  it('carries the same sides extractDungeonSides reads', () => {
+    const doc = dungeon(`
+      <img src="/pic/labirintus/fal/fal_f_8.gif">
+      <img src="/pic/labirintus/folyoso/foly_l_3.gif">`);
+    expect(extractDungeonObservation(doc).sides).toEqual(extractDungeonSides(doc));
+    expect(extractDungeonObservation(doc).sides).toEqual({ N: 'wall', S: 'open' });
+  });
+});
+
+describe('dungeonDirectionInputs', () => {
+  it('pairs each direction control with its side', () => {
+    const doc = new JSDOM(`<html><body><form name="urlap">
+      <input type="image" src="/pic/eszak.gif" title="Észak">
+      <input type="image" src="/pic/nyugat.gif" title="Nyugat">
+      <input type="image" src="/pic/ok.gif">
+    </form></body></html>`).window.document;
+
+    expect(dungeonDirectionInputs(doc).map((d) => d.side).sort()).toEqual(['N', 'W']);
+    expect(dungeonDirectionInputs(doc)[0].input.tagName).toBe('INPUT');
   });
 });

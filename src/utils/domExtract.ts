@@ -539,6 +539,15 @@ export interface DungeonState {
   question: DungeonQuestion | null;
 }
 
+/** What the dungeon page reveals about the cell the player is standing in. */
+export interface DungeonObservation {
+  sides: SideObservations;
+  /** An enemy is still present: the silhouette is drawn, or an attack is offered. */
+  enemy: boolean;
+  /** A question is waiting to be answered (its answer radios are on the page). */
+  question: boolean;
+}
+
 /** Composed-cell tile images, matched by their src path segment. */
 const DUNGEON_TILE_RE = /\/(talaj|ajto|fal|folyoso|labirintus|ellenfel)\//;
 
@@ -625,6 +634,58 @@ export function extractDungeonSides(doc: Document): SideObservations {
   }
 
   return sides;
+}
+
+/** Directory of the enemy silhouette in the composed cell picture. */
+const ENEMY_TILE_RE = /\/ellenfel\//;
+
+/**
+ * What the dungeon page says about the cell the player is in: its sides, and
+ * whether the cell still holds work.
+ *
+ * `sides` is `extractDungeonSides` verbatim, so the corpus tests that pin the
+ * matcher's rates keep testing exactly what they tested before.
+ *
+ * `enemy` reads **two** independent signals — the silhouette drawn in the
+ * composed picture and the game's own attack control — and reports true if
+ * either is present. The auto-clear rule that consumes it (a monster the data
+ * knows about being gone) is the one rule not yet verified across a live kill,
+ * so it is deliberately hard to trip: the game cannot offer an attack against a
+ * creature that is no longer there.
+ *
+ * `question` is the presence of the answer radios, the same signal
+ * `extractDungeonQuestion` reads — radios are how the live page asks, and their
+ * absence is how it stops asking.
+ */
+export function extractDungeonObservation(doc: Document): DungeonObservation {
+  const enemyTile = Array.from(doc.querySelectorAll<HTMLImageElement>('img'))
+    .some((img) => ENEMY_TILE_RE.test(img.getAttribute('src') ?? ''));
+  const attackControl = doc.querySelector(`input[type="image"][src*="${ATTACK_BASENAME}.gif"]`) !== null;
+
+  return {
+    sides: extractDungeonSides(doc),
+    enemy: enemyTile || attackControl,
+    question: doc.querySelector('input[name="valasz"]') !== null,
+  };
+}
+
+/**
+ * The game's own direction controls paired with the side each one leads to.
+ *
+ * Exposed so `trackDungeonMove` can listen on the controls themselves rather
+ * than re-deriving the basename map: every movement path in the toolkit ends in
+ * a `.click()` on one of these, so they are the one place a step is observable
+ * regardless of how it was initiated.
+ */
+export function dungeonDirectionInputs(
+  doc: Document,
+): Array<{ side: Side; input: HTMLInputElement }> {
+  const found: Array<{ side: Side; input: HTMLInputElement }> = [];
+  doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach((input) => {
+    const dir = DIRECTION_BY_BASENAME[basename(input.getAttribute('src') ?? '')];
+    if (dir) found.push({ side: SIDE_BY_DIRECTION[dir], input });
+  });
+  return found;
 }
 
 /** Text following a radio up to the next <br>/input — its answer label. */
