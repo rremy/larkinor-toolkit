@@ -1,12 +1,49 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { Battle } from '../src/pages/Battle';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 import type { BattleState } from '../src/utils/domExtract';
+import { USERSCRIPT_DATA_BASE_URL } from '../src/shared/publicUrl';
 
 const MONSTERS: Monster[] = [
   { id: 1, name: 'Vérszomjas moszkitóraj', image: '/pic/szornyk/moszkitoraj_k.gif', level: 3, hp: 6, mp: 4, attackType: 'Szúró', debuff: 'fertőzés', magicWeapon: false, location: 'Larkinor', drops: [] },
 ];
+
+function questCell() {
+  return {
+    row: 0, col: 0,
+    edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+    monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+    portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+    question: null, rawImage: '',
+  };
+}
+
+// Mirrors the helper in tests/Dungeon.test.tsx: stubs the quests.json/monsters.json
+// GM-cached fetches so the quests tab renders real, distinguishable content instead of
+// staying empty — needed to prove *which* quest actually rendered, not just that the
+// overlay mounted.
+function stubQuestData(quests: Array<{ id: string; description: string }> = [{ id: '1', description: 'Teszt küldetés' }]) {
+  const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
+  for (const file of ['quests.json', 'monsters.json']) {
+    GM_setValue(`${base}/${file}`, '');
+    GM_setValue(`${base}/${file}:v`, '');
+  }
+  const stubQuests = quests.map((q) => ({
+    id: q.id, description: q.description, reward: '1 db ezüst', rows: 1, cols: 1,
+    cells: [questCell()],
+  }));
+  vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
+    url: string;
+    onload?: (res: { status: number; responseText: string }) => void;
+  }) => {
+    if (opts.url.includes('quests.json')) {
+      opts.onload?.({ status: 200, responseText: JSON.stringify(stubQuests) });
+    } else if (opts.url.includes('monsters.json')) {
+      opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
+    }
+  }) as unknown as typeof GM_xmlhttpRequest);
+}
 
 function buildState(overrides: Partial<BattleState> = {}): BattleState {
   return {
@@ -148,13 +185,25 @@ describe('Battle', () => {
     expect(container.querySelector('.lc-battle-level-badge')).toBeNull();
   });
 
-  it('opens the quests tab on the active quest named in the narration', async () => {
-    const state = buildState({ narration: 'A szörny rád támad!\nAktuális küldetés: (39)' });
-    const { container } = render(<Battle state={state} db={null} />);
+  describe('active-quest link', () => {
+    afterEach(() => {
+      vi.mocked(GM_xmlhttpRequest).mockReset();
+    });
 
-    fireEvent.click(container.querySelector('.lc-quest-link')!);
+    it('opens the quests tab on the active quest named in the narration', async () => {
+      stubQuestData([
+        { id: '1', description: 'Első küldetés' },
+        { id: '39', description: 'Második küldetés' },
+      ]);
+      const state = buildState({ narration: 'A szörny rád támad!\nAktuális küldetés: (39)' });
+      const { container } = render(<Battle state={state} db={null} />);
 
-    // The overlay mounts its quests tab; the heading is enough to prove the route.
-    await waitFor(() => expect(container.querySelector('.lc-db')).not.toBeNull());
+      fireEvent.click(container.querySelector('.lc-quest-link')!);
+
+      // Assert on the rendered quest content, not just that the panel opened —
+      // a bug that opened the overlay on the wrong tab (or the right tab but
+      // the wrong quest) would still leave `.lc-db` mounted.
+      expect((await screen.findAllByText('Második küldetés')).length).toBeGreaterThan(0);
+    });
   });
 });

@@ -26,6 +26,12 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
   // The game names the active royal quest in the narration; make the sentence
   // the way into the quests tab. The pref writes happen in the boot — this is
   // only the affordance.
+  //
+  // Every other opener of the overlay (the plain "Adatbázis" button, an item
+  // link from the MonsterCard) must clear this back to null. DockedPanel
+  // unmounts DatabaseApp on close, so a stale route would force-navigate the
+  // *next* open back into that quest — including a later open that has
+  // nothing to do with quests at all.
   const activeQuest = findActiveQuest(state.narration);
   const [questRoute, setQuestRoute] = useState<{ id: string; seq: number } | null>(null);
 
@@ -37,7 +43,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         {state.locationImageUrl && (
           <img class="lc-hero-img" src={state.locationImageUrl} alt={state.locationName} />
         )}
-        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setDbOpen(true); }} />
+        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setQuestRoute(null); setDbOpen(true); }} />
       </div>
 
       <NavPad directions={state.directions} attack={state.attack} cornerLeft={state.settingsButton} cornerRight={state.restButton}>
@@ -85,7 +91,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
       <MonsterCard
         monster={selectedMonster}
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setDbOpen(true); }}
       />
 
       {configOpen && (

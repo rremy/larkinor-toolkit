@@ -20,6 +20,13 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
   // The game names the active royal quest in the narration; make the sentence
   // the way into the quests tab. The pref writes happen in the boot — this is
   // only the affordance.
+  //
+  // The MonsterCard item link is the only other opener of the overlay here,
+  // and it must clear this back to null. DockedPanel unmounts DatabaseApp on
+  // close, so a stale route would force-navigate the *next* open back into
+  // that quest — including a later open that has nothing to do with quests
+  // at all. (`initialItemId` taking precedence in DatabaseApp's guard only
+  // masks the symptom on the open that sets it; it does not clear the state.)
   const activeQuest = findActiveQuest(state.narration);
   const [questRoute, setQuestRoute] = useState<{ id: string; seq: number } | null>(null);
 
@@ -118,7 +125,7 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
       <MonsterCard
         monster={selectedMonster}
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setDbOpen(true); }}
       />
 
       <DatabaseOverlay
