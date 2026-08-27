@@ -380,27 +380,42 @@ describe('resolveDungeonPosition', () => {
     expect(resolved).toEqual(locateDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35'));
   });
 
+  /**
+   * Quest 16's narration "Hopp, zsákutca. Akkor vissza." is ambiguous between
+   * (7,7) and (8,7); an exact step east from (7,6) — a real corridor in the
+   * data — lands on (7,7) alone. This is the fixture that actually exercises
+   * the intersection: unlike the quest-35 fixtures elsewhere in this file, the
+   * narration here stays ambiguous (`exact: false`), so `resolveDungeonPosition`
+   * cannot shortcut through `if (detected.exact) return detected;` before
+   * reaching the intersection line — proven by mutation, see the fix report.
+   */
+  const quest16 = royal.find((q) => q.id === '16')!;
+  const DEAD_END_NARRATION = 'Hopp, zsákutca. Akkor vissza.';
+
   it('intersects the two when both have something to say', () => {
-    const narrated = quest35.cells.find((c) =>
-      c.narration !== '' && c.row > 0 && c.edges.N.kind === 'open')!;
-    const target = cellAt(narrated.row - 1, narrated.col);
     const start: QuestPosition = {
-      set: 'royal', questId: '35', exact: false, source: 'narration',
-      cells: [{ row: narrated.row, col: narrated.col }, { row: 0, col: 0 }],
+      set: 'royal', questId: '16', cells: [{ row: 7, col: 6 }], exact: true, source: 'narration',
     };
-    const resolved = resolveDungeonPosition(
-      target.narration, sidesOf(target), royal, '35', start, 'N',
-    );
-    expect(resolved?.cells).toContainEqual({ row: target.row, col: target.col });
+    const resolved = resolveDungeonPosition(DEAD_END_NARRATION, {}, royal, '16', start, 'E');
+    expect(resolved).toEqual({
+      set: 'royal', questId: '16', cells: [{ row: 7, col: 7 }], exact: true, source: 'move',
+    });
   });
 
   // A locked door is drawn *and* offered: the click fails, the player never
   // moves, and the page still describes the old cell. Evidence must win, or the
   // marker confidently walks through a door the player could not open.
+  //
+  // The step here must actually succeed and land somewhere *other* than the
+  // narrated cell — a step that fails outright (propagatePosition returns no
+  // candidates) resolves through the earlier `if (stepped.length === 0) return
+  // detected;` and never reaches this rule at all. (9,8) steps north cleanly
+  // to (8,8), a real corridor the data agrees with even under `OBSERVED_AT_0_6`
+  // — it is simply the wrong cell once the narration is consulted.
   it('believes the narration when the step disagrees, and drops the chain', () => {
     const resolved = resolveDungeonPosition(
       RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35',
-      { set: 'royal', questId: '35', cells: [{ row: 5, col: 5 }], exact: true, source: 'narration' },
+      { set: 'royal', questId: '35', cells: [{ row: 9, col: 8 }], exact: true, source: 'narration' },
       'N',
     );
     expect(resolved?.cells).toEqual([{ row: 0, col: 6 }]);
@@ -411,12 +426,43 @@ describe('resolveDungeonPosition', () => {
     expect(resolveDungeonPosition('', {}, royal, '35', null, null)).toBeNull();
   });
 
-  // A step is only meaningful inside the maze it was taken in.
+  // A step is only meaningful inside the maze it was taken in. This covers the
+  // case resolved by the earlier `!quest` guard: the previous quest ('GOMB')
+  // is not even in the `royal` list handed to this call.
   it('ignores a step from a position in another quest than the one matched', () => {
     const foreign: QuestPosition = {
       set: 'tavern', questId: 'GOMB', cells: [{ row: 0, col: 0 }], exact: true, source: 'narration',
     };
     const resolved = resolveDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35', foreign, 'N');
     expect(resolved?.questId).toBe('35');
+  });
+
+  /**
+   * A second, distinct cross-quest case: `previous` names a quest ('24') that
+   * *is* present in `royal`, so the step actually resolves (unlike the test
+   * above, which never gets past the `!quest` guard). Quest 24's (8,7) steps
+   * north to (7,7) — the very coordinate quest 16's ambiguous dead-end match
+   * also names, purely by coincidence of numbering. Only the `set`/`questId`
+   * guard stops that coincidence from being read as agreement: without it, the
+   * quest-24 step would "confirm" one of quest 16's candidates and the result
+   * would wrongly claim to be standing in quest 24 at (7,7), narrowed and
+   * marked exact, instead of quest 16's genuine (still ambiguous) match.
+   */
+  it('refuses to let a step from a different quest of the same set narrow the match', () => {
+    const quest24 = royal.find((q) => q.id === '24')!;
+    expect(quest24.cells.find((c) => c.row === 8 && c.col === 7)?.edges.N.kind).not.toBe('wall');
+    expect(quest16.cells.find((c) => c.row === 7 && c.col === 7)).toBeDefined();
+
+    const previous: QuestPosition = {
+      set: 'royal', questId: '24', cells: [{ row: 8, col: 7 }], exact: true, source: 'narration',
+    };
+    const resolved = resolveDungeonPosition(DEAD_END_NARRATION, {}, royal, '16', previous, 'N');
+    expect(resolved).toEqual({
+      set: 'royal',
+      questId: '16',
+      cells: [{ row: 7, col: 7 }, { row: 8, col: 7 }],
+      exact: false,
+      source: 'narration',
+    });
   });
 });
