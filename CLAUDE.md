@@ -297,9 +297,15 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
         fight, which is precisely the moment a monster stops being alive and its tile becomes
         clearable. Every other page still forgets the position.
       Together these are what make the auto-clear reachable at all: `source === 'stay'` is
-      admitted alongside `'narration'` for that reason, while `'move'` and `'entrance'` stay
-      excluded (a refused move carries a pending step, so it can never be mistaken for a
-      stay). Before this, the only page printing a cell's text was one where the monster was
+      admitted alongside `'narration'` for that reason.
+      - **A `'move'` position may clear too, but only when the page confirms the step**
+        (`movementConfirmed`): the game prints `Továbbjöttél <északra|délre|keletre|nyugatra>.`
+        naming the direction, and a **refused** move — the whole reason `'move'` was excluded —
+        cannot print it. Requiring the stated direction to match the button clicked closes the
+        gap further, since a trap that relocated the player does not describe their own click
+        back to them. Two of the four wordings are live-observed; an unrecognised one costs an
+        auto-clear, never a position. `'entrance'` stays excluded outright — it is a class
+        inference about a tile, not an account of this page. Before this, the only page printing a cell's text was one where the monster was
       still alive.
     - **A labyrinth's entry page states nothing about its cell, so the entrance is inferred
       from the game's own entry line.** Walking in prints `Sikerült bejutnod a labirintusba.`

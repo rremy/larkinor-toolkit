@@ -408,6 +408,73 @@ describe('activateDungeonPosition', () => {
       .toEqual(new Set(['9,5']));
   });
 
+  /**
+   * Walking onto a tile whose monster was killed on an earlier visit. The page
+   * prints no cell text — the game never reprints it — so the position comes
+   * from the step, and it is the movement confirmation (`"Továbbjöttél
+   * északra."`, naming the direction clicked) that makes it good enough to mark
+   * the tile cleared. Measured live on 2026-08-27: quest 39, (10,5) → (9,5).
+   */
+  it('marks a monster cleared when the page confirms the step onto its tile', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const from = quest.cells.find((c) => c.row === 10 && c.col === 5)!;
+    const to = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+    expect(to.monsterId).not.toBeNull();
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '39',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: from.row, col: from.col }],
+        exact: true, source: 'entrance',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'N',
+    });
+
+    const position = await activateDungeonPosition(
+      'Továbbjöttél északra.',
+      { sides: observed(to).sides, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal', questId: '39', cells: [{ row: 9, col: 5 }], exact: true, source: 'move',
+    });
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null))
+      .toEqual(new Set(['9,5']));
+  });
+
+  /**
+   * The refused move the gate exists for: the player clicks a direction, the
+   * game does not let them through, and the page says so instead of confirming
+   * the step. Nothing may be marked — the monster on the *predicted* cell was
+   * never fought.
+   */
+  it('marks nothing when a step was clicked but the page never confirms it', async () => {
+    const quest = royal.find((q) => q.id === '39')!;
+    const from = quest.cells.find((c) => c.row === 10 && c.col === 5)!;
+    const to = quest.cells.find((c) => c.row === 9 && c.col === 5)!;
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '39',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '39', cells: [{ row: from.row, col: from.col }],
+        exact: true, source: 'entrance',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'N',
+    });
+
+    const position = await activateDungeonPosition(
+      'Az ajtó zárva van.',
+      { sides: observed(to).sides, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position?.source).toBe('move');
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', '39')) ?? null)).toEqual(new Set());
+  });
+
   // The other half of the same page: while the creature is still drawn, standing
   // on its tile must mark nothing.
   it('leaves a held position alone while the enemy is still drawn', async () => {

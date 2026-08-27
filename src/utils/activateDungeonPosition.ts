@@ -17,7 +17,7 @@ import {
 } from '@/shared/prefKeys';
 import { parseQuestPosition, serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
-import { resolveDungeonPosition } from './dungeonPosition';
+import { resolveDungeonPosition, movementConfirmed } from './dungeonPosition';
 import { takePendingMove } from './trackDungeonMove';
 import type { DungeonObservation } from './domExtract';
 
@@ -124,7 +124,13 @@ export async function activateDungeonPosition(
 
   // Only a position the page's own words pinned may write a permanent mark —
   // `exact` alone is not the gate, because a propagated step is exact too.
-  if (position?.exact && (position.source === 'narration' || position.source === 'stay')) {
+  // A propagated position joins the two page-backed ones when the page states
+  // the move happened, in the direction asked for — see `movementConfirmed`.
+  const movedAsAsked = move != null && movementConfirmed(narration, move);
+  const pageAccountsForIt = position?.source === 'narration'
+    || position?.source === 'stay'
+    || (position?.source === 'move' && movedAsAsked);
+  if (position?.exact && pageAccountsForIt) {
     recordClearedCell(position, quests, observation, readPref, writePref);
   }
 

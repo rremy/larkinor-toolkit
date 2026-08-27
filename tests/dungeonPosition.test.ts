@@ -6,6 +6,7 @@ import {
   foldNarrationLines,
   locateDungeonPosition,
   matchCellsInQuest,
+  movementConfirmed,
   narrationSaysEntered,
   stayCells,
   propagatePosition,
@@ -856,5 +857,35 @@ describe('standing still', () => {
 
   it('has nothing to hold on the first dungeon page of a visit', () => {
     expect(resolveDungeonPosition('Pihensz egy kicsit...', {}, royal, '35', null, null)).toBeNull();
+  });
+});
+
+/**
+ * The sentence that makes a walked-to position trustworthy enough to write
+ * progress from. Both live wordings were captured on 2026-08-27 in royal
+ * quest 39.
+ */
+describe('movementConfirmed', () => {
+  it('accepts the observed wordings, in the direction asked for', () => {
+    expect(movementConfirmed('\n\nTovábbjöttél északra.\n', 'N')).toBe(true);
+    expect(movementConfirmed('\n\nTovábbjöttél délre.\n\n', 'S')).toBe(true);
+  });
+
+  // The point of the direction check: a page describing some other movement
+  // must not vouch for this click.
+  it('rejects a confirmation for a different direction', () => {
+    expect(movementConfirmed('Továbbjöttél északra.', 'S')).toBe(false);
+    expect(movementConfirmed('Továbbjöttél délre.', 'E')).toBe(false);
+  });
+
+  // A refused move — the whole reason the gate exists — prints no such line.
+  it('rejects a page that does not state a move', () => {
+    expect(movementConfirmed('Sikerült bejutnod a labirintusba.', 'N')).toBe(false);
+    expect(movementConfirmed('Pihensz egy kicsit...', 'N')).toBe(false);
+    expect(movementConfirmed('', 'N')).toBe(false);
+  });
+
+  it('requires both halves on the same line', () => {
+    expect(movementConfirmed('Továbbjöttél a sötétben.\nÉszakra egy tábla függ.', 'N')).toBe(false);
   });
 });

@@ -299,6 +299,46 @@ export function propagatePosition(
 }
 
 /**
+ * Hungarian direction word the game uses when it confirms a move, per side.
+ *
+ * Observed live on 2026-08-27 for two of the four (`északra` stepping north,
+ * `délre` stepping south, both in royal quest 39); the other two follow the same
+ * `-ra`/`-re` suffixation of the direction names the nav buttons already use
+ * (`kelet`, `nyugat`). A wording we do not recognise makes `movementConfirmed`
+ * return false, which only costs an auto-clear — never a position.
+ */
+const MOVED_WORD: Record<Side, string> = {
+  N: 'eszakra',
+  E: 'keletre',
+  S: 'delre',
+  W: 'nyugatra',
+};
+
+/** Folded fragment of the sentence the game prints when a move succeeded. */
+const MOVED_PHRASE = 'tovabbjottel';
+
+/**
+ * Whether the page states that the player moved, in the direction they asked
+ * for.
+ *
+ * This is what makes a propagated position trustworthy enough to write
+ * permanent progress from. The objection to clearing on a `'move'` position is
+ * that a **refused** move (a locked door, a blocked step) leaves the player
+ * where they were while the prediction insists otherwise — and a refused move
+ * cannot print this sentence. Requiring the stated direction to match the button
+ * clicked closes it further: a trap that moved the player elsewhere does not
+ * describe their own click back to them.
+ *
+ * Both parts must appear on the **same line**, so a movement sentence about an
+ * earlier action cannot vouch for this one.
+ */
+export function movementConfirmed(narration: string, move: Side): boolean {
+  const word = MOVED_WORD[move];
+  return foldNarrationLines(narration)
+    .some((line) => line.includes(MOVED_PHRASE) && line.includes(word));
+}
+
+/**
  * Where the player is when the page follows an action that was **not** a move.
  *
  * You cannot leave a cell without clicking a direction, so with no step pending
