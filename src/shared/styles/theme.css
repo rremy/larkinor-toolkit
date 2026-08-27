@@ -69,7 +69,7 @@
      is the one direction the lock palette does not already use. */
   --quest-here-ring: #4fd6ee;
   --quest-here-dim: rgba(79, 214, 238, 0.55);
-  --quest-cleared-bg: #1d1a17;
+  --quest-cleared-bg: #2b241c;
 }
 
 /* Off-screen container for original game DOM (proxy DOM pattern) */
@@ -1148,6 +1148,18 @@
 /* Cell detail panel — everything about the selected maze cell */
 .lc-db .quest-detail { padding: 10px; color: var(--text); }
 .lc-db .quest-detail h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
+.lc-db .quest-clear-toggle {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.lc-db .quest-clear-toggle.active { color: var(--muted); }
 .lc-db .quest-detail-monster { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .lc-db .quest-detail-sprite { width: 40px; height: 46px; object-fit: contain; }
 .lc-db .quest-monster-link {
@@ -1205,6 +1217,15 @@
 .lc-db .quest-details-toggle { display: none; }
 .lc-db .quest-reward { margin: 0 0 4px; font-size: 12px; color: var(--good); }
 .lc-db .quest-stats { color: var(--muted); font-size: 11px; }
+.lc-db .quest-cleared-count { display: flex; align-items: center; gap: 8px; }
+.lc-db .quest-cleared-reset {
+  padding: 2px 6px;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
 .lc-db .quest-zoom { margin-top: 6px; }
 .lc-db .quest-grid-wrap { flex: 1; overflow: auto; }
 .lc-db .quest-side {

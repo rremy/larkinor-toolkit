@@ -5,7 +5,8 @@ import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_SET_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_SET_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { parseCleared, serialiseCleared } from '@/shared/questCleared';
 
 /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
 function makePrefStore(initial: Record<string, string> = {}): PrefStore {
@@ -583,6 +584,58 @@ describe('QuestView', () => {
       );
       await screen.findAllByText(/Gründen borospincéje/);
       expect(container.querySelector('.quest-header')!.classList.contains('details-collapsed')).toBe(true);
+    });
+  });
+
+  describe('cleared cells', () => {
+    it('persists a cleared cell per quest and offers a reset', async () => {
+      const prefStore = makePrefStore({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '1' });
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      // Queried by coordinate attributes rather than by title: the tile's title
+      // is a composed Hungarian label (`1. sor, 1. oszlop — …`) that these tests
+      // have no reason to depend on.
+      const tile = await waitFor(() => {
+        const el = container.querySelector('.quest-cell[data-row="0"][data-col="0"]');
+        expect(el).not.toBeNull();
+        return el!;
+      });
+      fireEvent.click(tile);
+      fireEvent.click(screen.getByRole('button', { name: /Teljesítve/ }));
+
+      await waitFor(() => expect(
+        parseCleared(prefStore.read(questClearedKey('royal', '1'))),
+      ).toEqual(new Set(['0,0'])));
+      expect(screen.getByText(/Teljesített: 1/)).toBeTruthy();
+
+      fireEvent.click(screen.getByRole('button', { name: /Visszaállítás/ }));
+      await waitFor(() => expect(
+        parseCleared(prefStore.read(questClearedKey('royal', '1'))),
+      ).toEqual(new Set()));
+    });
+
+    it('renders cells the store already marks as cleared', async () => {
+      const prefStore = makePrefStore({
+        [QUEST_SET_PREF_KEY]: 'royal',
+        [questSelectedKey('royal')]: '1',
+        [questClearedKey('royal', '1')]: serialiseCleared(new Set(['0,1'])),
+      });
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      await waitFor(() => expect(
+        container.querySelector('.quest-cell[data-row="0"][data-col="1"]')?.classList.contains('cleared'),
+      ).toBe(true));
+    });
+
+    it('shows no reset control when nothing is cleared', async () => {
+      const prefStore = makePrefStore({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '1' });
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      await waitFor(() => expect(container.querySelector('.quest-cell')).not.toBeNull());
+      expect(screen.queryByRole('button', { name: /Visszaállítás/ })).toBeNull();
     });
   });
 });

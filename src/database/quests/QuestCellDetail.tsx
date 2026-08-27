@@ -1,18 +1,25 @@
 import { h, type VNode } from 'preact';
 import type { MonsterDatabase, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { LOCK_LABEL, SIDES, SIDE_LABEL, coordLabel } from './questMeta';
+import { CLEARED_LABEL, LOCK_LABEL, SIDES, SIDE_LABEL, coordLabel } from './questMeta';
 import { QuestQuestionCard } from './QuestQuestionCard';
 
 interface QuestCellDetailProps {
   cell: QuestCell | null;
   monsters: MonsterDatabase;
   onJumpToMonster(id: number): void;
+  /** Whether this cell is marked cleared. */
+  cleared?: boolean;
+  /**
+   * Toggles the mark. Optional: without it no control is rendered, which is
+   * what a read-only host (or a test that does not care) gets.
+   */
+  onToggleCleared?(cell: QuestCell): void;
 }
 
 /** Detail panel for the selected maze cell. */
 export function QuestCellDetail(props: QuestCellDetailProps): VNode {
-  const { cell, monsters, onJumpToMonster } = props;
+  const { cell, monsters, onJumpToMonster, cleared, onToggleCleared } = props;
 
   if (!cell) {
     return (
@@ -41,6 +48,17 @@ export function QuestCellDetail(props: QuestCellDetailProps): VNode {
   return (
     <div class="quest-detail">
       <h3>{coordLabel(cell)}</h3>
+
+      {onToggleCleared && (
+        <button
+          type="button"
+          class={`quest-clear-toggle${cleared ? ' active' : ''}`}
+          aria-pressed={cleared === true}
+          onClick={() => onToggleCleared(cell)}
+        >
+          {cleared ? `${CLEARED_LABEL} — Visszavonás` : 'Teljesítve'}
+        </button>
+      )}
 
       {monster ? (
         <div class="quest-detail-monster">

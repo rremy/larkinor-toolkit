@@ -74,4 +74,26 @@ describe('QuestCellDetail', () => {
     expect(container.querySelector('.quest-question')).toBeTruthy();
     expect(container.querySelectorAll('.quest-choice')).toHaveLength(2);
   });
+
+  it('offers a cleared toggle for the selected cell', () => {
+    const onToggle = vi.fn();
+    const target = cell({ row: 2, col: 3, monsterId: 1 });
+    render(<QuestCellDetail cell={target} monsters={monsters} onJumpToMonster={() => {}}
+      cleared={false} onToggleCleared={onToggle} />);
+
+    const button = screen.getByRole('button', { name: /Teljesítve/ });
+    fireEvent.click(button);
+    expect(onToggle).toHaveBeenCalledWith(target);
+  });
+
+  it('offers to undo it when the cell is already cleared', () => {
+    render(<QuestCellDetail cell={cell({ row: 2, col: 3 })} monsters={monsters}
+      onJumpToMonster={() => {}} cleared onToggleCleared={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Visszavonás/ })).toBeTruthy();
+  });
+
+  it('omits the toggle when no handler is supplied (standalone read-only use)', () => {
+    render(<QuestCellDetail cell={cell({ row: 2, col: 3 })} monsters={monsters} onJumpToMonster={() => {}} />);
+    expect(screen.queryByRole('button', { name: /Teljesítve/ })).toBeNull();
+  });
 });

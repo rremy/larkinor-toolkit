@@ -2,13 +2,14 @@ import { h, type VNode } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { parseCleared, serialiseCleared } from '@/shared/questCleared';
 import { parseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
-import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, hasSzelEdges, locksIn } from './questMeta';
+import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, cellKey, hasSzelEdges, locksIn } from './questMeta';
 
 interface QuestViewProps {
   loader: DataLoader;
@@ -66,6 +67,14 @@ export function QuestView(props: QuestViewProps): VNode {
   const [monsters, setMonsters] = useState<MonsterDatabase>(() => buildMonsterDatabase([]));
   const [selectedCell, setSelectedCell] = useState<QuestCell | null>(null);
   const [highlightLock, setHighlightLock] = useState<LockType | null>(null);
+  /**
+   * Cells of the current quest the player is done with.
+   *
+   * Loaded per quest (and re-loaded when the quest changes) rather than held
+   * for the whole set: the store is one key per quest, and a maze is the only
+   * scope in which a coordinate means anything.
+   */
+  const [cleared, setCleared] = useState<Set<string>>(() => new Set());
   const [tileSize, setTileSize] = useState(() => parseTileSize(prefStore?.read(QUEST_TILE_PREF_KEY) ?? null));
   // Only narrow viewports act on this (the stylesheet keeps the details block
   // and hides the toggle at full width), so anything but a stored '1' —
@@ -171,6 +180,30 @@ export function QuestView(props: QuestViewProps): VNode {
   // order on every render.
   const quest = quests ? (quests.find((q) => q.id === questId) ?? quests[0] ?? null) : null;
   const selectedQuestId = quest?.id ?? null;
+
+  // Re-read whenever the quest on screen changes, and once the data arrives —
+  // the boot's auto-clear write can land after this tab mounts, exactly like
+  // the detected position above.
+  useEffect(() => {
+    if (!prefStore || selectedQuestId == null) { setCleared(new Set()); return; }
+    setCleared(parseCleared(prefStore.read(questClearedKey(activeSet, selectedQuestId))));
+  }, [prefStore, activeSet, selectedQuestId, quests]);
+
+  /** Toggle one cell's cleared mark, writing through to the store. */
+  function toggleCleared(cell: QuestCell) {
+    if (selectedQuestId == null) return;
+    const next = new Set(cleared);
+    if (!next.delete(cellKey(cell))) next.add(cellKey(cell));
+    setCleared(next);
+    prefStore?.write(questClearedKey(activeSet, selectedQuestId), serialiseCleared(next));
+  }
+
+  /** Forget this quest's progress — for a repeat run of the same maze. */
+  function resetCleared() {
+    if (selectedQuestId == null) return;
+    setCleared(new Set());
+    prefStore?.write(questClearedKey(activeSet, selectedQuestId), serialiseCleared(new Set()));
+  }
 
   /**
    * Restore the stored set and selection when navigation cleared them —
@@ -402,6 +435,14 @@ export function QuestView(props: QuestViewProps): VNode {
                 {quest.rows}×{quest.cols} · {monsterCount} szörny · {keyCount} kulcs ·{' '}
                 {lockCount} zártípus · {questionCount} kérdés · {trapCount} csapda
               </div>
+              {cleared.size > 0 && (
+                <div class="quest-stats quest-cleared-count">
+                  Teljesített: {cleared.size}
+                  <button type="button" class="quest-cleared-reset" onClick={resetCleared}>
+                    Visszaállítás
+                  </button>
+                </div>
+              )}
             </div>
             <div class="field quest-zoom">
               <label for="quest-zoom-select">Méret</label>
@@ -425,6 +466,7 @@ export function QuestView(props: QuestViewProps): VNode {
               onProbeLock={setHighlightLock}
               tileSize={tileSize}
               position={questPosition}
+              cleared={cleared}
             />
           </div>
           {hasSzelEdges(quest) && (
@@ -437,7 +479,9 @@ export function QuestView(props: QuestViewProps): VNode {
         </div>
 
         <div class="quest-side">
-          <QuestCellDetail cell={selectedCell} monsters={monsters} onJumpToMonster={onJumpToMonster} />
+          <QuestCellDetail cell={selectedCell} monsters={monsters} onJumpToMonster={onJumpToMonster}
+            cleared={selectedCell !== null && cleared.has(cellKey(selectedCell))}
+            onToggleCleared={prefStore ? toggleCleared : undefined} />
           <QuestKeyLegend
             quest={quest}
             monsters={monsters}
