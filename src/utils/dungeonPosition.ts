@@ -241,11 +241,14 @@ export function propagatePosition(
  * Order of authority, and why:
  *
  * 1. **An exact narration match in the *same* quest wins outright.** A click
- *    on a direction is not proof of a move — a locked door in a maze is drawn
- *    *and* offered, and clicking it without the key leaves the player where
- *    they were. The narration then still describes the old cell, so
- *    believing the page is what keeps the marker honest. A disagreement
- *    drops the chain rather than averaging two incompatible answers.
+ *    on a direction control is not proof of a move: the game may refuse it,
+ *    the page may not navigate at all, the player may mis-click — and the
+ *    page's own words are the only account of where they ended up. (Not via
+ *    a locked door, despite what this comment used to say: a locked door is
+ *    drawn but offers *no* nav button — measured live, see `propagatePosition`
+ *    above — so it can never have been the step that was clicked.) A
+ *    disagreement drops the chain rather than averaging two incompatible
+ *    answers.
  * 2. **A step confirmed within the previous exact quest beats an exact
  *    narration match found in a *different* quest.** Within a chain of
  *    consecutive dungeon pages the quest cannot change: reaching a different

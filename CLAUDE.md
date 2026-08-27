@@ -343,8 +343,13 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     movement path in the toolkit clicks it — and consumed-and-cleared by the next dungeon page,
     so a rest, an answer, a fight or a refused move leaves no phantom step.
     `resolveDungeonPosition` combines the step with the narration match: **within the same
-    quest an exact narration match wins**, because a locked door is drawn AND offered a nav
-    button — the click fails, the player never moves, and only the narration knows. **Across
+    quest an exact narration match wins**, because a click on a direction control is not proof
+    of a move — the game may refuse it, the page may not navigate, the player may mis-click —
+    and the page's own words are the only account of where they ended up. (The design doc
+    justified this rule with a locked door being drawn *and* offered a nav button. That
+    contradicts what was measured live and is recorded above — a locked door is drawn but
+    offers **no** button — and was the plan author's error; the rule stands unchanged on the
+    weaker true premise.) **Across
     quests the rule inverts**: when the previous position was exact and the step propagates
     inside its own quest, an exact narration match in a *different* quest loses — reaching
     another labyrinth means passing through a non-dungeon page, and every non-dungeon page

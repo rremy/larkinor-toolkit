@@ -292,11 +292,20 @@ export function resolveDungeonPosition(
    - `predicted` empty → `detected`.
 
 **Why evidence outranks inference.** A click on a direction is not proof of a
-move. A locked door in a maze is drawn *and* offered — clicking it without the
-key leaves the player exactly where they were, while the prediction insists they
-advanced. The narration in that case still describes the old cell, so detection
-is right and the prediction is wrong. Where they merely fail to overlap, the
-honest resolution is to believe the page and restart the chain from it.
+move: the game may refuse it, the page may not navigate at all, the player may
+mis-click — and the page's own words are the only account of where they ended
+up. Where the two signals merely fail to overlap, the honest resolution is to
+believe the page and restart the chain from it.
+
+> **Corrected 2026-08-27 (final review).** This paragraph originally argued the
+> rule from a locked door being "drawn *and* offered": clicking it without the
+> key leaves the player where they were while the prediction insists they
+> advanced. That premise is wrong. The measured fact, recorded in `CLAUDE.md`
+> before this feature was planned, is the opposite — **a locked door is drawn
+> but offers no nav button** — so a locked door can never be the step that was
+> clicked. The rule itself is unchanged and still correct on the weaker premise
+> above; only its justification was faulty.
+
 
 `QuestPosition` gains `source: 'narration' | 'move'` (wire `VERSION` → 2; a
 stored v1 value is dropped, which costs one step in the maze — the file already
