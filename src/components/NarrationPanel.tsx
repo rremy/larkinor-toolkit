@@ -34,9 +34,11 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink
 
   const spans: Span[] = [];
 
-  // The active-quest phrase, pushed first so it wins any overlap with a
-  // monster mention or narration link (the splice below keeps the earliest
-  // span at a given index — see the sort's stability note there).
+  // The active-quest phrase, pushed first so it wins a *tie* with a monster
+  // mention or narration link starting at the same index (the sort below is
+  // stable — see the note there). A span starting earlier and overlapping this
+  // one still wins: the splice emits in index order and skips whatever overlaps
+  // a span already emitted.
   if (questLink && questLink.index >= 0 && questLink.index + questLink.length <= text.length) {
     spans.push({
       index: questLink.index,
