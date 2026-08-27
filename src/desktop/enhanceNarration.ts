@@ -4,10 +4,15 @@
 // The mobile UI re-renders the narration as Preact and can splice spans freely.
 // Desktop must edit the live block, where the game's own <a> elements carry
 // inline handlers that drive the shared form — so we mutate text nodes only and
-// never reserialise via innerHTML.
+// never reserialise via innerHTML. The flatten/splice machinery itself lives in
+// narrationSplice.ts, shared with every other desktop enhancement that turns
+// part of the narration into something clickable.
 
 import { findMonsterMentions, type MonsterMention } from '@/utils/narration';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
+import {
+  flattenNarration, isInsideAnchor, narrationBlock, segmentFor, spliceIntoTextNode,
+} from './narrationSplice';
 
 /** Marker attribute making a second call a no-op. */
 const ENHANCED_ATTR = 'data-lc-enhanced';
@@ -15,55 +20,6 @@ const ENHANCED_ATTR = 'data-lc-enhanced';
 interface ResolvedMention {
   mention: MonsterMention;
   monster: Monster;
-}
-
-/** Text nodes inside an existing anchor are skipped — no nested links. */
-function isInsideAnchor(node: Text, root: Element): boolean {
-  let el = node.parentElement;
-  while (el && el !== root) {
-    if (el.tagName === 'A') return true;
-    el = el.parentElement;
-  }
-  return false;
-}
-
-/** One text node's span within the block's flattened text. */
-interface Segment {
-  node: Text;
-  start: number;
-  /** Exclusive. */
-  end: number;
-}
-
-/**
- * Flattens the block to a single string and records where each text node landed
- * in it, so a match found in the flat text can be mapped back to the DOM.
- *
- * Collected up front, before any mutation, so the offsets stay valid.
- *
- * `<br>` contributes a newline without a segment, mirroring the mobile path's
- * `extractNarration`. Without it two sentences either side of a line break would
- * be concatenated, and a pattern anchored on a sentence boundary could match
- * across them.
- */
-function flatten(doc: Document, root: Element): { segments: Segment[]; text: string } {
-  const walker = doc.createTreeWalker(root, 0x5 /* SHOW_ELEMENT | SHOW_TEXT */);
-  const segments: Segment[] = [];
-  let text = '';
-  let current: Node | null;
-
-  while ((current = walker.nextNode()) !== null) {
-    if (current.nodeType === 1 /* ELEMENT_NODE */) {
-      if ((current as Element).tagName === 'BR') text += '\n';
-      continue;
-    }
-    const node = current as Text;
-    const content = node.textContent ?? '';
-    segments.push({ node, start: text.length, end: text.length + content.length });
-    text += content;
-  }
-
-  return { segments, text };
 }
 
 function buildLink(
@@ -97,38 +53,6 @@ function buildLink(
 }
 
 /**
- * Replaces one text node with a run of plain text and link elements, one link
- * per resolved mention. Offsets come from findMonsterMentions and index into
- * this node's own text.
- */
-function spliceLinks(
-  doc: Document,
-  node: Text,
-  text: string,
-  hits: ResolvedMention[],
-  onMonsterClick: (monster: Monster) => void
-): void {
-  const fragment = doc.createDocumentFragment();
-  let cursor = 0;
-
-  for (const { mention, monster } of hits) {
-    if (mention.index < cursor) continue; // overlaps an emitted link
-    if (mention.index > cursor) {
-      fragment.appendChild(doc.createTextNode(text.slice(cursor, mention.index)));
-    }
-    const label = text.slice(mention.index, mention.index + mention.length);
-    fragment.appendChild(buildLink(doc, label, monster, onMonsterClick));
-    cursor = mention.index + mention.length;
-  }
-
-  if (cursor < text.length) {
-    fragment.appendChild(doc.createTextNode(text.slice(cursor)));
-  }
-
-  node.parentNode?.replaceChild(fragment, node);
-}
-
-/**
  * Makes database-known monster names in the live narration clickable.
  *
  * Matching runs against the block's **flattened** text, not per text node,
@@ -151,21 +75,20 @@ export function enhanceNarration(
   db: MonsterDatabase,
   onMonsterClick: (monster: Monster) => void
 ): void {
-  const block = doc.querySelector('font[face="Comic sans MS"]');
+  const block = narrationBlock(doc);
   if (!block || block.hasAttribute(ENHANCED_ATTR)) return;
 
-  const { segments, text } = flatten(doc, block);
+  const { segments, text } = flattenNarration(doc, block);
 
-  // Group by node so one node containing several mentions is spliced once, with
-  // spliceLinks resolving any overlaps between them.
+  // Group by node so one node containing several mentions is spliced once,
+  // with spliceIntoTextNode resolving any overlaps between them.
   const byNode = new Map<Text, ResolvedMention[]>();
 
   for (const mention of findMonsterMentions(text)) {
     const monster = db.getByName(mention.name);
     if (!monster) continue; // unknown name — leave as plain text
 
-    const end = mention.index + mention.length;
-    const segment = segments.find(s => mention.index >= s.start && end <= s.end);
+    const segment = segmentFor(segments, mention.index, mention.index + mention.length);
     if (!segment) continue; // name spans elements (see above)
     if (isInsideAnchor(segment.node, block)) continue; // no nested links
 
@@ -176,7 +99,13 @@ export function enhanceNarration(
   }
 
   for (const [node, hits] of byNode) {
-    spliceLinks(doc, node, node.textContent ?? '', hits, onMonsterClick);
+    spliceIntoTextNode(doc, node, hits
+      .sort((a, b) => a.mention.index - b.mention.index)
+      .map(({ mention, monster }) => ({
+        index: mention.index,
+        length: mention.length,
+        build: (label: string) => buildLink(doc, label, monster, onMonsterClick),
+      })));
   }
 
   block.setAttribute(ENHANCED_ATTR, 'true');
