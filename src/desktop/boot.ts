@@ -14,10 +14,12 @@ import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractBattle, extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
-import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
+import { createDataLoader, gmSource, type MonsterDatabase, type QuestSet } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { activateActiveQuest } from '@/utils/activateActiveQuest';
+import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
 import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
@@ -240,7 +242,7 @@ export function bootDesktop(doc: Document): void {
 
   let db: MonsterDatabase | null = null;
   let openQuestsSignal = 0;
-  let openQuestTarget: { set: 'tavern'; id: string } | null = null;
+  let openQuestTarget: { set: QuestSet; id: string } | null = null;
 
   // The worn set, for the compare card on the inventory and market rows and in
   // the database overlay. Read once at boot: the game reloads on every action.
@@ -255,6 +257,21 @@ export function bootDesktop(doc: Document): void {
   };
 
   renderDock();
+
+  // The game names the active royal quest in its narration on ordinary pages.
+  // Remember it (never switching the set — see activateActiveQuest) and make
+  // the sentence itself the way into the quests tab.
+  const activeQuest = activateActiveQuest(extractNarration(doc), getPref, setPref);
+  if (activeQuest) {
+    renderActiveQuestLink(doc, activeQuest, () => {
+      // Route explicitly rather than leaning on the preference just written:
+      // QuestView reads the stored set once at mount, so an overlay already
+      // open would never see it.
+      openQuestTarget = { set: 'royal', id: activeQuest.questId };
+      openQuestsSignal += 1;
+      renderDock();
+    });
+  }
 
   // The character page is the only page that prints the worn equipment set, and
   // the only place it can be changed, so capturing on every visit keeps the
