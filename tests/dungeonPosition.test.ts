@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import type { Quest, QuestCell } from '@/shared/data';
+import type { Quest, QuestCell, Side } from '@/shared/data';
 import {
   cellNarrationMatches,
   foldNarrationLines,
@@ -464,5 +464,95 @@ describe('resolveDungeonPosition', () => {
       exact: false,
       source: 'narration',
     });
+  });
+});
+
+/**
+ * Match rates along a **walk**, rather than page by page.
+ *
+ * The per-page rates above are what one page can do on its own. These are what
+ * the same pages achieve when the step between them is known — the whole
+ * argument for tracking movement, measured rather than asserted.
+ *
+ * The walk is deterministic (a seeded PRNG, no Math.random) so the pinned
+ * numbers mean something: a data refresh that degrades detection fails here.
+ */
+describe('corpus walk rates', () => {
+  /** mulberry32 — small, seeded, and adequate for choosing an exit. */
+  function rng(seed: number): () => number {
+    return () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const STEP = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] } as const;
+  const sidesOf = (cell: QuestCell): SideObservations => Object.fromEntries(
+    (['N', 'E', 'S', 'W'] as const).map((s) => [
+      s,
+      cell.edges[s].kind === 'open' ? 'open' : cell.edges[s].kind === 'door' ? 'door' : 'wall',
+    ]),
+  ) as SideObservations;
+
+  /** Share of steps resolved to a single cell, walking each quest once. */
+  function walkRate(quests: Quest[], useMoves: boolean): number {
+    const random = rng(20260827);
+    let steps = 0;
+    let exact = 0;
+
+    for (const quest of quests) {
+      const byPosition = new Map(quest.cells.map((c) => [`${c.row},${c.col}`, c]));
+      let at = quest.cells.find((c) => c.portal === 'entrance') ?? quest.cells[0];
+      let previous: QuestPosition | null = null;
+      let move: Side | null = null;
+
+      for (let i = 0; i < 40; i += 1) {
+        const resolved = resolveDungeonPosition(
+          at.narration, sidesOf(at), quests, quest.id,
+          useMoves ? previous : null, useMoves ? move : null,
+        );
+        steps += 1;
+        if (resolved?.exact) exact += 1;
+        previous = resolved;
+
+        const exits = (['N', 'E', 'S', 'W'] as const).filter((s) => {
+          if (at.edges[s].kind === 'wall' || at.edges[s].kind === 'szel') return false;
+          const [dr, dc] = STEP[s];
+          return byPosition.has(`${at.row + dr},${at.col + dc}`);
+        });
+        if (exits.length === 0) break;
+        move = exits[Math.floor(random() * exits.length)];
+        const [dr, dc] = STEP[move];
+        at = byPosition.get(`${at.row + dr},${at.col + dc}`)!;
+      }
+    }
+
+    return exact / steps;
+  }
+
+  // 93% of steps resolve to a single cell from the narration and sides alone
+  // (`sidesOf` is passed on every call, tracked or not); knowing the step
+  // taken closes nearly all of the remaining gap, to 100%.
+  it('pins how much the step adds on a royal walk', () => {
+    const withoutMoves = walkRate(royal, false);
+    const withMoves = walkRate(royal, true);
+    expect(withoutMoves).toBeCloseTo(0.93, 2);
+    expect(withMoves).toBeCloseTo(1, 2);
+    expect(withMoves).toBeGreaterThan(withoutMoves);
+  });
+
+  // 83% of steps resolve without the step taken, 100% with it — a bigger gap
+  // than the royal walk, even though the tavern's per-page rates (98.4%/99.2%)
+  // are higher than royal's: this walk revisits cells at different frequencies
+  // than the per-page measurement, so the two numbers are not directly
+  // comparable across quest sets.
+  it('pins the tavern walk', () => {
+    const withoutMoves = walkRate(tavern, false);
+    const withMoves = walkRate(tavern, true);
+    expect(withoutMoves).toBeCloseTo(0.83, 2);
+    expect(withMoves).toBeCloseTo(1, 2);
+    expect(withMoves).toBeGreaterThanOrEqual(withoutMoves);
   });
 });
