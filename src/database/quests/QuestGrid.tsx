@@ -4,8 +4,8 @@ import type { LockType, MonsterDatabase, Quest, QuestCell } from '@/shared/data'
 import type { QuestPosition } from '@/shared/questPosition';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import {
-  BADGE, DEFAULT_TILE, HERE_LABEL, LOCK_LABEL, MAYBE_HERE_LABEL, SIDES, SIDE_LABEL, SZEL_LABEL,
-  cellKey, coordLabel, outsideMazeCells,
+  BADGE, CLEARED_LABEL, DEFAULT_TILE, HERE_LABEL, LOCK_LABEL, MAYBE_HERE_LABEL, SIDES, SIDE_LABEL,
+  SZEL_LABEL, cellKey, coordLabel, outsideMazeCells,
 } from './questMeta';
 
 /** Glyph and Hungarian label for each centred tile marker. */
@@ -32,6 +32,12 @@ interface QuestGridProps {
    * this component has no way to tell a foreign coordinate from a local one.
    */
   position?: QuestPosition | null;
+  /**
+   * Cells the player is done with, keyed by `cellKey`. Dimmed rather than
+   * hidden: the maze still has to be readable as a map, and a cleared tile's
+   * walls are the part still load-bearing.
+   */
+  cleared?: ReadonlySet<string> | null;
 }
 
 /**
@@ -44,7 +50,7 @@ interface QuestGridProps {
 export function QuestGrid(props: QuestGridProps): VNode {
   const {
     quest, monsters, selected, onSelect,
-    highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE, position = null,
+    highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE, position = null, cleared = null,
   } = props;
 
   // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
@@ -101,12 +107,17 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // these three" is useful and saying "this one" would be a guess.
         const isHere = detected.has(cellKey(cell));
         if (isHere) classes.push(position?.exact ? 'here' : 'maybe-here');
+        const isCleared = cleared !== null && cleared.has(cellKey(cell));
+        if (isCleared) classes.push('cleared');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit
         // without a highlightLock.
         const cellStyle = keyHit && highlightLock != null
           ? { '--hit': `var(--lock-${highlightLock})` }
           : undefined;
+        const titleParts = [coordLabel(cell)];
+        if (isHere) titleParts.push(position?.exact ? HERE_LABEL : MAYBE_HERE_LABEL);
+        if (isCleared) titleParts.push(CLEARED_LABEL);
 
         return (
           <div
@@ -116,7 +127,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
             data-col={cell.col}
             style={cellStyle}
             onClick={() => onSelect(cell)}
-            title={isHere ? `${coordLabel(cell)} — ${position?.exact ? HERE_LABEL : MAYBE_HERE_LABEL}` : coordLabel(cell)}
+            title={titleParts.join(' — ')}
           >
             {SIDES.map((side) => {
               const edge = cell.edges[side];
@@ -174,6 +185,9 @@ export function QuestGrid(props: QuestGridProps): VNode {
               </span>
             )}
             <div class="quest-badges">
+              {isCleared && (
+                <span class="quest-badge cleared" title={CLEARED_LABEL}>{BADGE.cleared}</span>
+              )}
               {/* Entrance and death are dropped on a big-icon tile to keep it
                   clear of clutter. Key, exit, quest item and boss stay: 10
                   cells pair a question with a key the door lookup depends

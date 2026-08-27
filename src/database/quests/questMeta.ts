@@ -34,11 +34,15 @@ export const BADGE = {
   boss: '★',
   /** The player's detected cell. Distinct from every marker above. */
   here: '📍',
+  /** A cell whose work is done — monster killed, question answered, trap sprung. */
+  cleared: '✓',
 } as const;
 
 /** Tooltip for a cell the player was pinned to, and for one of several candidates. */
 export const HERE_LABEL = 'itt vagy';
 export const MAYBE_HERE_LABEL = 'talán itt vagy';
+/** Tooltip and button copy for a cell the player is done with. */
+export const CLEARED_LABEL = 'teljesítve';
 
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
 

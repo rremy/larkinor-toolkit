@@ -423,3 +423,46 @@ it('draws the objective glyph at half the size of a trap or question glyph', () 
   expect(objective).toBeLessThan(question);
   expect(objective).toBeCloseTo(question / 2, 0);
 });
+
+describe('a cleared cell', () => {
+  it('marks a cleared cell and badges it', () => {
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}}
+        cleared={new Set(['1,0'])} />,
+    );
+    const cell = container.querySelector('.quest-cell[data-row="1"][data-col="0"]')!;
+    expect(cell.classList.contains('cleared')).toBe(true);
+    expect(cell.querySelector('.quest-badge.cleared')).not.toBeNull();
+    expect(cell.getAttribute('title')).toContain('teljesítve');
+  });
+
+  it('leaves other cells alone', () => {
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}}
+        cleared={new Set(['1,0'])} />,
+    );
+    expect(container.querySelectorAll('.quest-cell.cleared')).toHaveLength(1);
+  });
+
+  // Walls are what the player navigates by, and the position marker outranks
+  // everything: neither may be swallowed by the dimming.
+  it('keeps the walls and the position marker on a cleared cell', () => {
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}}
+        cleared={new Set(['0,1'])}
+        position={{ set: 'royal', questId: '1', cells: [{ row: 0, col: 1 }], exact: true, source: 'narration' }} />,
+    );
+    const cell = container.querySelector('.quest-cell[data-row="0"][data-col="1"]')!;
+    expect(cell.classList.contains('cleared')).toBe(true);
+    expect(cell.classList.contains('here')).toBe(true);
+    expect(cell.querySelector('.quest-edge.wall')).not.toBeNull();
+    expect(cell.querySelector('.quest-badge.here')).not.toBeNull();
+  });
+
+  it('renders normally without a cleared set', () => {
+    const { container } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
+    expect(container.querySelectorAll('.quest-cell.cleared')).toHaveLength(0);
+  });
+});
