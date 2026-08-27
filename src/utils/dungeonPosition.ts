@@ -135,6 +135,43 @@ export function matchCellsInQuest(
 }
 
 /**
+ * Folded fragment of the line the game prints when the player walks into a
+ * labyrinth.
+ *
+ * Only the distinctive middle is matched, not the whole sentence, so the tier
+ * survives the game prefixing or suffixing it.
+ *
+ * **Single live observation** (2026-08-27, royal quest 39's entry page, where
+ * the whole narration block was `"\n\nSikerült bejutnod a labirintusba.\n\n"`),
+ * and corroborated by the data: all 9 cells in the two corpora whose own text
+ * contains this phrase are `portal === 'entrance'` cells, 9 for 9. If the game
+ * words some other entry differently the tier simply does not fire, which is
+ * the safe direction.
+ */
+const ENTRY_PHRASE = 'bejutnod a labirintusba';
+
+/** Whether the narration says the player has just walked into a labyrinth. */
+export function narrationSaysEntered(narration: string): boolean {
+  return foldNarrationLines(narration).some((line) => line.includes(ENTRY_PHRASE));
+}
+
+/**
+ * The entrance cell of one quest, if the page's walls agree with it.
+ *
+ * The entrance is what makes this worth doing: it is unique in 44 of the 45
+ * royal quests and 36 of the 37 tavern ones, where an *exit* is not (royal
+ * quest 29 draws 38 of them). So "you have just entered" identifies a single
+ * cell where the entrance/exit tile as a class identifies dozens.
+ *
+ * The walls are a consistency check, not a second source: a page that
+ * contradicts the recorded entrance yields nothing rather than a cell nobody
+ * verified.
+ */
+export function matchEntranceCell(quest: Quest, observed: SideObservations): QuestCell[] {
+  return quest.cells.filter((c) => c.portal === 'entrance' && sidesAgree(c, observed));
+}
+
+/**
  * Locate the player's cell, searching the quest they were last looking at
  * first and the rest of the set after.
  *
@@ -151,6 +188,16 @@ export function matchCellsInQuest(
  *
  * Returns null when nothing matches, which is a routine outcome rather than an
  * error: roughly a quarter of cells carry no text for the page to print.
+ *
+ * **The entry line is a fallback, consulted only when no cell's text matched.**
+ * A labyrinth's entry page prints the game's own "you got in" line instead of
+ * the cell's text — for quest 39 the entrance's recorded text is unrelated, and
+ * for quests 1, 2, 3 and 5 the game prints only the first sentence of a longer
+ * recorded text, too short for the suffix rule — so before this tier existed no
+ * entry page could be identified at all. It is restricted to the **preferred
+ * quest**: every quest has an entrance, so searching the set would offer ~45
+ * candidates the walls rarely narrow to one, and a stale preference is
+ * corrected by the first step that prints real cell text.
  */
 export function locateDungeonPosition(
   narration: string,
@@ -182,7 +229,24 @@ export function locateDungeonPosition(
     ambiguous ??= position;
   }
 
-  return ambiguous;
+  if (ambiguous) return ambiguous;
+
+  // Nothing matched a cell's own text. If the page says the player has just
+  // walked in, the entrance answers it — see the doc comment above.
+  if (preferred && narrationSaysEntered(narration)) {
+    const cells = matchEntranceCell(preferred, observed);
+    if (cells.length > 0) {
+      return {
+        set: preferred.set,
+        questId: preferred.id,
+        cells: cells.map((c) => ({ row: c.row, col: c.col })),
+        exact: cells.length === 1,
+        source: 'entrance',
+      };
+    }
+  }
+
+  return null;
 }
 
 /** Row/column delta of one step towards each side. */

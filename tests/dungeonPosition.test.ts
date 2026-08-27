@@ -6,6 +6,7 @@ import {
   foldNarrationLines,
   locateDungeonPosition,
   matchCellsInQuest,
+  narrationSaysEntered,
   propagatePosition,
   resolveDungeonPosition,
   sidesAgree,
@@ -711,5 +712,85 @@ describe('corpus walk rates', () => {
     const withMoves = walkRates(tavern, true);
     expect(withoutMoves.wrongLockCount).toBe(0);
     expect(withMoves.wrongLockCount).toBe(0);
+  });
+});
+
+/**
+ * Walking into a labyrinth: the game prints its own entry line instead of the
+ * cell's text, so the narration tier has nothing to match.
+ *
+ * Captured live on 2026-08-27 from royal quest 39's entry page — the whole
+ * narration block was `"\n\nSikerült bejutnod a labirintusba.\n\n"`, and the
+ * composed picture drew `foly_f_2` + `fal_j_8` + `fal_l_6` + `fal_b_4`
+ * (north open, the other three walls). Quest 39's entrance is (10,5) and its
+ * recorded text is something else entirely (`"Amikor átlépsz a portálon…"`),
+ * which is why no cell matched.
+ */
+describe('entering a labyrinth', () => {
+  const ENTERED = '\n\nSikerült bejutnod a labirintusba.\n\n';
+  const ENTRY_SIDES: SideObservations = { N: 'open', E: 'wall', S: 'wall', W: 'wall' };
+  const entranceOf = (quest: Quest) => quest.cells.find((c) => c.portal === 'entrance')!;
+
+  it('recognises the entry line', () => {
+    expect(narrationSaysEntered(ENTERED)).toBe(true);
+    expect(narrationSaysEntered(RESTED_AT_0_6)).toBe(false);
+    expect(narrationSaysEntered('')).toBe(false);
+  });
+
+  it('pins the entrance of the preferred quest when the narration matches nothing', () => {
+    const entrance = entranceOf(quest35);
+    const sides: SideObservations = Object.fromEntries(
+      (['N', 'E', 'S', 'W'] as const).map((s) => [s, entrance.edges[s].kind === 'open' ? 'open' : 'wall']),
+    ) as SideObservations;
+
+    expect(locateDungeonPosition(ENTERED, sides, royal, '35')).toEqual({
+      set: 'royal',
+      questId: '35',
+      cells: [{ row: entrance.row, col: entrance.col }],
+      exact: true,
+      source: 'entrance',
+    });
+  });
+
+  // The live capture, end to end: quest 39's entrance is (10,5).
+  it('pins quest 39 cell (10,5) from the captured entry page', () => {
+    const resolved = locateDungeonPosition(ENTERED, ENTRY_SIDES, royal, '39');
+    expect(resolved?.questId).toBe('39');
+    expect(resolved?.cells).toEqual([{ row: 10, col: 5 }]);
+    expect(resolved?.source).toBe('entrance');
+  });
+
+  // The tier is a fallback, never a competitor: quests 1, 2, 3 and 5 record the
+  // entry phrase as their entrance cell's own text, and a real narration match
+  // must keep winning wherever one exists.
+  it('never displaces a narration match', () => {
+    const cell = quest35.cells.find((c) => c.narration.trim() !== '' && c.portal === null)!;
+    const resolved = locateDungeonPosition(`Sikerült bejutnod a labirintusba.\n${cell.narration}`, {}, royal, '35');
+    expect(resolved?.source).toBe('narration');
+    expect(resolved?.cells).toContainEqual({ row: cell.row, col: cell.col });
+  });
+
+  // Restricted to the preferred quest on purpose: every quest has an entrance,
+  // so searching the whole set would offer ~45 candidates the walls rarely
+  // narrow to one. A stale preference is corrected by the first step's text.
+  it('does not search other quests for an entrance', () => {
+    expect(locateDungeonPosition(ENTERED, ENTRY_SIDES, royal, null)).toBeNull();
+  });
+
+  // The walls are the consistency check. Claiming a cell the page contradicts
+  // would be worse than reporting nothing.
+  it('reports nothing when the drawn walls contradict the entrance', () => {
+    const entrance = entranceOf(quest35);
+    const lying: SideObservations = {
+      N: entrance.edges.N.kind === 'open' ? 'wall' : 'open',
+      E: entrance.edges.E.kind === 'open' ? 'wall' : 'open',
+    };
+    expect(locateDungeonPosition(ENTERED, lying, royal, '35')).toBeNull();
+  });
+
+  // Royal quest 11 records no entrance at all; the tier must simply not fire.
+  it('reports nothing for a quest whose entrance is missing from the data', () => {
+    expect(royal.find((q) => q.id === '11')!.cells.some((c) => c.portal === 'entrance')).toBe(false);
+    expect(locateDungeonPosition(ENTERED, ENTRY_SIDES, royal, '11')).toBeNull();
   });
 });

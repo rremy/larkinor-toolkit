@@ -281,6 +281,34 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       no text at all, so detecting nothing is routine — and must **clear** the stored
       position rather than leave the previous cell's marker standing, which would read
       exactly like a live one.
+    - **A labyrinth's entry page states nothing about its cell, so the entrance is inferred
+      from the game's own entry line.** Walking in prints `Sikerült bejutnod a labirintusba.`
+      — an *action* line — and not the cell's text, so before this tier existed **no entry
+      page could be identified at all**: measured live on royal quest 39, whose entrance
+      (10,5) records something else entirely (`"Amikor átlépsz a portálon…"`), and equally
+      true of quests 1/2/3/5, where the phrase *is* the entrance's recorded text but the game
+      prints only its first sentence — too short for the suffix rule and not a whole-line
+      match. `narrationSaysEntered` therefore feeds a **fallback** tier
+      (`matchEntranceCell`), consulted only when no cell's text matched, so every measured
+      narration rate is untouched.
+      - **The entrance, not the entrance/exit tile.** The `labikibe.gif` control on the page
+        marks either, and royal quest 29 draws **38 exits beside its 1 entrance** — as a
+        class that signal is worthless there. Split by kind the numbers invert: exactly one
+        entrance in 44 of 45 royal and 36 of 37 tavern quests (royal 11 and
+        `larkinor_kulonleges_allatvilaga` record none, and the tier simply does not fire for
+        them). All 9 cells across both corpora whose own text carries the phrase are
+        `portal === 'entrance'`, 9 for 9, which is why the line is read as naming the
+        entrance rather than merely a portal.
+      - **Restricted to the promoted quest**, deliberately: every quest has an entrance, so
+        searching the set would offer ~45 candidates the drawn walls rarely narrow to one. A
+        stale promotion is corrected by the first step that prints real cell text.
+      - The drawn walls are a **consistency check, not a second source** — a page that
+        contradicts the recorded entrance yields nothing rather than a cell nobody verified —
+        and the phrase itself rests on a **single live observation**, so a differently-worded
+        entry silently declines to fire, which is the safe direction.
+      - `source: 'entrance'` keeps it out of the auto-clear (which requires `'narration'`):
+        an inferred tile must never write permanent progress, or an entrance holding a monster
+        would be marked killed on arrival.
     - Only the **stored set** is loaded (`lc-quest-set`), not both: covering the rarer case of
       being in the other kind of labyrinth would mean fetching ~1.2MB more on every dungeon
       page. Within that set, a `??` chain promotes **exactly one** quest to the head of the

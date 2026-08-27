@@ -338,6 +338,41 @@ describe('activateDungeonPosition', () => {
     expect(parseCleared(prefs.stored.get(questClearedKey('royal', '35')) ?? null)).toEqual(new Set());
   });
 
+  // Same argument one tier down: an entrance inferred from the game's "you got
+  // in" line is a class inference, not the page's account of this cell, so it
+  // must not write permanent progress either — and a quest whose entrance holds
+  // a monster would otherwise have it marked killed on arrival.
+  it('clears nothing for a position inferred from the entrance', async () => {
+    const withMonsterEntrance = royal.find((q) => {
+      const e = q.cells.find((c) => c.portal === 'entrance');
+      return e != null && (e.monsterId != null || e.trap || e.hasQuestion);
+    });
+    // Not every corpus has such a quest; fall back to any entrance, since the
+    // assertion is that *nothing* is written either way.
+    const quest = withMonsterEntrance ?? royal.find((q) => q.cells.some((c) => c.portal === 'entrance'))!;
+    const entrance = quest.cells.find((c) => c.portal === 'entrance')!;
+
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: quest.id,
+    });
+
+    const position = await activateDungeonPosition(
+      'Sikerült bejutnod a labirintusba.',
+      observed(entrance),
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal',
+      questId: quest.id,
+      cells: [{ row: entrance.row, col: entrance.col }],
+      exact: true,
+      source: 'entrance',
+    });
+    expect(parseCleared(prefs.stored.get(questClearedKey('royal', quest.id)) ?? null)).toEqual(new Set());
+  });
+
   it('clears nothing when the position is ambiguous', async () => {
     // Quest 16's narration "Hopp, zsákutca. Akkor vissza." is shared by two
     // cells, (7,7) and (8,7) — verified unique to this quest in the corpus —

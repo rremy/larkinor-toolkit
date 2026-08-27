@@ -32,15 +32,18 @@ export interface QuestPosition {
   exact: boolean;
   /**
    * How the position was arrived at: matched against the page's narration and
-   * walls, or carried forward from the previous cell through a step the player
-   * took.
+   * walls, carried forward from the previous cell through a step the player
+   * took, or — on a labyrinth's entry page, where the game prints its own "you
+   * got in" line instead of the cell's text — inferred from the quest's
+   * entrance tile.
    *
    * Not rendered — a step confirmed by the drawn walls is not a guess to be
    * hedged, and a second visual language for "you are here" would read as a
-   * second player. The field exists so the tests and any future diagnostics can
-   * tell the two apart.
+   * second player. The field is load-bearing for one decision, though: the
+   * auto-clear of finished tiles requires `'narration'`, because only the
+   * page's own words about *this* cell justify writing permanent progress.
    */
-  source: 'narration' | 'move';
+  source: 'narration' | 'move' | 'entrance';
 }
 
 /**
@@ -50,7 +53,7 @@ export interface QuestPosition {
  * discarded one costs a single step in the maze — so an unrecognised version is
  * dropped outright rather than migrated.
  */
-const VERSION = 2;
+const VERSION = 3;
 
 export function serialiseQuestPosition(position: QuestPosition): string {
   return JSON.stringify({ version: VERSION, ...position });
@@ -82,7 +85,9 @@ export function parseQuestPosition(raw: string | null): QuestPosition | null {
 
     // Defaulted rather than rejected: an unknown source is a diagnostic detail,
     // and the cells — the part that actually places a marker — are unaffected.
-    const source = parsed.source === 'move' ? 'move' : 'narration';
+    const source = parsed.source === 'move' || parsed.source === 'entrance'
+      ? parsed.source
+      : 'narration';
 
     // Derived rather than trusted: `exact` drives how loudly the grid draws the
     // marker, and a stored `true` beside three cells would draw three confident

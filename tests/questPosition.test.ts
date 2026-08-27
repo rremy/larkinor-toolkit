@@ -42,22 +42,22 @@ describe('parseQuestPosition', () => {
   });
 
   it('drops an unknown quest set', () => {
-    expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, set: 'kocsma' }))).toBeNull();
+    expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, set: 'kocsma' }))).toBeNull();
   });
 
   it('drops a missing or empty quest id', () => {
-    expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, questId: '' }))).toBeNull();
-    expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, questId: 35 }))).toBeNull();
+    expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, questId: '' }))).toBeNull();
+    expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, questId: 35 }))).toBeNull();
   });
 
   it('drops a position with no cells', () => {
-    expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, cells: [] }))).toBeNull();
-    expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, cells: 'nope' }))).toBeNull();
+    expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, cells: [] }))).toBeNull();
+    expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, cells: 'nope' }))).toBeNull();
   });
 
   it('drops a cell that is not a whole non-negative coordinate', () => {
     for (const cell of [{ row: -1, col: 0 }, { row: 1.5, col: 0 }, { row: 0 }, { row: '0', col: 0 }]) {
-      expect(parseQuestPosition(JSON.stringify({ version: 2, ...AT_0_6, cells: [cell] }))).toBeNull();
+      expect(parseQuestPosition(JSON.stringify({ version: 3, ...AT_0_6, cells: [cell] }))).toBeNull();
     }
   });
 
@@ -65,7 +65,7 @@ describe('parseQuestPosition', () => {
   // recomputed from the cells rather than believed.
   it('derives exact from the cell count instead of trusting it', () => {
     const lying = JSON.stringify({
-      version: 2,
+      version: 3,
       set: 'royal',
       questId: '35',
       cells: [{ row: 0, col: 6 }, { row: 1, col: 1 }],
@@ -73,7 +73,7 @@ describe('parseQuestPosition', () => {
     });
     expect(parseQuestPosition(lying)?.exact).toBe(false);
 
-    const modest = JSON.stringify({ version: 2, ...AT_0_6, exact: false });
+    const modest = JSON.stringify({ version: 3, ...AT_0_6, exact: false });
     expect(parseQuestPosition(modest)?.exact).toBe(true);
   });
 
@@ -86,15 +86,19 @@ describe('parseQuestPosition', () => {
 
   // A stored v1 value costs one step in the maze to replace, so it is dropped
   // rather than migrated — the same argument the module already makes.
-  it('drops a version-1 value', () => {
+  it('drops a superseded value', () => {
     expect(parseQuestPosition(JSON.stringify({
       version: 1, set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true,
+    }))).toBeNull();
+    // v2 is the shape from before `source` learned about entrance tiles.
+    expect(parseQuestPosition(JSON.stringify({
+      version: 2, set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'move',
     }))).toBeNull();
   });
 
   it('defaults an unrecognised source to narration', () => {
     const parsed = parseQuestPosition(JSON.stringify({
-      version: 2, set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'psychic',
+      version: 3, set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'psychic',
     }));
     expect(parsed?.source).toBe('narration');
   });

@@ -391,6 +391,22 @@ splice), `src/desktop/boot.ts` and `src/mobile/boot.ts` (activation + arming),
 - Both boots: the activation fires on the right pages, arming happens only in a
   dungeon, and the pending move is cleared on entry.
 
+## Corrected 2026-08-27 — the entry page
+
+> **Corrected after live testing.** *Out of scope* below lists "seeding a
+> position from the entrance tile on the first page of a run" as deliberately
+> excluded. That was wrong in a way only the live game showed: an entry page
+> prints the game's own `Sikerült bejutnod a labirintusba.` line **instead of**
+> the cell's text, so no entry page could be identified at all — not a rare
+> case but every labyrinth visit. `dungeonPosition.ts` now carries a fallback
+> tier (`narrationSaysEntered` + `matchEntranceCell`), consulted only when the
+> narration tier finds nothing, pinning the promoted quest's `entrance` cell
+> when the drawn walls agree. It reads the **entrance** specifically, not the
+> entrance/exit tile class: royal quest 29 draws 38 exits, while an entrance is
+> unique in 44 of 45 royal and 36 of 37 tavern quests. `QuestPosition.source`
+> gained `'entrance'` (wire version 3) so the auto-clear still requires
+> `'narration'`.
+
 ## Out of scope
 
 Graying *visited* tiles (a trail is a different feature from cleared work);
