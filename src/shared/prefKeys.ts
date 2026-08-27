@@ -92,3 +92,14 @@ export function questClearedKey(set: QuestSet, questId: string): string {
 export type WritePref = (key: string, value: string) => void;
 /** Reads one preference. In the userscript this is `getPref` (GM-backed). */
 export type ReadPref = (key: string) => string | null;
+
+/**
+ * PrefStore key holding the step the player has just taken inside a labyrinth
+ * (`'N'`/`'E'`/`'S'`/`'W'`), written the moment a direction control is clicked
+ * and consumed by the next dungeon page.
+ *
+ * Only a direction, deliberately: the cell it started from is whatever
+ * `QUEST_POSITION_PREF_KEY` still holds when the next page reads it, so the
+ * click handler needs nothing that detection may not have produced yet.
+ */
+export const QUEST_MOVE_PREF_KEY = 'lc-quest-move';
