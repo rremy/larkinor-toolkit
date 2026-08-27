@@ -76,7 +76,11 @@ clickable district map with cell details and resident monsters, and an
 interactive maze viewer for the game's quests — switch between **Királyi**
 (the 45 royal quests) and **Kocsmai** (the 37 tavern quests) as independent
 sets, each with its own key/lock legend and question tiles. Search is
-accent-insensitive, so `gyikbor` finds `Gyíkbőr`.
+accent-insensitive, so `gyikbor` finds `Gyíkbőr`. The active quest the game
+names in its narration becomes a link straight into the quest tab; tiles you've
+already cleared — a monster killed, a question answered, a trap sprung — gray
+out on their own, with a per-quest reset if you'd rather clear the slate by
+hand; and a marker follows your character step by step as you walk the maze.
 
 ## Configuration
 

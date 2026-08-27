@@ -296,6 +296,59 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     - **The standalone site never shows a marker.** It is a different origin with its own
       `localStorage` and cannot see the in-game store, so the pref reads null and the grid
       renders normally — the same situation as the compare card.
+  - **The game names the active royal quest.** `Aktuális küldetés: (39)` in any page's
+    narration is a royal `Quest.id` — tavern quests are keyed by slug and carry no number to
+    print, so the recognition needs no data file at all (`src/utils/activeQuest.ts`).
+    `activateActiveQuest` writes `lc-quest-active-royal` on every match but writes
+    `lc-quest-selected-royal` **only when the id changed**, and never writes `lc-quest-set`:
+    ordinary city pages print the line too, so writing the set would drag a player mid-way
+    through a tavern quest back to royal on every step. Desktop splices the sentence itself
+    into a link (`activeQuestLink.ts`, through the shared `narrationSplice.ts` extracted from
+    `enhanceNarration`); mobile passes the parser's offsets to `NarrationPanel`, which already
+    splices spans by offset, with `FreeMove`/`Battle`/`Dungeon` routing to `royal/<id>`
+    explicitly. Every page opener that is *not* the quest link has to clear the stored quest
+    route, or a used link hijacks every later plain "Adatbázis" open — the overlay unmounts on
+    close, so its landing effect re-fires on every reopen. `QuestView` persisting the
+    last-viewed quest means following the link also makes that quest "the remembered one" for
+    the StatBar shortcut.
+  - **Cleared tiles are inferred, not tracked.** `extractDungeonObservation` reads two
+    independent enemy signals (the `ellenfel/` silhouette and the `tamadas` control) plus the
+    question radios: a monster the data knows about with **both** signals absent is dead, a
+    question cell with no radios is answered, and a trap cell is sprung by the act of standing
+    on it. Only an **exact** position may write a mark. Progress lives one key per quest
+    (`lc-quest-cleared-<set>-<id>`) and never expires — unlike a position it is progress, so an
+    unreadable value degrades to "nothing cleared" instead of stopping the caller. Dimming is
+    applied to the tile's *contents*, never to `.quest-cell` itself: `opacity` there would take
+    the walls with it, and the walls are what stays load-bearing on an emptied tile.
+    `--quest-cleared-bg` had to move away from `--quest-void` — canvas outside the maze and a
+    finished room mean opposite things. **The monster rule's assumption is unverified**: that
+    the enemy silhouette actually disappears after a kill has not been watched across a live
+    kill (Task 16 needed a live game session and did not run). It ships behind two signals plus
+    a manual toggle for exactly that reason; settling it needs two captures — a dungeon cell
+    with a live monster, and the same cell immediately after the kill — compared for which
+    `ellenfel`/`tamadas` tokens changed.
+  - **A step is evidence, but weaker evidence than the page.** `lc-quest-move` holds only a
+    direction, written in the capture phase on the game's own direction control — every
+    movement path in the toolkit clicks it — and consumed-and-cleared by the next dungeon page,
+    so a rest, an answer, a fight or a refused move leaves no phantom step.
+    `resolveDungeonPosition` combines the step with the narration match: **within the same
+    quest an exact narration match wins**, because a locked door is drawn AND offered a nav
+    button — the click fails, the player never moves, and only the narration knows. **Across
+    quests the rule inverts**: when the previous position was exact and the step propagates
+    inside its own quest, an exact narration match in a *different* quest loses — reaching
+    another labyrinth means passing through a non-dungeon page, and every non-dungeon page
+    clears the position, so within a chain of consecutive dungeon pages the quest cannot change
+    and is proven rather than guessed. That inversion was measured: it took the royal walk's
+    wrong-lock rate from 6 of 1800 steps to 0, and those collisions cascade — a wrong lock
+    corrupts the next step's propagation too. Where the step and the narration agree, or are
+    both ambiguous, they intersect, which is what collapses candidate sets a single page cannot
+    separate alone; where the page prints nothing, the step is all there is. Rates are pinned in
+    `tests/dungeonPosition.test.ts` — per-page (78.1%/90.5% royal, 98.4%/99.2% tavern, over
+    narrated cells) and along a seeded walk (correct-and-unique: royal 92.6% → 99.9%, tavern
+    82.6% → 99.9%, baseline being the with-sides analogue since the walk always supplies the
+    sides). The walk metric counts a step only when the result names the **true** cell and
+    quest — an earlier version counted mere uniqueness and was blind to a confidently wrong
+    lock.
 - Uses `httpSource` for data fetching; no ViolentMonkey required — serves standalone at `/db/` during dev, `/larkinor/` in production.
 
 ### Real game DOM — hard-won facts (see `docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md`)
