@@ -6,6 +6,7 @@ import { StatBar } from '@/components/StatBar';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { findActiveQuest } from '@/utils/activeQuest';
 
 export interface BattleProps {
   state: BattleState;
@@ -16,6 +17,11 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
+  // The game names the active royal quest in the narration; make the sentence
+  // the way into the quests tab. The pref writes happen in the boot — this is
+  // only the affordance.
+  const activeQuest = findActiveQuest(state.narration);
+  const [questRoute, setQuestRoute] = useState<{ id: string; seq: number } | null>(null);
 
   const dbMonster = db?.getByName(state.monsterName) ?? null;
 
@@ -52,7 +58,22 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
         )}
       </div>
 
-      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
+      <NarrationPanel
+        text={state.narration}
+        db={db}
+        onMonsterClick={setSelectedMonster}
+        links={state.narrationLinks}
+        questLink={activeQuest
+          ? {
+              index: activeQuest.index,
+              length: activeQuest.length,
+              onClick: () => {
+                setQuestRoute((r) => ({ id: activeQuest.questId, seq: (r?.seq ?? 0) + 1 }));
+                setDbOpen(true);
+              },
+            }
+          : undefined}
+      />
 
       <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} />
 
@@ -100,7 +121,14 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
         onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbOpen(true); }}
       />
 
-      <DatabaseOverlay open={dbOpen} initialItemId={dbItemId ?? undefined} onClose={() => setDbOpen(false)} />
+      <DatabaseOverlay
+        open={dbOpen}
+        initialItemId={dbItemId ?? undefined}
+        initialTab={questRoute ? 'quests' : undefined}
+        initialTabKey={questRoute?.seq}
+        initialQuest={questRoute ? { set: 'royal', id: questRoute.id } : null}
+        onClose={() => setDbOpen(false)}
+      />
     </div>
   );
 }

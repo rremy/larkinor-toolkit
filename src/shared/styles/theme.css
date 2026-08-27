@@ -191,6 +191,13 @@
   color: var(--text);
 }
 
+/* Active-quest phrase in narration text — mobile counterpart of desktop's .lc-active-quest */
+#lc-root .lc-quest-link {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
 /* Bottom drawer overlay */
 .lc-drawer-backdrop {
   position: fixed;

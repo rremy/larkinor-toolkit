@@ -108,28 +108,32 @@ describe('Dungeon', () => {
     // (no `?v=` tag), so clear it before stubbing a fresh response — otherwise a
     // stale response cached by an earlier test could satisfy this block's own
     // stub without the mock ever being called.
-    function stubQuestData() {
+    function questCell() {
+      return {
+        row: 0, col: 0,
+        edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
+        monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
+        portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
+        question: null, rawImage: '',
+      };
+    }
+
+    function stubQuestData(quests: Array<{ id: string; description: string }> = [{ id: '1', description: 'Teszt küldetés' }]) {
       const base = `lc_cache:${USERSCRIPT_DATA_BASE_URL}`;
       for (const file of ['quests.json', 'monsters.json']) {
         GM_setValue(`${base}/${file}`, '');
         GM_setValue(`${base}/${file}:v`, '');
       }
-      const stubQuest = {
-        id: 1, description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
-        cells: [{
-          row: 0, col: 0,
-          edges: { N: { kind: 'open' }, E: { kind: 'open' }, S: { kind: 'open' }, W: { kind: 'open' } },
-          monsterId: null, monsterName: null, boss: false, key: null, questItem: false,
-          portal: null, trap: false, death: false, narration: '', drops: null, hasQuestion: false,
-          question: null, rawImage: '',
-        }],
-      };
+      const stubQuests = quests.map((q) => ({
+        id: q.id, description: q.description, reward: '1 db ezüst', rows: 1, cols: 1,
+        cells: [questCell()],
+      }));
       vi.mocked(GM_xmlhttpRequest).mockImplementation(((opts: {
         url: string;
         onload?: (res: { status: number; responseText: string }) => void;
       }) => {
         if (opts.url.includes('quests.json')) {
-          opts.onload?.({ status: 200, responseText: JSON.stringify([stubQuest]) });
+          opts.onload?.({ status: 200, responseText: JSON.stringify(stubQuests) });
         } else if (opts.url.includes('monsters.json')) {
           opts.onload?.({ status: 200, responseText: JSON.stringify([]) });
         }
@@ -177,6 +181,43 @@ describe('Dungeon', () => {
       const monstersTab = [...document.querySelectorAll('.lc-db .tab')]
         .find((t) => t.textContent === 'Szörnyek') as HTMLElement;
       fireEvent.click(monstersTab);
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
+
+      fireEvent.click(screen.getByLabelText('Küldetések'));
+      expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Küldetések');
+    });
+
+    it('opens the database overlay on the quest named in the narration, via the quest link', async () => {
+      stubQuestData([
+        { id: '1', description: 'Első küldetés' },
+        { id: '39', description: 'Második küldetés' },
+      ]);
+      const state = buildState({ narration: 'Aktuális küldetés: (39)' });
+      const { container } = render(<Dungeon state={state} />);
+
+      fireEvent.click(container.querySelector('.lc-quest-link')!);
+
+      expect((await screen.findAllByText('Második küldetés')).length).toBeGreaterThan(0);
+    });
+
+    it('re-navigates via the StatBar shortcut after the narration link opened a different quest', async () => {
+      // Regression guard for the shared questsSeq nonce: pressing the StatBar
+      // shortcut after the link must still re-fire DatabaseApp's landing
+      // effect (a stale nonce would leave the overlay wherever the link left
+      // it) and must open with no `initialQuest`, per the brief.
+      stubQuestData([
+        { id: '1', description: 'Első küldetés' },
+        { id: '39', description: 'Második küldetés' },
+      ]);
+      const state = buildState({ narration: 'Aktuális küldetés: (39)' });
+      const { container } = render(<Dungeon state={state} />);
+
+      fireEvent.click(container.querySelector('.lc-quest-link')!);
+      expect((await screen.findAllByText('Második küldetés')).length).toBeGreaterThan(0);
+
+      const otherTab = [...document.querySelectorAll('.lc-db .tab')]
+        .find((t) => t.textContent === 'Szörnyek') as HTMLElement;
+      fireEvent.click(otherTab);
       expect(document.querySelector('.lc-db .tab.active')?.textContent).toBe('Szörnyek');
 
       fireEvent.click(screen.getByLabelText('Küldetések'));

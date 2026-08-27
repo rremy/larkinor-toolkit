@@ -94,4 +94,31 @@ describe('NarrationPanel', () => {
     expect(container.querySelector('.lc-narration-link')).toBeNull();
     expect(container.querySelector('.lc-narration')?.textContent).toBe('Semmi különös.');
   });
+
+  it('renders the active-quest phrase as a tappable span at its own offsets', () => {
+    const text = 'Sétálsz.\nAktuális küldetés: (39)\nVége.';
+    const onClick = vi.fn();
+    const { container } = render(
+      <NarrationPanel
+        text={text}
+        db={null}
+        onMonsterClick={vi.fn()}
+        questLink={{ index: text.indexOf('Aktuális'), length: 'Aktuális küldetés: (39)'.length, onClick }}
+      />
+    );
+
+    const link = container.querySelector('.lc-quest-link')!;
+    expect(link.textContent).toBe('Aktuális küldetés: (39)');
+    fireEvent.click(link);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toBe(text);
+  });
+
+  it('ignores a questLink whose offsets fall outside the text', () => {
+    const { container } = render(
+      <NarrationPanel text="Rövid" db={null} onMonsterClick={vi.fn()}
+        questLink={{ index: 40, length: 5, onClick: vi.fn() }} />
+    );
+    expect(container.querySelector('.lc-quest-link')).toBeNull();
+  });
 });

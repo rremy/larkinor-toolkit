@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/preact';
+import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { Battle } from '../src/pages/Battle';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 import type { BattleState } from '../src/utils/domExtract';
@@ -146,5 +146,15 @@ describe('Battle', () => {
     expect(screen.getByText('Ismeretlen szörny')).toBeTruthy();
     expect(container.querySelector('.lc-monster-link')).toBeNull();
     expect(container.querySelector('.lc-battle-level-badge')).toBeNull();
+  });
+
+  it('opens the quests tab on the active quest named in the narration', async () => {
+    const state = buildState({ narration: 'A szörny rád támad!\nAktuális küldetés: (39)' });
+    const { container } = render(<Battle state={state} db={null} />);
+
+    fireEvent.click(container.querySelector('.lc-quest-link')!);
+
+    // The overlay mounts its quests tab; the heading is enough to prove the route.
+    await waitFor(() => expect(container.querySelector('.lc-db')).not.toBeNull());
   });
 });

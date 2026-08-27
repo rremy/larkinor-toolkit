@@ -11,6 +11,7 @@ import { HotkeyRow } from '@/components/HotkeyRow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
+import { findActiveQuest } from '@/utils/activeQuest';
 
 export interface FreeMoveProps {
   state: FreeMoveState;
@@ -22,6 +23,11 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
+  // The game names the active royal quest in the narration; make the sentence
+  // the way into the quests tab. The pref writes happen in the boot — this is
+  // only the affordance.
+  const activeQuest = findActiveQuest(state.narration);
+  const [questRoute, setQuestRoute] = useState<{ id: string; seq: number } | null>(null);
 
   const { hotkeyActions, buttonActions } = partitionHotkeys(state.actions, enabled);
 
@@ -49,7 +55,22 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         </div>
       )}
 
-      <NarrationPanel text={state.narration} db={db} onMonsterClick={setSelectedMonster} links={state.narrationLinks} />
+      <NarrationPanel
+        text={state.narration}
+        db={db}
+        onMonsterClick={setSelectedMonster}
+        links={state.narrationLinks}
+        questLink={activeQuest
+          ? {
+              index: activeQuest.index,
+              length: activeQuest.length,
+              onClick: () => {
+                setQuestRoute((r) => ({ id: activeQuest.questId, seq: (r?.seq ?? 0) + 1 }));
+                setDbOpen(true);
+              },
+            }
+          : undefined}
+      />
 
       {buttonActions.length > 0 && (
         <div class="lc-section">
@@ -71,7 +92,14 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         <ConfigDrawer enabled={enabled} onToggle={toggleHotkey} onClose={closeConfig} />
       )}
 
-      <DatabaseOverlay open={dbOpen} initialItemId={dbItemId ?? undefined} onClose={() => setDbOpen(false)} />
+      <DatabaseOverlay
+        open={dbOpen}
+        initialItemId={dbItemId ?? undefined}
+        initialTab={questRoute ? 'quests' : undefined}
+        initialTabKey={questRoute?.seq}
+        initialQuest={questRoute ? { set: 'royal', id: questRoute.id } : null}
+        onClose={() => setDbOpen(false)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { h, render, type ComponentChildren } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractFreeMove, extractBattle, extractLogin, extractDungeon, extractDungeonSides, extractNarration, hideOriginalDOM, type FreeMoveState, type BattleState, type LoginState, type DungeonState } from '@/utils/domExtract';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
+import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { activateDungeonPosition, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { LoadoutContext } from '@/components/LoadoutContext';
@@ -103,6 +104,11 @@ export function bootMobile(doc: Document): void {
   // runs before the early return: the page has no state of its own and mobile
   // deliberately renders nothing on it.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // Runs on every page, like the pub and dungeon activations above: the
+  // active-quest line is not tied to a page type we render, and the link the
+  // pages draw is a separate concern from remembering the id.
+  activateActiveQuest(extractNarration(doc), getPref, setPref);
 
   // Inside a labyrinth, work out which maze cell the player is standing in and
   // store it, so the quests tab can mark it. Anywhere else, forget it — a

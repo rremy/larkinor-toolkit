@@ -10,6 +10,14 @@ export interface NarrationPanelProps {
   onMonsterClick: (monster: Monster) => void;
   /** Clickable anchors embedded in the narration (quest/action links). */
   links?: NarrationLink[];
+  /**
+   * The active-quest phrase to make tappable, by offset into `text`.
+   *
+   * Offsets rather than a search string, unlike `links`: the parser already
+   * knows where it matched, and a phrase the game could print twice must land
+   * where it was found rather than at the first `indexOf`.
+   */
+  questLink?: { index: number; length: number; onClick(): void };
 }
 
 /** A run of the narration to render as a clickable element, by text offset. */
@@ -19,12 +27,27 @@ interface Span {
   node: ComponentChildren;
 }
 
-export function NarrationPanel({ text, db, onMonsterClick, links = [] }: NarrationPanelProps) {
+export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink }: NarrationPanelProps) {
   if (!text) {
     return <div class="lc-narration lc-section">{text}</div>;
   }
 
   const spans: Span[] = [];
+
+  // The active-quest phrase, pushed first so it wins any overlap with a
+  // monster mention or narration link (the splice below keeps the earliest
+  // span at a given index — see the sort's stability note there).
+  if (questLink && questLink.index >= 0 && questLink.index + questLink.length <= text.length) {
+    spans.push({
+      index: questLink.index,
+      length: questLink.length,
+      node: (
+        <span class="lc-quest-link" onClick={() => questLink.onClick()}>
+          {text.slice(questLink.index, questLink.index + questLink.length)}
+        </span>
+      ),
+    });
+  }
 
   // Monster mentions (only resolvable with a DB) become tappable monster links.
   if (db) {
@@ -65,7 +88,9 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [] }: Narrati
   }
 
   // Splice the plain text and the spans into ordered runs, skipping any span
-  // that overlaps one already emitted.
+  // that overlaps one already emitted. Array.prototype.sort is stable, so two
+  // spans starting at the same index keep their push order — which is why the
+  // quest link is pushed before the monster mentions above.
   spans.sort((a, b) => a.index - b.index);
   const nodes: ComponentChildren[] = [];
   let cursor = 0;

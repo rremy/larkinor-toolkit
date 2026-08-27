@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/preact';
+import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { FreeMove } from '../src/pages/FreeMove';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 import type { FreeMoveState } from '../src/utils/domExtract';
@@ -174,5 +174,15 @@ describe('FreeMove', () => {
 
     fireEvent.click(screen.getByLabelText('Bezárás'));
     expect(document.querySelector('.lc-db-overlay')).toBeNull();
+  });
+
+  it('opens the quests tab on the active quest named in the narration', async () => {
+    const state = buildState({ narration: 'Sétálsz.\nAktuális küldetés: (39)' });
+    const { container } = render(<FreeMove state={state} db={null} />);
+
+    fireEvent.click(container.querySelector('.lc-quest-link')!);
+
+    // The overlay mounts its quests tab; the heading is enough to prove the route.
+    await waitFor(() => expect(container.querySelector('.lc-db')).not.toBeNull());
   });
 });
