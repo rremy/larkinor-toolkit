@@ -186,6 +186,54 @@ describe('activateDungeonPosition', () => {
     expect(position?.questId).toBe('35');
   });
 
+  // The active-quest pref never expires — the game just stops printing the line
+  // — so it must not outrank the maze the player is provably in. This narration
+  // is unique within quest 11 and within quest 38 and appears in no other royal
+  // quest, so whichever of the two is searched first wins: with the stale active
+  // quest in front (the old order) every such page was attributed to 38.
+  it('searches the previous position\'s quest before a stale active quest', async () => {
+    const SHARED_TRAP = 'Csapda! Egy kés-prés lepett meg. A csapda 3 életpontot sebzett rajtad!';
+    const here = royal.find((q) => q.id === '11')!.cells.find((c) => c.narration === SHARED_TRAP)!;
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [ACTIVE_ROYAL_QUEST_PREF_KEY]: '38',
+      [questSelectedKey('royal')]: '38',
+      // Where the player was one dungeon page ago: quest 11, and within a chain
+      // of dungeon pages the quest cannot change.
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '11', cells: [{ row: here.row, col: here.col }],
+        exact: true, source: 'narration',
+      }),
+    });
+
+    const position = await activateDungeonPosition(
+      SHARED_TRAP, { sides: {}, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position?.questId).toBe('11');
+    expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), '38');
+  });
+
+  // An ambiguous match is not evidence of which maze the player is in, so it
+  // must not relocate the reader's tab — which is also what defuses a stale
+  // active quest: it can no longer drag the selection to the wrong labyrinth.
+  it('leaves the remembered quest alone when the match is ambiguous', async () => {
+    // Quest 16's "Hopp, zsákutca. Akkor vissza." is shared by (7,7) and (8,7).
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '12' });
+
+    const position = await activateDungeonPosition(
+      'Hopp, zsákutca. Akkor vissza.', { sides: {}, enemy: false, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position?.exact).toBe(false);
+    expect(position?.questId).toBe('16');
+    expect(prefs.write).not.toHaveBeenCalledWith(questSelectedKey('royal'), expect.anything());
+    // The marker itself is still stored — it is honest about being tentative.
+    expect(parseQuestPosition(prefs.stored.get(QUEST_POSITION_PREF_KEY)!)?.exact).toBe(false);
+  });
+
   it('carries the position through a pending step when the page prints no text', async () => {
     const from = quest35.cells.find((c) => c.edges.N.kind === 'open' && c.row > 0)!;
     const to = quest35.cells.find((c) => c.row === from.row - 1 && c.col === from.col)!;

@@ -283,10 +283,21 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       exactly like a live one.
     - Only the **stored set** is loaded (`lc-quest-set`), not both: covering the rarer case of
       being in the other kind of labyrinth would mean fetching ~1.2MB more on every dungeon
-      page. Within that set the search is self-correcting — the remembered quest first, then
-      the rest of the set — and a hit elsewhere moves `lc-quest-selected-<set>` too, so
-      walking into a different labyrinth fixes a stale store instead of silently detecting
-      nothing. Verified live: the store said 34 while the player was in 35.
+      page. Within that set the search order is **most-proven first**: the quest the *previous*
+      position was in, then the active royal quest (`lc-quest-active-royal`, royal set only),
+      then the remembered selection, then the rest of the set. The previous position leads
+      because within a chain of consecutive dungeon pages the quest cannot change — every
+      non-dungeon page clears the position — so it is the one candidate that is demonstrated
+      rather than remembered; the active-quest pref, by contrast, **never expires** (the game
+      merely stops printing the line, which is indistinguishable from a page that never
+      printed it), and `locateDungeonPosition` keeps the *first* quest in search order among
+      ambiguous matches, so leading with a stale quest 39 attributed every ambiguous cell of
+      the labyrinth actually being walked to 39. An **exact** hit elsewhere moves
+      `lc-quest-selected-<set>` too, so walking into a different labyrinth fixes a stale store
+      instead of silently detecting nothing (verified live: the store said 34 while the player
+      was in 35) — an *ambiguous* hit never does, because a set of candidates is no evidence of
+      which maze the player is in, and moving the tab on one would drag the reader away with no
+      way back.
     - An exact hit is drawn as a solid pulsing ring plus a `📍` badge and **selects** the cell
       (handing over its detail panel for free); an ambiguous match draws a dashed dimmed ring
       on each candidate, no badge and no selection. Three pins would read as three players

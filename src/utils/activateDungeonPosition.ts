@@ -42,9 +42,9 @@ function isQuestSet(value: string | null): value is QuestSet {
  * move left by `armDungeonMoveTracking`, and consumed here so the next page
  * cannot replay it). Within the narration signal the search is self-correcting:
  * `resolveDungeonPosition` tries the remembered quest first and the rest of the
- * set after, and a hit elsewhere moves the remembered selection too — so
- * walking into a different labyrinth fixes the store instead of silently
- * detecting nothing.
+ * set after (see the ordering below for which quest that is), and an *exact*
+ * hit elsewhere moves the remembered selection too — so walking into a
+ * different labyrinth fixes the store instead of silently detecting nothing.
  *
  * Clears the stored position whenever nothing matches, which is a routine
  * outcome (about a quarter of cells print no text). A stale marker is worse than
@@ -84,10 +84,25 @@ export async function activateDungeonPosition(
     return null;
   }
 
-  // What the game says the character is doing beats what the reader last
-  // browsed — but only within the royal set, since an active royal quest says
-  // nothing about whether the player has wandered into a tavern labyrinth.
-  const preferred = (set === 'royal' ? readPref(ACTIVE_ROYAL_QUEST_PREF_KEY) : null)
+  // Which quest to search first, most-proven first:
+  //
+  // 1. **the quest the previous position was in.** Within a chain of
+  //    consecutive dungeon pages the quest cannot change — reaching another
+  //    labyrinth means passing through a non-dungeon page, and every one of
+  //    those clears the position — so this is the one candidate that is
+  //    demonstrated rather than remembered.
+  // 2. **the quest the game named as active**, royal only: an active royal
+  //    quest says nothing about whether the player has wandered into a tavern
+  //    labyrinth. It is what the game says the character is *doing*, which
+  //    still beats what the reader last browsed — but it never expires (the
+  //    game simply stops printing the line, which is indistinguishable from a
+  //    page that never printed it), so it must not outrank a maze the player is
+  //    provably standing in: `locateDungeonPosition` keeps the first quest in
+  //    search order among ambiguous matches, and a stale active quest at the
+  //    front attributes every ambiguous cell of the real labyrinth to it.
+  // 3. the last quest browsed in the tab.
+  const preferred = (previous?.set === set ? previous.questId : null)
+    ?? (set === 'royal' ? readPref(ACTIVE_ROYAL_QUEST_PREF_KEY) : null)
     ?? readPref(questSelectedKey(set));
 
   const position = resolveDungeonPosition(
@@ -96,10 +111,14 @@ export async function activateDungeonPosition(
 
   try {
     writePref(QUEST_POSITION_PREF_KEY, position ? serialiseQuestPosition(position) : '');
-    // A hit outside the remembered quest is the store being stale, not the
-    // player being lost — move the selection so the grid opens on the maze they
-    // are actually walking.
-    if (position) writePref(questSelectedKey(position.set), position.questId);
+    // An **exact** hit outside the remembered quest is the store being stale,
+    // not the player being lost — move the selection so the grid opens on the
+    // maze they are actually walking. An ambiguous match earns no such move: a
+    // set of candidates is not evidence of which maze the player is in, and
+    // relocating the tab on one would drag the reader away on nothing (a stale
+    // active quest at the front of the search order used to do exactly that,
+    // repeatedly and with no way back).
+    if (position?.exact) writePref(questSelectedKey(position.set), position.questId);
   } catch (err) {
     console.warn('[Larkinor UI] Dungeon position: could not store the position:', err);
   }
