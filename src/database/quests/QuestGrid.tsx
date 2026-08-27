@@ -101,13 +101,19 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // canvas around an irregular maze, and only `outsideMazeCells` tells
         // them apart. Deciding it here from emptiness alone painted 200 royal
         // and 537 tavern rooms black — see that function's doc comment.
-        if (outside.has(cellKey(cell))) classes.push('void');
+        const isOutside = outside.has(cellKey(cell));
+        if (isOutside) classes.push('void');
         // Where the player is. An exact hit is drawn confidently; a candidate
         // from an ambiguous match is drawn tentatively, because saying "one of
         // these three" is useful and saying "this one" would be a guess.
         const isHere = detected.has(cellKey(cell));
         if (isHere) classes.push(position?.exact ? 'here' : 'maybe-here');
-        const isCleared = cleared !== null && cleared.has(cellKey(cell));
+        // Never on canvas outside the maze: "done" and "not part of the maze"
+        // mean opposite things, and a `.cleared` background on a `.void` tile
+        // would read as work finished on a room that does not exist. The toggle
+        // is withheld for those cells too (QuestView), so this only ever fires
+        // on a mark stored by an older build.
+        const isCleared = !isOutside && cleared !== null && cleared.has(cellKey(cell));
         if (isCleared) classes.push('cleared');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit

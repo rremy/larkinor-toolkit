@@ -999,10 +999,16 @@
    it, and the walls are exactly what still matters on a tile you have already
    emptied. The position marker (a ::before on the cell) and its badge stay at
    full strength — standing on a cleared tile is the common case. */
-.lc-db .quest-cell.cleared { background: var(--quest-cleared-bg); }
-.lc-db .quest-cell.cleared .quest-sprite,
-.lc-db .quest-cell.cleared .quest-big-icon,
-.lc-db .quest-cell.cleared .quest-badge:not(.here):not(.cleared) {
+/* `:not(.void)` on every one of these, and not merely for tidiness: the two
+   rules have equal specificity and `.cleared` is declared later, so on a tile
+   that is both it would win — painting outside-the-maze canvas as finished work,
+   which is the one thing the palette must never blur. QuestGrid also refuses to
+   add the class there; this is the half that cannot be bypassed by a mark an
+   older build stored. */
+.lc-db .quest-cell.cleared:not(.void) { background: var(--quest-cleared-bg); }
+.lc-db .quest-cell.cleared:not(.void) .quest-sprite,
+.lc-db .quest-cell.cleared:not(.void) .quest-big-icon,
+.lc-db .quest-cell.cleared:not(.void) .quest-badge:not(.here):not(.cleared) {
   opacity: 0.3;
   filter: grayscale(1);
 }

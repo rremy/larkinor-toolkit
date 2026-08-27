@@ -629,6 +629,26 @@ describe('QuestView', () => {
       ).toBe(true));
     });
 
+    // Every tile is clickable, the canvas around an irregular maze included — but
+    // "done" and "not part of the maze" mean opposite things, so the toggle is
+    // withheld there and a stored mark is never painted. Quest 2's only cell is
+    // an undrawn blank touching the grid edge, i.e. canvas (`outsideMazeCells`).
+    it('offers no cleared toggle on canvas outside the maze', async () => {
+      const prefStore = makePrefStore({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '2' });
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="2"
+        prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      const tile = await waitFor(() => {
+        const el = container.querySelector('.quest-cell[data-row="0"][data-col="0"]');
+        expect(el).not.toBeNull();
+        return el!;
+      });
+      expect(tile.classList.contains('void')).toBe(true);
+      fireEvent.click(tile);
+
+      expect(screen.queryByRole('button', { name: 'Teljesítve' })).toBeNull();
+    });
+
     it('shows no reset control when nothing is cleared', async () => {
       const prefStore = makePrefStore({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '1' });
       const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"

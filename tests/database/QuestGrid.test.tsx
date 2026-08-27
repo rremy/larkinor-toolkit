@@ -459,6 +459,33 @@ describe('a cleared cell', () => {
     expect(cell.querySelector('.quest-badge.here')).not.toBeNull();
   });
 
+  // Canvas outside the drawn maze must never read as finished work: the two mean
+  // opposite things. A mark can only get onto such a cell from an older build
+  // (the toggle is withheld there now), and it is dropped on the way in rather
+  // than left to the stylesheet — where `.cleared` and `.void` have equal
+  // specificity and `.cleared`, declared later, would win.
+  it('never marks a cell outside the maze as cleared', () => {
+    const canvasQuest: Quest = {
+      id: '1', set: 'royal', title: '1', description: 'd', reward: 'r', rows: 1, cols: 2,
+      cells: [
+        cell({ row: 0, col: 0, narration: 'Egy terem.' }),
+        // Blank and drawing none of its own sides, touching the grid edge: the
+        // untouched canvas around the maze, as `outsideMazeCells` reads it.
+        cell({ row: 0, col: 1 }),
+      ],
+    };
+    const { container } = render(
+      <QuestGrid quest={canvasQuest} monsters={monsters} selected={null} onSelect={() => {}}
+        cleared={new Set(['0,1'])} />,
+    );
+    const canvas = container.querySelector('.quest-cell[data-row="0"][data-col="1"]')!;
+
+    expect(canvas.classList.contains('void')).toBe(true);
+    expect(canvas.classList.contains('cleared')).toBe(false);
+    expect(canvas.querySelector('.quest-badge.cleared')).toBeNull();
+    expect(canvas.getAttribute('title')).not.toContain('teljesítve');
+  });
+
   it('renders normally without a cleared set', () => {
     const { container } = render(
       <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />,

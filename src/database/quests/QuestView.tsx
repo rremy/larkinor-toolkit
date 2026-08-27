@@ -1,5 +1,5 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
 import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
@@ -9,7 +9,7 @@ import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
-import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, cellKey, hasSzelEdges, locksIn } from './questMeta';
+import { DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, cellKey, hasSzelEdges, locksIn, outsideMazeCells } from './questMeta';
 
 interface QuestViewProps {
   loader: DataLoader;
@@ -180,6 +180,17 @@ export function QuestView(props: QuestViewProps): VNode {
   // order on every render.
   const quest = quests ? (quests.find((q) => q.id === questId) ?? quests[0] ?? null) : null;
   const selectedQuestId = quest?.id ?? null;
+
+  /**
+   * The maze's own canvas — cells outside the drawn shape, which QuestGrid draws
+   * as `void`. Held here as well as in the grid so the cleared toggle can be
+   * withheld for them: every tile is clickable, canvas included, and "done" on a
+   * room that does not exist is a mark the maze must never carry.
+   */
+  const outside = useMemo(
+    () => (quest ? outsideMazeCells(quest) : new Set<string>()),
+    [quest],
+  );
 
   // Re-read whenever the quest on screen changes, and once the data arrives —
   // the boot's auto-clear write can land after this tab mounts, exactly like
@@ -481,7 +492,11 @@ export function QuestView(props: QuestViewProps): VNode {
         <div class="quest-side">
           <QuestCellDetail cell={selectedCell} monsters={monsters} onJumpToMonster={onJumpToMonster}
             cleared={selectedCell !== null && cleared.has(cellKey(selectedCell))}
-            onToggleCleared={prefStore ? toggleCleared : undefined} />
+            onToggleCleared={
+              prefStore && selectedCell !== null && !outside.has(cellKey(selectedCell))
+                ? toggleCleared
+                : undefined
+            } />
           <QuestKeyLegend
             quest={quest}
             monsters={monsters}
