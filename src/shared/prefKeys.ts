@@ -64,3 +64,14 @@ export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
  * surface; written only by the boots' loadout capture.
  */
 export const LOADOUT_PREF_KEY = 'lc-loadout';
+
+/**
+ * PrefStore key holding the royal quest the game itself names as active
+ * (`Aktuális küldetés: (39)`).
+ *
+ * Kept apart from `questSelectedKey('royal')` — which follows the player's
+ * browsing — because the two answer different questions: what the character is
+ * doing, and what the reader is looking at. Keeping both is what lets the
+ * selection move when the *active* quest changes and stay put otherwise.
+ */
+export const ACTIVE_ROYAL_QUEST_PREF_KEY = 'lc-quest-active-royal';
