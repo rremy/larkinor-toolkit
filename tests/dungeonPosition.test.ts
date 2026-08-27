@@ -7,6 +7,7 @@ import {
   locateDungeonPosition,
   matchCellsInQuest,
   propagatePosition,
+  resolveDungeonPosition,
   sidesAgree,
   type SideObservations,
 } from '../src/utils/dungeonPosition';
@@ -346,5 +347,76 @@ describe('propagatePosition', () => {
     const cells = propagatePosition(previous, 'N', quest35, {});
     expect(cells.length).toBeGreaterThan(1);
     expect(cells.every((c) => previous.cells.some((p) => p.row === c.row + 1 && p.col === c.col))).toBe(true);
+  });
+});
+
+describe('resolveDungeonPosition', () => {
+  const cellAt = (row: number, col: number) =>
+    quest35.cells.find((c) => c.row === row && c.col === col)!;
+  const sidesOf = (cell: QuestCell): SideObservations => ({
+    N: cell.edges.N.kind === 'open' ? 'open' : 'wall',
+    E: cell.edges.E.kind === 'open' ? 'open' : 'wall',
+    S: cell.edges.S.kind === 'open' ? 'open' : 'wall',
+    W: cell.edges.W.kind === 'open' ? 'open' : 'wall',
+  });
+  /** A pair of vertically adjacent cells of quest 35 where the step is open. */
+  const from = quest35.cells.find((c) =>
+    c.edges.N.kind === 'open' && c.row > 0 && cellAt(c.row - 1, c.col).narration === '')!;
+  const to = cellAt(from.row - 1, from.col);
+  const previous: QuestPosition = {
+    set: 'royal', questId: '35', cells: [{ row: from.row, col: from.col }], exact: true,
+    source: 'narration',
+  };
+
+  it('falls back to the step when the page prints no cell text', () => {
+    const resolved = resolveDungeonPosition('', sidesOf(to), royal, '35', previous, 'N');
+    expect(resolved).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: to.row, col: to.col }], exact: true, source: 'move',
+    });
+  });
+
+  it('keeps the narration match when there is no step to apply', () => {
+    const resolved = resolveDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35', null, null);
+    expect(resolved).toEqual(locateDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35'));
+  });
+
+  it('intersects the two when both have something to say', () => {
+    const narrated = quest35.cells.find((c) =>
+      c.narration !== '' && c.row > 0 && c.edges.N.kind === 'open')!;
+    const target = cellAt(narrated.row - 1, narrated.col);
+    const start: QuestPosition = {
+      set: 'royal', questId: '35', exact: false, source: 'narration',
+      cells: [{ row: narrated.row, col: narrated.col }, { row: 0, col: 0 }],
+    };
+    const resolved = resolveDungeonPosition(
+      target.narration, sidesOf(target), royal, '35', start, 'N',
+    );
+    expect(resolved?.cells).toContainEqual({ row: target.row, col: target.col });
+  });
+
+  // A locked door is drawn *and* offered: the click fails, the player never
+  // moves, and the page still describes the old cell. Evidence must win, or the
+  // marker confidently walks through a door the player could not open.
+  it('believes the narration when the step disagrees, and drops the chain', () => {
+    const resolved = resolveDungeonPosition(
+      RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35',
+      { set: 'royal', questId: '35', cells: [{ row: 5, col: 5 }], exact: true, source: 'narration' },
+      'N',
+    );
+    expect(resolved?.cells).toEqual([{ row: 0, col: 6 }]);
+    expect(resolved?.source).toBe('narration');
+  });
+
+  it('returns null when neither source knows anything', () => {
+    expect(resolveDungeonPosition('', {}, royal, '35', null, null)).toBeNull();
+  });
+
+  // A step is only meaningful inside the maze it was taken in.
+  it('ignores a step from a position in another quest than the one matched', () => {
+    const foreign: QuestPosition = {
+      set: 'tavern', questId: 'GOMB', cells: [{ row: 0, col: 0 }], exact: true, source: 'narration',
+    };
+    const resolved = resolveDungeonPosition(RESTED_AT_0_6, OBSERVED_AT_0_6, royal, '35', foreign, 'N');
+    expect(resolved?.questId).toBe('35');
   });
 });

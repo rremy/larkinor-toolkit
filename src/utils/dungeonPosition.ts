@@ -233,3 +233,60 @@ export function propagatePosition(
 
   return out;
 }
+
+/**
+ * The player's position from both signals the page offers: the text it printed,
+ * and the step they took to get here.
+ *
+ * Order of authority, and why:
+ *
+ * 1. **An exact narration match wins outright.** A click on a direction is not
+ *    proof of a move — a locked door in a maze is drawn *and* offered, and
+ *    clicking it without the key leaves the player where they were. The
+ *    narration then still describes the old cell, so believing the page is what
+ *    keeps the marker honest. A disagreement drops the chain rather than
+ *    averaging two incompatible answers.
+ * 2. **They intersect when both are ambiguous or agree**, which is where the
+ *    tracking earns its keep: a step filtered by the drawn walls routinely
+ *    collapses several candidates to one.
+ * 3. **Either fills in for the other's silence.** Roughly a quarter of cells
+ *    print no text at all, and that is exactly where a step is the only thing
+ *    that knows anything.
+ */
+export function resolveDungeonPosition(
+  narration: string,
+  observed: SideObservations,
+  quests: readonly Quest[],
+  preferredQuestId: string | null,
+  previous: QuestPosition | null,
+  move: Side | null,
+): QuestPosition | null {
+  const detected = locateDungeonPosition(narration, observed, quests, preferredQuestId);
+
+  const quest = previous && move
+    ? quests.find((q) => q.id === previous.questId && q.set === previous.set)
+    : undefined;
+  if (!quest || !previous || !move) return detected;
+
+  const stepped = propagatePosition(previous, move, quest, observed);
+  if (stepped.length === 0) return detected;
+
+  const walked: QuestPosition = {
+    set: quest.set,
+    questId: quest.id,
+    cells: stepped,
+    exact: stepped.length === 1,
+    source: 'move',
+  };
+
+  if (!detected) return walked;
+  // A step out of one maze cannot narrow a match in another.
+  if (detected.set !== walked.set || detected.questId !== walked.questId) return detected;
+
+  const both = walked.cells.filter((c) =>
+    detected.cells.some((d) => d.row === c.row && d.col === c.col));
+  if (both.length === 0) return detected;
+  if (detected.exact) return detected;
+
+  return { ...walked, cells: both, exact: both.length === 1 };
+}
