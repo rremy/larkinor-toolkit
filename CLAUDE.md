@@ -326,18 +326,33 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     independent enemy signals (the `ellenfel/` silhouette and the `tamadas` control) plus the
     question radios: a monster the data knows about with **both** signals absent is dead, a
     question cell with no radios is answered, and a trap cell is sprung by the act of standing
-    on it. Only an **exact** position may write a mark. Progress lives one key per quest
-    (`lc-quest-cleared-<set>-<id>`) and never expires — unlike a position it is progress, so an
+    on it. Only a position the **narration** pinned exactly may write a mark — `exact` alone
+    stopped meaning "the page said so" the moment movement tracking landed, since a propagated
+    step is exact too, and a mark is permanent: a refused move on an unnarrated cell would
+    otherwise record the monster on the *predicted* cell as killed. Progress lives one key per
+    quest (`lc-quest-cleared-<set>-<id>`) and never expires — unlike a position it is progress, so an
     unreadable value degrades to "nothing cleared" instead of stopping the caller. Dimming is
     applied to the tile's *contents*, never to `.quest-cell` itself: `opacity` there would take
     the walls with it, and the walls are what stays load-bearing on an emptied tile.
     `--quest-cleared-bg` had to move away from `--quest-void` — canvas outside the maze and a
-    finished room mean opposite things. **The monster rule's assumption is unverified**: that
+    finished room mean opposite things — and a cleared mark is never drawn on canvas at all:
+    the toggle is withheld for `outsideMazeCells` (every tile is clickable, canvas included),
+    `QuestGrid` drops the class for them, and the CSS carries `:not(.void)` because the two
+    rules have equal specificity and `.cleared` comes later. **The monster rule's assumption is unverified**: that
     the enemy silhouette actually disappears after a kill has not been watched across a live
     kill (Task 16 needed a live game session and did not run). It ships behind two signals plus
     a manual toggle for exactly that reason; settling it needs two captures — a dungeon cell
     with a live monster, and the same cell immediately after the kill — compared for which
-    `ellenfel`/`tamadas` tokens changed.
+    `ellenfel`/`tamadas` tokens changed. **And the two signals may really be one**: nothing in
+    the toolkit has ever observed a `tamadas` control on a dungeon page (`extractDungeon` has
+    no attack field at all, unlike `extractFreeMove`), so the same captures should also settle
+    whether a dungeon page carries an attack control, and under what basename — if it does not,
+    the silhouette is the only signal and the mitigation is the manual toggle alone.
+    **The standalone site does show and write these marks**, unlike the position marker and the
+    compare card: `src/database/main.tsx` supplies a `localStorage`-backed `prefStore`, and
+    progress is a preference the tab itself owns, so the toggle works there — in that origin's
+    own storage, which is a different store from the in-game one, so the two never see each
+    other's progress.
   - **A step is evidence, but weaker evidence than the page.** `lc-quest-move` holds only a
     direction, written in the capture phase on the game's own direction control — every
     movement path in the toolkit clicks it — and consumed-and-cleared by the next dungeon page,
