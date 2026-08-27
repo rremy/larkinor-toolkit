@@ -179,6 +179,7 @@ describe('locateDungeonPosition', () => {
       questId: '35',
       cells: [{ row: 0, col: 6 }],
       exact: true,
+      source: 'narration',
     });
   });
 

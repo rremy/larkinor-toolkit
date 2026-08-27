@@ -176,6 +176,7 @@ export function locateDungeonPosition(
       questId: quest.id,
       cells: cells.map((c) => ({ row: c.row, col: c.col })),
       exact: cells.length === 1,
+      source: 'narration',
     };
     if (position.exact) return position;
     ambiguous ??= position;

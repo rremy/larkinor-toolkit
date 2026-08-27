@@ -14,7 +14,7 @@ const quest35 = royal.find((q) => q.id === '35')!;
 const monsters = buildMonsterDatabase([]);
 
 const AT_0_6: QuestPosition = {
-  set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true,
+  set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'narration',
 };
 
 const cellAt = (row: number, col: number) =>
@@ -33,7 +33,7 @@ describe('QuestGrid position marker', () => {
 
   it('marks several candidates tentatively, with no pin', () => {
     const ambiguous: QuestPosition = {
-      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }, { row: 1, col: 1 }], exact: false,
+      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }, { row: 1, col: 1 }], exact: false, source: 'narration',
     };
     render(h(QuestGrid, { quest: quest35, monsters, selected: null, onSelect: () => {}, position: ambiguous }));
 
@@ -156,7 +156,7 @@ describe('QuestView reading the stored position', () => {
       [QUEST_SET_PREF_KEY]: 'royal',
       [questSelectedKey('royal')]: '35',
       [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
-        set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }, { row: 1, col: 1 }], exact: false,
+        set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }, { row: 1, col: 1 }], exact: false, source: 'narration',
       }),
     });
 

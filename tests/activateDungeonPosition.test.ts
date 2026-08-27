@@ -48,7 +48,9 @@ describe('activateDungeonPosition', () => {
       RESTED_AT_0_6, OBSERVED_AT_0_6, makeLoader(), prefs.read, prefs.write,
     );
 
-    expect(position).toEqual({ set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true });
+    expect(position).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'narration',
+    });
     expect(parseQuestPosition(prefs.stored.get(QUEST_POSITION_PREF_KEY)!)).toEqual(position);
   });
 
