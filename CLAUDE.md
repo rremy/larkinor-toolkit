@@ -283,16 +283,19 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       exactly like a live one.
     - Only the **stored set** is loaded (`lc-quest-set`), not both: covering the rarer case of
       being in the other kind of labyrinth would mean fetching ~1.2MB more on every dungeon
-      page. Within that set the search order is **most-proven first**: the quest the *previous*
-      position was in, then the active royal quest (`lc-quest-active-royal`, royal set only),
-      then the remembered selection, then the rest of the set. The previous position leads
-      because within a chain of consecutive dungeon pages the quest cannot change — every
-      non-dungeon page clears the position — so it is the one candidate that is demonstrated
-      rather than remembered; the active-quest pref, by contrast, **never expires** (the game
-      merely stops printing the line, which is indistinguishable from a page that never
-      printed it), and `locateDungeonPosition` keeps the *first* quest in search order among
-      ambiguous matches, so leading with a stale quest 39 attributed every ambiguous cell of
-      the labyrinth actually being walked to 39. An **exact** hit elsewhere moves
+      page. Within that set, a `??` chain promotes **exactly one** quest to the head of the
+      search, most-proven candidate first: the quest the *previous* position was in, else the
+      active royal quest (`lc-quest-active-royal`, royal set only), else the remembered
+      selection. Once a previous position exists the other two are never even consulted; the
+      rest of the set follows in file order after the promoted quest, with no priority among
+      them. The previous position leads because within a chain of consecutive dungeon pages
+      the quest cannot change — every non-dungeon page clears the position — so it is the one
+      candidate that is demonstrated rather than remembered; the active-quest pref, by
+      contrast, **never expires** (the game merely stops printing the line, which is
+      indistinguishable from a page that never printed it), and `locateDungeonPosition` keeps
+      the *first* quest in search order among ambiguous matches, so leading with a stale quest
+      39 attributed every ambiguous cell of the labyrinth actually being walked to 39. An
+      **exact** hit elsewhere moves
       `lc-quest-selected-<set>` too, so walking into a different labyrinth fixes a stale store
       instead of silently detecting nothing (verified live: the store said 34 while the player
       was in 35) — an *ambiguous* hit never does, because a set of candidates is no evidence of

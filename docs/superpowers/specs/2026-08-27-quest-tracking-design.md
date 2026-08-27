@@ -118,10 +118,24 @@ could plausibly recur.
 
 The stored active quest is a better "preferred quest" than the last-viewed
 selection for dungeon detection: it is what the game says the player is doing.
-`activateDungeonPosition` therefore prefers it over
-`lc-quest-selected-royal` **when the loaded set is royal**, and ignores it
+But it is not the *top* preference — the quest the previous dungeon position
+was in outranks it, because every non-dungeon page clears the position, so
+within a chain of consecutive dungeon pages the quest cannot change: that
+candidate is proven, not merely stated by a pref that never expires.
+`activateDungeonPosition` therefore falls back to the active quest only when
+there is no previous position in the loaded set, preferring it over
+`lc-quest-selected-royal` **when the loaded set is royal**, and ignoring it
 otherwise. It never chooses which set to load — the active royal quest says
 nothing about whether the player has wandered into a tavern labyrinth.
+
+> **Corrected 2026-08-27 (doc touch-up).** This section originally presented
+> the active royal quest as the top-ranked preferred quest for dungeon
+> detection. It is now second, behind the quest the previous dungeon position
+> was in. Nothing ever clears the active-quest pref — the game simply stops
+> printing the line, which is indistinguishable from a page that never printed
+> it — so a stale active quest at the front of the search would capture every
+> ambiguous match. See the `??` chain in `activateDungeonPosition`
+> (`src/utils/activateDungeonPosition.ts`).
 
 ## Part 2 — cleared tiles
 
@@ -151,10 +165,23 @@ as a reason to stop.
 
 ### Automatic clearing
 
-Runs in `activateDungeonPosition`, and **only when the resolved position is
-exact**: a cleared mark on the wrong cell is worse than no mark, and an
-ambiguous match has no single cell to mark. Each rule compares what the page
-shows against what the quest data says the cell holds:
+Runs in `activateDungeonPosition`, and only when the resolved position is
+**exact and pinned by the narration** (`position.source === 'narration'`): a
+cleared mark on the wrong cell is worse than no mark, an ambiguous match has
+no single cell to mark, and a mark is permanent — only the page's own words
+may justify one. Each rule compares what the page shows against what the
+quest data says the cell holds:
+
+> **Corrected 2026-08-27 (doc touch-up).** This paragraph originally gated
+> the rule on `exact` alone. That stopped being sufficient once movement
+> tracking landed: a step propagated from a confirmed previous position is
+> `exact` whenever the walls leave one candidate, so gating on `exact` alone
+> would mark cells nobody's narration confirmed — the game refuses a move,
+> the cell the player is still standing on prints no text (about a quarter
+> don't), the prediction wins, and the monster on the *predicted* cell is
+> recorded as killed. The shipped gate additionally requires
+> `position.source === 'narration'`; see `activateDungeonPosition` in
+> `src/utils/activateDungeonPosition.ts`.
 
 | Data says | Page shows | Conclusion |
 |---|---|---|
