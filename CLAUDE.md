@@ -660,6 +660,25 @@ as `__PUBLIC_BASE_URL__` and read in `src/shared/publicUrl.ts`:
 - the `@connect` host (derived via `new URL(...).hostname`);
 - `@downloadURL` / `@updateURL`, so a direct install self-updates.
 
+**The userscript's `@version` is CalVer from the build clock** — `YYYY.M.D.HHMM` in UTC, from
+`scripts/userscriptVersion.mjs` — and it must never go back to a fixed number. ViolentMonkey
+installs an update only when the remote `@version` is strictly **greater** than the installed
+one, and this was a hardcoded `0.1.0`: every deployed build looked identical to an
+already-installed copy, so a direct install could never update itself. The bug hid for as long
+as it did because the dev loader re-fetches the script on every page load with `?v=<now>` and
+ignores versions entirely, so development never saw it. Details worth keeping:
+- **UTC, not local time**, so builds from machines in different zones cannot appear to move
+  backwards relative to one another.
+- **The time part is `hours * 100 + minutes`, unpadded** (`…​.30`, not `…​.0030`): managers
+  compare parts numerically, and a leading zero invites a string comparison where `0030` beats
+  `1315`. Month and day are unpadded for the same reason and compare correctly per part, so
+  `2026.8.31` precedes `2026.9.1`.
+- It is **unrelated to `package.json`'s version**, which describes the source tree rather than
+  an installed artifact. `tests/userscriptVersion.test.ts` pins the format and the
+  strictly-increasing property across every boundary.
+- VM checks for updates on its own schedule (typically daily), so even a newer version is not
+  instant — *Check for updates* in VM forces it.
+
 So `LC_PUBLIC_BASE_URL=http://192.168.x.x:9912 npm run build` produces a bundle that is
 entirely self-consistent for local testing — which is exactly what `serve.sh` does, instead
 of patching the built output.

@@ -1,4 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
+// @ts-expect-error — build-time helper, plain .mjs with no type declarations.
+import { calverVersion } from './scripts/userscriptVersion.mjs';
 import preact from '@preact/preset-vite';
 import monkey from 'vite-plugin-monkey';
 import fs from 'node:fs';
@@ -72,7 +74,9 @@ export default defineConfig(({ mode }) => ({
       userscript: {
         name: 'Larkinor Toolkit',
         namespace: REPO_URL,
-        version: '0.1.0',
+        // CalVer from the build clock — see scripts/userscriptVersion.mjs for why
+        // this must not be a fixed number.
+        version: calverVersion(),
         author: 'rremy',
         description: 'Mobile-friendly UI and desktop companion dock for the Larkinor browser RPG',
         homepage: REPO_URL,
