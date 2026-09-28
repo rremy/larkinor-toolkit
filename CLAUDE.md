@@ -633,6 +633,12 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     `urlap.par1` — set the index. `darabN` is **per piece** (confirmed by the player).
   - Six Erőd armours share one identical recipe (the `gyíkacél` set); the game picks the
     output, and the panel says so.
+  - **A recipe may list one ingredient in several slots** — `kincsgúla` is kincs (622) ×200
+    three times — so `planCraft` sums per ingredient id; judging each slot alone showed 450
+    kincs as enough for two pieces when one needs 600.
+  - Mobile also offers the form **by hand** (`ManualCraft`, *Kézi kitöltés*): taking the page
+    over would otherwise make whatever the database has no recipe for (97 Erőd entries), or
+    everything when the data fails to load, uncraftable on a phone.
   - Each building also has a lobby (`otErod`, `otMagustorony`) of titled image controls
     only. Mobile takes over all four pages; desktop adds a docked panel in the halls only.
     The Erőd hall's trap form prices itself through the page's own `kerdojel` control
