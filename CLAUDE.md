@@ -19,9 +19,9 @@ larkinor-toolkit/
 │   │   ├── boot.ts · DesktopDock.tsx
 │   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
 │   │   └── desktop.css
-│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx (mobile)
+│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx, BuildingLobby.tsx, CraftingHall.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
-│   │                        #   MarketRows/MarketBuy/MarketActions (shared by both platforms)
+│   │                        #   MarketRows/MarketBuy/MarketActions, CraftingPanel (shared by both platforms), HallSideForm
 │   ├── hooks/               # useHotkeyConfig
 │   ├── utils/               # platform, pageDetector, domExtract, narration, hotkeys, config
 │   ├── shared/
@@ -31,6 +31,7 @@ larkinor-toolkit/
 │   │   │   ├── source.ts    # DataSource (gmSource for GM, httpSource for fetch)
 │   │   │   ├── loader.ts    # createDataLoader(source, baseUrl)
 │   │   │   └── index.ts
+│   │   ├── crafting.ts      # Crafting planner: what a hall makes, recipe vs. carried, max count
 │   │   ├── publicUrl.ts     # Deployment base URL + userscript data URL (build-time inject)
 │   │   ├── text.ts          # foldAccents / matchesSearch (accent-insensitive search)
 │   │   └── styles/theme.css # Single shared dark-medieval theme (variables + scopes)
@@ -82,7 +83,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
 - **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home and Market, and leaves the rest untouched; desktop adds its dock to every page.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market and the four crafting-building pages, and leaves the rest untouched; desktop adds its dock to every page.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
@@ -616,6 +617,26 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - Mobile shows the four jobs as tabs (Felkínálható / Felkínált / Vétel / Egyéb);
     the desktop panel has two (Eladás keeps the two-column split, Vétel is the
     same shared buy view), with the page's own actions in a bar above both.
+- **The crafting halls (`otErodBelso`, `otMagustoronyBelso`) share one form under two
+  names** — `fegyvercsinalUrlap` + `keszitfegyver.gif` in the Erőd,
+  `varfegyvercsinalUrlap` + `keszitvarazstargy.gif` in the Mágustorony (measured live
+  2026-09-28). Facts that cost measurement:
+  - Three ingredient slots (`targyN` select + `darabN` text) and `darabszam`. The form
+    **never names the product** — the game infers it from the ingredients — so "craft X"
+    means "fill the slots with X's recipe" (`src/shared/crafting.ts` +
+    `src/utils/craftingExtract.ts`). Every recipe in the database fits: none has more than 3.
+  - Every `targyN` lists the backpack: `value` = game item id (matching `recipe[].id`),
+    text `"<count> <name>"`, silver first as `value="0"`. So availability is read **off the
+    page**, never from a stored inventory. Only the first run of digits is the count — a name
+    may start with one.
+  - The page's `fegyverAdatFeltolt()` packs **`targyN.selectedIndex`**, not the value, into
+    `urlap.par1` — set the index. `darabN` is **per piece** (confirmed by the player).
+  - Six Erőd armours share one identical recipe (the `gyíkacél` set); the game picks the
+    output, and the panel says so.
+  - Each building also has a lobby (`otErod`, `otMagustorony`) of titled image controls
+    only. Mobile takes over all four pages; desktop adds a docked panel in the halls only.
+    The Erőd hall's trap form prices itself through the page's own `kerdojel` control
+    (`jelezAr`), which mobile clicks rather than re-implementing the formula.
 - **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow
