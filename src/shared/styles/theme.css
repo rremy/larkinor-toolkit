@@ -1931,3 +1931,19 @@
   padding: 6px 12px;
 }
 .lc-craft-btn:disabled { cursor: default; color: var(--muted); border-color: var(--border); background: none; }
+
+.lc-hall-side { margin-top: 12px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); }
+.lc-hall-side > summary { padding: 8px 10px; cursor: pointer; color: var(--accent); font-size: 13px; }
+.lc-hall-side-body { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 10px; }
+.lc-hall-side-label { font-size: 12px; color: var(--muted); }
+.lc-hall-side-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+}
+.lc-hall-side-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-hall-side-price { font-size: 13px; color: var(--accent); }

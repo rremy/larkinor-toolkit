@@ -11,6 +11,7 @@ import { readLoadout } from '@/utils/config';
 import { getPref, setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
+import { extractBuildingLobby, extractCraftingHall, type BuildingLobbyState, type CraftingHallState } from '@/utils/craftingExtract';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { FreeMove } from '@/pages/FreeMove';
@@ -19,6 +20,8 @@ import { Login } from '@/pages/Login';
 import { Dungeon } from '@/pages/Dungeon';
 import { Home } from '@/pages/Home';
 import { Market } from '@/pages/Market';
+import { BuildingLobby } from '@/pages/BuildingLobby';
+import { CraftingHall } from '@/pages/CraftingHall';
 import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Mobile boot (proxy-DOM pattern): extract the game state, move the original
@@ -40,7 +43,9 @@ type PageState =
   | { pageType: PageType.Login; state: LoginState }
   | { pageType: PageType.Dungeon; state: DungeonState }
   | { pageType: PageType.Home; state: HomeState }
-  | { pageType: PageType.Market; state: MarketState };
+  | { pageType: PageType.Market; state: MarketState }
+  | { pageType: PageType.ForgeLobby | PageType.MageLobby; state: BuildingLobbyState }
+  | { pageType: PageType.ForgeHall | PageType.MageHall; state: CraftingHallState };
 
 /**
  * The game page ships no viewport meta, so mobile browsers assume a ~980px
@@ -58,6 +63,12 @@ function ensureMobileViewport(doc: Document): void {
   meta.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
+/** Rendered pages that never need the monster database. */
+const NO_MONSTER_PAGES: ReadonlySet<PageType> = new Set([
+  PageType.Login, PageType.Dungeon, PageType.Home, PageType.Market,
+  PageType.ForgeLobby, PageType.ForgeHall, PageType.MageLobby, PageType.MageHall,
+]);
+
 /** Extracts the page state for a page type we render, or null to skip it. */
 function extractPageState(pageType: PageType, doc: Document): PageState | null {
   switch (pageType) {
@@ -73,6 +84,17 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractHome(doc) };
     case PageType.Market:
       return { pageType, state: extractMarket(doc) };
+    case PageType.ForgeLobby:
+    case PageType.MageLobby:
+      return { pageType, state: extractBuildingLobby(doc) };
+    case PageType.ForgeHall:
+    case PageType.MageHall: {
+      // A hall without its crafting form means the markup changed under us:
+      // leave the page to the game rather than render a panel that cannot craft.
+      const state = extractCraftingHall(doc);
+      if (!state) console.warn('[Larkinor UI] Crafting form not found; hall page left untouched');
+      return state ? { pageType, state } : null;
+    }
     default:
       return null; // v1 leaves other pages untouched
   }
@@ -183,20 +205,24 @@ export function bootMobile(doc: Document): void {
       case PageType.Market:
         render(provide(h(Market, { state: pageState.state })), root);
         break;
+      case PageType.ForgeLobby:
+      case PageType.MageLobby:
+        render(provide(h(BuildingLobby, { state: pageState.state })), root);
+        break;
+      case PageType.ForgeHall:
+      case PageType.MageHall:
+        render(provide(h(CraftingHall, { state: pageState.state, loader: createDataLoader(gmSource(), DATA_BASE_URL) })), root);
+        break;
     }
   };
 
   renderPage(); // immediate render (db=null; login/dungeon never need it)
 
-  // The login and dungeon screens have no monster references, and Home and the
-  // market use the DB overlay's own on-demand loader, so skip the shared monster
-  // fetch.
-  if (
-    pageState.pageType === PageType.Login
-    || pageState.pageType === PageType.Dungeon
-    || pageState.pageType === PageType.Home
-    || pageState.pageType === PageType.Market
-  ) return;
+  // Pages with no monster references skip the shared monster fetch: the login
+  // and dungeon screens have none, Home and the market use the DB overlay's own
+  // on-demand loader, and the crafting halls load their item data through
+  // CraftingPanel.
+  if (NO_MONSTER_PAGES.has(pageState.pageType)) return;
 
   createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()
     .then((loaded) => {

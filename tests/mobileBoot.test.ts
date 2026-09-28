@@ -88,4 +88,34 @@ describe('bootMobile', () => {
     expect(doc.getElementById('lc-root')).toBeNull();
     expect(doc.getElementById('lc-offscreen')).toBeNull();
   });
+  it('takes over a crafting hall and a crafting lobby', () => {
+    const hall = new JSDOM(`<html><head></head><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otErodBelso"></form>
+      <input type="image" src="http://common.larkinor.hu/ikon/keszitfegyver.gif" title="Fegyvert keszitesz">
+      <form name="fegyvercsinalUrlap">
+        <select name="targy1"><option value="0">10 ezüst</option></select><input name="darab1">
+        <select name="targy2"><option value="0">10 ezüst</option></select><input name="darab2">
+        <select name="targy3"><option value="0">10 ezüst</option></select><input name="darab3">
+        <input name="darabszam">
+      </form>
+    </body></html>`).window.document;
+    bootMobile(hall);
+    expect(hall.getElementById('lc-offscreen')).not.toBeNull();
+    expect(hall.querySelector('#lc-root .lc-craft, #lc-root .lc-craft-empty')).not.toBeNull();
+
+    const lobby = new JSDOM(`<html><head><title>Erőd</title></head><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otErod"></form>
+      <input type="image" src="http://common.larkinor.hu/ikon/belephatso.gif" title="belépsz a kovácsok termébe.">
+    </body></html>`).window.document;
+    bootMobile(lobby);
+    expect(lobby.querySelector('#lc-root .lc-home-act')?.textContent).toContain('kovácsok termébe');
+  });
+
+  it('leaves a hall page alone when its crafting form is missing', () => {
+    const doc = new JSDOM(`<html><head></head><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otMagustoronyBelso"></form>
+    </body></html>`).window.document;
+    bootMobile(doc);
+    expect(doc.getElementById('lc-root')).toBeNull();
+  });
 });
