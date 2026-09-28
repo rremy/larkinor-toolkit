@@ -1863,3 +1863,71 @@
 .lc-cmp-same { color: var(--text); }
 /* Shown, never judged (a weapon's class) — same weight as an unchanged value. */
 .lc-cmp-info { color: var(--text); }
+
+/* ── Crafting (Erőd / Mágustorony halls) ─────────────────────────────────────
+   One panel for both platforms. Inputs and buttons set `color` themselves:
+   the in-game page is quirks mode and form controls never inherit it. */
+.lc-craft { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 0; min-width: 0; }
+.lc-craft-search, .lc-craft-count {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  box-sizing: border-box;
+}
+.lc-craft-search { width: 100%; }
+.lc-craft-count { width: 64px; }
+.lc-craft-search:focus, .lc-craft-count:focus { outline: none; border-color: var(--accent); }
+.lc-craft-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.lc-craft-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--row-border);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-craft-row:last-child { border-bottom: 0; }
+.lc-craft-row:hover { background: var(--panel-2); }
+.lc-craft-row--active { background: var(--accent-dim); }
+/* Listed but dimmed: knowing the recipe of something you cannot make yet is
+   the other half of why you searched for it. */
+.lc-craft-row--none { color: var(--muted); }
+.lc-craft-name { flex: 1; min-width: 0; }
+.lc-craft-kind { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.lc-craft-max { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lc-craft-row--none .lc-craft-max { color: var(--bad); }
+.lc-craft-more, .lc-craft-empty, .lc-craft-meta, .lc-craft-note { margin: 0; font-size: 12px; color: var(--muted); }
+.lc-craft-error { margin: 0; font-size: 12px; color: var(--bad); }
+
+.lc-craft-detail { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); }
+.lc-craft-detail h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+.lc-craft-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.lc-craft-line { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.lc-craft-line--ok { color: var(--good); }
+.lc-craft-line--short { color: var(--bad); }
+.lc-craft-line-qty { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lc-craft-go { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-craft-count-label { font-size: 12px; color: var(--muted); }
+.lc-craft-of { font-size: 12px; color: var(--muted); }
+.lc-craft-btn {
+  margin-left: auto;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+.lc-craft-btn:disabled { cursor: default; color: var(--muted); border-color: var(--border); background: none; }

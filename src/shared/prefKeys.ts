@@ -12,6 +12,7 @@
 // dependency.
 
 import type { QuestSet } from './data/types';
+import type { CraftingHallKind } from './crafting';
 
 /** PrefStore key holding the quest maze's last selected zoom (tile size). */
 export const QUEST_TILE_PREF_KEY = 'lc-quest-tile-size';
@@ -103,3 +104,12 @@ export type ReadPref = (key: string) => string | null;
  * click handler needs nothing that detection may not have produced yet.
  */
 export const QUEST_MOVE_PREF_KEY = 'lc-quest-move';
+
+/**
+ * The crafting panel's last selected item, per hall (`kind:id`, see
+ * `Craftable.key`). Crafting reloads the page; this is what brings the player
+ * back to the same recipe with the counts the game has just updated.
+ */
+export function craftSelectedKey(hall: CraftingHallKind): string {
+  return `lc-craft-selected-${hall}`;
+}
