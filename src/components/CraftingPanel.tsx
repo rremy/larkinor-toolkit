@@ -144,6 +144,9 @@ function CraftDetail({ item, all, state }: DetailProps): JSX.Element {
 export function CraftingPanel({ state, loader }: CraftingPanelProps): JSX.Element {
   const { list, failed } = useCraftables(state, loader);
   const [query, setQuery] = useState('');
+  // Behaves like a select: typing opens the list, a pick closes it and puts the
+  // chosen name in the field. Starts closed when a remembered item will fill it.
+  const [listOpen, setListOpen] = useState(() => !getPref(craftSelectedKey(state.hall)));
   const [selectedKey, setSelectedKey] = useState<string | null>(() => getPref(craftSelectedKey(state.hall)));
 
   const selected = useMemo(
@@ -154,11 +157,16 @@ export function CraftingPanel({ state, loader }: CraftingPanelProps): JSX.Elemen
   if (failed) return <p class="lc-craft-error">Nem sikerült betölteni a tárgyadatbázist.</p>;
   if (!list) return <p class="lc-craft-empty">Receptek betöltése…</p>;
 
-  const narrowed = query.trim().length >= MIN_QUERY;
+  // With nothing selected (none yet, or a remembered key that no longer
+  // matches) there is nothing to show closed, so the list counts as open.
+  const open = listOpen || selected === null;
+  const narrowed = open && query.trim().length >= MIN_QUERY;
   const matches = narrowed ? list.filter((c) => matchesSearch(c.name, query)) : [];
   const shown = matches.slice(0, MAX_MATCHES);
 
   const pick = (item: Craftable): void => {
+    setQuery(item.name);
+    setListOpen(false);
     setSelectedKey(item.key);
     setPref(craftSelectedKey(state.hall), item.key);
   };
@@ -170,10 +178,16 @@ export function CraftingPanel({ state, loader }: CraftingPanelProps): JSX.Elemen
         type="search"
         placeholder="mit készítenél?"
         aria-label="Keresés a készíthető tárgyak között"
-        value={query}
-        onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+        value={open ? query : selected.name}
+        onInput={(e) => {
+          setQuery((e.target as HTMLInputElement).value);
+          setListOpen(true);
+        }}
+        // Selecting the text on focus lets a new search replace the chosen
+        // name in one go, as retyping into a select would.
+        onFocus={(e) => (e.target as HTMLInputElement).select()}
       />
-      {!narrowed && <p class="lc-craft-empty">Írj be legalább 2 betűt a kereséshez.</p>}
+      {open && !narrowed && <p class="lc-craft-empty">Írj be legalább 2 betűt a kereséshez.</p>}
       {narrowed && matches.length === 0 && <p class="lc-craft-empty">Itt nem készíthető ilyen tárgy.</p>}
       {shown.length > 0 && (
         <div class="lc-craft-list">

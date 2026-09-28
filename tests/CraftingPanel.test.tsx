@@ -161,6 +161,33 @@ describe('CraftingPanel', () => {
     await waitFor(() => expect(container.querySelector('.lc-craft-detail h3')?.textContent).toBe('sárkány szarv'));
   });
 
+  it('closes the list on a pick and shows the chosen name, like a select', async () => {
+    const { container } = render(<CraftingPanel state={hallState()} loader={loader()} />);
+    await screen.findByRole('searchbox');
+    search('sa');
+    fireEvent.click(await screen.findByText('sárkány szarv'));
+    expect(container.querySelector('.lc-craft-list')).toBeNull();
+    expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('sárkány szarv');
+    expect(container.querySelector('.lc-craft-detail h3')?.textContent).toBe('sárkány szarv');
+  });
+
+  it('reopens the list when the player types again, keeping the detail until a new pick', async () => {
+    const { container } = render(<CraftingPanel state={hallState()} loader={loader()} />);
+    await screen.findByRole('searchbox');
+    search('szarv');
+    fireEvent.click(await screen.findByText('sárkány szarv'));
+    search('vaspa');
+    expect(container.querySelector('.lc-craft-list')?.textContent).toContain('vaspajzs');
+    expect(container.querySelector('.lc-craft-detail h3')?.textContent).toBe('sárkány szarv');
+  });
+
+  it('shows a remembered selection closed, with its name in the field', async () => {
+    GM_setValue(craftSelectedKey('forge'), 'armor:10');
+    const { container } = render(<CraftingPanel state={hallState()} loader={loader()} />);
+    await waitFor(() => expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('sárkány szarv'));
+    expect(container.querySelector('.lc-craft-list')).toBeNull();
+  });
+
   it('remembers a selection', async () => {
     render(<CraftingPanel state={hallState()} loader={loader()} />);
     await screen.findByRole('searchbox');
@@ -174,6 +201,8 @@ describe('CraftingPanel', () => {
     const { container } = render(<CraftingPanel state={hallState()} loader={loader()} />);
     await screen.findByRole('searchbox');
     expect(container.querySelector('.lc-craft-detail')).toBeNull();
+    // Nothing to show closed: the search hint is back.
+    expect(screen.getByText(/legalább 2 betűt/)).toBeTruthy();
   });
 
   it('says so when the database cannot be loaded', async () => {
