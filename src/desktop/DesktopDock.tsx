@@ -5,7 +5,7 @@ import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { QuestSet } from '@/shared/data';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
@@ -17,6 +17,9 @@ import { InventoryPanel } from '@/desktop/InventoryPanel';
 import { MarketPanel } from '@/desktop/MarketPanel';
 import type { HomeState } from '@/utils/homeExtract';
 import type { MarketState } from '@/utils/marketExtract';
+import { CraftingDockPanel, CRAFTING_TITLE } from '@/desktop/CraftingDockPanel';
+import type { CraftingHallState } from '@/utils/craftingExtract';
+import type { DataLoader } from '@/shared/data';
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -32,6 +35,8 @@ export interface DesktopDockProps {
   homeState?: HomeState | null;
   /** Market state, when we are on the market page. */
   marketState?: MarketState | null;
+  /** Crafting hall state and its data loader, when we are in a crafting hall. */
+  crafting?: { state: CraftingHallState; loader: DataLoader } | null;
   /** Name of the monster being fought, when we are on the battle screen. */
   battleMonsterName?: string | null;
   /** Force the minimal (config + database) form regardless of state. */
@@ -77,7 +82,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, crafting = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -99,6 +104,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
+  const [craftingOpen, setCraftingOpen] = useState(() => getPanelOpen(CRAFTING_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
 
   // No actions to offer means nothing but the DB button is useful: either the
@@ -171,6 +177,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     setPanelOpen(MARKET_OPEN_KEY, open);
   };
 
+  const setCrafting = (open: boolean) => {
+    setCraftingOpen(open);
+    setPanelOpen(CRAFTING_OPEN_KEY, open);
+  };
+
   // The narration lives in the game's own DOM, so this is a side effect on an
   // external document rather than something Preact renders. enhanceNarration is
   // idempotent (data-lc-enhanced), so re-running on a db change is harmless.
@@ -184,7 +195,10 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     }
   }, [doc, db]);
 
-  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen || marketOpen;
+  // The crafting flag is persisted, so it can be true on a page with no hall;
+  // only a panel actually on screen may suppress the shortcuts.
+  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen || marketOpen
+    || (crafting !== null && craftingOpen);
 
   /**
    * Closes the topmost drawer. Panels are not handled here: DockedPanel owns
@@ -270,6 +284,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
                 Piac
               </button>
             )}
+            {crafting && (
+              <button class="lc-dock-btn lc-dock-crafting" onClick={() => setCrafting(true)}>
+                {CRAFTING_TITLE[crafting.state.hall]}
+              </button>
+            )}
             <button
               class="lc-dock-btn lc-dock-config"
               aria-label="Beállítások"
@@ -324,6 +343,10 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
       {marketState && (
         <MarketPanel open={marketOpen} state={marketState} onClose={() => setMarket(false)} />
+      )}
+
+      {crafting && (
+        <CraftingDockPanel open={craftingOpen} state={crafting.state} loader={crafting.loader} onClose={() => setCrafting(false)} />
       )}
     </div>
   );

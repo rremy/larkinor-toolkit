@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -48,6 +48,7 @@ describe('DesktopDock', () => {
     // true, silently suppressing all the keyboard shortcuts.
     GM_setValue(DB_OPEN_KEY, '');
     GM_setValue(DB_ROUTE_KEY, '');
+    GM_setValue(CRAFTING_OPEN_KEY, '');
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {
@@ -426,5 +427,32 @@ describe('DesktopDock', () => {
     });
 
     expect(container.querySelector('.lc-drawer-backdrop')).toBeNull();
+  });
+  it('offers the crafting panel in a crafting hall, and keeps it open across the reload', async () => {
+    const crafting = {
+      state: {
+        hall: 'forge' as const, gold: 0, narration: '', owned: new Map<string, number>(),
+        craft: vi.fn(), exit: null, side: null,
+      },
+      loader: {
+        loadWeapons: () => Promise.resolve([]),
+        loadArmors: () => Promise.resolve([]),
+        loadItems: () => Promise.resolve([]),
+      } as never,
+    };
+    const { unmount } = render(<DesktopDock doc={document} state={null} db={null} crafting={crafting} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Kovácsolás' }));
+    expect(await screen.findByRole('searchbox')).toBeTruthy();
+    unmount();
+
+    // The craft reloads the page; the panel must come back open.
+    render(<DesktopDock doc={document} state={null} db={null} crafting={crafting} />);
+    expect(await screen.findByRole('searchbox')).toBeTruthy();
+  });
+
+  it('offers no crafting button elsewhere', () => {
+    render(<DesktopDock doc={document} state={null} db={null} />);
+    expect(screen.queryByRole('button', { name: 'Kovácsolás' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Varázstárgyak' })).toBeNull();
   });
 });

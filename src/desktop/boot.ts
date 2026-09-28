@@ -14,7 +14,8 @@ import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractBattle, extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
-import { createDataLoader, gmSource, type MonsterDatabase, type QuestSet } from '@/shared/data';
+import { extractCraftingHall, type CraftingHallState } from '@/utils/craftingExtract';
+import { createDataLoader, gmSource, type DataLoader, type MonsterDatabase, type QuestSet } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DesktopDock } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
@@ -97,6 +98,25 @@ function extractInventoryState(pageType: PageType, doc: Document): HomeState | n
     return extractHome(doc);
   } catch (err) {
     console.warn('[Larkinor UI] Home extraction failed; inventory panel unavailable:', err);
+    return null;
+  }
+}
+
+/**
+ * Crafting hall state plus the loader its panel reads recipes through. Null
+ * outside the two halls and on failure — the game's own form still works.
+ */
+function extractCrafting(pageType: PageType, doc: Document): { state: CraftingHallState; loader: DataLoader } | null {
+  if (pageType !== PageType.ForgeHall && pageType !== PageType.MageHall) return null;
+  try {
+    const state = extractCraftingHall(doc);
+    if (!state) {
+      console.warn('[Larkinor UI] Crafting form not found; crafting panel unavailable');
+      return null;
+    }
+    return { state, loader: createDataLoader(gmSource(), DATA_BASE_URL) };
+  } catch (err) {
+    console.warn('[Larkinor UI] Crafting extraction failed; crafting panel unavailable:', err);
     return null;
   }
 }
@@ -236,6 +256,7 @@ export function bootDesktop(doc: Document): void {
   const state = extractDockState(pageType, doc);
   const homeState = extractInventoryState(pageType, doc);
   const marketState = extractMarketState(pageType, doc);
+  const crafting = extractCrafting(pageType, doc);
   const battleMonsterName = extractBattleMonsterName(pageType, doc);
 
   const root = mountDockRoot(doc);
@@ -251,7 +272,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, crafting, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

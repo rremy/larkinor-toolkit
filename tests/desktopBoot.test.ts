@@ -292,4 +292,18 @@ describe('bootDesktop', () => {
     addStyle.mockReset();
     warn.mockRestore();
   });
+  it('adds the crafting button in a crafting hall', () => {
+    const doc = new JSDOM(`<html><head></head><body>
+      <form name="urlap"><input type="hidden" name="oldalTipus" value="otMagustoronyBelso"></form>
+      <input type="image" src="http://common.larkinor.hu/ikon/keszitvarazstargy.gif" title="Varázstárgyat készítesz">
+      <form name="varfegyvercsinalUrlap">
+        <select name="targy1"><option value="0">10 ezüst</option></select><input name="darab1">
+        <select name="targy2"><option value="0">10 ezüst</option></select><input name="darab2">
+        <select name="targy3"><option value="0">10 ezüst</option></select><input name="darab3">
+        <input name="darabszam">
+      </form>
+    </body></html>`).window.document;
+    bootDesktop(doc);
+    expect(doc.querySelector('#lc-dock-root .lc-dock-crafting')?.textContent).toBe('Varázstárgyak');
+  });
 });

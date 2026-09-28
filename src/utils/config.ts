@@ -58,6 +58,10 @@ export const INVENTORY_OPEN_KEY = 'lc-inventory-open';
 export const MARKET_MINIMIZED_KEY = 'lc-market-minimized';
 export const MARKET_OPEN_KEY = 'lc-market-open';
 
+/** GM storage keys for the crafting panel's minimised and open flags. */
+export const CRAFTING_MINIMIZED_KEY = 'lc-crafting-minimized';
+export const CRAFTING_OPEN_KEY = 'lc-crafting-open';
+
 /** GM storage key holding the market view's last selected tab. */
 export const MARKET_TAB_KEY = 'lc-market-tab';
 
