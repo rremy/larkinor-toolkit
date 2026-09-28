@@ -303,7 +303,11 @@ function isCornerOrShortcut(name: string): boolean {
   return name === SETTINGS_BASENAME || name === REST_BASENAME || name.startsWith('sc_');
 }
 
-function extractBuildings(doc: Document, excludeExtra: (name: string) => boolean = () => false): BuildingOption[] {
+/**
+ * Exported for the crafting buildings' lobbies, whose whole page is a row of
+ * such titled controls (enter the hall, train a skill, leave).
+ */
+export function extractBuildings(doc: Document, excludeExtra: (name: string) => boolean = () => false): BuildingOption[] {
   const buildings: BuildingOption[] = [];
   doc.querySelectorAll<HTMLInputElement>('input[type="image"]').forEach(input => {
     const src = input.getAttribute('src') ?? '';
