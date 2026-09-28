@@ -96,6 +96,14 @@ describe('extractCraftingHall', () => {
     }
   });
 
+  it('keeps the carried stacks in page order, for filling the slots by hand', () => {
+    const state = extractCraftingHall(docOf(FORGE_HALL))!;
+    expect(state.options.map((o) => o.name)).toEqual([
+      'ezüst', 'varázsburok', 'sárkánypikkely', 'sárkányfog', 'sárkánykarom', 'csodaflaska',
+    ]);
+    expect(state.options[3]).toEqual({ id: '251', count: 20, name: 'sárkányfog' });
+  });
+
   it('reads the Mágustorony hall and its spell form', () => {
     const state = extractCraftingHall(docOf(MAGE_HALL))!;
     expect(state.hall).toBe('mage');

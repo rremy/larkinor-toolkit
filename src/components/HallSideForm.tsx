@@ -13,7 +13,12 @@ export interface HallSideSectionProps {
 
 function TrapOrder({ side }: { side: Extract<HallSideForm, { kind: 'trap' }> }): JSX.Element {
   const [index, setIndex] = useState(0);
-  const [strength, setStrength] = useState(1);
+  // The field's text: it must be able to sit empty while being retyped, and an
+  // empty or invalid strength must never be ordered as some default the screen
+  // does not show.
+  const [strengthText, setStrengthText] = useState('1');
+  const parsed = Math.floor(Number(strengthText));
+  const strength = strengthText !== '' && Number.isFinite(parsed) && parsed >= 1 ? parsed : null;
   const [price, setPrice] = useState<string | null>(null);
   return (
     <div class="lc-hall-side-body">
@@ -23,12 +28,14 @@ function TrapOrder({ side }: { side: Extract<HallSideForm, { kind: 'trap' }> }):
         {side.traps.map((t) => <option key={t.index} value={String(t.index)}>{t.label}</option>)}
       </select>
       <label class="lc-hall-side-label" for="lc-trap-strength">Erősség</label>
-      <input id="lc-trap-strength" class="lc-hall-side-input" type="number" min={1} value={strength}
-        onInput={(e) => { setStrength(Math.max(1, Math.floor(Number((e.target as HTMLInputElement).value)) || 1)); setPrice(null); }} />
+      <input id="lc-trap-strength" class="lc-hall-side-input" type="number" min={1} value={strengthText}
+        onInput={(e) => { setStrengthText((e.target as HTMLInputElement).value); setPrice(null); }} />
       <div class="lc-hall-side-row">
-        <button class="lc-home-act" onClick={() => setPrice(side.price(index, strength))}>Mennyi?</button>
+        <button class="lc-home-act" disabled={strength === null}
+          onClick={() => { if (strength !== null) setPrice(side.price(index, strength)); }}>Mennyi?</button>
         {price !== null && <span class="lc-hall-side-price">Ár: {price} ezüst</span>}
-        <button class="lc-home-act" onClick={() => side.order(index, strength)}>Megrendel</button>
+        <button class="lc-home-act" disabled={strength === null}
+          onClick={() => { if (strength !== null) side.order(index, strength); }}>Megrendel</button>
       </div>
     </div>
   );

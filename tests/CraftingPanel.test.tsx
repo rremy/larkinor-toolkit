@@ -22,6 +22,7 @@ const ARMORS: Armor[] = [
   armor(12, 'mágikus sapka', 'Mágustorony', [{ name: 'csodaflaska', qty: 1, id: '545' }]),
   armor(13, 'gyíkacél mellény', 'Erőd', [{ name: 'x', qty: 1, id: '107' }]),
   armor(14, 'gyíkacél páncél', 'Erőd', [{ name: 'x', qty: 1, id: '107' }]),
+  armor(15, 'ezüstrúd', 'Erőd', [{ name: 'ezüst', qty: 10, id: '0' }]),
 ];
 
 function loader(armors: Armor[] = ARMORS): DataLoader {
@@ -38,6 +39,7 @@ function hallState(overrides: Partial<CraftingHallState> = {}): CraftingHallStat
     gold: 1168,
     narration: '',
     owned: new Map([['0', 1168], ['251', 20], ['252', 10], ['250', 6]]),
+    options: [],
     craft: vi.fn(),
     exit: null,
     side: null,
@@ -102,6 +104,35 @@ describe('CraftingPanel', () => {
     expect(count.value).toBe('2');
     fireEvent.click(screen.getByRole('button', { name: /Elkészít/ }));
     expect(state.craft).toHaveBeenCalledWith(ARMORS[0].recipe, 2);
+  });
+
+  it('lets the count be cleared and retyped without inventing digits', async () => {
+    const state = hallState();
+    render(<CraftingPanel state={state} loader={loader()} />);
+    await screen.findByRole('searchbox');
+    search('ezustrud');
+    fireEvent.click(await screen.findByText('ezüstrúd'));
+    const count = screen.getByLabelText('Darabszám') as HTMLInputElement;
+    const button = screen.getByRole('button', { name: /Elkészít/ }) as HTMLButtonElement;
+    fireEvent.input(count, { target: { value: '' } });
+    expect(count.value).toBe('');
+    // An empty count is not "one": nothing is crafted until a number is shown.
+    expect(button.disabled).toBe(true);
+    fireEvent.input(count, { target: { value: '3' } });
+    expect(count.value).toBe('3');
+    fireEvent.click(button);
+    expect(state.craft).toHaveBeenCalledWith([{ name: 'ezüst', qty: 10, id: '0' }], 3);
+  });
+
+  it('puts one back when the count is left empty', async () => {
+    render(<CraftingPanel state={hallState()} loader={loader()} />);
+    await screen.findByRole('searchbox');
+    search('ezustrud');
+    fireEvent.click(await screen.findByText('ezüstrúd'));
+    const count = screen.getByLabelText('Darabszám') as HTMLInputElement;
+    fireEvent.input(count, { target: { value: '' } });
+    fireEvent.blur(count);
+    expect(count.value).toBe('1');
   });
 
   it('disables crafting when the materials cover nothing', async () => {

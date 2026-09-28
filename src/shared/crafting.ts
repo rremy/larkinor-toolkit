@@ -67,11 +67,21 @@ export function craftableIn(hall: CraftingHallKind, weapons: Weapon[], armors: A
 /**
  * Each ingredient against what is carried, and the most pieces that covers.
  * An ingredient missing from `owned` is simply not carried.
+ *
+ * One line per distinct ingredient, not per slot: a recipe may put the same
+ * item in several slots (kincsgúla is kincs ×200 three times), and every one of
+ * those slots draws on the same stack.
  */
 export function planCraft(recipe: RecipeRef[], owned: ReadonlyMap<string, number>): CraftPlan {
-  const lines = recipe.map((r) => {
-    const have = owned.get(r.id) ?? 0;
-    return { id: r.id, name: r.name, needed: r.qty, owned: have, ok: have >= r.qty };
+  const needed = new Map<string, { name: string; qty: number }>();
+  for (const r of recipe) {
+    const entry = needed.get(r.id);
+    if (entry) entry.qty += r.qty;
+    else needed.set(r.id, { name: r.name, qty: r.qty });
+  }
+  const lines = [...needed].map(([id, { name, qty }]) => {
+    const have = owned.get(id) ?? 0;
+    return { id, name, needed: qty, owned: have, ok: have >= qty };
   });
   const max = lines.length === 0
     ? 0

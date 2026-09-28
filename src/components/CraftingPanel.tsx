@@ -60,18 +60,23 @@ interface DetailProps {
 
 function CraftDetail({ item, all, state }: DetailProps): JSX.Element {
   const plan = planCraft(item.recipe, state.owned);
-  const [count, setCount] = useState(1);
+  // The field's text, not a number: it must be able to sit empty while the
+  // player retypes it. Clearing it to "1" on every keystroke turned a
+  // backspace-then-3 into 13.
+  const [count, setCount] = useState('1');
   const [error, setError] = useState<string | null>(null);
   const alternatives = sharedRecipe(item, all);
   const disabled = plan.max === 0;
+  // An empty field is not "one": nothing is crafted until a number is shown.
+  const blocked = disabled || count === '';
 
   // A new item or fresh counts start again from one piece.
-  useEffect(() => { setCount(1); setError(null); }, [item.key, plan.max]);
+  useEffect(() => { setCount('1'); setError(null); }, [item.key, plan.max]);
 
   const craft = (): void => {
-    if (disabled) return;
+    if (blocked) return;
     try {
-      state.craft(item.recipe, clampCount(String(count), plan.max));
+      state.craft(item.recipe, clampCount(count, plan.max));
     } catch (err) {
       console.warn('[Larkinor UI] Crafting form could not be filled:', err);
       setError('A készítési űrlapot nem sikerült kitölteni.');
@@ -110,14 +115,23 @@ function CraftDetail({ item, all, state }: DetailProps): JSX.Element {
           disabled={disabled}
           onInput={(e) => {
             const input = e.target as HTMLInputElement;
-            const next = clampCount(input.value, plan.max);
-            setCount(next);
+            if (input.value === '') {
+              setCount('');
+              return;
+            }
             // Write back immediately: an out-of-range value must not stay on screen.
-            input.value = String(next);
+            const next = String(clampCount(input.value, plan.max));
+            if (input.value !== next) input.value = next;
+            setCount(next);
+          }}
+          onBlur={(e) => {
+            if (count !== '') return;
+            (e.target as HTMLInputElement).value = '1';
+            setCount('1');
           }}
         />
         <span class="lc-craft-of">/ {plan.max}</span>
-        <button class="lc-craft-btn" disabled={disabled} onClick={craft}>
+        <button class="lc-craft-btn" disabled={blocked} onClick={craft}>
           🔨 Elkészít
         </button>
       </div>

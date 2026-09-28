@@ -1947,3 +1947,5 @@
 }
 .lc-hall-side-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lc-hall-side-price { font-size: 13px; color: var(--accent); }
+.lc-manual-item { flex: 1; min-width: 0; }
+.lc-manual-qty { width: 64px; box-sizing: border-box; }

@@ -431,7 +431,7 @@ describe('DesktopDock', () => {
   it('offers the crafting panel in a crafting hall, and keeps it open across the reload', async () => {
     const crafting = {
       state: {
-        hall: 'forge' as const, gold: 0, narration: '', owned: new Map<string, number>(),
+        hall: 'forge' as const, gold: 0, narration: '', owned: new Map<string, number>(), options: [],
         craft: vi.fn(), exit: null, side: null,
       },
       loader: {

@@ -77,6 +77,8 @@ export interface CraftingHallState {
   narration: string;
   /** Game item id → count carried. */
   owned: ReadonlyMap<string, number>;
+  /** The carried stacks in page order — what the slots can be filled with by hand. */
+  options: OwnedOption[];
   /** Fills the form with `count` pieces of `recipe` and submits. Throws, without submitting, on an ingredient the page does not list. */
   craft: (recipe: RecipeRef[], count: number) => void;
   exit: BuildingOption | null;
@@ -155,10 +157,13 @@ export function extractCraftingHall(doc: Document): CraftingHallState | null {
   const count = field<HTMLInputElement>(form, 'darabszam');
   if (!submit || !first || !count) return null;
 
+  const options: OwnedOption[] = [];
   const owned = new Map<string, number>();
   for (const opt of Array.from(first.options)) {
     const parsed = parseOwnedOption(opt.value, opt.text);
-    if (parsed) owned.set(parsed.id, parsed.count);
+    if (!parsed) continue;
+    options.push(parsed);
+    owned.set(parsed.id, parsed.count);
   }
 
   const craft = (recipe: RecipeRef[], pieces: number): void => {
@@ -189,6 +194,7 @@ export function extractCraftingHall(doc: Document): CraftingHallState | null {
     gold: parseGold(doc.body.textContent ?? ''),
     narration: extractNarration(doc),
     owned,
+    options,
     craft,
     exit: extractImageControl(doc, EXIT_BASENAME),
     side: hall === 'forge' ? extractTrapForm(doc) : extractSpellForm(doc),

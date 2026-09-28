@@ -64,6 +64,15 @@ describe('planCraft', () => {
     expect(plan.max).toBe(2);
   });
 
+  it('adds up an ingredient the recipe lists in more than one slot', () => {
+    // kincsgúla (Mágustorony) is kincs ×200 in all three slots: 600 per piece.
+    const kincs = { name: 'kincs', qty: 200, id: '622' };
+    const plan = planCraft([kincs, kincs, kincs], new Map([['622', 450]]));
+    expect(plan.max).toBe(0);
+    expect(plan.lines).toEqual([{ id: '622', name: 'kincs', needed: 600, owned: 450, ok: false }]);
+    expect(planCraft([kincs, kincs, kincs], new Map([['622', 1200]])).max).toBe(2);
+  });
+
   it('allows nothing for an empty recipe', () => {
     expect(planCraft([], new Map()).max).toBe(0);
   });

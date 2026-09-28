@@ -4,6 +4,7 @@ import type { CraftingHallState } from '@/utils/craftingExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { CraftingPanel } from '@/components/CraftingPanel';
 import { HallSideSection } from '@/components/HallSideForm';
+import { ManualCraft } from '@/components/ManualCraft';
 import { silver } from '@/components/MarketRows';
 
 // A crafting hall as a phone page. The narration leads: it is where the game
@@ -23,6 +24,7 @@ export function CraftingHall({ state, loader }: CraftingHallProps): JSX.Element 
       </div>
       <div class="lc-mkt-body">
         <CraftingPanel state={state} loader={loader} />
+        <ManualCraft state={state} />
         {state.side && <HallSideSection side={state.side} />}
         {state.exit && (
           <div class="lc-mkt-actions">
