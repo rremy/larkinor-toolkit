@@ -9,6 +9,10 @@ export enum PageType {
   Dungeon = 'Dungeon',
   Home = 'Home',
   Character = 'Character',
+  ForgeLobby = 'ForgeLobby',
+  ForgeHall = 'ForgeHall',
+  MageLobby = 'MageLobby',
+  MageHall = 'MageHall',
   Unknown = 'Unknown',
 }
 
@@ -51,6 +55,17 @@ export function detectPage(doc: Document): PageType {
     // rendered on it — the boots capture the loadout and leave the page alone.
     case 'otPlayerSettings':
       return PageType.Character;
+    // The two crafting buildings are two pages each: a lobby of training and
+    // entry buttons, and an inner hall holding the crafting form. Only the halls
+    // craft; mobile takes over all four so the building reads as one UI.
+    case 'otErod':
+      return PageType.ForgeLobby;
+    case 'otErodBelso':
+      return PageType.ForgeHall;
+    case 'otMagustorony':
+      return PageType.MageLobby;
+    case 'otMagustoronyBelso':
+      return PageType.MageHall;
     default:
       console.warn(`[Larkinor UI] Unrecognised oldalTipus "${oldalTipus ?? '(missing)'}" — rendering skipped`);
       return PageType.Unknown;

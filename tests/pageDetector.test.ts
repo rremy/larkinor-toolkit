@@ -90,4 +90,13 @@ describe('detectPage', () => {
   it('detects the character page from otPlayerSettings', () => {
     expect(detectPage(makeDoc('otPlayerSettings'))).toBe(PageType.Character);
   });
+
+  it.each([
+    ['otErod', PageType.ForgeLobby],
+    ['otErodBelso', PageType.ForgeHall],
+    ['otMagustorony', PageType.MageLobby],
+    ['otMagustoronyBelso', PageType.MageHall],
+  ])('recognises the crafting building page %s', (oldalTipus, expected) => {
+    expect(detectPage(makeDoc(oldalTipus))).toBe(expected);
+  });
 });
