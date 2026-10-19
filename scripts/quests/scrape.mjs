@@ -16,11 +16,19 @@ const OUT = 'static/db/quests.json';
 
 const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
 
-/** Sprite base (`moszkitoraj_k`) → monster, from each monster's image path. */
+/**
+ * Sprite base (`moszkitoraj_k`) → monster, from each monster's image path.
+ *
+ * First wins: monsters.json carries `*`-prefixed elite duplicates (level 128+)
+ * that reuse their base monster's sprite, and the base entry comes first. The
+ * quests use the base monsters — letting the later entry overwrite the map
+ * linked 474 royal cells to elites, e.g. quest 4's Részeg matróz at level 133
+ * instead of 7. scrapeTavern.mjs resolves the same way.
+ */
 const byBase = new Map();
 for (const m of monsters) {
   const base = m.image.replace(/^.*\//, '').replace(/\.[a-z]+$/i, '');
-  if (base) byBase.set(base, m);
+  if (base && !byBase.has(base)) byBase.set(base, m);
 }
 
 const unresolved = new Set();

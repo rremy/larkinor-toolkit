@@ -138,3 +138,31 @@ describe('one-sided doors in static/db/quests.json', () => {
     expect(split.has('4,3:E') && split.has('4,4:W')).toBe(true);
   });
 });
+
+describe('monster links in static/db/quests.json', () => {
+  const byId = new Map<number, { name: string; level: number }>(
+    monsters.map((m: { id: number; name: string; level: number }) => [m.id, m]),
+  );
+
+  it('never links a `*` elite — the quests use the base monsters', () => {
+    const elite = quests.flatMap((q) => q.cells
+      .filter((c) => c.monsterId != null && byId.get(c.monsterId)?.name.startsWith('*'))
+      .map((c) => `${q.id}:${c.row},${c.col}`));
+    expect(elite).toEqual([]);
+  });
+
+  it('keeps each cell\'s name in step with the monster it links', () => {
+    for (const q of quests) {
+      for (const c of q.cells) {
+        if (c.monsterId != null) expect(c.monsterName, `${q.id}:${c.row},${c.col}`).toBe(byId.get(c.monsterId)?.name);
+      }
+    }
+  });
+
+  it('links quest 4\'s drunken sailor at level 7, not the level-133 elite', () => {
+    const q4 = quests.find((q) => q.id === '4') as Quest;
+    const sailor = q4.cells.find((c) => c.monsterName === 'Részeg matróz');
+    expect(sailor?.monsterId).toBe(40);
+    expect(byId.get(40)?.level).toBe(7);
+  });
+});
