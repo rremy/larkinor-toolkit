@@ -89,6 +89,12 @@ export interface MapCell {
 
 export interface MapData {
   cells: MapCell[];
+  /**
+   * Recorded moves, keyed `<cellId>:<side>` → the cell reached, or `blocked`.
+   * The only reliable source of a cell's position: tile ids mostly encode
+   * `<row><col>`, but not all of them do (see `layoutCells`).
+   */
+  edges: Record<string, string>;
 }
 
 export interface ShopLine {

@@ -1,15 +1,15 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import type { DataLoader, MapCell } from '@/shared/data';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import type { DataLoader, MapData, MapCell } from '@/shared/data';
 import {
-  DISTRICT_CLASS, DISTRICT_SHORT, POI_EMOJI, POI_LABEL,
-  CLAN_POI, buildShopOwners, type ShopOwners,
+  DISTRICT_CLASS, DISTRICT_SHORT, POI_EMOJI, POI_LABEL, HUB_ID, MAP_SIDES,
+  CLAN_POI, buildShopOwners, cellWalls, layoutCells, type GridPos, type ShopOwners,
 } from './mapMeta';
 import { CellDetail } from './CellDetail';
 import { Legend } from './Legend';
 
+/** The city's own 10×10 block, always drawn even where nothing is explored. */
 const GRID_SIZE = 10;
-const HUB_ID = '44';
 
 interface MapViewProps {
   loader: DataLoader;
@@ -29,13 +29,20 @@ function cellMatchesFilter(cell: MapCell, poi: string): boolean {
   return cell.buildings.some((b) => b.icon === poi);
 }
 
+/** Inclusive `[min, max]` over `values`, widened to cover the city block. */
+function span(values: number[]): [number, number] {
+  return [Math.min(0, ...values), Math.max(GRID_SIZE - 1, ...values)];
+}
+
 /**
- * 10x10 district grid + legend + cell detail. Ported from the MAP module's
+ * District grid + legend + cell detail. Cells are placed by `layoutCells`, so
+ * tiles outside the city block — the strip north of row 0, the démonsziget
+ * east of 68 — get rows and columns of their own. Ported from the MAP module's
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
   const { loader, targetCellId = null } = props;
-  const [cells, setCells] = useState<MapCell[] | null>(null);
+  const [map, setMap] = useState<MapData | null>(null);
   const [owners, setOwners] = useState<ShopOwners>({});
   const [selectedId, setSelectedId] = useState<string | null>(targetCellId);
   const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -47,7 +54,7 @@ export function MapView(props: MapViewProps): VNode {
     Promise.all([loader.loadMap(), loader.loadItemShops(), loader.loadWeaponShops()])
       .then(([map, itemShops, weaponShops]) => {
         if (cancelled) return;
-        setCells(map.cells);
+        setMap(map);
         setOwners(buildShopOwners(itemShops.shops, weaponShops.shops));
       });
     return () => { cancelled = true; };
@@ -56,7 +63,7 @@ export function MapView(props: MapViewProps): VNode {
   // Focus the routed target cell: select it, scroll it into view and flash the
   // pulse highlight for a few seconds (ported from the legacy `focusCell`).
   useEffect(() => {
-    if (!targetCellId || !cells) return;
+    if (!targetCellId || !map) return;
     setSelectedId(targetCellId);
     setFocusedId(targetCellId);
     const raf = requestAnimationFrame(() => {
@@ -65,9 +72,14 @@ export function MapView(props: MapViewProps): VNode {
     });
     const timer = setTimeout(() => setFocusedId(null), FOCUS_MS);
     return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
-  }, [targetCellId, cells]);
+  }, [targetCellId, map]);
 
-  if (!cells) {
+  const positions = useMemo(
+    () => (map ? layoutCells(map.cells, map.edges ?? {}) : new Map<string, GridPos>()),
+    [map],
+  );
+
+  if (!map) {
     return (
       <div class="map-view">
         <div class="map-stats">Betöltés…</div>
@@ -75,12 +87,21 @@ export function MapView(props: MapViewProps): VNode {
     );
   }
 
+  const { cells } = map;
   const cellById = new Map(cells.map((c) => [c.imageId, c]));
   const districtCount = new Set(cells.map((c) => c.district)).size;
   const selectedCell = selectedId != null ? cellById.get(selectedId) ?? null : null;
 
-  const rowIndexes = Array.from({ length: GRID_SIZE }, (_, i) => i);
-  const colIndexes = Array.from({ length: GRID_SIZE }, (_, i) => i);
+  const cellAt = new Map<string, MapCell>();
+  for (const cell of cells) {
+    const pos = positions.get(cell.imageId);
+    if (pos) cellAt.set(`${pos.row},${pos.col}`, cell);
+  }
+  const placed = [...positions.values()];
+  const [minRow, maxRow] = span(placed.map((p) => p.row));
+  const [minCol, maxCol] = span(placed.map((p) => p.col));
+  const rowIndexes = Array.from({ length: maxRow - minRow + 1 }, (_, i) => minRow + i);
+  const colIndexes = Array.from({ length: maxCol - minCol + 1 }, (_, i) => minCol + i);
 
   const toggleFilter = (poi: string) =>
     setActiveFilter((current) => (current === poi ? null : poi));
@@ -105,9 +126,9 @@ export function MapView(props: MapViewProps): VNode {
                 <tr key={r}>
                   <th class="rh">r{r}</th>
                   {colIndexes.map((c) => {
-                    const id = `${r}${c}`;
-                    const cell = cellById.get(id);
+                    const cell = cellAt.get(`${r},${c}`);
                     if (!cell) {
+                      const id = `${r}${c}`;
                       return (
                         <td
                           key={c}
@@ -117,6 +138,7 @@ export function MapView(props: MapViewProps): VNode {
                         />
                       );
                     }
+                    const id = cell.imageId;
                     const districtClass = DISTRICT_CLASS[cell.district] ?? '';
                     const matches = activeFilter != null && cellMatchesFilter(cell, activeFilter);
                     const classes = ['cell', districtClass];
@@ -125,6 +147,7 @@ export function MapView(props: MapViewProps): VNode {
                     if (id === focusedId) classes.push('focused');
                     if (matches) classes.push('match');
                     const blockers = cell.blockers ?? {};
+                    const walls = cellWalls(cell);
                     return (
                       <td
                         key={c}
@@ -154,10 +177,13 @@ export function MapView(props: MapViewProps): VNode {
                           </div>
                           <div class="row-id">{id}</div>
                         </div>
-                        {(['N', 'S', 'E', 'W'] as const).map((dir) => {
+                        {MAP_SIDES.map((dir) => {
                           const blocker = blockers[dir];
-                          if (!blocker) return null;
-                          return <div key={dir} class={`blocker ${dir}`} title={blocker.title ?? blocker.icon} />;
+                          if (blocker) {
+                            return <div key={dir} class={`blocker ${dir}`} title={blocker.title ?? blocker.icon} />;
+                          }
+                          if (walls.includes(dir)) return <div key={dir} class={`wall ${dir}`} title="fal" />;
+                          return null;
                         })}
                       </td>
                     );
@@ -168,7 +194,11 @@ export function MapView(props: MapViewProps): VNode {
           </table>
         </div>
         <div class="map-side">
-          <CellDetail cell={selectedCell} owners={selectedId != null ? owners[selectedId] : undefined} />
+          <CellDetail
+            cell={selectedCell}
+            position={selectedCell ? positions.get(selectedCell.imageId) ?? null : null}
+            owners={selectedId != null ? owners[selectedId] : undefined}
+          />
           <Legend activeFilter={activeFilter} onToggleFilter={toggleFilter} />
         </div>
       </div>

@@ -67,7 +67,7 @@ function makeLoader(overrides: Partial<DataLoader> = {}): DataLoader {
   return {
     loadWeapons: async () => [], loadArmors: async () => [], loadItems: async () => [],
     loadMonsters: async () => buildMonsterDatabase([]),
-    loadMap: async () => ({ cells: [] }),
+    loadMap: async () => ({ cells: [], edges: {} }),
     loadItemShops: async () => ({ shops: [] }),
     loadWeaponShops: async () => ({ shops: [] }),
     loadQuests: vi.fn(async () => quests),

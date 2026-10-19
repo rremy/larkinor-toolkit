@@ -35,6 +35,8 @@
   --temeto-text: #ddd;
   --blocker-border: #1c3654;
   --blocker-text: rgba(255, 255, 255, 0.85);
+  --map-wall: #17120e;
+  --map-wall-border: rgba(212, 162, 89, 0.55);
   --cell-detail-bg: rgba(0, 0, 0, 0.25);
   --legend-active-bg: rgba(212, 162, 89, 0.32);
   --swatch-border: rgba(0, 0, 0, 0.5);
@@ -854,10 +856,11 @@
 .lc-db .map-view td.cell.demon  { background: var(--demon); }
 .lc-db .map-view td.cell.hub    { box-shadow: 0 0 0 2px var(--accent) inset; }
 .lc-db .map-view td.cell .blocker { position: absolute; background: var(--sea); border: 1px solid var(--blocker-border); z-index: 1; display: grid; place-items: center; font-size: 9px; color: var(--blocker-text); pointer-events: none; }
-.lc-db .map-view td.cell .blocker.N { top: -4px; left: 8%; right: 8%; height: 6px; }
-.lc-db .map-view td.cell .blocker.S { bottom: -4px; left: 8%; right: 8%; height: 6px; }
-.lc-db .map-view td.cell .blocker.W { left: -4px; top: 8%; bottom: 8%; width: 6px; }
-.lc-db .map-view td.cell .blocker.E { right: -4px; top: 8%; bottom: 8%; width: 6px; }
+.lc-db .map-view td.cell .wall { position: absolute; background: var(--map-wall); border: 1px solid var(--map-wall-border); z-index: 1; pointer-events: none; }
+.lc-db .map-view td.cell :is(.blocker, .wall).N { top: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).S { bottom: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).W { left: -4px; top: 8%; bottom: 8%; width: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).E { right: -4px; top: 8%; bottom: 8%; width: 6px; }
 /* Side panel: cell detail on top, legend below */
 .lc-db .map-view .map-side { display: flex; flex-direction: column; gap: 12px; }
 /* Cell detail */
@@ -890,6 +893,7 @@
 .lc-db .map-view .swatch.temeto { background: var(--temeto); }
 .lc-db .map-view .swatch.demon { background: var(--demon); }
 .lc-db .map-view .swatch.sea { background: var(--sea); }
+.lc-db .map-view .swatch.wall { background: var(--map-wall); border-color: var(--map-wall-border); }
 .lc-db .map-view .swatch.hub { background: var(--varos); box-shadow: 0 0 0 2px var(--accent) inset; }
 /* POI filter highlight */
 .lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
