@@ -1,4 +1,4 @@
-import type { LockType, Quest, QuestCell, Side } from '@/shared/data';
+import type { Edge, LockType, Quest, QuestCell, Side } from '@/shared/data';
 
 /**
  * Maze tile sizes offered by the zoom control, and the one applied before any
@@ -70,6 +70,52 @@ export const MAYBE_HERE_LABEL = 'talán itt vagy';
 export const CLEARED_LABEL = 'teljesítve';
 
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
+
+const OPPOSITE: Record<Side, Side> = { N: 'S', E: 'W', S: 'N', W: 'E' };
+const STEP: Record<Side, [number, number]> = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] };
+
+/** Key for one side of one cell in the set {@link splitEdges} returns. */
+export function edgeKey(cell: { row: number; col: number }, side: Side): string {
+  return `${cellKey(cell)}:${side}`;
+}
+
+function sameEdge(a: Edge, b: Edge): boolean {
+  return a.kind === b.kind && (a.kind !== 'door' || (b.kind === 'door' && a.lock === b.lock));
+}
+
+/**
+ * Sides whose two halves disagree where a door is involved — the door is drawn
+ * on one cell only, or the two cells draw different doors on the same line.
+ *
+ * The source writes each cell's four sides independently, and the game shows
+ * a door from one side only: in royal quest 44 a corridor can be open going
+ * east and barred by a thief's door coming back west. Drawing both halves on
+ * the shared line hides that — a one-sided door looks like any other, and of
+ * two different doors only the later-painted one shows — so the grid draws
+ * each half of a split side inside its own cell instead.
+ *
+ * Limited to sides with a door on either half. A wall facing an open side is
+ * common in the source's irregular drawing (royal quest 30 alone has 80), and
+ * redrawing all of those would reshape mazes nobody reported as wrong.
+ */
+export function splitEdges(quest: Quest): ReadonlySet<string> {
+  const byKey = new Map(quest.cells.map((c) => [cellKey(c), c]));
+  const split = new Set<string>();
+  for (const cell of quest.cells) {
+    for (const side of SIDES) {
+      const edge = cell.edges[side];
+      // An open half draws nothing, so there is nothing to move off the line.
+      if (edge.kind === 'open') continue;
+      const [dr, dc] = STEP[side];
+      const neighbour = byKey.get(cellKey({ row: cell.row + dr, col: cell.col + dc }));
+      if (!neighbour) continue;
+      const facing = neighbour.edges[OPPOSITE[side]];
+      if (edge.kind !== 'door' && facing.kind !== 'door') continue;
+      if (!sameEdge(edge, facing)) split.add(edgeKey(cell, side));
+    }
+  }
+  return split;
+}
 
 /** Hungarian side names, used in door tooltips. */
 export const SIDE_LABEL: Record<Side, string> = {

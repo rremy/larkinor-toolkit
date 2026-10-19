@@ -1058,6 +1058,16 @@
 .lc-db .quest-edge.S { bottom: -2px; left: 0; right: 0; height: 4px; }
 .lc-db .quest-edge.W { left: -2px; top: 0; bottom: 0; width: 4px; }
 .lc-db .quest-edge.E { right: -2px; top: 0; bottom: 0; width: 4px; }
+/* One half of a side the two cells draw differently (see `splitEdges`): moved
+   off the shared line into its own cell, with a gap to the line, so a door seen
+   from one side only reads as belonging to that side, and two different doors
+   on one line show as two bars. */
+/* Shortened as well as inset: a full-length bar a few pixels off the line
+   still reads as the grid line itself. */
+.lc-db .quest-edge.split.N { top: 5px; left: 12%; right: 12%; }
+.lc-db .quest-edge.split.S { bottom: 5px; left: 12%; right: 12%; }
+.lc-db .quest-edge.split.W { left: 5px; top: 12%; bottom: 12%; }
+.lc-db .quest-edge.split.E { right: 5px; top: 12%; bottom: 12%; }
 .lc-db .quest-edge.wall { background: var(--quest-wall); }
 .lc-db .quest-edge.szel { background: var(--quest-szel); }
 .lc-db .quest-edge.door { cursor: help; }

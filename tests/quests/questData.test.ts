@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseImage } from '../../scripts/quests/parseQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
-import { cellKey, outsideMazeCells } from '@/database/quests/questMeta';
+import { cellKey, outsideMazeCells, splitEdges } from '@/database/quests/questMeta';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
@@ -123,5 +123,18 @@ describe('maze shape of static/db/quests.json', () => {
     }
     expect(withContent).toEqual([]);
     expect(outside).toBe(377);
+  });
+});
+
+describe('one-sided doors in static/db/quests.json', () => {
+  it('finds the doors royal quest 44 draws from one side only', () => {
+    const q44 = quests.find((q) => q.id === '44') as Quest;
+    const split = splitEdges(q44);
+    expect(split.size).toBe(54);
+    // Open going east from (0,2), a thief's door coming back west from (0,3).
+    expect(split.has('0,3:W')).toBe(true);
+    expect(split.has('0,2:E')).toBe(false);
+    // Two different doors on one line: both halves are drawn.
+    expect(split.has('4,3:E') && split.has('4,4:W')).toBe(true);
   });
 });

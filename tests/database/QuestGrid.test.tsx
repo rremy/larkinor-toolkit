@@ -76,6 +76,23 @@ describe('QuestGrid', () => {
     expect(container.querySelector('.quest-edge.N.wall')).toBeTruthy();
   });
 
+  it('draws a one-sided door inside its own cell and says so in its tooltip', () => {
+    const oneSided: Quest = {
+      ...quest,
+      cells: quest.cells.map((c) => (c.row === 0 && c.col === 1
+        ? cell({ row: 0, col: 1, edges: { ...openEdges(), W: { kind: 'door', lock: 'vas' } } })
+        : c.row === 0 && c.col === 0
+          ? cell({ row: 0, col: 0, edges: { ...c.edges, E: { kind: 'open' } } })
+          : c)),
+    };
+    const { container } = render(
+      <QuestGrid quest={oneSided} monsters={monsters} selected={null} onSelect={() => {}} />,
+    );
+    const door = container.querySelector('.quest-cell[data-col="1"][data-row="0"] .quest-edge.W.door');
+    expect(door?.classList.contains('split')).toBe(true);
+    expect(door?.getAttribute('title')).toBe('vaskulcs ajtó — csak erről a mezőről');
+  });
+
   it('marks a szel edge and labels it as the edge of the maze, not a passage', () => {
     const szelQuest: Quest = {
       ...quest,

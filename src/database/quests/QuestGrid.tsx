@@ -5,8 +5,11 @@ import type { QuestPosition } from '@/shared/questPosition';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import {
   BADGE, CLEARED_LABEL, DEFAULT_TILE, HERE_LABEL, LOCK_LABEL, MAYBE_HERE_LABEL, SIDES, SIDE_LABEL,
-  SZEL_LABEL, cellKey, coordLabel, outsideMazeCells,
+  SZEL_LABEL, cellKey, coordLabel, edgeKey, outsideMazeCells, splitEdges,
 } from './questMeta';
+
+/** Tooltip suffix for a door the neighbouring cell does not draw the same. */
+const ONE_SIDED_LABEL = 'csak erről a mezőről';
 
 /** Glyph and Hungarian label for each centred tile marker. */
 const BIG_ICON = {
@@ -68,6 +71,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
   // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
   // memoised because the grid re-renders on every door hover.
   const outside = useMemo(() => outsideMazeCells(quest), [quest]);
+  const split = useMemo(() => splitEdges(quest), [quest]);
 
   // Detected cells as a key set, so the per-cell loop stays a lookup rather
   // than a scan of the candidate list.
@@ -153,6 +157,10 @@ export function QuestGrid(props: QuestGridProps): VNode {
               if (edge.kind === 'open') return null;
               if (edge.kind === 'door' && hiddenLocks?.has(edge.lock)) return null;
               const edgeClasses = ['quest-edge', side];
+              // Drawn inside its own cell rather than on the shared line, so a
+              // door seen from one side only sits on the side it is seen from.
+              const isSplit = split.has(edgeKey(cell, side));
+              if (isSplit) edgeClasses.push('split');
               if (edge.kind === 'wall') edgeClasses.push('wall');
               if (edge.kind === 'szel') edgeClasses.push('szel');
               if (edge.kind === 'door') edgeClasses.push('door', `lock-${edge.lock}`);
@@ -164,10 +172,10 @@ export function QuestGrid(props: QuestGridProps): VNode {
                   tabIndex={isDoor ? 0 : undefined}
                   role={isDoor ? 'button' : undefined}
                   aria-label={isDoor
-                    ? `${LOCK_LABEL[edge.lock]} ajtó ${SIDE_LABEL[side]} felé`
+                    ? `${LOCK_LABEL[edge.lock]} ajtó ${SIDE_LABEL[side]} felé${isSplit ? ` — ${ONE_SIDED_LABEL}` : ''}`
                     : undefined}
                   title={isDoor
-                    ? `${LOCK_LABEL[edge.lock]} ajtó`
+                    ? `${LOCK_LABEL[edge.lock]} ajtó${isSplit ? ` — ${ONE_SIDED_LABEL}` : ''}`
                     : edge.kind === 'szel' ? SZEL_LABEL : undefined}
                   onMouseEnter={isDoor ? () => onProbeLock?.(edge.lock) : undefined}
                   onMouseLeave={isDoor ? () => onProbeLock?.(null) : undefined}

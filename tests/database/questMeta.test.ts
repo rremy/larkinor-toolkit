@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LOCK_LABEL, SZEL_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn, hasSzelEdges,
-  outsideMazeCells, cellKey, parseHiddenLocks, serialiseHiddenLocks,
+  outsideMazeCells, cellKey, parseHiddenLocks, serialiseHiddenLocks, splitEdges, edgeKey,
 } from '@/database/quests/questMeta';
 import type { Quest, QuestCell, Edge } from '@/shared/data';
 
@@ -204,5 +204,37 @@ describe('hidden locks', () => {
     expect(parseHiddenLocks('not json')).toEqual(new Set());
     expect(parseHiddenLocks('{"vas":true}')).toEqual(new Set());
     expect(parseHiddenLocks('["vas","mithril",3,"toString"]')).toEqual(new Set(['vas']));
+  });
+});
+
+describe('splitEdges', () => {
+  const quest = (cells: QuestCell[], cols: number): Quest => ({
+    id: 'x', set: 'royal', title: 'x', description: '', reward: '', rows: 1, cols, cells,
+  });
+
+  it('flags a door the neighbour does not draw, on the door\'s side only', () => {
+    // Royal quest 44's shape: open going east, a thief's door coming back west.
+    const q = quest([
+      cell({ row: 0, col: 0 }),
+      cell({ row: 0, col: 1, edges: { ...openEdges(), W: { kind: 'door', lock: 'tolvaj' } } }),
+    ], 2);
+    expect([...splitEdges(q)]).toEqual([edgeKey({ row: 0, col: 1 }, 'W')]);
+  });
+
+  it('flags both halves when the two cells draw different doors', () => {
+    const q = quest([
+      cell({ row: 0, col: 0, edges: { ...openEdges(), E: { kind: 'door', lock: 'tolvaj' } } }),
+      cell({ row: 0, col: 1, edges: { ...openEdges(), W: { kind: 'door', lock: 'vas' } } }),
+    ], 2);
+    expect(new Set(splitEdges(q))).toEqual(new Set(['0,0:E', '0,1:W']));
+  });
+
+  it('leaves matching doors and door-free disagreements alone', () => {
+    const q = quest([
+      cell({ row: 0, col: 0, edges: { ...openEdges(), E: { kind: 'door', lock: 'vas' }, W: { kind: 'wall' } } }),
+      cell({ row: 0, col: 1, edges: { ...openEdges(), W: { kind: 'door', lock: 'vas' }, E: { kind: 'wall' } } }),
+      cell({ row: 0, col: 2 }),
+    ], 3);
+    expect(splitEdges(q).size).toBe(0);
   });
 });
