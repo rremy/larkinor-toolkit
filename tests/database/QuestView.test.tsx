@@ -200,6 +200,34 @@ describe('QuestView', () => {
     expect(container.querySelector('.quest-szel-note')?.textContent).toMatch(/labirintus széle/);
   });
 
+  describe('key location links', () => {
+    it('selects the key cell and spotlights it for a moment', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      const link = await screen.findByRole('button', { name: /1\. sor, 2\. oszlop/ });
+      vi.useFakeTimers();
+      try {
+        fireEvent.click(link);
+        const grid = container.querySelector('.quest-grid') as HTMLElement;
+        expect(grid.classList.contains('spotlight-active')).toBe(true);
+        const spotlit = container.querySelectorAll('.quest-cell.spotlit');
+        expect(spotlit).toHaveLength(1);
+        expect(spotlit[0].getAttribute('data-col')).toBe('1');
+        expect(spotlit[0].classList.contains('selected')).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(1800);
+        expect(grid.classList.contains('spotlight-active')).toBe(false);
+        expect(container.querySelector('.quest-cell.spotlit')).toBeNull();
+        // The selection outlives the spotlight: the detail panel stays put.
+        expect(container.querySelector('.quest-cell.selected[data-col="1"]')).toBeTruthy();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe('door toggles', () => {
     it('hides a lock\'s doors per quest and remembers it across a remount', async () => {
       const prefStore = makePrefStore();

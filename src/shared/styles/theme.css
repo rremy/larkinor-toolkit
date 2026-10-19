@@ -1018,6 +1018,34 @@
 }
 .lc-db .quest-badge.cleared { background: var(--quest-cleared-bg); color: var(--muted); }
 .lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
+/* A cell picked from the key legend: the rest of the maze greys out for a
+   moment so the one tile can be found on a large grid. The *contents* fade,
+   never the cell — the same reason `.cleared` dims its contents: a filter or
+   opacity on `.quest-cell` makes it a stacking context, and a neighbour's
+   background would then paint over the wall edge the two share. Walls stay,
+   so the route to the key still reads. */
+.lc-db .quest-cell :is(.quest-sprite, .quest-big-icon, .quest-badges) {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit) :is(.quest-sprite, .quest-big-icon, .quest-badges),
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit)::before,
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit)::after {
+  opacity: 0.15;
+  filter: grayscale(1);
+}
+.lc-db .quest-cell.spotlit {
+  outline: 3px solid var(--accent); outline-offset: -3px; z-index: 3;
+  animation: lc-spotlight-pulse 0.6s ease-in-out 3;
+}
+@keyframes lc-spotlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 14px 4px var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The greyed-out surroundings and the outline carry it without motion. */
+  .lc-db .quest-cell.spotlit { animation: none; }
+  .lc-db .quest-cell :is(.quest-sprite, .quest-big-icon, .quest-badges) { transition: none; }
+}
 /* --hit is set inline per cell from the hovered door's lock colour
    (QuestGrid); --quest-key-glow is the fallback if that is ever absent. */
 .lc-db .quest-cell.key-hit { box-shadow: inset 0 0 0 3px var(--hit, var(--quest-key-glow)); z-index: 3; }

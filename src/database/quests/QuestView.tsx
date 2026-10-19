@@ -35,6 +35,21 @@ interface QuestViewProps {
 const SET_LABELS: Record<QuestSet, string> = { royal: 'Királyi', tavern: 'Kocsmai' };
 const SETS: QuestSet[] = ['royal', 'tavern'];
 
+/** How long a cell picked from the key legend stays spotlit (ms). */
+const SPOTLIGHT_MS = 1800;
+
+/**
+ * Scroll a maze cell into the middle of the view. Guarded rather than
+ * optional-chained: jsdom ships no scrollIntoView, and a missing scroll must
+ * not break the selection that matters.
+ */
+function scrollCellIntoView(wrap: HTMLElement | null, row: number, col: number): void {
+  const el = wrap?.querySelector(`.quest-cell[data-row="${row}"][data-col="${col}"]`);
+  if (el && typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+  }
+}
+
 function isQuestSet(value: string | null): value is QuestSet {
   return value === 'royal' || value === 'tavern';
 }
@@ -98,6 +113,12 @@ export function QuestView(props: QuestViewProps): VNode {
     () => parseQuestPosition(prefStore?.read(QUEST_POSITION_PREF_KEY) ?? null),
   );
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
+  /**
+   * The cell a key-legend link just pointed at, while spotlit. Carries its
+   * quest so a spotlight raised on one maze is never drawn on the next.
+   */
+  const [spotlight, setSpotlight] = useState<{ questId: string; cell: string } | null>(null);
+  const spotlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guards the restore-from-store effect below so it fires at most once per
   // active set, regardless of how many times its other dependencies change.
   const restoredQuestRef = useRef(false);
@@ -314,17 +335,34 @@ export function QuestView(props: QuestViewProps): VNode {
     if (!cell) return;
     setSelectedCell(cell);
 
-    const raf = requestAnimationFrame(() => {
-      const el = gridWrapRef.current
-        ?.querySelector(`.quest-cell[data-row="${target.row}"][data-col="${target.col}"]`);
-      // Guarded rather than optional-chained: jsdom ships no scrollIntoView, and
-      // a missing scroll must not break the selection that matters.
-      if (el && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
-      }
-    });
+    const raf = requestAnimationFrame(
+      () => scrollCellIntoView(gridWrapRef.current, target.row, target.col),
+    );
     return () => cancelAnimationFrame(raf);
   }, [questPosition, quest]);
+
+  /**
+   * Show where a key is: select its cell, scroll it into view and spotlight it
+   * — every other tile greys out for a moment. On a large maze a selection
+   * outline alone is easy to lose among a hundred sprites, which is the whole
+   * reason the legend names the location in the first place.
+   */
+  function revealCell(cell: QuestCell) {
+    setSelectedCell(cell);
+    scrollCellIntoView(gridWrapRef.current, cell.row, cell.col);
+    if (selectedQuestId == null) return;
+    setSpotlight({ questId: selectedQuestId, cell: cellKey(cell) });
+    if (spotlightTimerRef.current !== null) clearTimeout(spotlightTimerRef.current);
+    spotlightTimerRef.current = setTimeout(() => {
+      spotlightTimerRef.current = null;
+      setSpotlight(null);
+    }, SPOTLIGHT_MS);
+  }
+
+  // The spotlight's timer must not outlive the view.
+  useEffect(() => () => {
+    if (spotlightTimerRef.current !== null) clearTimeout(spotlightTimerRef.current);
+  }, []);
 
   /** Remember whichever set and quest end up shown. */
   useEffect(() => {
@@ -509,6 +547,7 @@ export function QuestView(props: QuestViewProps): VNode {
               position={questPosition}
               cleared={cleared}
               hiddenLocks={hiddenLocks}
+              spotlight={spotlight?.questId === quest.id ? spotlight.cell : null}
             />
           </div>
           {hasSzelEdges(quest) && (
@@ -533,7 +572,7 @@ export function QuestView(props: QuestViewProps): VNode {
             monsters={monsters}
             activeLock={highlightLock}
             onHoverLock={setHighlightLock}
-            onSelectCell={setSelectedCell}
+            onSelectCell={revealCell}
             hiddenLocks={hiddenLocks}
             onToggleLock={toggleLock}
           />

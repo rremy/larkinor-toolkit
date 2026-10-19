@@ -51,6 +51,22 @@ describe('QuestGrid', () => {
     expect(container.querySelector('.quest-edge.E.door.lock-vas')).toBeTruthy();
   });
 
+  it('marks the spotlit cell and flags the grid while a spotlight is up', () => {
+    const { container, rerender } = render(
+      <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}}
+                 spotlight="1,0" />,
+    );
+    expect(container.querySelector('.quest-grid.spotlight-active')).toBeTruthy();
+    const spotlit = container.querySelectorAll('.quest-cell.spotlit');
+    expect(spotlit).toHaveLength(1);
+    expect(spotlit[0].getAttribute('data-row')).toBe('1');
+    expect(spotlit[0].getAttribute('data-col')).toBe('0');
+
+    rerender(<QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}} />);
+    expect(container.querySelector('.quest-grid.spotlight-active')).toBeNull();
+    expect(container.querySelector('.quest-cell.spotlit')).toBeNull();
+  });
+
   it('leaves the doors of a hidden lock undrawn, and nothing else', () => {
     const { container } = render(
       <QuestGrid quest={quest} monsters={monsters} selected={null} onSelect={() => {}}

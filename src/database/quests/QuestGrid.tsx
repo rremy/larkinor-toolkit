@@ -44,6 +44,11 @@ interface QuestGridProps {
    * side renders as open rather than as a dimmed door.
    */
   hiddenLocks?: ReadonlySet<LockType> | null;
+  /**
+   * A cell to pick out, by `cellKey`: every other tile greys out while it is
+   * set. The caller owns the timing — this only draws the current state.
+   */
+  spotlight?: string | null;
 }
 
 /**
@@ -57,7 +62,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
   const {
     quest, monsters, selected, onSelect,
     highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE, position = null, cleared = null,
-    hiddenLocks = null,
+    hiddenLocks = null, spotlight = null,
   } = props;
 
   // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
@@ -73,7 +78,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
 
   return (
     <div
-      class="quest-grid"
+      class={`quest-grid${spotlight !== null ? ' spotlight-active' : ''}`}
       // Fixed-px columns: the tiles take their size from the column, so the
       // zoom control needs no CSS custom property.
       style={{ gridTemplateColumns: `repeat(${quest.cols}, ${tileSize}px)` }}
@@ -122,6 +127,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
         // on a mark stored by an older build.
         const isCleared = !isOutside && cleared !== null && cleared.has(cellKey(cell));
         if (isCleared) classes.push('cleared');
+        if (spotlight !== null && spotlight === cellKey(cell)) classes.push('spotlit');
         // Tint the hit glow with the hovered lock's colour; --quest-key-glow
         // is the fallback for the (impossible in practice) case of a keyHit
         // without a highlightLock.
