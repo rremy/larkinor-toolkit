@@ -62,7 +62,15 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 **Data conventions**:
 - All game data is JSON under `static/db/` (the single source of truth).
 - Hungarian language throughout (game is Hungarian) — UI copy stays Hungarian; identifiers/comments English.
-- Map coordinates: `imageId = row*10 + col`, row 0 = north, col 0 = west.
+- Map coordinates: `imageId = row*10 + col`, row 0 = north, col 0 = west — **mostly**. The strip
+  north of row 0 is written `-1<col>` (`-11`, `-14`, `-15`), and the démonsziget tile east of 68
+  is `41-13`, which encodes no position at all. So the map view places tiles by walking
+  `map-data.json`'s `edges` out from cell 44 (`layoutCells` in `src/database/map/mapMeta.ts`)
+  and grows the grid past the city's 10×10 block to fit them; reading positions off the id
+  alone silently drops all four.
+- A side of a map cell with **neither an exit nor a blocker is a plain wall**: the game draws a
+  direction button for every open side and a `tenger.gif` blocker only for the coast, and
+  draws nothing at all for a wall. `cellWalls` derives them; 13 exist in the data.
 
 > The original zero-dependency HTML explorer (`lc-database/`) has been fully
 > ported into `src/database/` and removed; see git history if you need it.
