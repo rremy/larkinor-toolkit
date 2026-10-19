@@ -200,6 +200,39 @@ describe('QuestView', () => {
     expect(container.querySelector('.quest-szel-note')?.textContent).toMatch(/labirintus széle/);
   });
 
+  describe('wall toggle', () => {
+    it('shows walls by default and remembers hiding them across a remount', async () => {
+      const prefStore = makePrefStore();
+      const { unmount } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: 'Falak elrejtése' }));
+      expect(prefStore.read('lc-quest-walls-hidden')).toBe('1');
+      expect(screen.getByRole('button', { name: 'Falak megjelenítése' })).toBeTruthy();
+      unmount();
+
+      render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1" prefStore={prefStore}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: 'Falak megjelenítése' }));
+      expect(prefStore.read('lc-quest-walls-hidden')).toBe('0');
+    });
+
+    it('hides the grid walls while the eye is crossed', async () => {
+      // Quest 3's only cell draws a szel edge, which the view shows by default.
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="3"
+                   prefStore={makePrefStore({ 'lc-quest-walls-hidden': '1' })}
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findByRole('button', { name: 'Falak megjelenítése' });
+      expect(container.querySelector('.quest-cell')).toBeTruthy();
+      expect(container.querySelector('.quest-edge.szel')).toBeNull();
+    });
+  });
+
   describe('remembered zoom', () => {
     it('initialises the zoom from a supplied PrefStore', async () => {
       const prefStore = makePrefStore({ 'lc-quest-tile-size': '72' });

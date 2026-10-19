@@ -38,6 +38,12 @@ interface QuestGridProps {
    * walls are the part still load-bearing.
    */
   cleared?: ReadonlySet<string> | null;
+  /**
+   * Draw the plain walls and the `szel` drawing edges. Off, only doors remain:
+   * they are what the key legend is about, and a door is a fact about the
+   * route rather than about the maze's outline.
+   */
+  showWalls?: boolean;
 }
 
 /**
@@ -51,6 +57,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
   const {
     quest, monsters, selected, onSelect,
     highlightLock = null, onProbeLock, tileSize = DEFAULT_TILE, position = null, cleared = null,
+    showWalls = true,
   } = props;
 
   // Whole-maze analysis, so it cannot be folded into the per-cell loop below;
@@ -138,6 +145,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
             {SIDES.map((side) => {
               const edge = cell.edges[side];
               if (edge.kind === 'open') return null;
+              if (!showWalls && edge.kind !== 'door') return null;
               const edgeClasses = ['quest-edge', side];
               if (edge.kind === 'wall') edgeClasses.push('wall');
               if (edge.kind === 'szel') edgeClasses.push('szel');

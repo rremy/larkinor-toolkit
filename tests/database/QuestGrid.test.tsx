@@ -51,6 +51,23 @@ describe('QuestGrid', () => {
     expect(container.querySelector('.quest-edge.E.door.lock-vas')).toBeTruthy();
   });
 
+  it('drops walls and szel edges but keeps doors when walls are hidden', () => {
+    const szelQuest: Quest = {
+      ...quest,
+      cells: [
+        ...quest.cells.slice(0, 3),
+        cell({ row: 1, col: 1, edges: { ...openEdges(), E: { kind: 'szel' } } }),
+      ],
+    };
+    const { container } = render(
+      <QuestGrid quest={szelQuest} monsters={monsters} selected={null} onSelect={() => {}}
+                 showWalls={false} />,
+    );
+    expect(container.querySelector('.quest-edge.wall')).toBeNull();
+    expect(container.querySelector('.quest-edge.szel')).toBeNull();
+    expect(container.querySelector('.quest-edge.E.door.lock-vas')).toBeTruthy();
+  });
+
   it('marks a szel edge and labels it as the edge of the maze, not a passage', () => {
     const szelQuest: Quest = {
       ...quest,

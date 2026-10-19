@@ -17,6 +17,13 @@ import type { CraftingHallKind } from './crafting';
 /** PrefStore key holding the quest maze's last selected zoom (tile size). */
 export const QUEST_TILE_PREF_KEY = 'lc-quest-tile-size';
 
+/**
+ * PrefStore key holding whether the quest maze's walls are hidden (`'1'`).
+ * Stored as *hidden* so that an absent value — a first visit, or a store from
+ * an older build — means the walls show, which is the default.
+ */
+export const QUEST_WALLS_HIDDEN_PREF_KEY = 'lc-quest-walls-hidden';
+
 /** PrefStore key holding which quest set the tab last showed. */
 export const QUEST_SET_PREF_KEY = 'lc-quest-set';
 

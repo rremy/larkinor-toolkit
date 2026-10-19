@@ -2,7 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet } from '@/shared/data';
 import { buildMonsterDatabase } from '@/shared/data';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, QUEST_WALLS_HIDDEN_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
 import { parseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import type { PrefStore } from '../DatabaseApp';
@@ -80,6 +80,7 @@ export function QuestView(props: QuestViewProps): VNode {
   // and hides the toggle at full width), so anything but a stored '1' —
   // missing, or a value from some other build — means collapsed.
   const [detailsOpen, setDetailsOpen] = useState(() => prefStore?.read(QUEST_DETAILS_PREF_KEY) === '1');
+  const [wallsVisible, setWallsVisible] = useState(() => prefStore?.read(QUEST_WALLS_HIDDEN_PREF_KEY) !== '1');
   /**
    * The player's detected maze cell, as the dungeon page last stored it.
    *
@@ -126,6 +127,12 @@ export function QuestView(props: QuestViewProps): VNode {
     const next = !detailsOpen;
     setDetailsOpen(next);
     prefStore?.write(QUEST_DETAILS_PREF_KEY, next ? '1' : '0');
+  }
+
+  function toggleWalls() {
+    const next = !wallsVisible;
+    setWallsVisible(next);
+    prefStore?.write(QUEST_WALLS_HIDDEN_PREF_KEY, next ? '0' : '1');
   }
 
   function fetchSet(set: QuestSet): Promise<Quest[]> {
@@ -490,6 +497,7 @@ export function QuestView(props: QuestViewProps): VNode {
               tileSize={tileSize}
               position={questPosition}
               cleared={cleared}
+              showWalls={wallsVisible}
             />
           </div>
           {hasSzelEdges(quest) && (
@@ -515,6 +523,8 @@ export function QuestView(props: QuestViewProps): VNode {
             activeLock={highlightLock}
             onHoverLock={setHighlightLock}
             onSelectCell={setSelectedCell}
+            wallsVisible={wallsVisible}
+            onToggleWalls={toggleWalls}
           />
         </div>
       </div>
