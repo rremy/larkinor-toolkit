@@ -128,6 +128,11 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - Cell images follow `<base>[_<X>kulcs][_kt][_labikibe].jpg`: `_<X>kulcs` = this cell yields
     that lock's key, `_kt` = holds the quest item, `_labikibe` = labyrinth entrance/exit, a
     `boss` suffix on the base = boss monster.
+  - **Sprites resolve to the first monster using them, never a `*` elite.** `monsters.json`
+    carries 64 `*`-prefixed elite duplicates (level 128+) that reuse their base monster's
+    sprite and come later in the file. The quests use the base monsters, so a last-wins sprite
+    map linked 474 royal cells to elites (quest 4's Részeg matróz at level 133 instead of 7).
+    Both scrapers keep the first match, and `tests/quests/questData.test.ts` fails on any elite link.
   - Only 5 of the 45 quest pages carry `id="td<RR><CC>"` on their cells — coordinates come
     from row/column position in the table for the rest, with the ids used as a cross-check
     where present.
