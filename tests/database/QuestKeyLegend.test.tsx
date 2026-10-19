@@ -38,7 +38,7 @@ describe('QuestKeyLegend', () => {
   it('lists every lock that gates a door', () => {
     render(<QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                            onHoverLock={() => {}} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />);
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />);
     expect(screen.getByText('vaskulcs')).toBeTruthy();
     expect(screen.getByText('aranykulcs')).toBeTruthy();
   });
@@ -46,7 +46,7 @@ describe('QuestKeyLegend', () => {
   it('names where the key is, with the monster holding it', () => {
     render(<QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                            onHoverLock={() => {}} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />);
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />);
     expect(screen.getByText(/2\. sor, 1\. oszlop/)).toBeTruthy();
     expect(screen.getByText(/Csontváz/)).toBeTruthy();
   });
@@ -54,7 +54,7 @@ describe('QuestKeyLegend', () => {
   it('says so explicitly when the quest holds no key for a lock', () => {
     render(<QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                            onHoverLock={() => {}} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />);
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />);
     expect(screen.getByText('nincs kulcs ebben a küldetésben')).toBeTruthy();
   });
 
@@ -63,7 +63,7 @@ describe('QuestKeyLegend', () => {
     const { container } = render(
       <QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                       onHoverLock={onHoverLock} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />,
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />,
     );
     fireEvent.mouseEnter(container.querySelector('.quest-legend-row') as HTMLElement);
     expect(onHoverLock).toHaveBeenCalledWith('vas');
@@ -73,7 +73,7 @@ describe('QuestKeyLegend', () => {
     const onSelectCell = vi.fn();
     render(<QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                            onHoverLock={() => {}} onSelectCell={onSelectCell}
-                      wallsVisible onToggleWalls={() => {}} />);
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />);
     fireEvent.click(screen.getByText(/2\. sor, 1\. oszlop/));
     expect(onSelectCell).toHaveBeenCalledWith(expect.objectContaining({ row: 1, col: 0 }));
   });
@@ -82,7 +82,7 @@ describe('QuestKeyLegend', () => {
     const { container } = render(
       <QuestKeyLegend quest={quest} monsters={monsters} activeLock="vas"
                       onHoverLock={() => {}} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />,
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />,
     );
     expect(container.querySelectorAll('.quest-legend-row.active')).toHaveLength(1);
   });
@@ -96,44 +96,47 @@ describe('QuestKeyLegend', () => {
     const { container } = render(
       <QuestKeyLegend quest={lockless} monsters={monsters} activeLock={null}
                       onHoverLock={() => {}} onSelectCell={() => {}}
-                      wallsVisible onToggleWalls={() => {}} />,
+                      hiddenLocks={new Set()} onToggleLock={() => {}} />,
     );
     expect(screen.getByText('Ebben a küldetésben nincs zárt ajtó.')).toBeTruthy();
     expect(container.querySelector('.quest-legend-row')).toBeNull();
   });
-  describe('wall toggle', () => {
-    it('shows an open eye that hides the walls while they are visible', () => {
+  describe('door toggles', () => {
+    it('gives every lock row its own open eye while its doors show', () => {
       const { container } = render(
         <QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                         onHoverLock={() => {}} onSelectCell={() => {}}
-                        wallsVisible onToggleWalls={() => {}} />,
+                        hiddenLocks={new Set()} onToggleLock={() => {}} />,
       );
-      const toggle = screen.getByRole('button', { name: 'Falak elrejtése' });
-      expect(toggle.getAttribute('aria-pressed')).toBe('true');
-      expect(container.querySelector('.quest-walls-icon line')).toBeNull();
+      const vas = screen.getByRole('button', { name: 'vaskulcs ajtóinak elrejtése' });
+      expect(vas.getAttribute('aria-pressed')).toBe('true');
+      // Offered on the gold lock too, though this quest holds no gold key.
+      expect(screen.getByRole('button', { name: 'aranykulcs ajtóinak elrejtése' })).toBeTruthy();
+      expect(container.querySelector('.quest-eye-icon line')).toBeNull();
     });
 
-    it('crosses the eye out once the walls are hidden', () => {
+    it('crosses out only the eye of a hidden lock', () => {
       const { container } = render(
         <QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                         onHoverLock={() => {}} onSelectCell={() => {}}
-                        wallsVisible={false} onToggleWalls={() => {}} />,
+                        hiddenLocks={new Set(['vas'] as const)} onToggleLock={() => {}} />,
       );
-      const toggle = screen.getByRole('button', { name: 'Falak megjelenítése' });
-      expect(toggle.getAttribute('aria-pressed')).toBe('false');
-      expect(container.querySelector('.quest-walls-icon line')).toBeTruthy();
+      const vas = screen.getByRole('button', { name: 'vaskulcs ajtóinak megjelenítése' });
+      expect(vas.getAttribute('aria-pressed')).toBe('false');
+      expect(vas.querySelector('line')).toBeTruthy();
+      expect(container.querySelectorAll('.quest-eye-icon line')).toHaveLength(1);
+      expect(container.querySelectorAll('.quest-legend-row.doors-hidden')).toHaveLength(1);
     });
 
-    it('reports a click, and stays available on a quest without locks', () => {
-      const onToggleWalls = vi.fn();
-      const lockless: Quest = { ...quest, cells: [cell({ row: 0, col: 0 })], rows: 1, cols: 1 };
+    it('reports which lock was toggled', () => {
+      const onToggleLock = vi.fn();
       render(
-        <QuestKeyLegend quest={lockless} monsters={monsters} activeLock={null}
+        <QuestKeyLegend quest={quest} monsters={monsters} activeLock={null}
                         onHoverLock={() => {}} onSelectCell={() => {}}
-                        wallsVisible onToggleWalls={onToggleWalls} />,
+                        hiddenLocks={new Set()} onToggleLock={onToggleLock} />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Falak elrejtése' }));
-      expect(onToggleWalls).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: 'aranykulcs ajtóinak elrejtése' }));
+      expect(onToggleLock).toHaveBeenCalledWith('arany');
     });
   });
 });

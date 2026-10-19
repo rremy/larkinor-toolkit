@@ -17,13 +17,6 @@ import type { CraftingHallKind } from './crafting';
 /** PrefStore key holding the quest maze's last selected zoom (tile size). */
 export const QUEST_TILE_PREF_KEY = 'lc-quest-tile-size';
 
-/**
- * PrefStore key holding whether the quest maze's walls are hidden (`'1'`).
- * Stored as *hidden* so that an absent value — a first visit, or a store from
- * an older build — means the walls show, which is the default.
- */
-export const QUEST_WALLS_HIDDEN_PREF_KEY = 'lc-quest-walls-hidden';
-
 /** PrefStore key holding which quest set the tab last showed. */
 export const QUEST_SET_PREF_KEY = 'lc-quest-set';
 
@@ -94,6 +87,18 @@ export const ACTIVE_ROYAL_QUEST_PREF_KEY = 'lc-quest-active-royal';
  */
 export function questClearedKey(set: QuestSet, questId: string): string {
   return `lc-quest-cleared-${set}-${questId}`;
+}
+
+/**
+ * PrefStore key holding the locks whose doors one quest's maze hides — the
+ * keys the player already carries there, so those doors read as open.
+ *
+ * Per quest, like the cleared cells: a key is picked up inside one labyrinth
+ * and is no use in the next, so hiding iron doors in quest 39 must not hide
+ * them in quest 40. An absent key means every door shows.
+ */
+export function questHiddenLocksKey(set: QuestSet, questId: string): string {
+  return `lc-quest-hidden-locks-${set}-${questId}`;
 }
 
 /** Writes one preference. In the userscript this is `setPref` (GM-backed). */

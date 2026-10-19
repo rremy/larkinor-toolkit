@@ -22,6 +22,31 @@ export const LOCK_LABEL: Record<LockType, string> = {
   cso: 'csőkulcs',
 };
 
+/** Serialise a hidden-locks set for `questHiddenLocksKey`; sorted, so stable. */
+export function serialiseHiddenLocks(locks: ReadonlySet<LockType>): string {
+  return JSON.stringify([...locks].sort());
+}
+
+/**
+ * Parse a stored hidden-locks set. Anything unreadable, and any entry that is
+ * not a lock this build knows, is dropped: the cost is a door shown again,
+ * never one hidden that should not be.
+ */
+export function parseHiddenLocks(raw: string | null): Set<LockType> {
+  if (!raw) return new Set();
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter(
+      // Own keys only: a plain `in` would let `toString` through the prototype.
+      (lock): lock is LockType =>
+        typeof lock === 'string' && Object.prototype.hasOwnProperty.call(LOCK_LABEL, lock),
+    ));
+  } catch {
+    return new Set();
+  }
+}
+
 /** Badge glyphs overlaid on maze cells. */
 export const BADGE = {
   key: '🔑',

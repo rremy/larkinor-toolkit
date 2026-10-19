@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LOCK_LABEL, SZEL_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn, hasSzelEdges,
-  outsideMazeCells, cellKey,
+  outsideMazeCells, cellKey, parseHiddenLocks, serialiseHiddenLocks,
 } from '@/database/quests/questMeta';
 import type { Quest, QuestCell, Edge } from '@/shared/data';
 
@@ -189,5 +189,20 @@ describe('outsideMazeCells', () => {
     ]);
     expect(outsideMazeCells(q).has(cellKey({ row: 1, col: 1 }))).toBe(false);
     expect(outsideMazeCells(q).size).toBe(8);
+  });
+});
+
+describe('hidden locks', () => {
+  it('round-trips a set, sorted so the stored value is stable', () => {
+    const raw = serialiseHiddenLocks(new Set(['vas', 'arany'] as const));
+    expect(raw).toBe('["arany","vas"]');
+    expect(parseHiddenLocks(raw)).toEqual(new Set(['arany', 'vas']));
+  });
+
+  it('shows every door again on anything it cannot read', () => {
+    expect(parseHiddenLocks(null)).toEqual(new Set());
+    expect(parseHiddenLocks('not json')).toEqual(new Set());
+    expect(parseHiddenLocks('{"vas":true}')).toEqual(new Set());
+    expect(parseHiddenLocks('["vas","mithril",3,"toString"]')).toEqual(new Set(['vas']));
   });
 });

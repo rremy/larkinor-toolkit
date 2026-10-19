@@ -1103,18 +1103,17 @@
 .lc-db .quest-badge.key.lock-tolvaj { border-color: var(--lock-tolvaj); }
 .lc-db .quest-badge.key.lock-cso { border-color: var(--lock-cso); }
 .lc-db .quest-legend h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
-.lc-db .quest-legend-head { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
-.lc-db .quest-legend-head h3 { margin: 0; }
 /* Colour set explicitly: a button never inherits it (quirks-mode notes above),
    and this one renders inside the in-game overlay too. */
-.lc-db .quest-walls-toggle {
-  display: grid; place-items: center; padding: 2px;
+.lc-db .quest-door-toggle {
+  display: grid; place-items: center; padding: 1px; flex: none;
   background: none; border: none; border-radius: 3px;
   color: var(--accent); cursor: pointer;
 }
-.lc-db .quest-walls-toggle[aria-pressed="false"] { color: var(--muted); }
-.lc-db .quest-walls-toggle:hover { background: var(--accent-dim); }
-.lc-db .quest-walls-toggle:focus-visible { outline: 2px solid var(--accent); }
+.lc-db .quest-door-toggle[aria-pressed="false"] { color: var(--muted); }
+.lc-db .quest-door-toggle:hover { background: var(--accent-dim); }
+.lc-db .quest-door-toggle:focus-visible { outline: 2px solid var(--accent); }
+.lc-db .quest-legend-row.doors-hidden .quest-lock-name { color: var(--muted); }
 .lc-db .quest-legend-row {
   display: flex; align-items: center; gap: 6px;
   padding: 3px 4px; border-radius: 3px; font-size: 12px;
