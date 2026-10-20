@@ -17,7 +17,7 @@ import {
 } from '@/shared/prefKeys';
 import { parseQuestPosition, serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
-import { resolveDungeonPosition, movementConfirmed } from './dungeonPosition';
+import { resolveDungeonPosition, movementConfirmed, moveRefused } from './dungeonPosition';
 import { takePendingMove } from './trackDungeonMove';
 import type { DungeonObservation } from './domExtract';
 
@@ -77,7 +77,11 @@ export async function activateDungeonPosition(
   // Read before anything is written: both of these describe the page *before*
   // this one, and the writes below overwrite them.
   const previous = parseQuestPosition(readPref(QUEST_POSITION_PREF_KEY));
-  const move = takePendingMove(readPref, writePref);
+  // Consumed either way. A locked door the player has no key for takes the
+  // click and refuses the step, leaving them where they stood — so a refused
+  // step is no step, and the remembered cell holds (see `moveRefused`).
+  const clicked = takePendingMove(readPref, writePref);
+  const move = clicked && !moveRefused(narration) ? clicked : null;
 
   let quests: Quest[];
   try {

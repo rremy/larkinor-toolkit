@@ -269,9 +269,9 @@ const STEP: Record<Side, { row: number; col: number }> = {
  * the same code and strictly more useful: three candidates stepped north and
  * filtered by the walls frequently leave one, which no single page could do.
  *
- * A `door` is passable here — a locked door offers no button and cannot have
- * been the step taken, and the caller resolves a failed step by preferring the
- * narration (see `resolveDungeonPosition`).
+ * A `door` is passable here: the data cannot say whether the player holds its
+ * key. A door that refused them prints a line saying so, and the caller drops
+ * the step before it gets here (see `moveRefused`).
  */
 export function propagatePosition(
   previous: QuestPosition,
@@ -339,6 +339,27 @@ export function movementConfirmed(narration: string, move: Side): boolean {
 }
 
 /**
+ * Folded opening of the line the game prints when a locked door refuses the
+ * player: `Nincs nálad tolvajkulcs. Ezt az ajtót csak egy tolvajkulcssal tudod
+ * kinyitni.` (live, royal quest 44's entrance, 2026-10-20). Only the key's
+ * name changes between locks, so the pattern takes any word ending in `kulcs`.
+ */
+const REFUSED_RE = /\bnincs nalad \S*kulcs\b/;
+
+/**
+ * Whether the page says the step the player clicked did not happen.
+ *
+ * A locked door has a nav button like any open side ("Kinyitod az ajtót és
+ * belépsz"), so the click is recorded as a step whether or not the player
+ * holds the key. Without it the game hands back the **same** cell with only
+ * this line, and the step must be read as no step at all — propagating it
+ * looks for the player behind the door, where the drawn walls never agree.
+ */
+export function moveRefused(narration: string): boolean {
+  return foldNarrationLines(narration).some((line) => REFUSED_RE.test(line));
+}
+
+/**
  * Where the player is when the page follows an action that was **not** a move.
  *
  * You cannot leave a cell without clicking a direction, so with no step pending
@@ -373,12 +394,11 @@ export function stayCells(
  * 1. **An exact narration match in the *same* quest wins outright.** A click
  *    on a direction control is not proof of a move: the game may refuse it,
  *    the page may not navigate at all, the player may mis-click — and the
- *    page's own words are the only account of where they ended up. (Not via
- *    a locked door, despite what this comment used to say: a locked door is
- *    drawn but offers *no* nav button — measured live, see `propagatePosition`
- *    above — so it can never have been the step that was clicked.) A
+ *    page's own words are the only account of where they ended up. A
  *    disagreement drops the chain rather than averaging two incompatible
- *    answers.
+ *    answers. (A locked door *does* offer a nav button — measured live on
+ *    2026-10-20 — and the page it refuses with is recognised before this
+ *    point, see `moveRefused`.)
  * 2. **A step confirmed within the previous exact quest beats an exact
  *    narration match found in a *different* quest.** Within a chain of
  *    consecutive dungeon pages the quest cannot change: reaching a different

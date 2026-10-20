@@ -257,6 +257,37 @@ describe('activateDungeonPosition', () => {
   });
 
   /**
+   * Live replay, 2026-10-20: royal quest 44's entrance (3,6), whose north side
+   * is a thief-locked door. The door has a nav button ("Kinyitod az ajtót és
+   * belépsz"), so the click was recorded as a step north — but without the key
+   * the game refuses, and hands back the same cell with only the refusal line.
+   * Propagating that step looked for the player behind the door, found the
+   * walls disagree, and wiped the marker.
+   */
+  it('holds the position when the game refuses the step at a locked door', async () => {
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [questSelectedKey('royal')]: '44',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '44', cells: [{ row: 3, col: 6 }], exact: true, source: 'entrance',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'N',
+    });
+
+    const position = await activateDungeonPosition(
+      '\n\nNincs nálad tolvajkulcs. Ezt az ajtót csak egy tolvajkulcssal tudod kinyitni.\n',
+      { sides: { N: 'door', E: 'wall', S: 'open', W: 'wall' }, enemySides: {}, question: false },
+      makeLoader(), prefs.read, prefs.write,
+    );
+
+    expect(position).toEqual({
+      set: 'royal', questId: '44', cells: [{ row: 3, col: 6 }], exact: true, source: 'stay',
+    });
+    // Spent all the same: the refusal page must not hand the step to the next one.
+    expect(prefs.stored.get(QUEST_MOVE_PREF_KEY)).toBe('');
+  });
+
+  /**
    * The cell underfoot, proved by the page existing at all.
    *
    * Stepping onto a field that holds a live monster makes the creature attack

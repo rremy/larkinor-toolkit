@@ -7,6 +7,7 @@ import {
   locateDungeonPosition,
   matchCellsInQuest,
   movementConfirmed,
+  moveRefused,
   narrationSaysEntered,
   stayCells,
   propagatePosition,
@@ -887,5 +888,24 @@ describe('movementConfirmed', () => {
 
   it('requires both halves on the same line', () => {
     expect(movementConfirmed('Továbbjöttél a sötétben.\nÉszakra egy tábla függ.', 'N')).toBe(false);
+  });
+});
+
+describe('moveRefused', () => {
+  // Live capture, royal quest 44's entrance, pressing the thief-locked door.
+  it('recognises the game refusing a locked door', () => {
+    expect(moveRefused('\n\nNincs nálad tolvajkulcs. Ezt az ajtót csak egy tolvajkulcssal tudod kinyitni.\n')).toBe(true);
+  });
+
+  // Same template for every lock — only the key's name changes.
+  it('reads the other locks the same way', () => {
+    expect(moveRefused('Nincs nálad aranykulcs. Ezt az ajtót csak egy aranykulccsal tudod kinyitni.')).toBe(true);
+    expect(moveRefused('Nincs nálad ezüstkulcs.')).toBe(true);
+  });
+
+  it('ignores a page that moved, or narrates anything else', () => {
+    expect(moveRefused('Továbbjöttél északra.')).toBe(false);
+    expect(moveRefused('Sikerült bejutnod a labirintusba.')).toBe(false);
+    expect(moveRefused('')).toBe(false);
   });
 });

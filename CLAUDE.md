@@ -283,10 +283,11 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       absent, and an absent side never rejects a candidate.
     - **The nav buttons are a second, independent read of the open sides** and only ever
       reveal *open* ones, so they fill in a side whose tile went unrecognised rather than
-      overruling one. Precedence matters for doors: a locked door is drawn but offers no
-      button, and letting the missing button win would report it as a wall. Measured live at
-      quest 35 cell (0,6): tiles said N/E wall + S/W corridor, and the page offered exactly
-      `nyugat` and `del`.
+      overruling one. Measured live at quest 35 cell (0,6): tiles said N/E wall + S/W
+      corridor, and the page offered exactly `nyugat` and `del`. **A locked door does get a
+      button** (`Kinyitod az ajtót és belépsz`, measured live on 2026-10-20 at royal quest
+      44's entrance) — an earlier version of this note claimed it did not, read off the cell
+      above, which has no door at all.
     - **The enemy sprite never names the monster** — `ellenfel_b.gif` is a generic
       silhouette — so the creature cannot be used as a third signal for *position*, however
       tempting the quest data's `monsterName` makes it. (The seven "Fekete szűz" mentions
@@ -466,15 +467,17 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - **A step is evidence, but weaker evidence than the page.** `lc-quest-move` holds only a
     direction, written in the capture phase on the game's own direction control — every
     movement path in the toolkit clicks it — and consumed-and-cleared by the next dungeon page,
-    so a rest, an answer, a fight or a refused move leaves no phantom step.
+    so a rest, an answer, a fight or a refused move leaves no phantom step. **A locked door
+    refuses on its own page**: its button records a step like any other, and without the key
+    the game hands back the same cell with only `Nincs nálad <zár>kulcs. …` — so `moveRefused`
+    drops the step and the remembered cell holds. Propagating it instead looked for the player
+    behind the door, where the drawn walls never agree, and wiped the marker.
     `resolveDungeonPosition` combines the step with the narration match: **within the same
     quest an exact narration match wins**, because a click on a direction control is not proof
     of a move — the game may refuse it, the page may not navigate, the player may mis-click —
     and the page's own words are the only account of where they ended up. (The design doc
-    justified this rule with a locked door being drawn *and* offered a nav button. That
-    contradicts what was measured live and is recorded above — a locked door is drawn but
-    offers **no** button — and was the plan author's error; the rule stands unchanged on the
-    weaker true premise.) **Across
+    justified this rule with a locked door being drawn *and* offered a nav button, which is
+    right after all — see above.) **Across
     quests the rule inverts**: when the previous position was exact and the step propagates
     inside its own quest, an exact narration match in a *different* quest loses — reaching
     another labyrinth means passing through a non-dungeon page, and every non-dungeon page
