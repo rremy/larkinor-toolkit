@@ -37,8 +37,9 @@
   line-height: 1.4;
 }
 
-/* Pages with no chat to lay the dock over (Home, for one) anchor it to the foot
-   of the game column instead of to a chat position that does not exist there. */
+/* Pages with no chat to lay the dock over sit below the game's frame; only when
+   a usable dock would not fit there does alignDock() anchor it to the
+   viewport's foot instead. */
 #lc-dock-root[data-anchor='bottom'] {
   top: auto;
   bottom: 8px;

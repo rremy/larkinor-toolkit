@@ -21,11 +21,19 @@ import { CraftingDockPanel, CRAFTING_TITLE } from '@/desktop/CraftingDockPanel';
 import type { CraftingHallState } from '@/utils/craftingExtract';
 import type { DataLoader } from '@/shared/data';
 
+/**
+ * The part of a page's state the dock acts on: quick actions, plus the
+ * directions and encounter attack the keyboard shortcuts drive. Free move and
+ * the labyrinth both supply it — a labyrinth just never has an attack, since
+ * its monsters attack on entry.
+ */
+export type DockState = Pick<FreeMoveState, 'directions' | 'actions' | 'attack'>;
+
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
   doc: Document;
-  /** Free-move state, or null on pages where we only offer the DB button. */
-  state: FreeMoveState | null;
+  /** Free-move or dungeon state, or null on pages where we only offer the DB button. */
+  state: DockState | null;
   db: MonsterDatabase | null;
   /**
    * Home-page inventory state, when we are on it. A second optional field rather

@@ -11,13 +11,13 @@
 
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractBattle, extractFreeMove, type FreeMoveState } from '@/utils/domExtract';
+import { extractBattle, extractDungeon, extractFreeMove } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { extractCraftingHall, type CraftingHallState } from '@/utils/craftingExtract';
 import { createDataLoader, gmSource, type DataLoader, type MonsterDatabase, type QuestSet } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
-import { DesktopDock } from '@/desktop/DesktopDock';
+import { DesktopDock, type DockState } from '@/desktop/DesktopDock';
 import { activateQuestOffer } from '@/utils/activateQuestOffer';
 import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
@@ -46,16 +46,19 @@ const DATA_BASE_URL = USERSCRIPT_DATA_BASE_URL;
 const UNDOCKED_PAGES: ReadonlySet<PageType> = new Set([PageType.Login]);
 
 /**
- * Free-move state when we are on the free-move page, otherwise null — every
- * other docked page type (including one we do not recognise) still gets the
- * minimal dock, because on desktop we are adding to a page that already works.
+ * The dock's actions on the two pages that offer them — free move and the
+ * labyrinth — otherwise null. Every other docked page type (including one we
+ * do not recognise) still gets the minimal dock, because on desktop we are
+ * adding to a page that already works.
  */
-function extractDockState(pageType: PageType, doc: Document): FreeMoveState | null {
-  if (pageType !== PageType.FreeMove) return null;
+function extractDockState(pageType: PageType, doc: Document): DockState | null {
+  if (pageType !== PageType.FreeMove && pageType !== PageType.Dungeon) return null;
   try {
-    return extractFreeMove(doc);
+    if (pageType === PageType.FreeMove) return extractFreeMove(doc);
+    const { directions, actions } = extractDungeon(doc);
+    return { directions, actions, attack: null };
   } catch (err) {
-    console.warn('[Larkinor UI] Free-move extraction failed; dock degraded:', err);
+    console.warn('[Larkinor UI] Page extraction failed; dock degraded:', err);
     return null;
   }
 }
@@ -137,6 +140,34 @@ const VIEWPORT_MARGIN = 8;
 const MIN_DOCK_HEIGHT = 120;
 
 /**
+ * Clearance kept below the game's drawn frame on a page with no chat — the
+ * same gap the chat itself keeps on free move (frame ends at 463, chat starts
+ * at 473; measured live).
+ */
+const GAME_FRAME_GAP = 10;
+
+/**
+ * Bottom edge of what the game draws in its content column, or null when
+ * nothing measurable is there.
+ *
+ * Leaves only: the column's own container is 600px tall and overhangs the
+ * drawn frame by 40px, while the frame is built from small background-image
+ * strips. And only elements that end inside the column's width, which leaves
+ * out the 791px banner, the sidebar at 653 and any ad content past the game.
+ */
+function gameFrameBottom(doc: Document, root: HTMLElement): number | null {
+  const columnRight = FALLBACK_COLUMN_RECT.left + FALLBACK_COLUMN_RECT.width;
+  let bottom: number | null = null;
+  for (const el of Array.from(doc.body.querySelectorAll('*'))) {
+    if (el.childElementCount > 0 || root.contains(el)) continue;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0 || rect.right > columnRight) continue;
+    bottom = Math.max(bottom ?? rect.bottom, rect.bottom);
+  }
+  return bottom;
+}
+
+/**
  * The game's right edge, published as `--lc-game-right` so the minimised
  * database overlay can fill the empty page beside the game.
  *
@@ -176,10 +207,13 @@ const GAME_WIDTH = 791;
  *  - Bounding the height by the chat forced the action list to scroll even with
  *    room to spare underneath.
  *
- * Pages without a chat at all — Home is one — get `data-anchor="bottom"` and sit
- * at the foot of the game column instead. An earlier version fell back to the
- * chat's known coordinates there, which planted the bar at a spot that meant
- * nothing on that page.
+ * Pages without a chat at all — the labyrinth and Home — sit just below the
+ * game's drawn frame instead (see `gameFrameBottom`), and fall back to
+ * `data-anchor="bottom"` only when a usable dock would not fit under it. An
+ * earlier version fell back to the chat's known coordinates there, which
+ * planted the bar at a spot that meant nothing on that page; a later one always
+ * anchored to the viewport's bottom, leaving the dock a window's height away
+ * from the game on a tall screen.
  *
  * Coordinates are viewport-relative, which is correct for `position: fixed` and
  * needs no scroll offset — and the game page does not scroll, so a single
@@ -189,15 +223,27 @@ function alignDock(root: HTMLElement, doc: Document): void {
   const chat = doc.querySelector(CHAT_SELECTOR);
   const measured = chat?.getBoundingClientRect();
 
-  // No chat to lay the dock over — the Home page is one such. Anchor to the
-  // bottom of the game column instead of pretending the fallback chat
-  // coordinates mean something, which put the bar at an arbitrary spot.
+  // No chat to lay the dock over — the labyrinth and Home pages are two. Sit
+  // just below the game's drawn frame, where the chat would otherwise be, as
+  // long as a usable dock still fits under it; otherwise anchor to the bottom
+  // of the viewport rather than run off it.
   if (!measured || measured.width === 0) {
-    root.dataset.anchor = 'bottom';
+    const viewportHeight = doc.defaultView?.innerHeight ?? 0;
     root.style.setProperty('--lc-dock-left', `${FALLBACK_COLUMN_RECT.left}px`);
     root.style.setProperty('--lc-dock-width', `${FALLBACK_COLUMN_RECT.width}px`);
-    root.style.setProperty('--lc-dock-max-height', `${Math.round((doc.defaultView?.innerHeight ?? 0) * 0.5) || MIN_DOCK_HEIGHT}px`);
     root.style.setProperty('--lc-game-right', `${GAME_WIDTH}px`);
+
+    const frameBottom = gameFrameBottom(doc, root);
+    const top = frameBottom === null ? null : Math.round(frameBottom + GAME_FRAME_GAP);
+    const room = top === null ? 0 : viewportHeight - VIEWPORT_MARGIN - top;
+    if (top !== null && room >= MIN_DOCK_HEIGHT) {
+      root.style.setProperty('--lc-dock-top', `${top}px`);
+      root.style.setProperty('--lc-dock-max-height', `${Math.round(room)}px`);
+      return;
+    }
+
+    root.dataset.anchor = 'bottom';
+    root.style.setProperty('--lc-dock-max-height', `${Math.round(viewportHeight * 0.5) || MIN_DOCK_HEIGHT}px`);
     return;
   }
 
@@ -358,9 +404,9 @@ export function bootDesktop(doc: Document): void {
       .catch((err) => console.warn('[Larkinor UI] Quest offer failed:', err));
   }
 
-  // The free-move narration and the battle screen's monster sheet are the two
-  // things needing monster data up front; every other panel loads its own on
-  // demand.
+  // The narration on the free-move and labyrinth pages and the battle
+  // screen's monster sheet are the things needing monster data up front;
+  // every other panel loads its own on demand.
   if (!state && !battleMonsterName) return;
 
   createDataLoader(gmSource(), DATA_BASE_URL).loadMonsters()

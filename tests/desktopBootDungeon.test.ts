@@ -6,11 +6,12 @@ import { QUEST_MOVE_PREF_KEY, QUEST_POSITION_PREF_KEY } from '../src/shared/pref
 const GAME_URL = 'https://l2.larkinor.hu/cgi-bin/larkinor';
 
 /** A dungeon page carrying the game's own direction control. */
-function dungeonDoc(): Document {
+function dungeonDoc(extraHtml = ''): Document {
   return new JSDOM(`<html><body>
     <form name="urlap"><input type="hidden" name="oldalTipus" value="otLabirintus"></form>
     <div id="mydiv"><input type="text"></div>
     <input type="image" src="/pic/eszak.gif" title="Észak">
+    ${extraHtml}
   </body></html>`, { url: GAME_URL }).window.document;
 }
 
@@ -50,6 +51,22 @@ describe('bootDesktop and the dungeon step tracker', () => {
     doc.querySelector<HTMLInputElement>('input[src*="eszak"]')!.click();
 
     expect(GM_setValue).toHaveBeenCalledWith(QUEST_MOVE_PREF_KEY, 'N');
+  });
+
+  // The labyrinth offers the same select-plus-submit special actions as free
+  // move, and the game page makes each one two clicks there too.
+  it('offers the quick actions on a dungeon page, as on free move', () => {
+    const doc = dungeonDoc(`
+      <form name="specTevUrlap">
+        <select name="tevFajta"><option value="kajal">kajálsz</option></select>
+        <input type="image" src="/ikon/ok.gif">
+      </form>
+    `);
+    bootDesktop(doc);
+
+    const labels = Array.from(doc.querySelectorAll('#lc-dock-root .lc-dock-btn')).map(b => b.textContent);
+    expect(labels).toContain('kajálsz');
+    expect(labels).toContain('Küldetések');
   });
 
   it('clears the stored position on a page that is not a dungeon', () => {

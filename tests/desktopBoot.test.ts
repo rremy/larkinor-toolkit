@@ -188,6 +188,51 @@ describe('bootDesktop', () => {
     expect(root.style.getPropertyValue('--lc-dock-top')).toBe('');
   });
 
+  /**
+   * The live labyrinth page, measured in a real browser: no chat at all, a
+   * 791px banner, a sidebar at 653..791 running to 660, and the game frame's
+   * bottom strip ending at 463 inside the 633px column — whose own container
+   * overhangs it to 503.
+   */
+  function labyrinthDoc(viewportHeight: number): Document {
+    const doc = gameDoc('otLabirintus', `
+      <div id="banner"></div>
+      <div id="sidebar"></div>
+      <div id="column"><div id="frame-strip"></div><div id="narration"></div></div>
+    `);
+    const rect = (left: number, top: number, width: number, height: number) =>
+      () => ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRect;
+    doc.getElementById('banner')!.getBoundingClientRect = rect(0, 0, 791, 60);
+    doc.getElementById('sidebar')!.getBoundingClientRect = rect(653, 60, 138, 600);
+    doc.getElementById('column')!.getBoundingClientRect = rect(0, -97, 633, 600);
+    doc.getElementById('frame-strip')!.getBoundingClientRect = rect(0, 443, 627, 20);
+    doc.getElementById('narration')!.getBoundingClientRect = rect(275, 93, 345, 350);
+    Object.defineProperty(doc.defaultView!, 'innerHeight', { value: viewportHeight, configurable: true });
+    return doc;
+  }
+
+  it('sits just below the game frame on a page with no chat', () => {
+    // Anchoring to the viewport's foot left the dock a window's height away
+    // from the game in a labyrinth. Below the frame is where the chat sits on
+    // free move — and the banner, sidebar and the column's overhanging
+    // container must not push it further down.
+    const doc = labyrinthDoc(987);
+    bootDesktop(doc);
+
+    const root = doc.getElementById('lc-dock-root')!;
+    expect(root.dataset.anchor).toBeUndefined();
+    expect(root.style.getPropertyValue('--lc-dock-top')).toBe('473px'); // 463 + 10 gap
+    expect(root.style.getPropertyValue('--lc-dock-max-height')).toBe('506px'); // 987 - 8 - 473
+    expect(root.style.getPropertyValue('--lc-dock-width')).toBe('633px');
+  });
+
+  it('falls back to the viewport foot when a usable dock does not fit under the frame', () => {
+    const doc = labyrinthDoc(560);
+    bootDesktop(doc);
+
+    expect(doc.getElementById('lc-dock-root')!.dataset.anchor).toBe('bottom');
+  });
+
   it('still mounts the dock when there is no chat at all', () => {
     const doc = gameDoc('otVilag');
     bootDesktop(doc);
