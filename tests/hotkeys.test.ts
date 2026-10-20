@@ -8,9 +8,15 @@ describe('hotkey catalog', () => {
   it('covers the observed free-move tevFajta actions', () => {
     const keys = HOTKEY_CATALOG.map(h => h.key);
     expect(keys).toEqual([
-      'kajal', 'imadkozas', 'manaital', 'mobilidoxin',
+      'kajal', 'imadkozas', 'manaital', 'mobilidoxin', 'csodaflaska',
       'vargyogy', 'homeport', 'burok', 'as', 'ongyilok', 'kilep',
     ]);
+  });
+
+  it('maps "kiüríted a csodaflaskát" to its icon', () => {
+    // Both read off the live page: option value `csodaflaska`, and a GIF served
+    // at /2/ikon/sc_csodaflaska.gif.
+    expect(hotkeyIconUrl(getHotkey('csodaflaska')!)).toBe('https://l2.larkinor.hu/2/ikon/sc_csodaflaska.gif');
   });
 
   it('maps "elmondasz egy hómportot" to its irregular icon', () => {

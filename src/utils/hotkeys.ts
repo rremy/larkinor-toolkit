@@ -23,6 +23,7 @@ export const HOTKEY_CATALOG: Hotkey[] = [
   { key: 'imadkozas', label: 'Imádkozol', icon: 'sc_ima' },
   { key: 'manaital', label: 'Manaital', icon: 'sc_manaital' },
   { key: 'mobilidoxin', label: 'Mobilidoxin', icon: 'sc_mobilidoxin' },
+  { key: 'csodaflaska', label: 'Csodaflaska', icon: 'sc_csodaflaska' },
   { key: 'vargyogy', label: 'Gyógyvarázs', icon: 'sc_gyogyvarazs' },
   { key: 'homeport', label: 'Hómport', icon: 'sc_homport' },
   { key: 'burok', label: 'Varázsburok', icon: 'sc_durex' },
