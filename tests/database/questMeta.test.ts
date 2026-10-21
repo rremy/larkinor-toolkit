@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   LOCK_LABEL, SZEL_LABEL, outcomeValence, coordLabel, keyCellsFor, locksIn, hasSzelEdges,
   outsideMazeCells, cellKey, parseHiddenLocks, serialiseHiddenLocks, splitEdges, edgeKey,
+  cellKeys, questChipLabel, questHeading,
 } from '@/database/quests/questMeta';
 import type { Quest, QuestCell, Edge } from '@/shared/data';
 
@@ -27,7 +28,8 @@ describe('LOCK_LABEL', () => {
     expect(LOCK_LABEL.vas).toBe('vaskulcs');
     expect(LOCK_LABEL.ezust).toBe('ezüstkulcs');
     expect(LOCK_LABEL.cso).toBe('csőkulcs');
-    expect(Object.keys(LOCK_LABEL)).toHaveLength(8);
+    expect(LOCK_LABEL.varazs).toBe('varázskulcs');
+    expect(Object.keys(LOCK_LABEL)).toHaveLength(9);
   });
 });
 
@@ -109,6 +111,36 @@ describe('keyCellsFor / locksIn', () => {
     expect(keyCellsFor(q, 'platina')).toEqual([]);
     // Only locks that actually gate a door, deduped.
     expect(locksIn(q)).toEqual(['vas']);
+  });
+
+  // Archived quest 57's Csontváz drops six kinds of key; every one of them
+  // must lead the key legend to that cell, not only the first.
+  it('finds a cell by any of the keys it gives', () => {
+    const many = cell({ row: 1, col: 1, key: 'vas', extraKeys: ['rez', 'cso'] });
+    const q = quest([many, cell({ row: 0, col: 0 })]);
+    expect(cellKeys(many)).toEqual(['vas', 'rez', 'cso']);
+    expect(cellKeys(cell({}))).toEqual([]);
+    expect(keyCellsFor(q, 'cso')).toEqual([many]);
+  });
+});
+
+describe('questChipLabel / questHeading', () => {
+  it('labels a royal quest by its number, and a floor by its level', () => {
+    const plain = quest([]);
+    expect(questChipLabel(plain)).toBe('1');
+    expect(questHeading(plain)).toBe('1. küldetés');
+
+    const ground = { ...quest([]), id: '59', title: '59', floor: 'F' };
+    const cellar = { ...quest([]), id: '59-2', title: '59', floor: '−2' };
+    expect(questChipLabel(ground)).toBe('59 F');
+    expect(questHeading(ground)).toBe('59. küldetés · földszint');
+    expect(questChipLabel(cellar)).toBe('59 −2');
+    expect(questHeading(cellar)).toBe('59. küldetés · −2. szint');
+  });
+
+  it('heads a tavern quest with its title alone', () => {
+    const tavern: Quest = { ...quest([]), set: 'tavern', id: 'GOMB', title: 'Gomb' };
+    expect(questHeading(tavern)).toBe('Gomb');
   });
 });
 

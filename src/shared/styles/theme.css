@@ -53,6 +53,8 @@
   --lock-platina: #6fc08a;
   --lock-tolvaj: #6f8fd6;
   --lock-cso: #cf5f5f;
+  /* Violet: the one hue none of the other eight sits near. */
+  --lock-varazs: #a77bd4;
   --quest-wall: #c9b998;
   --quest-szel: #4b7fa8;
   --quest-void: #191310;
@@ -1080,6 +1082,7 @@
 .lc-db .quest-edge.lock-platina { background: var(--lock-platina); }
 .lc-db .quest-edge.lock-tolvaj { background: var(--lock-tolvaj); }
 .lc-db .quest-edge.lock-cso { background: var(--lock-cso); }
+.lc-db .quest-edge.lock-varazs { background: var(--lock-varazs); }
 /* Trap and question cells: one big centred icon instead of a small corner
    badge (owner feedback — those badges were too easy to miss). font-size is
    set inline per cell from `tileSize` (QuestGrid.tsx), not here: a CSS
@@ -1140,6 +1143,7 @@
 .lc-db .quest-badge.key.lock-platina { border-color: var(--lock-platina); }
 .lc-db .quest-badge.key.lock-tolvaj { border-color: var(--lock-tolvaj); }
 .lc-db .quest-badge.key.lock-cso { border-color: var(--lock-cso); }
+.lc-db .quest-badge.key.lock-varazs { border-color: var(--lock-varazs); }
 .lc-db .quest-legend h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
 /* Colour set explicitly: a button never inherits it (quirks-mode notes above),
    and this one renders inside the in-game overlay too. */
@@ -1169,6 +1173,7 @@
 .lc-db .quest-lock-swatch.lock-platina { background: var(--lock-platina); }
 .lc-db .quest-lock-swatch.lock-tolvaj { background: var(--lock-tolvaj); }
 .lc-db .quest-lock-swatch.lock-cso { background: var(--lock-cso); }
+.lc-db .quest-lock-swatch.lock-varazs { background: var(--lock-varazs); }
 .lc-db .quest-lock-swatch.szel { background: var(--quest-szel); }
 .lc-db .quest-lock-missing { color: var(--muted); font-style: italic; }
 .lc-db .quest-szel-note {

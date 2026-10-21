@@ -11,7 +11,7 @@ import { QuestKeyLegend } from './QuestKeyLegend';
 import { QuestCellDetail } from './QuestCellDetail';
 import {
   DEFAULT_TILE, SZEL_LABEL, TILE_SIZES, cellKey, hasSzelEdges, locksIn, outsideMazeCells,
-  parseHiddenLocks, serialiseHiddenLocks,
+  parseHiddenLocks, questChipLabel, questHeading, serialiseHiddenLocks,
 } from './questMeta';
 
 interface QuestViewProps {
@@ -485,7 +485,7 @@ export function QuestView(props: QuestViewProps): VNode {
             aria-pressed={q.id === quest.id}
             onClick={() => onSelectQuest(quest.set, q.id)}
           >
-            {q.title}
+            {questChipLabel(q)}
           </button>
         ))}
       </div>
@@ -493,7 +493,7 @@ export function QuestView(props: QuestViewProps): VNode {
       <div class="quest-layout">
         <div class="quest-main">
           <div class={`quest-header${detailsOpen ? '' : ' details-collapsed'}`}>
-            <h2>{quest.set === 'royal' ? `${quest.title}. küldetés` : quest.title}</h2>
+            <h2>{questHeading(quest)}</h2>
             {/* Shown only on narrow viewports, where the brief, the reward and
                 the stats together cost more screen than the maze they
                 describe. The zoom stays outside the fold: resizing the maze is

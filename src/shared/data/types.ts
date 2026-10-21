@@ -115,10 +115,14 @@ export interface ShopData {
   shops: ItemShop[];
 }
 
-/** The eight lock types a quest door can carry. */
+/**
+ * The lock types a quest door can carry: the eight both larkinorcenter.hu
+ * sources use, plus `varazs` (magic), which only the archived quests 46–63
+ * have.
+ */
 export type LockType =
   | 'vas' | 'rez' | 'bronz' | 'ezust'
-  | 'arany' | 'platina' | 'tolvaj' | 'cso';
+  | 'arany' | 'platina' | 'tolvaj' | 'cso' | 'varazs';
 
 export type Side = 'N' | 'E' | 'S' | 'W';
 
@@ -161,6 +165,11 @@ export interface QuestCell {
   boss: boolean;
   /** The lock whose key this cell yields. */
   key: LockType | null;
+  /**
+   * Further keys, for the few cells that yield several (archived quests only,
+   * e.g. 57's Csontváz). Absent everywhere else; read both through `cellKeys`.
+   */
+  extraKeys?: LockType[];
   questItem: boolean;
   portal: 'entrance' | 'exit' | null;
   trap: boolean;
@@ -206,4 +215,10 @@ export interface Quest {
   rows: number;
   cols: number;
   cells: QuestCell[];
+  /**
+   * Which floor of a multi-floor quest this maze is — `F` for the ground floor,
+   * `−1`… below it. Only royal quest 59 has floors; each is its own `Quest`,
+   * sharing the title, and the ground floor keeps the plain id.
+   */
+  floor?: string;
 }

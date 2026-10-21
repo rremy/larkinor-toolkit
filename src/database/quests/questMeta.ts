@@ -20,6 +20,7 @@ export const LOCK_LABEL: Record<LockType, string> = {
   platina: 'platinakulcs',
   tolvaj: 'tolvajkulcs',
   cso: 'csőkulcs',
+  varazs: 'varázskulcs',
 };
 
 /** Serialise a hidden-locks set for `questHiddenLocksKey`; sorted, so stable. */
@@ -264,9 +265,26 @@ export function coordLabel(cell: { row: number; col: number }): string {
   return `${cell.row + 1}. sor, ${cell.col + 1}. oszlop`;
 }
 
+/** Every key this cell yields, in the order the source lists them. */
+export function cellKeys(cell: QuestCell): LockType[] {
+  return cell.key ? [cell.key, ...(cell.extraKeys ?? [])] : [];
+}
+
 /** Cells in this quest that yield the given lock's key. */
 export function keyCellsFor(quest: Quest, lock: LockType): QuestCell[] {
-  return quest.cells.filter((c) => c.key === lock);
+  return quest.cells.filter((c) => cellKeys(c).includes(lock));
+}
+
+/** A quest's chip label: its title, plus the floor for a multi-floor quest. */
+export function questChipLabel(quest: Quest): string {
+  return quest.floor ? `${quest.title} ${quest.floor}` : quest.title;
+}
+
+/** A quest's heading: `12. küldetés` for royal (with its floor), the title for tavern. */
+export function questHeading(quest: Quest): string {
+  if (quest.set !== 'royal') return quest.title;
+  const floor = quest.floor === 'F' ? ' · földszint' : quest.floor ? ` · ${quest.floor}. szint` : '';
+  return `${quest.title}. küldetés${floor}`;
 }
 
 /** Every lock that gates at least one door in this quest, deduped and ordered. */

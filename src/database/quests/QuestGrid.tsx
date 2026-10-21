@@ -5,7 +5,7 @@ import type { QuestPosition } from '@/shared/questPosition';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import {
   BADGE, CLEARED_LABEL, DEFAULT_TILE, HERE_LABEL, LOCK_LABEL, MAYBE_HERE_LABEL, SIDES, SIDE_LABEL,
-  SZEL_LABEL, cellKey, coordLabel, edgeKey, outsideMazeCells, splitEdges,
+  SZEL_LABEL, cellKey, cellKeys, coordLabel, edgeKey, outsideMazeCells, splitEdges,
 } from './questMeta';
 
 /** Tooltip suffix for a door the neighbouring cell does not draw the same. */
@@ -90,7 +90,7 @@ export function QuestGrid(props: QuestGridProps): VNode {
       {quest.cells.map((cell) => {
         const monster = cell.monsterId != null ? monsters.getById(cell.monsterId) : undefined;
         const isSelected = selected != null && selected.row === cell.row && selected.col === cell.col;
-        const keyHit = highlightLock != null && cell.key === highlightLock;
+        const keyHit = highlightLock != null && cellKeys(cell).includes(highlightLock);
         // Trap and question cells get one big centred icon instead of a
         // corner badge (see CLAUDE.md / task 17). Trap wins if a cell were
         // ever both — not observed in the current data, but a trap is the
@@ -230,7 +230,12 @@ export function QuestGrid(props: QuestGridProps): VNode {
               )}
               {cell.portal === 'exit' && <span class="quest-badge exit" title="kijárat">{BADGE.exit}</span>}
               {cell.key && (
-                <span class={`quest-badge key lock-${cell.key}`} title={LOCK_LABEL[cell.key]}>{BADGE.key}</span>
+                <span
+                  class={`quest-badge key lock-${cell.key}`}
+                  title={cellKeys(cell).map((lock) => LOCK_LABEL[lock]).join(', ')}
+                >
+                  {BADGE.key}
+                </span>
               )}
               {/* No quest-item chip: the objective is the centred glyph now,
                   so a corner copy would be redundant clutter on the one tile

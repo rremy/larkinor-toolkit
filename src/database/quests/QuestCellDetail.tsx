@@ -1,7 +1,7 @@
 import { h, type VNode } from 'preact';
 import type { MonsterDatabase, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { CLEARED_LABEL, LOCK_LABEL, SIDES, SIDE_LABEL, coordLabel } from './questMeta';
+import { CLEARED_LABEL, LOCK_LABEL, SIDES, SIDE_LABEL, cellKeys, coordLabel } from './questMeta';
 import { QuestQuestionCard } from './QuestQuestionCard';
 
 interface QuestCellDetailProps {
@@ -80,7 +80,9 @@ export function QuestCellDetail(props: QuestCellDetailProps): VNode {
       {markers.length > 0 && <div class="quest-markers">{markers.join(' · ')}</div>}
 
       {cell.key && (
-        <div class="quest-detail-key">Itt található: <strong>{LOCK_LABEL[cell.key]}</strong></div>
+        <div class="quest-detail-key">
+          Itt található: <strong>{cellKeys(cell).map((lock) => LOCK_LABEL[lock]).join(', ')}</strong>
+        </div>
       )}
 
       {doors.length > 0 && (
