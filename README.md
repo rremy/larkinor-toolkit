@@ -74,7 +74,7 @@ adds to it.
 Sortable, filterable tables for weapons, armour, items and monsters, plus a
 clickable district map with cell details and resident monsters, and an
 interactive maze viewer for the game's quests — switch between **Királyi**
-(the 45 royal quests) and **Kocsmai** (the 37 tavern quests) as independent
+(royal quests 1–63) and **Kocsmai** (the 37 tavern quests) as independent
 sets, each with its own key/lock legend and question tiles. Search is
 accent-insensitive, so `gyikbor` finds `Gyíkbőr`. The active quest the game
 names in its narration becomes a link straight into the quest tab; tiles you've

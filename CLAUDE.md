@@ -47,7 +47,8 @@ larkinor-toolkit/
 ├── loader/larkinor-loader.user.js   # Hand-written ViolentMonkey loader (fetches + evals main script)
 ├── scripts/
 │   ├── deploy.sh            # scp dist/ + static/ to the server (config from repo-root .env)
-│   └── quests/              # scrape.mjs+parseQuest.mjs (royal), scrapeTavern.mjs+parseTavernQuest.mjs (tavern)
+│   └── quests/              # scrape.mjs+parseQuest.mjs (royal 1–45), scrapeArchive.mjs+parseArchiveQuest.mjs
+│                            #   (royal 46–63, from the committed archive/ snapshots), scrapeTavern.mjs+parseTavernQuest.mjs (tavern)
 ├── docs/superpowers/        # specs + plans
 ├── .github/workflows/ci.yml # CI: typecheck + test + build; deploys main to GitHub Pages
 ├── vite.config.ts           # Userscript build (vite-plugin-monkey)
@@ -113,8 +114,8 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map), Küldetések (Quests).
 - **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab.
 - **Map viewer** (`map/`): clickable districts with cell details and resident monsters.
-- **Quest viewer** (`quests/`): the 45 royal quests as interactive mazes, scraped once from a
-  third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
+- **Quest viewer** (`quests/`): royal quests 1–63 as interactive mazes. 1–45 were scraped once
+  from a third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
   `static/db/quests.json` via `npm run scrape:quests` (`scripts/quests/scrape.mjs` +
   `parseQuest.mjs`). Hard-won facts about that source page, needed if the scraper or parser
   ever needs revisiting:
@@ -162,6 +163,40 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     in quirks mode, where table cells don't inherit `color` and render black-on-dark (see
     *quirks-mode inheritance holes* below). Rendering divs sidesteps that class of bug rather
     than patching around it.
+  - **Royal quests 46–63 come from a third source**: the Internet Archive's 2004–2007 copies of
+    `lc.kew1n.hu/kuldik/<n>/<n>.htm`, which larkinorcenter.hu never carried. The 18 pages are
+    committed under `scripts/quests/archive/` (the archive is slow and drops connections, and
+    the pages will never change), parsed by `parseArchiveQuest.mjs` and appended to
+    `quests.json` by `scrapeArchive.mjs` — `npm run scrape:quests` runs it after `scrape.mjs`,
+    which writes 1–45 only. A grammar of its own again, so a module of its own:
+    - **Walls and doors are inline `border-<side>-style`/`-color` on each `<td>`**: none (or no
+      style at all — quest 54 is mostly an open field) is open, black is a wall, any other
+      colour a door. **A dotted side always faces a solid door of the same colour** (103 pairs,
+      never black) — the far half of a one-sided door, so it parses as open.
+    - **Each author used their own palette**, so no colour means one lock across the set:
+      quest 49 prints a legend (red = réz, …) that holds from 49 on, but in 46 red is tolvaj and
+      in 47 bronz. The cell labels (`Jobbra tolvajajtó`, `Északra és délre platinaajtó`) do hold
+      everywhere, so `buildPalette` votes each quest's colours from its own labels, side by
+      side, and the legend only fills a colour no label names.
+    - **A ninth lock, `varazs`**, exists only here; so do **cells giving several keys**
+      (`extraKeys`, six cells — 57's Csontváz drops six kinds). Read keys through `cellKeys`.
+    - `na_alert('…')` is the game's narration, with question choices as `---> text (outcome)`;
+      the image's `alt`/`title` is the site author's label (monster name, `Csőkulcs`,
+      `Külditárgy`, `Kijárat`, door notes) and decides markers only, never narration.
+      Narration is joined onto one line like the other sources — the matcher compares a cell's
+      text against single printed lines, and a multi-line cell could not even find itself.
+    - **Royal quest 63's entrance text is exactly the game's entry line**, which the game prints
+      on entering *any* labyrinth — so `narrationMatchStrength` ignores a cell whose whole text
+      is that line, or every entry page became an exact hit on 63.
+    - **Quest 59 is four mazes on one page** (Földszint, −1…−3), each its own `Quest` with a
+      `floor` label; the ground floor keeps id `59` (so `Aktuális küldetés: (59)` lands on it),
+      the cellars are `59-1`…`59-3`.
+    - No page declares a charset: the bytes are Windows-1250, and several pages also spell ő/ű
+      as `&otilde;`/`&ucirc;` — the same Latin-1 mojibake as below — which `decodeText` folds
+      back. Sprites are named after the monster, run together (`reszegmatroz.gif`), so they
+      resolve by folded name, then by the label's leading words; `vamirlord` is the one alias.
+    - They narrate only 48% of their cells against larkinorcenter's 75%, so the position rates
+      in `tests/dungeonPosition.test.ts` are pinned per source.
   - **Tavern quests** (*kocsmai küldetések*) are a second, independent quest body — 37 quests
     keyed by page slug rather than a number (ids like `GOMB` or `GY.I.K`, dots and mixed case
     included), titled from the index link's text — scraped from
