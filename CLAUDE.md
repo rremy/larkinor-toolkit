@@ -434,6 +434,13 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       rather than one uncertainty. The ring is inset past the wall edges — like the objective
       ring, and for a sharper reason: on the tile the player is standing on, which way they
       can go is the whole point, so the marker must not cover its own walls.
+    - **The player can set the position by hand** — *📍 Itt állok* on the selected cell, for
+      when detection never found them or lost them. It writes an exact `'manual'` position to
+      the same pref, so the next dungeon page carries on from it like any other (a step
+      propagates, no step holds it, contradicting walls drop it); it writes no cleared marks,
+      since a mis-click must not cost permanent progress. Offered only in-game
+      (`DatabaseApp`'s `tracksPosition`, set by `DatabaseOverlay`): the standalone site's
+      storage is another origin, where a position would reach no dungeon page.
     - **The standalone site never shows a marker.** It is a different origin with its own
       `localStorage` and cannot see the in-game store, so the pref reads null and the grid
       renders normally — the same situation as the compare card.
