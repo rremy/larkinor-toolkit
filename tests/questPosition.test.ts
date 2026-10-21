@@ -77,9 +77,9 @@ describe('parseQuestPosition', () => {
     expect(parseQuestPosition(modest)?.exact).toBe(true);
   });
 
-  it('round-trips the source', () => {
+  it.each(['narration', 'move', 'entrance', 'stay', 'manual'] as const)('round-trips the source %s', (source) => {
     const position: QuestPosition = {
-      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source: 'move',
+      set: 'royal', questId: '35', cells: [{ row: 0, col: 6 }], exact: true, source,
     };
     expect(parseQuestPosition(serialiseQuestPosition(position))).toEqual(position);
   });

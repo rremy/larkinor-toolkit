@@ -1,7 +1,7 @@
 import { h, type VNode } from 'preact';
 import type { MonsterDatabase, QuestCell } from '@/shared/data';
 import { monsterImageUrl } from '@/components/MonsterCard';
-import { CLEARED_LABEL, LOCK_LABEL, SIDES, SIDE_LABEL, cellKeys, coordLabel } from './questMeta';
+import { BADGE, CLEARED_LABEL, LOCK_LABEL, SIDES, SIDE_LABEL, cellKeys, coordLabel } from './questMeta';
 import { QuestQuestionCard } from './QuestQuestionCard';
 
 interface QuestCellDetailProps {
@@ -15,11 +15,18 @@ interface QuestCellDetailProps {
    * what a read-only host (or a test that does not care) gets.
    */
   onToggleCleared?(cell: QuestCell): void;
+  /** Whether the player is pinned to this very cell. */
+  here?: boolean;
+  /**
+   * Pins the player here by hand. Optional: only the in-game overlay can, so
+   * without it no control is rendered.
+   */
+  onSetHere?(cell: QuestCell): void;
 }
 
 /** Detail panel for the selected maze cell. */
 export function QuestCellDetail(props: QuestCellDetailProps): VNode {
-  const { cell, monsters, onJumpToMonster, cleared, onToggleCleared } = props;
+  const { cell, monsters, onJumpToMonster, cleared, onToggleCleared, here, onSetHere } = props;
 
   if (!cell) {
     return (
@@ -60,6 +67,18 @@ export function QuestCellDetail(props: QuestCellDetailProps): VNode {
           onClick={() => onToggleCleared(cell)}
         >
           {cleared ? 'Visszavonás' : 'Teljesítve'}
+        </button>
+      )}
+
+      {onSetHere && (
+        <button
+          type="button"
+          class={`quest-here-toggle${here ? ' active' : ''}`}
+          disabled={here}
+          title={here ? undefined : 'Ha a jelölő nem talált meg, vagy elvesztett'}
+          onClick={() => onSetHere(cell)}
+        >
+          {BADGE.here} {here ? 'Itt állsz' : 'Itt állok'}
         </button>
       )}
 

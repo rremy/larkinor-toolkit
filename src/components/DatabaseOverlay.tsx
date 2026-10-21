@@ -87,6 +87,7 @@ export function DatabaseOverlay({
           routing="memory"
           routeStore={routeStore}
           prefStore={prefStore}
+          tracksPosition
           initialItemId={initialItemId}
           initialItemName={initialItemName}
           initialTab={initialTab}

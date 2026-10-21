@@ -256,6 +256,26 @@ describe('activateDungeonPosition', () => {
     expect(prefs.stored.get(QUEST_MOVE_PREF_KEY)).toBe('');
   });
 
+  // Set by hand in the quests tab when detection had lost the player: the next
+  // page must carry on from it exactly as from a detected cell.
+  it('carries on from a position the player set by hand', async () => {
+    const from = quest35.cells.find((c) => c.edges.N.kind === 'open' && c.row > 0)!;
+    const to = quest35.cells.find((c) => c.row === from.row - 1 && c.col === from.col)!;
+    const prefs = makePrefs({
+      [QUEST_SET_PREF_KEY]: 'royal',
+      [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+        set: 'royal', questId: '35', cells: [{ row: from.row, col: from.col }], exact: true, source: 'manual',
+      }),
+      [QUEST_MOVE_PREF_KEY]: 'N',
+    });
+
+    const position = await activateDungeonPosition('', observed(to), makeLoader(), prefs.read, prefs.write);
+
+    expect(position).toEqual({
+      set: 'royal', questId: '35', cells: [{ row: to.row, col: to.col }], exact: true, source: 'move',
+    });
+  });
+
   /**
    * Live replay, 2026-10-20: royal quest 44's entrance (3,6), whose north side
    * is a thief-locked door. The door has a nav button ("Kinyitod az ajtót és

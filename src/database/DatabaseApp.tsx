@@ -70,6 +70,13 @@ export interface DatabaseAppProps {
    */
   prefStore?: PrefStore;
   /**
+   * True when the host tracks the player's position in a labyrinth — the
+   * in-game overlay. Lets the quests tab set that position by hand. The
+   * standalone site leaves it off: its storage is a different origin from the
+   * game's, so a position written there would reach no dungeon page.
+   */
+  tracksPosition?: boolean;
+  /**
    * Entity id to open on mount (weapon/armor/item) — resolved to its tab. Used
    * when the overlay is opened from a monster's dropped-item link.
    */
@@ -198,7 +205,7 @@ function hashFor(tab: Tab, first: string | null, second: string | null): string 
 }
 
 export function DatabaseApp(props: DatabaseAppProps) {
-  const { loader, routing = 'hash', routeStore, prefStore, initialItemId, initialItemName, initialTab, initialTabKey, initialQuest } = props;
+  const { loader, routing = 'hash', routeStore, prefStore, tracksPosition = false, initialItemId, initialItemName, initialTab, initialTabKey, initialQuest } = props;
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
@@ -340,6 +347,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
           questSet={route.set}
           questId={route.quest}
           prefStore={prefStore}
+          canSetPosition={tracksPosition}
           onSelectQuest={(set, id) => navigate('quests', set, id)}
           onJumpToMonster={(id) => navigate('monsters', String(id))}
         />

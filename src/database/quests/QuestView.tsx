@@ -4,7 +4,7 @@ import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet 
 import { buildMonsterDatabase } from '@/shared/data';
 import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questClearedKey, questHiddenLocksKey, questSelectedKey } from '@/shared/prefKeys';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
-import { parseQuestPosition, type QuestPosition } from '@/shared/questPosition';
+import { parseQuestPosition, serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
 import { QuestKeyLegend } from './QuestKeyLegend';
@@ -28,6 +28,12 @@ interface QuestViewProps {
    * store existed.
    */
   prefStore?: PrefStore;
+  /**
+   * Offer "Itt állok" on the selected cell, writing the player's position by
+   * hand when detection did not find it or lost it. Only where the host tracks
+   * that position — see DatabaseApp's `tracksPosition`.
+   */
+  canSetPosition?: boolean;
   onSelectQuest(set: QuestSet, id: string | null): void;
   onJumpToMonster(id: number): void;
 }
@@ -66,7 +72,7 @@ function parseTileSize(raw: string | null): number {
 }
 
 export function QuestView(props: QuestViewProps): VNode {
-  const { loader, questSet, questId, prefStore, onSelectQuest, onJumpToMonster } = props;
+  const { loader, questSet, questId, prefStore, canSetPosition = false, onSelectQuest, onJumpToMonster } = props;
   // The active set falls back to the stored one, then to royal. Read once at
   // mount: later navigation supplies `questSet` explicitly.
   const [fallbackSet] = useState<QuestSet>(() => {
@@ -260,6 +266,24 @@ export function QuestView(props: QuestViewProps): VNode {
     prefStore?.write(key, serialiseCleared(next));
   }
 
+  /**
+   * Pin the player to a cell by hand, for when detection never found them or
+   * has lost them. Written where the boot writes it, so the next dungeon page
+   * starts from here: a step from it propagates, a page with no step holds it,
+   * and the drawn walls still drop it if it was the wrong cell.
+   *
+   * Writes no cleared marks — the boot does that from what the page shows, and
+   * a mis-click here must not cost permanent progress.
+   */
+  function setHere(cell: QuestCell) {
+    if (!quest) return;
+    const next: QuestPosition = {
+      set: activeSet, questId: quest.id, cells: [{ row: cell.row, col: cell.col }], exact: true, source: 'manual',
+    };
+    setPosition(next);
+    prefStore?.write(QUEST_POSITION_PREF_KEY, serialiseQuestPosition(next));
+  }
+
   /** Forget this quest's progress — for a repeat run of the same maze. */
   function resetCleared() {
     if (selectedQuestId == null) return;
@@ -299,7 +323,11 @@ export function QuestView(props: QuestViewProps): VNode {
    */
   useEffect(() => {
     if (!quests || !prefStore) return;
-    setPosition(parseQuestPosition(prefStore.read(QUEST_POSITION_PREF_KEY)));
+    const stored = parseQuestPosition(prefStore.read(QUEST_POSITION_PREF_KEY));
+    // Keep the current object when nothing changed: a new one with the same
+    // content re-fires the select-the-detected-cell effect below a render
+    // later, which would undo a cell the player picked in between.
+    setPosition((current) => (JSON.stringify(current) === JSON.stringify(stored) ? current : stored));
   }, [quests, prefStore]);
 
   /**
@@ -565,6 +593,14 @@ export function QuestView(props: QuestViewProps): VNode {
             onToggleCleared={
               prefStore && selectedCell !== null && !outside.has(cellKey(selectedCell))
                 ? toggleCleared
+                : undefined
+            }
+            here={selectedCell !== null && questPosition?.exact === true
+              && questPosition.cells[0].row === selectedCell.row
+              && questPosition.cells[0].col === selectedCell.col}
+            onSetHere={
+              canSetPosition && prefStore && selectedCell !== null && !outside.has(cellKey(selectedCell))
+                ? setHere
                 : undefined
             } />
           <QuestKeyLegend

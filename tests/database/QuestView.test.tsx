@@ -5,7 +5,8 @@ import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_SET_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { parseQuestPosition, serialiseQuestPosition } from '@/shared/questPosition';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
 
 /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
@@ -634,6 +635,63 @@ describe('QuestView', () => {
       );
       await screen.findAllByText(/Gründen borospincéje/);
       expect(container.querySelector('.quest-header')!.classList.contains('details-collapsed')).toBe(true);
+    });
+  });
+
+  describe('setting the position by hand', () => {
+    const selectTile = async (container: Element, col: number) => {
+      const tile = await waitFor(() => {
+        const el = container.querySelector(`.quest-cell[data-row="0"][data-col="${col}"]`);
+        expect(el).not.toBeNull();
+        return el!;
+      });
+      fireEvent.click(tile);
+    };
+
+    // Detection found nothing (or lost the player): the tab can say where they
+    // are, and the next dungeon page carries on from there.
+    it('pins the player to the selected cell and marks it', async () => {
+      const prefStore = makePrefStore();
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={prefStore} canSetPosition onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      await selectTile(container, 1);
+      fireEvent.click(screen.getByRole('button', { name: /Itt állok/ }));
+
+      expect(parseQuestPosition(prefStore.read(QUEST_POSITION_PREF_KEY))).toEqual({
+        set: 'royal', questId: '1', cells: [{ row: 0, col: 1 }], exact: true, source: 'manual',
+      });
+      await waitFor(() => expect(container.querySelector('.quest-cell.here[data-col="1"]')).toBeTruthy());
+      expect((screen.getByRole('button', { name: /Itt állsz/ }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('moves a wrong detected position to the chosen cell', async () => {
+      const prefStore = makePrefStore({
+        [QUEST_POSITION_PREF_KEY]: serialiseQuestPosition({
+          set: 'royal', questId: '1', cells: [{ row: 0, col: 0 }], exact: true, source: 'narration',
+        }),
+      });
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={prefStore} canSetPosition onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+      // An exact position selects its own cell once the data arrives; the
+      // player then picks the cell they are really on.
+      await waitFor(() => expect(container.querySelector('.quest-cell.selected[data-col="0"]')).toBeTruthy());
+
+      await selectTile(container, 1);
+      fireEvent.click(screen.getByRole('button', { name: /Itt állok/ }));
+
+      await waitFor(() => expect(container.querySelector('.quest-cell.here[data-col="1"]')).toBeTruthy());
+      expect(container.querySelector('.quest-cell.here[data-col="0"]')).toBeNull();
+    });
+
+    // The standalone site's storage is not the game's, so a position set there
+    // would reach no dungeon page.
+    it('offers nothing where the host does not track the position', async () => {
+      const { container } = render(<QuestView loader={makeLoader()} questSet="royal" questId="1"
+        prefStore={makePrefStore()} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+      await selectTile(container, 1);
+      expect(screen.queryByRole('button', { name: /Itt állok/ })).toBeNull();
     });
   });
 
