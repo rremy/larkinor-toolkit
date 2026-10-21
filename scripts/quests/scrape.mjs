@@ -2,7 +2,9 @@
 /**
  * Crawl the larkinorcenter.hu royal quest pages into static/db/quests.json.
  *
- * Run with `npm run scrape:quests`. Fails loudly rather than degrading: an
+ * Run with `npm run scrape:quests`, which then runs scrapeArchive.mjs to
+ * append quests 46–63 — this script writes 1–45 only, so running it alone
+ * drops them from the file. Fails loudly rather than degrading: an
  * unknown class token, a missing field, an empty maze or an unresolved sprite
  * base aborts before anything is written, so source drift surfaces here rather
  * than as a broken page.

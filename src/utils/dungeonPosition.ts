@@ -70,6 +70,11 @@ export function foldNarrationLines(narration: string): string[] {
 export function narrationMatchStrength(cellNarration: string, foldedLines: string[]): 0 | 1 | 2 {
   const text = foldAccents(cellNarration).replace(/[^a-z0-9]+/g, ' ').trim();
   if (!text) return 0;
+  // A cell whose whole text is the game's entry line names no cell at all: the
+  // game prints that line on entering *any* labyrinth. Royal quest 63's
+  // entrance records nothing else, so letting it match made every labyrinth's
+  // entry page an exact hit on 63. Entrances are the entrance tier's job.
+  if (text === ENTRY_LINE) return 0;
   if (foldedLines.includes(text)) return 2;
 
   const lastLine = foldedLines[foldedLines.length - 1];
@@ -149,6 +154,9 @@ export function matchCellsInQuest(
  * the safe direction.
  */
 const ENTRY_PHRASE = 'bejutnod a labirintusba';
+
+/** The whole entry line, folded: `Sikerült bejutnod a labirintusba.` */
+const ENTRY_LINE = `sikerult ${ENTRY_PHRASE}`;
 
 /** Whether the narration says the player has just walked into a labyrinth. */
 export function narrationSaysEntered(narration: string): boolean {

@@ -20,6 +20,16 @@ import type { QuestPosition } from '@/shared/questPosition';
 const royal: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const tavern: Quest[] = JSON.parse(readFileSync('static/db/tavern-quests.json', 'utf-8'));
 
+/**
+ * The royal set comes from two sources with very different amounts of text:
+ * 1–45 from larkinorcenter.hu, 46–63 from archived lc.kew1n.hu pages, which
+ * narrate only 48% of their cells against 75%. Rates are pinned per source so
+ * neither can hide the other's drift; the search corpus stays the whole set,
+ * since that is what the game page is matched against.
+ */
+const royalCenter = royal.filter((q) => !q.floor && Number(q.id) <= 45);
+const royalArchive = royal.filter((q) => !royalCenter.includes(q));
+
 const quest35 = royal.find((q) => q.id === '35')!;
 
 /**
@@ -271,8 +281,14 @@ describe('corpus match rates', () => {
   };
 
   it('pins the royal rates, and that the sides earn their keep', () => {
-    expect(rate(royal, false)).toBeCloseTo(0.781, 2);
-    expect(rate(royal, true)).toBeCloseTo(0.905, 2);
+    expect(rate(royalCenter, false)).toBeCloseTo(0.781, 2);
+    expect(rate(royalCenter, true)).toBeCloseTo(0.905, 2);
+  });
+
+  // Fewer narrated cells, but what is there is more distinctive per maze.
+  it('pins the archived royal rates', () => {
+    expect(rate(royalArchive, false)).toBeCloseTo(0.880, 2);
+    expect(rate(royalArchive, true)).toBeCloseTo(0.935, 2);
   });
 
   it('pins the tavern rates', () => {
@@ -287,6 +303,9 @@ describe('corpus match rates', () => {
       for (const quest of quests) {
         for (const cell of quest.cells) {
           if (!cell.narration.trim()) continue;
+          // Royal quest 63's entrance records only the game's own entry line,
+          // which the matcher deliberately ignores — see narrationMatchStrength.
+          if (/^Sikerült bejutnod a labirintusba\.?$/.test(cell.narration.trim())) continue;
           const observed: SideObservations = {
             N: cell.edges.N.kind === 'open' ? 'open' : 'wall',
             E: cell.edges.E.kind === 'open' ? 'open' : 'wall',
@@ -607,6 +626,7 @@ describe('corpus walk rates', () => {
   function walkRates(
     quests: Quest[],
     useMoves: boolean,
+    corpus: Quest[] = quests,
   ): { correct: number; wrongLock: number; wrongLockCount: number } {
     const random = rng(20260827);
     let steps = 0;
@@ -621,7 +641,7 @@ describe('corpus walk rates', () => {
 
       for (let i = 0; i < 40; i += 1) {
         const resolved = resolveDungeonPosition(
-          at.narration, sidesOf(at), quests, quest.id,
+          at.narration, sidesOf(at), corpus, quest.id,
           useMoves ? previous : null, useMoves ? move : null,
         );
         steps += 1;
@@ -660,8 +680,8 @@ describe('corpus walk rates', () => {
   // at 99.94% correct-and-unique (1799 of 1800 steps), which rounds to the
   // `1` pinned below.
   it('pins how much the step adds on a royal walk', () => {
-    const withoutMoves = walkRates(royal, false);
-    const withMoves = walkRates(royal, true);
+    const withoutMoves = walkRates(royalCenter, false, royal);
+    const withMoves = walkRates(royalCenter, true, royal);
     expect(withoutMoves.correct).toBeCloseTo(0.93, 2);
     expect(withMoves.correct).toBeCloseTo(1, 2);
     expect(withMoves.correct).toBeGreaterThan(withoutMoves.correct);
@@ -684,9 +704,22 @@ describe('corpus walk rates', () => {
   // the tolerant check since its small measured rate (5 of 1800, unaffected
   // by the fix) was never the invariant this rule proves.
   it('pins the wrong-lock rate on a royal walk', () => {
-    const withoutMoves = walkRates(royal, false);
-    const withMoves = walkRates(royal, true);
+    const withoutMoves = walkRates(royalCenter, false, royal);
+    const withMoves = walkRates(royalCenter, true, royal);
     expect(withoutMoves.wrongLock).toBeCloseTo(0, 2);
+    expect(withMoves.wrongLockCount).toBe(0);
+  });
+
+  // The archived quests narrate half their cells, so a walk spends long
+  // stretches on silent tiles: 54.8% correct-and-unique from the page alone,
+  // 80.7% with the step. Never a wrong lock either way, in its own corpus
+  // or against the larkinorcenter quests' wording.
+  it('pins the archived royal walk', () => {
+    const withoutMoves = walkRates(royalArchive, false, royal);
+    const withMoves = walkRates(royalArchive, true, royal);
+    expect(withoutMoves.correct).toBeCloseTo(0.55, 2);
+    expect(withMoves.correct).toBeCloseTo(0.81, 2);
+    expect(withoutMoves.wrongLockCount).toBe(0);
     expect(withMoves.wrongLockCount).toBe(0);
   });
 

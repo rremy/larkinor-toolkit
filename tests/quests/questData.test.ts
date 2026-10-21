@@ -1,21 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseImage } from '../../scripts/quests/parseQuest.mjs';
+import { parseArchiveImage } from '../../scripts/quests/parseArchiveQuest.mjs';
 import type { Quest, LockType } from '@/shared/data';
-import { cellKey, outsideMazeCells, splitEdges } from '@/database/quests/questMeta';
+import { cellKey, cellKeys, outsideMazeCells, splitEdges } from '@/database/quests/questMeta';
 
 const quests: Quest[] = JSON.parse(readFileSync('static/db/quests.json', 'utf-8'));
 const monsters = JSON.parse(readFileSync('static/db/monsters.json', 'utf-8'));
 const monsterIds = new Set<number>(monsters.map((m: { id: number }) => m.id));
 
-const LOCKS: LockType[] = ['vas', 'rez', 'bronz', 'ezust', 'arany', 'platina', 'tolvaj', 'cso'];
+const LOCKS: LockType[] = ['vas', 'rez', 'bronz', 'ezust', 'arany', 'platina', 'tolvaj', 'cso', 'varazs'];
+
+/** 1–45 come from larkinorcenter.hu, the rest from archived lc.kew1n.hu pages. */
+const fromArchive = (q: Quest) => q.floor !== undefined || Number(q.id) > 45;
 
 describe('static/db/quests.json', () => {
-  it('holds a contiguous run of royal quests starting at 1', () => {
-    expect(quests.length).toBeGreaterThanOrEqual(45);
-    expect(quests.map((q) => q.id)).toEqual(quests.map((_, i) => String(i + 1)));
+  it('holds royal quests 1–63 in order, with 59\'s cellar floors after its ground floor', () => {
+    const numbers = Array.from({ length: 63 }, (_, i) => String(i + 1));
+    const ids = numbers.flatMap((n) => (n === '59' ? ['59', '59-1', '59-2', '59-3'] : [n]));
+    expect(quests.map((q) => q.id)).toEqual(ids);
     expect(quests.every((q) => q.set === 'royal')).toBe(true);
-    expect(quests.map((q) => q.title)).toEqual(quests.map((_, i) => String(i + 1)));
+    // Floors share their quest's title; the id and `floor` tell them apart.
+    expect(quests.map((q) => q.title)).toEqual(ids.map((id) => id.split('-')[0]));
+    expect(quests.filter((q) => q.floor).map((q) => `${q.id}:${q.floor}`))
+      .toEqual(['59:F', '59-1:−1', '59-2:−2', '59-3:−3']);
   });
 
   it('gives every quest a description and a reward', () => {
@@ -40,7 +48,7 @@ describe('static/db/quests.json', () => {
   it('uses only known lock types on doors and keys', () => {
     for (const q of quests) {
       for (const c of q.cells) {
-        if (c.key) expect(LOCKS, `quest ${q.id}`).toContain(c.key);
+        for (const key of cellKeys(c)) expect(LOCKS, `quest ${q.id}`).toContain(key);
         for (const edge of Object.values(c.edges)) {
           if (edge.kind === 'door') expect(LOCKS, `quest ${q.id}`).toContain(edge.lock);
         }
@@ -64,7 +72,7 @@ describe('static/db/quests.json', () => {
     // original bug in CI — 42 cells across 10 quests had a question image
     // but a null `question`, and rendered no marker at all.
     const mismatches: string[] = [];
-    for (const q of quests) {
+    for (const q of quests.filter((quest) => !fromArchive(quest))) {
       for (const c of q.cells) {
         const imageSaysQuestion = parseImage(c.rawImage).question as boolean;
         if (imageSaysQuestion !== c.hasQuestion) {
@@ -75,6 +83,16 @@ describe('static/db/quests.json', () => {
     expect(mismatches).toEqual([]);
   });
 
+  it('sets hasQuestion on every archived question tile, whatever its text parsed to', () => {
+    // The archived pages also mark questions in the label (`kérdés!!!`) and
+    // by their `--->` choices, so the image only ever adds — never decides
+    // alone that a cell is not a question.
+    const missed = quests.filter(fromArchive).flatMap((q) => q.cells
+      .filter((c) => parseArchiveImage(c.rawImage).question && !c.hasQuestion)
+      .map((c) => `quest ${q.id} cell ${c.row},${c.col}`));
+    expect(missed).toEqual([]);
+  });
+
   it('provides a key cell for every lock that appears on a door, except this known set', () => {
     // The source genuinely omits a key for some door/quest pairs — the UI
     // states "nincs kulcs ebben a küldetésben" for these rather than treating
@@ -83,7 +101,7 @@ describe('static/db/quests.json', () => {
     // build instead of silently drifting.
     const missing: string[] = [];
     for (const q of quests) {
-      const keysHere = new Set(q.cells.map((c) => c.key).filter(Boolean));
+      const keysHere = new Set(q.cells.flatMap(cellKeys));
       const locksHere = new Set(
         q.cells.flatMap((c) => Object.values(c.edges))
           .filter((e) => e.kind === 'door')
@@ -98,6 +116,16 @@ describe('static/db/quests.json', () => {
       '39:vas',
       '41:bronz',
       '42:rez',
+      // The archived pages leave many more unrecorded: quest 49 mentions only
+      // its vas and varázs keys anywhere on the page, for seven other locks.
+      '47:bronz', '48:tolvaj',
+      '49:arany', '49:bronz', '49:cso', '49:ezust', '49:platina', '49:rez', '49:tolvaj',
+      '50:platina', '50:varazs', '51:tolvaj', '52:tolvaj', '53:bronz', '53:varazs',
+      '54:bronz', '54:ezust',
+      '55:arany', '55:ezust', '55:platina', '55:varazs',
+      '56:bronz', '56:cso', '57:bronz',
+      '59-1:vas', '59:arany', '59:bronz', '59:cso', '59:rez',
+      '60:tolvaj', '62:cso', '63:bronz', '63:ezust',
     ]);
   });
 });
@@ -122,7 +150,9 @@ describe('maze shape of static/db/quests.json', () => {
       }
     }
     expect(withContent).toEqual([]);
-    expect(outside).toBe(377);
+    // 377 from larkinorcenter.hu; 34 in archived quest 52's irregular outline
+    // and 6 in 58's.
+    expect(outside).toBe(417);
   });
 });
 
@@ -164,5 +194,49 @@ describe('monster links in static/db/quests.json', () => {
     const sailor = q4.cells.find((c) => c.monsterName === 'Részeg matróz');
     expect(sailor?.monsterId).toBe(40);
     expect(byId.get(40)?.level).toBe(7);
+  });
+});
+
+describe('the archived royal quests 46–63', () => {
+  const archived = quests.filter(fromArchive);
+
+  it('parses 18 pages into 21 mazes, quest 59 being four floors', () => {
+    expect(archived).toHaveLength(21);
+    expect(archived.reduce((n, q) => n + q.cells.length, 0)).toBe(2114);
+  });
+
+  it('gives each floor of 59 its own grid, but one brief', () => {
+    const floors = quests.filter((q) => q.title === '59');
+    expect(floors.map((q) => `${q.rows}x${q.cols}`)).toEqual(['10x10', '10x10', '10x10', '10x10']);
+    expect(new Set(floors.map((q) => q.description)).size).toBe(1);
+    // The way in is on the ground floor only; the cellars are reached by lift.
+    expect(floors.map((q) => q.cells.filter((c) => c.portal === 'entrance').length)).toEqual([1, 0, 0, 0]);
+  });
+
+  it('records the varázs lock the larkinorcenter.hu quests never use', () => {
+    const doors = archived.flatMap((q) => q.cells.flatMap((c) => Object.values(c.edges)))
+      .filter((e) => e.kind === 'door' && e.lock === 'varazs');
+    expect(doors.length).toBeGreaterThan(0);
+    expect(quests.filter((q) => !fromArchive(q)).flatMap((q) => q.cells.flatMap(cellKeys))).not.toContain('varazs');
+  });
+
+  // Six cells give more than one key; the label lists them all.
+  it('keeps every key of a cell that gives several', () => {
+    const multi = archived.flatMap((q) => q.cells.filter((c) => c.extraKeys).map((c) => `${q.id}:${cellKeys(c).join('+')}`));
+    expect(multi.sort()).toEqual([
+      '52:vas+rez', '56:varazs+rez+ezust+platina', '57:vas+rez+cso+ezust+arany+tolvaj',
+      '60:bronz+vas', '60:ezust+rez', '60:rez+platina',
+    ]);
+  });
+
+  it('spells ő and ű right, never as the õ/û the pages carry', () => {
+    const text = archived.flatMap((q) => [q.description, q.reward, ...q.cells.map((c) => c.narration)]).join(' ');
+    expect(text).not.toMatch(/[õûÕÛ]/);
+    expect(text).toMatch(/ő/);
+  });
+
+  it('never links an archived cell to a * elite', () => {
+    const elites = archived.flatMap((q) => q.cells).filter((c) => c.monsterName?.startsWith('*'));
+    expect(elites).toEqual([]);
   });
 });
