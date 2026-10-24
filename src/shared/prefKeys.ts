@@ -125,3 +125,15 @@ export const QUEST_MOVE_PREF_KEY = 'lc-quest-move';
 export function craftSelectedKey(hall: CraftingHallKind): string {
   return `lc-craft-selected-${hall}`;
 }
+
+/**
+ * A database list tab's filters (`weapons`, `armors`, `items`, `monsters`),
+ * as `filters.ts`'s `FilterState` in JSON.
+ *
+ * Kept per tab so switching tabs — or the game reloading the page under the
+ * overlay — leaves each tab's search where the player left it. Only the
+ * "Szűrők törlése" button empties it.
+ */
+export function explorerFiltersKey(tab: string): string {
+  return `lc-explorer-filters-${tab}`;
+}

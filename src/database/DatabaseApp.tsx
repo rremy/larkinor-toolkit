@@ -359,6 +359,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
           onSelect={onSelect}
           onJump={onJump}
           onShowCell={showCell}
+          prefStore={prefStore}
         />
       )}
     </div>

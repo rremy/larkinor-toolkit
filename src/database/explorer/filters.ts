@@ -10,6 +10,38 @@ export type FilterDef = {
 
 export type FilterState = Record<string, string>;
 
+/** Every state key the given filters read: a range filter reads two. */
+function stateKeys(defs: FilterDef[]): Set<string> {
+  return new Set(defs.flatMap((def) => (def.type === 'range' ? [`${def.key}_min`, `${def.key}_max`] : [def.key])));
+}
+
+/** A filter state for `explorerFiltersKey`. */
+export function serialiseFilterState(state: FilterState): string {
+  return JSON.stringify(state);
+}
+
+/**
+ * Read a stored filter state back, keeping only non-empty string values for
+ * keys the tab's filters still have — so a renamed filter or a corrupt value
+ * falls back to "no filter" rather than hiding rows behind a field the player
+ * can no longer see or clear.
+ */
+export function parseFilterState(raw: string | null, defs: FilterDef[]): FilterState {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const keys = stateKeys(defs);
+    const state: FilterState = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (keys.has(key) && typeof value === 'string' && value !== '') state[key] = value;
+    }
+    return state;
+  } catch {
+    return {};
+  }
+}
+
 export function applyFilters<T extends Record<string, unknown>>(
   rows: T[], defs: FilterDef[], state: FilterState,
 ): T[] {

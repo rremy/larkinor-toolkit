@@ -4,12 +4,14 @@ import type { DataLoader, Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import type { EntityTab } from './columns';
 import { COLS, DEFAULT_SORT } from './columns';
-import { FILTERS, applyFilters, type FilterState } from './filters';
+import { FILTERS, applyFilters, parseFilterState, serialiseFilterState, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
 import { DetailPanel } from './DetailPanel';
 import { buildLookups, type DetailLookups } from './lookups';
 import { fromArmor, fromWeapon, type CompareSubject } from '@/shared/compare';
+import { explorerFiltersKey } from '@/shared/prefKeys';
+import type { PrefStore } from '../DatabaseApp';
 
 type Row = Record<string, unknown>;
 type Entity = Weapon | Armor | Item | Monster;
@@ -22,6 +24,11 @@ interface ExplorerViewProps {
   onJump: (tab: EntityTab, id: number) => void;
   /** Open the map focused on a shop's cell (from the detail panel). */
   onShowCell: (cellId: string) => void;
+  /**
+   * Where each tab's filters are kept, so a tab switch or the game's page
+   * reload does not wipe a search. Absent: filters reset as they always did.
+   */
+  prefStore?: PrefStore;
 }
 
 async function loadRows(loader: DataLoader, tab: EntityTab): Promise<Row[]> {
@@ -37,16 +44,18 @@ async function loadRows(loader: DataLoader, tab: EntityTab): Promise<Row[]> {
 }
 
 export function ExplorerView(props: ExplorerViewProps): VNode {
-  const { loader, tab, selectedId, onSelect, onJump, onShowCell } = props;
+  const { loader, tab, selectedId, onSelect, onJump, onShowCell, prefStore } = props;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterState, setFilterState] = useState<FilterState>({});
+  const storedFilters = (forTab: EntityTab): FilterState =>
+    parseFilterState(prefStore?.read(explorerFiltersKey(forTab)) ?? null, FILTERS[forTab]);
+  const [filterState, setFilterState] = useState<FilterState>(() => storedFilters(tab));
   const [lookups, setLookups] = useState<DetailLookups | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setFilterState({});
+    setFilterState(storedFilters(tab));
     loadRows(loader, tab)
       .then((loaded) => { if (!cancelled) { setRows(loaded); setLoading(false); } })
       .catch(() => { if (!cancelled) { setRows([]); setLoading(false); } });
@@ -65,6 +74,13 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
     return () => { cancelled = true; };
   }, [loader]);
 
+  // Stored on every change, so only "Szűrők törlése" — which hands back an
+  // empty state — ever resets a tab.
+  const changeFilters = (next: FilterState) => {
+    setFilterState(next);
+    prefStore?.write(explorerFiltersKey(tab), serialiseFilterState(next));
+  };
+
   const visible = applyFilters(rows, FILTERS[tab], filterState);
   const selected = selectedId != null
     ? rows.find((r) => r.id === selectedId) ?? null
@@ -80,7 +96,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
 
   return (
     <div class={`db-view${selected ? ' has-selection' : ''}`}>
-      <Filters defs={FILTERS[tab]} state={filterState} onChange={setFilterState} />
+      <Filters defs={FILTERS[tab]} state={filterState} onChange={changeFilters} />
       <div class="counts">
         {loading
           ? 'Betöltés…'

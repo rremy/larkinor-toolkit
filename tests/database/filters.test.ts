@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyFilters, sortRows } from '@/database/explorer/filters';
+import { applyFilters, parseFilterState, serialiseFilterState, sortRows } from '@/database/explorer/filters';
 import type { FilterDef } from '@/database/explorer/filters';
 
 const rows = [
@@ -31,5 +31,32 @@ describe('sortRows', () => {
   });
   it('string descending, accent-folded', () => {
     expect(sortRows(rows, 'name', false, false)[0].name).toBe('őrbot');
+  });
+});
+
+describe('parseFilterState', () => {
+  const defs: FilterDef[] = [
+    { type: 'search', key: 'name', label: '' },
+    { type: 'range', key: 'level', label: '' },
+    { type: 'tri', key: 'magical', label: '' },
+  ];
+
+  it('reads back what was stored', () => {
+    const state = { name: 'kard', level_min: '5', level_max: '20', magical: 'yes' };
+    expect(parseFilterState(serialiseFilterState(state), defs)).toEqual(state);
+  });
+
+  // A filter the tab no longer has would hide rows behind a field the player
+  // cannot see, so it is dropped rather than kept.
+  it('keeps only the keys the tab still filters on, with non-empty text', () => {
+    expect(parseFilterState(JSON.stringify({ name: 'kard', gone: 'x', level_min: 5, magical: '' }), defs))
+      .toEqual({ name: 'kard' });
+  });
+
+  it('reads nothing, garbage or a non-object as no filter', () => {
+    expect(parseFilterState(null, defs)).toEqual({});
+    expect(parseFilterState('{not json', defs)).toEqual({});
+    expect(parseFilterState('["name"]', defs)).toEqual({});
+    expect(parseFilterState('null', defs)).toEqual({});
   });
 });
