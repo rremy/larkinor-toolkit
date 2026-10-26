@@ -4,6 +4,7 @@ import type { DataLoader, LockType, MonsterDatabase, Quest, QuestCell, QuestSet 
 import { buildMonsterDatabase } from '@/shared/data';
 import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_DETAILS_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, QUEST_TILE_PREF_KEY, questClearedKey, questHiddenLocksKey, questSelectedKey } from '@/shared/prefKeys';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
+import { killKeys } from '@/shared/questKeys';
 import { parseQuestPosition, serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import type { PrefStore } from '../DatabaseApp';
 import { QuestGrid } from './QuestGrid';
@@ -231,19 +232,29 @@ export function QuestView(props: QuestViewProps): VNode {
     setCleared(parseCleared(prefStore.read(questClearedKey(activeSet, selectedQuestId))));
   }, [prefStore, activeSet, selectedQuestId, quests]);
 
+  // Re-read on the data's arrival too: killing a key monster hides its doors
+  // from the boot, which can land after this tab mounts, like the marks above.
   useEffect(() => {
     if (!prefStore || selectedQuestId == null) { setHiddenLocks(new Set()); return; }
     setHiddenLocks(parseHiddenLocks(prefStore.read(questHiddenLocksKey(activeSet, selectedQuestId))));
-  }, [prefStore, activeSet, selectedQuestId]);
+  }, [prefStore, activeSet, selectedQuestId, quests]);
+
+  /**
+   * Change which locks' doors this quest hides, read-modify-write against the
+   * store for the reason `toggleCleared` gives: the boot hides doors too.
+   */
+  function updateHiddenLocks(change: (locks: Set<LockType>) => void) {
+    if (selectedQuestId == null) return;
+    const key = questHiddenLocksKey(activeSet, selectedQuestId);
+    const next = parseHiddenLocks(prefStore?.read(key) ?? null);
+    change(next);
+    setHiddenLocks(next);
+    prefStore?.write(key, serialiseHiddenLocks(next));
+  }
 
   /** Show or hide one lock's doors in this quest — the legend's eye toggle. */
   function toggleLock(lock: LockType) {
-    const next = new Set(hiddenLocks);
-    if (!next.delete(lock)) next.add(lock);
-    setHiddenLocks(next);
-    if (selectedQuestId != null) {
-      prefStore?.write(questHiddenLocksKey(activeSet, selectedQuestId), serialiseHiddenLocks(next));
-    }
+    updateHiddenLocks((locks) => { if (!locks.delete(lock)) locks.add(lock); });
   }
 
   /**
@@ -255,15 +266,31 @@ export function QuestView(props: QuestViewProps): VNode {
    * the write on this component's state would then silently drop whatever the
    * boot recorded in between — observed live, where an auto-cleared tile
    * disappeared again after a hand toggle elsewhere. Read-modify-write, the
-   * same way `recordClearedCell` does it.
+   * same way `recordClearedCells` does it.
+   *
+   * Marking a key monster's cell hides that key's doors, as the boot does for a
+   * kill it sees. Undoing the mark shows them again — unless another cleared
+   * kill in this maze yields the same key.
    */
   function toggleCleared(cell: QuestCell) {
-    if (selectedQuestId == null) return;
+    if (selectedQuestId == null || !quest) return;
     const key = questClearedKey(activeSet, selectedQuestId);
     const next = parseCleared(prefStore?.read(key) ?? null);
-    if (!next.delete(cellKey(cell))) next.add(cellKey(cell));
+    const marking = !next.delete(cellKey(cell));
+    if (marking) next.add(cellKey(cell));
     setCleared(next);
     prefStore?.write(key, serialiseCleared(next));
+
+    const locks = killKeys(cell);
+    if (locks.length === 0) return;
+    if (marking) {
+      updateHiddenLocks((hidden) => { for (const lock of locks) hidden.add(lock); });
+      return;
+    }
+    const stillHeld = new Set(quest.cells.filter((c) => next.has(cellKey(c))).flatMap(killKeys));
+    updateHiddenLocks((hidden) => {
+      for (const lock of locks) if (!stillHeld.has(lock)) hidden.delete(lock);
+    });
   }
 
   /**
@@ -284,11 +311,16 @@ export function QuestView(props: QuestViewProps): VNode {
     prefStore?.write(QUEST_POSITION_PREF_KEY, serialiseQuestPosition(next));
   }
 
-  /** Forget this quest's progress — for a repeat run of the same maze. */
-  function resetCleared() {
+  /**
+   * Forget this quest's progress — for a repeat run of the same maze. The keys
+   * go with it: a new run starts without them, so every door shows again.
+   */
+  function resetProgress() {
     if (selectedQuestId == null) return;
     setCleared(new Set());
     prefStore?.write(questClearedKey(activeSet, selectedQuestId), serialiseCleared(new Set()));
+    setHiddenLocks(new Set());
+    prefStore?.write(questHiddenLocksKey(activeSet, selectedQuestId), serialiseHiddenLocks(new Set()));
   }
 
   /**
@@ -542,10 +574,10 @@ export function QuestView(props: QuestViewProps): VNode {
                 {quest.rows}×{quest.cols} · {monsterCount} szörny · {keyCount} kulcs ·{' '}
                 {lockCount} zártípus · {questionCount} kérdés · {trapCount} csapda
               </div>
-              {cleared.size > 0 && (
+              {(cleared.size > 0 || hiddenLocks.size > 0) && (
                 <div class="quest-stats quest-cleared-count">
                   Teljesített: {cleared.size}
-                  <button type="button" class="quest-cleared-reset" onClick={resetCleared}>
+                  <button type="button" class="quest-cleared-reset" onClick={resetProgress}>
                     Visszaállítás
                   </button>
                 </div>

@@ -7,10 +7,12 @@ import {
   QUEST_POSITION_PREF_KEY,
   QUEST_SET_PREF_KEY,
   questClearedKey,
+  questHiddenLocksKey,
   questSelectedKey,
 } from '@/shared/prefKeys';
 import { parseQuestPosition, serialiseQuestPosition } from '@/shared/questPosition';
-import { parseCleared } from '@/shared/questCleared';
+import { parseCleared, serialiseCleared } from '@/shared/questCleared';
+import { parseHiddenLocks } from '@/shared/questKeys';
 import type { SideObservations } from '../src/utils/dungeonPosition';
 import type { DataLoader, Quest, QuestCell, Side } from '@/shared/data';
 
@@ -641,6 +643,58 @@ describe('activateDungeonPosition', () => {
  * narration cannot. The tile stayed unmarked even though the kill had just
  * happened on it.
  */
+describe('activateDungeonPosition — keys from a kill', () => {
+  const WALL = { kind: 'wall' } as const;
+  const OPEN = { kind: 'open' } as const;
+  const tile = (col: number, extra: Partial<QuestCell>): QuestCell => ({
+    row: 0, col, edges: { N: WALL, E: col === 0 ? OPEN : WALL, S: WALL, W: col === 0 ? WALL : OPEN },
+    monsterId: null, monsterName: null, boss: false, key: null, questItem: false, portal: null,
+    trap: false, death: false, narration: '', drops: [], hasQuestion: false, question: null, rawImage: '',
+    ...extra,
+  } as QuestCell);
+  const maze = (cells: QuestCell[]): Quest => ({
+    id: '900', set: 'royal', title: '900', description: '', reward: '', rows: 1, cols: 2, cells,
+  } as Quest);
+  const GUARD = 'Egy vasvértes őr áll a folyosó közepén, mögötte a kulcsok.';
+  const QUIZ = 'Egy szellem állja utadat, és egy talányt kérdez tőled.';
+
+  async function standOn(quest: Quest, initial: Record<string, string> = {}) {
+    const here = quest.cells[0];
+    const prefs = makePrefs({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: quest.id, ...initial });
+    await activateDungeonPosition(
+      here.narration, { sides: observed(here).sides, enemySides: {}, question: false },
+      makeLoader({ loadQuests: async () => [quest] }), prefs.read, prefs.write,
+    );
+    return parseHiddenLocks(prefs.stored.get(questHiddenLocksKey('royal', quest.id)) ?? null);
+  }
+
+  // The kill hands the key over, so its doors are open to the player now.
+  it('hides the doors of every key a killed monster carried', async () => {
+    const quest = maze([tile(0, { monsterId: 7, monsterName: 'Őr', narration: GUARD, key: 'vas', extraKeys: ['cso'] }), tile(1, {})]);
+    expect(await standOn(quest)).toEqual(new Set(['vas', 'cso']));
+  });
+
+  it('keeps the doors already hidden', async () => {
+    const quest = maze([tile(0, { monsterId: 7, monsterName: 'Őr', narration: GUARD, key: 'vas' }), tile(1, {})]);
+    expect(await standOn(quest, { [questHiddenLocksKey('royal', '900')]: '["arany"]' }))
+      .toEqual(new Set(['arany', 'vas']));
+  });
+
+  // A tile already marked had its chance: re-hiding on every visit would undo
+  // a player who showed the doors again.
+  it('hides nothing for a cell that was already cleared', async () => {
+    const quest = maze([tile(0, { monsterId: 7, monsterName: 'Őr', narration: GUARD, key: 'vas' }), tile(1, {})]);
+    expect(await standOn(quest, { [questClearedKey('royal', '900')]: serialiseCleared(new Set(['0,0'])) }))
+      .toEqual(new Set());
+  });
+
+  // An answered question says nothing about whether the answer paid out.
+  it('hides nothing for an answered question that holds a key', async () => {
+    const quest = maze([tile(0, { narration: QUIZ, key: 'platina', hasQuestion: true }), tile(1, {})]);
+    expect(await standOn(quest)).toEqual(new Set());
+  });
+});
+
 describe('advancePositionThroughBattle', () => {
   it('carries the position into the cell the fight is in, and spends the step', () => {
     const prefs = makePrefs({

@@ -11,12 +11,14 @@ import {
   QUEST_POSITION_PREF_KEY,
   QUEST_SET_PREF_KEY,
   questClearedKey,
+  questHiddenLocksKey,
   questSelectedKey,
   type ReadPref,
   type WritePref,
 } from '@/shared/prefKeys';
 import { parseQuestPosition, serialiseQuestPosition, type QuestPosition } from '@/shared/questPosition';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
+import { killKeys, parseHiddenLocks, serialiseHiddenLocks } from '@/shared/questKeys';
 import { resolveDungeonPosition, movementConfirmed, moveRefused } from './dungeonPosition';
 import { takePendingMove } from './trackDungeonMove';
 import type { DungeonObservation } from './domExtract';
@@ -183,6 +185,11 @@ export async function activateDungeonPosition(
  * Sight is limited to `open` sides. A wall obviously blocks it, and a door is
  * excluded too: the game cannot draw what is behind a closed door, so "no
  * silhouette" there is not evidence of anything.
+ *
+ * A newly cleared cell whose monster carried a key also hides that key's doors
+ * (`killKeys`): the kill handed the player the key, so those doors are open to
+ * them now. Only newly cleared ones — a cell already marked had its chance, and
+ * re-hiding on every visit would undo a player who showed the doors again.
  */
 function recordClearedCells(
   position: QuestPosition,
@@ -226,15 +233,31 @@ function recordClearedCells(
 
   if (done.length === 0) return;
 
+  let fresh: string[];
   try {
     const key = questClearedKey(position.set, position.questId);
     const cleared = parseCleared(readPref(key));
-    const before = cleared.size;
-    for (const id of done) cleared.add(id);
-    if (cleared.size === before) return;
+    fresh = [...new Set(done)].filter((id) => !cleared.has(id));
+    if (fresh.length === 0) return;
+    for (const id of fresh) cleared.add(id);
     writePref(key, serialiseCleared(cleared));
   } catch (err) {
     console.warn('[Larkinor UI] Dungeon position: could not store the cleared cells:', err);
+    return;
+  }
+
+  const collected = quest.cells
+    .filter((c) => fresh.includes(`${c.row},${c.col}`))
+    .flatMap(killKeys);
+  if (collected.length === 0) return;
+  try {
+    const key = questHiddenLocksKey(position.set, position.questId);
+    const hidden = parseHiddenLocks(readPref(key));
+    const before = hidden.size;
+    for (const lock of collected) hidden.add(lock);
+    if (hidden.size !== before) writePref(key, serialiseHiddenLocks(hidden));
+  } catch (err) {
+    console.warn('[Larkinor UI] Dungeon position: could not store the collected keys:', err);
   }
 }
 

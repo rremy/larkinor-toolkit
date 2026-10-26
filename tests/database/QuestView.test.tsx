@@ -5,9 +5,10 @@ import { QuestView } from '@/database/quests/QuestView';
 import { buildMonsterDatabase } from '@/shared/data';
 import type { DataLoader, Quest, QuestCell, Edge } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
-import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questClearedKey, questSelectedKey } from '@/shared/prefKeys';
+import { LEGACY_QUEST_SELECTED_PREF_KEY, QUEST_POSITION_PREF_KEY, QUEST_SET_PREF_KEY, questClearedKey, questHiddenLocksKey, questSelectedKey } from '@/shared/prefKeys';
 import { parseQuestPosition, serialiseQuestPosition } from '@/shared/questPosition';
 import { parseCleared, serialiseCleared } from '@/shared/questCleared';
+import { parseHiddenLocks } from '@/shared/questKeys';
 
 /** An in-memory PrefStore stand-in, for tests that don't care which real one backs it. */
 function makePrefStore(initial: Record<string, string> = {}): PrefStore {
@@ -792,6 +793,86 @@ describe('QuestView', () => {
       fireEvent.click(tile);
 
       expect(screen.queryByRole('button', { name: 'Teljesítve' })).toBeNull();
+    });
+
+    describe('keys from a kill', () => {
+      // Two monsters carrying the iron key, behind an iron door.
+      const keyQuest: Quest = {
+        id: '4', set: 'royal', title: '4', description: 'Vasőrök', reward: '1 db arany', rows: 1, cols: 3,
+        cells: [
+          cell({ row: 0, col: 0, edges: { ...openEdges(), E: { kind: 'door', lock: 'vas' } } }),
+          cell({ row: 0, col: 1, monsterId: 1, monsterName: 'Őr', key: 'vas' }),
+          cell({ row: 0, col: 2, monsterId: 2, monsterName: 'Másik őr', key: 'vas' }),
+        ],
+      };
+      const loader = () => makeLoader({ loadQuests: vi.fn(async () => [keyQuest]) });
+      const hidden = (prefStore: PrefStore) => parseHiddenLocks(prefStore.read(questHiddenLocksKey('royal', '4')));
+
+      async function markDone(container: Element, col: number, label: RegExp = /Teljesítve/) {
+        const tile = await waitFor(() => {
+          const el = container.querySelector(`.quest-cell[data-row="0"][data-col="${col}"]`);
+          expect(el).not.toBeNull();
+          return el!;
+        });
+        fireEvent.click(tile);
+        fireEvent.click(screen.getByRole('button', { name: label }));
+      }
+
+      it('hides the key\'s doors when its monster is marked done, and shows them on undo', async () => {
+        const prefStore = makePrefStore({ [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '4' });
+        const { container } = render(<QuestView loader={loader()} questSet="royal" questId="4"
+          prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+        await markDone(container, 1);
+        await waitFor(() => expect(hidden(prefStore)).toEqual(new Set(['vas'])));
+        expect(container.querySelector('.quest-edge.door.lock-vas')).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: /Visszavonás/ }));
+        await waitFor(() => expect(hidden(prefStore)).toEqual(new Set()));
+        expect(container.querySelector('.quest-edge.door.lock-vas')).toBeTruthy();
+      });
+
+      it('keeps the doors hidden on undo while another kill still yields the key', async () => {
+        const prefStore = makePrefStore({
+          [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '4',
+          [questClearedKey('royal', '4')]: serialiseCleared(new Set(['0,1', '0,2'])),
+          [questHiddenLocksKey('royal', '4')]: '["vas"]',
+        });
+        const { container } = render(<QuestView loader={loader()} questSet="royal" questId="4"
+          prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+        await markDone(container, 1, /Visszavonás/);
+        await waitFor(() => expect(parseCleared(prefStore.read(questClearedKey('royal', '4')))).toEqual(new Set(['0,2'])));
+        expect(hidden(prefStore)).toEqual(new Set(['vas']));
+      });
+
+      // A new run starts without the keys.
+      it('shows every door again on reset', async () => {
+        const prefStore = makePrefStore({
+          [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '4',
+          [questClearedKey('royal', '4')]: serialiseCleared(new Set(['0,1'])),
+          [questHiddenLocksKey('royal', '4')]: '["arany","vas"]',
+        });
+        const { container } = render(<QuestView loader={loader()} questSet="royal" questId="4"
+          prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+        fireEvent.click(await screen.findByRole('button', { name: /Visszaállítás/ }));
+        await waitFor(() => expect(hidden(prefStore)).toEqual(new Set()));
+        expect(parseCleared(prefStore.read(questClearedKey('royal', '4')))).toEqual(new Set());
+        expect(container.querySelector('.quest-edge.door.lock-vas')).toBeTruthy();
+      });
+
+      it('offers the reset when doors are hidden but nothing is marked done', async () => {
+        const prefStore = makePrefStore({
+          [QUEST_SET_PREF_KEY]: 'royal', [questSelectedKey('royal')]: '4',
+          [questHiddenLocksKey('royal', '4')]: '["vas"]',
+        });
+        render(<QuestView loader={loader()} questSet="royal" questId="4"
+          prefStore={prefStore} onSelectQuest={() => {}} onJumpToMonster={() => {}} />);
+
+        fireEvent.click(await screen.findByRole('button', { name: /Visszaállítás/ }));
+        await waitFor(() => expect(hidden(prefStore)).toEqual(new Set()));
+      });
     });
 
     it('shows no reset control when nothing is cleared', async () => {
