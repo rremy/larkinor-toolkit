@@ -112,7 +112,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 
 #### Standalone database (`src/database/`, built separately)
 - **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map), Küldetések (Quests).
-- **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab. Each tab's filters are kept in the `PrefStore` (`lc-explorer-filters-<tab>`), so neither a tab switch nor the game's page reload wipes a search — only *Szűrők törlése* does. A stored key the tab no longer filters on is dropped on read, never applied invisibly.
+- **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab. Each tab's filters are kept in the `PrefStore` (`lc-explorer-filters-<tab>`), so neither a tab switch nor the game's page reload wipes a search — only *Szűrők törlése* does. A stored key the tab no longer filters on is dropped on read, never applied invisibly. The sort column and direction are kept the same way (`lc-explorer-sort-<tab>`), changed only by a header click — *Szűrők törlése* leaves them alone; the defaults are max damage (weapons) and defence (armours) descending, level/price ascending elsewhere.
 - **Map viewer** (`map/`): clickable districts with cell details and resident monsters.
 - **Quest viewer** (`quests/`): royal quests 1–63 as interactive mazes. 1–45 were scraped once
   from a third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
