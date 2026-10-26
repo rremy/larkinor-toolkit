@@ -104,8 +104,21 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     actions, encounter attack, config, database), makes DB-known monster names in the live
     narration clickable (`enhanceNarration` — text-node splicing only, never `innerHTML`,
     which would destroy the game's own `<a>` handlers), and binds keyboard shortcuts
-    (WASD/arrows, Space, 1–9, Q, Esc — all suppressed while the event target is a form
-    control, so typing in chat can't move the character). The dock renders on every page,
+    (WASD/arrows move, Space attacks an encounter, 1–9 then 0 run the dock's quick actions in
+    drawn order — the icon row, then the text buttons — Q opens the database, Esc closes; all
+    suppressed while the event target is a form control, so typing in chat can't move the
+    character). Each numbered quick action shows its
+    key as a corner badge, drawn by CSS from the button's `aria-keyshortcuts` so the label text
+    stays the action's own (tests read it). In a fight A/D and ←/→ attack
+    with the left/right hand (`balk`/`jobbk`) — a battle page draws no direction buttons, so
+    they never compete with movement — Esc flees (`menekul`), and anywhere else Esc presses the
+    page's `vissza.gif` exit (shops, market, home, crafting halls, character sheet); an open
+    modal takes Esc first. Space presses the *Folytatás* control that ends it
+    (`extractFightControls`). That control is found by its label alone — any link, button or
+    image input reading just *Folytatás* — on every page, because which page type ends a fight
+    was never captured live. The config drawer's *Billentyűparancsok* section turns all of it
+    off (`lc-keyboard-shortcuts`, on unless stored `off`) and lists every key; Escape still
+    closes a modal when off. Mobile binds no keys, so it gets no such section. The dock renders on every page,
     including ones we don't recognise; only free-move gets the full action set.
   - Because the game page stays visible on desktop, **no CSS may use an unscoped element
     selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
