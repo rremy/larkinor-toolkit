@@ -493,6 +493,16 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     the toggle is withheld for `outsideMazeCells` (every tile is clickable, canvas included),
     `QuestGrid` drops the class for them, and the CSS carries `:not(.void)` because the two
     rules have equal specificity and `.cleared` comes later.
+    **A kill hides its key's doors.** When a cell whose monster carries a key becomes cleared —
+    by the boot (underfoot or by silhouette) or by the tab's own *Teljesítve* — that key's locks
+    join the quest's hidden locks (`lc-quest-hidden-locks-<set>-<id>`, the legend's eye), via
+    `killKeys` in `src/shared/questKeys.ts`. Only a monster's key counts: an answered question
+    says nothing about whether the answer paid out, and on the two tiles holding both, the data
+    cannot say which gives the key. The boot hides only for **newly** cleared cells, so a player
+    who shows the doors again is not overruled on the next visit; undoing a mark in the tab shows
+    them again unless another cleared kill yields the same key. *Visszaállítás* resets the hidden
+    locks with the marks — a new run starts without the keys — and is offered whenever either is
+    set. Both writers read the hidden locks from the store first, for the reason the marks do.
     **The silhouette rule is now live-verified in both directions** — absent for two
     neighbours whose monsters had been killed, drawn for three that were alive, cross-checked
     against the data each time — which settles the assumption an earlier version of this note
