@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -49,6 +49,7 @@ describe('DesktopDock', () => {
     GM_setValue(DB_OPEN_KEY, '');
     GM_setValue(DB_ROUTE_KEY, '');
     GM_setValue(CRAFTING_OPEN_KEY, '');
+    GM_setValue(KEYBOARD_SHORTCUTS_KEY, '');
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {
@@ -61,6 +62,45 @@ describe('DesktopDock', () => {
     const labels = Array.from(container.querySelectorAll('.lc-dock-btn')).map(b => b.textContent);
     expect(labels).toContain('imádkozol');
     expect(labels).toContain('ásol');
+  });
+
+  describe('number keys', () => {
+    const keys = (container: Element) => Array.from(container.querySelectorAll('.lc-hotkey, .lc-dock-btn'))
+      .map((b) => b.getAttribute('aria-keyshortcuts'))
+      .filter((k) => k !== null);
+
+    // The icons first, then the text buttons — the order they are drawn in.
+    it('numbers the quick actions in the order they are drawn', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['as']));
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(container.querySelector('.lc-hotkey')?.getAttribute('aria-keyshortcuts')).toBe('1');
+      const numbered = Array.from(container.querySelectorAll('.lc-dock-btn[aria-keyshortcuts]'))
+        .map((b) => [b.textContent, b.getAttribute('aria-keyshortcuts')]);
+      expect(numbered).toEqual([['kajálsz', '2'], ['imádkozol', '3']]);
+    });
+
+    it('runs them on their number', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['as']));
+      const state = makeState();
+      render(<DesktopDock doc={document} state={state} db={null} />);
+      fireEvent.keyDown(document.body, { code: 'Digit1' });
+      fireEvent.keyDown(document.body, { code: 'Digit3' });
+      expect(state.actions[2].trigger).toHaveBeenCalledTimes(1);
+      expect(state.actions[1].trigger).toHaveBeenCalledTimes(1);
+      expect(state.actions[0].trigger).not.toHaveBeenCalled();
+    });
+
+    it('shows no numbers while the shortcuts are off', () => {
+      GM_setValue(KEYBOARD_SHORTCUTS_KEY, 'off');
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(keys(container)).toEqual([]);
+    });
+
+    it('numbers nothing past the tenth', () => {
+      const actions = Array.from({ length: 12 }, (_, i) => ({ label: `m${i}`, actionKey: `x${i}`, trigger: vi.fn() }));
+      const { container } = render(<DesktopDock doc={document} state={makeState({ actions })} db={null} />);
+      expect(keys(container)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
+    });
   });
 
   it('fires the original action trigger when a hotkey is clicked', () => {

@@ -2,19 +2,39 @@
 // of its own, but it does have text inputs (chat), so the editable-target guard
 // is what actually makes single-letter bindings safe: typing "wasd" into chat
 // must never walk the character across the map. See handleKeyDown below for
-// the full guard order (modifiers, auto-repeat, modal, dock, editable target)
+// the full guard order (modifiers, auto-repeat, modal, setting, dock, editable target)
 // and why each one runs where it does.
 
 import { useEffect } from 'preact/hooks';
-import type { Action, BuildingOption, Direction, DirectionOption } from '@/utils/domExtract';
+import type { Action, BuildingOption, Direction, DirectionOption, FightControls } from '@/utils/domExtract';
 
 export interface KeyboardShortcutOptions {
   /** The live game document to listen on. */
   doc: Document;
   directions: DirectionOption[];
   attack: BuildingOption | null;
-  /** Enabled hotkeys in the order the dock renders them; bound to 1-9. */
-  hotkeyActions: Action[];
+  /**
+   * The dock's quick actions in the order it renders them — the icon row,
+   * then the text buttons — bound to 1–9 and then 0 (see `shortcutDigit`).
+   */
+  quickActions: Action[];
+  /**
+   * The fight controls on this page: A/D and ←/→ attack with the left/right
+   * hand, Esc flees, and Space continues once the fight is over. Absent: no
+   * fight bindings.
+   */
+  fight?: FightControls | null;
+  /**
+   * The page's exit (`vissza.gif` — leaving a shop, the market, the home, a
+   * crafting hall, the character sheet), pressed by Esc. Absent: none.
+   */
+  exit?: Action | null;
+  /**
+   * The player's on/off setting. Off leaves every key to the page, except
+   * Escape closing a modal — that is the dialogs' own close key, not a
+   * shortcut into the game.
+   */
+  enabled?: boolean;
   /** True while any desktop modal is open — suppresses all but Escape. */
   modalOpen: boolean;
   onOpenDatabase: () => void;
@@ -36,6 +56,10 @@ const DIRECTION_BY_CODE: Record<string, Direction> = {
   KeyD: 'east',
 };
 
+/** The keys that attack with each weapon hand in a fight. */
+const LEFT_HAND_CODES = new Set(['KeyA', 'ArrowLeft']);
+const RIGHT_HAND_CODES = new Set(['KeyD', 'ArrowRight']);
+
 const EDITABLE_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
 /** True for targets the user types into — those keep every keystroke. */
@@ -51,15 +75,28 @@ function isInsideDockRoot(target: EventTarget | null): boolean {
   return (target as Element).closest('#lc-dock-root') !== null;
 }
 
-/** Index of the hotkey bound to a Digit1-Digit9 code, or -1. */
+/** The number keys in quick-action order: 1–9, then 0 for the tenth. */
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+/**
+ * The key bound to the quick action at `index`, for its on-screen badge — or
+ * null past the tenth, which no key reaches.
+ */
+export function shortcutDigit(index: number): string | null {
+  return DIGITS[index] ?? null;
+}
+
+/** Index of the quick action bound to a Digit0-Digit9 code, or -1. */
 function digitIndex(code: string): number {
-  const match = /^Digit([1-9])$/.exec(code);
-  return match ? Number(match[1]) - 1 : -1;
+  const match = /^Digit([0-9])$/.exec(code);
+  return match ? DIGITS.indexOf(match[1]) : -1;
 }
 
 /** Installs the document-level key bindings for the lifetime of the caller. */
 export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
-  const { doc, directions, attack, hotkeyActions, modalOpen, onOpenDatabase, onCloseModal } = options;
+  const {
+    doc, directions, attack, quickActions, fight = null, exit = null, enabled = true, modalOpen, onOpenDatabase, onCloseModal,
+  } = options;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -86,12 +123,37 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
         return;
       }
 
+      if (!enabled) return;
+
       // The dock's own controls (collapse toggle, action buttons, ...) must
       // behave natively — e.g. Space activating a focused button — rather
       // than being reinterpreted as a game shortcut such as the attack key.
       if (isInsideDockRoot(event.target)) return;
 
       if (isEditableTarget(event.target)) return;
+
+      // Esc flees a fight, or leaves the building — but only once no modal is
+      // open (above, Esc closes the modal instead) and never from chat, where
+      // it is the input's own.
+      if (event.code === 'Escape') {
+        const action = fight?.flee ?? exit;
+        if (!action) return;
+        event.preventDefault();
+        action.trigger();
+        return;
+      }
+
+      // A/D and the left/right arrows are west and east on the map, and the
+      // two weapon hands in a fight. A battle page draws no direction buttons,
+      // so the two never compete; the hands are checked first all the same.
+      const hand = LEFT_HAND_CODES.has(event.code) ? fight?.leftHand
+        : RIGHT_HAND_CODES.has(event.code) ? fight?.rightHand
+          : null;
+      if (hand) {
+        event.preventDefault();
+        hand.trigger();
+        return;
+      }
 
       const dir = DIRECTION_BY_CODE[event.code];
       if (dir) {
@@ -102,10 +164,14 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
         return;
       }
 
+      // Space engages a monster on the map, and continues past the end of a
+      // fight. *Folytatás* wins when both are drawn: it is what the page is
+      // waiting for.
       if (event.code === 'Space') {
-        if (!attack) return;
+        const action = fight?.proceed ?? attack;
+        if (!action) return;
         event.preventDefault();
-        attack.trigger();
+        action.trigger();
         return;
       }
 
@@ -117,7 +183,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
 
       const index = digitIndex(event.code);
       if (index >= 0) {
-        const action = hotkeyActions[index];
+        const action = quickActions[index];
         if (!action) return;
         event.preventDefault();
         action.trigger();
@@ -126,5 +192,5 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
 
     doc.addEventListener('keydown', handleKeyDown);
     return () => doc.removeEventListener('keydown', handleKeyDown);
-  }, [doc, directions, attack, hotkeyActions, modalOpen, onOpenDatabase, onCloseModal]);
+  }, [doc, directions, attack, quickActions, fight, exit, enabled, modalOpen, onOpenDatabase, onCloseModal]);
 }

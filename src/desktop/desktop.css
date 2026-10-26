@@ -145,6 +145,32 @@
 
 #lc-dock-root .lc-hotkey-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
 
+/* The number key that runs a quick action, in its top-left corner. Drawn from
+   the attribute rather than written into the button, so the label stays the
+   action's own text. Only set while the keyboard shortcuts are on. */
+#lc-dock-root .lc-hotkey[aria-keyshortcuts],
+#lc-dock-root .lc-dock-btn[aria-keyshortcuts] { position: relative; }
+
+#lc-dock-root .lc-hotkey[aria-keyshortcuts]::after,
+#lc-dock-root .lc-dock-btn[aria-keyshortcuts]::after {
+  content: attr(aria-keyshortcuts);
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .lc-dock-btn {
   display: inline-flex;
   align-items: center;

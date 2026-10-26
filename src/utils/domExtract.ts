@@ -11,6 +11,7 @@
 // See docs/superpowers/specs/2026-07-06-larkinor-real-dom-reference.md.
 
 import type { Side } from '@/shared/data';
+import { foldAccents } from '@/shared/text';
 import type { SideObservation, SideObservations } from '@/utils/dungeonPosition';
 
 export type Direction = 'north' | 'south' | 'east' | 'west';
@@ -437,6 +438,69 @@ function extractBattleActions(doc: Document): Action[] {
     });
   });
   return actions;
+}
+
+/**
+ * The controls the fight shortcuts drive: the two weapon-hand attacks and the
+ * flee of a battle page, and the *Folytatás* control the game prints once a
+ * fight is over. Each is null when the page does not draw it.
+ */
+export interface FightControls {
+  leftHand: Action | null;
+  rightHand: Action | null;
+  flee: Action | null;
+  proceed: Action | null;
+}
+
+const PROCEED_LABEL = 'folytatas';
+
+/** What a control says: its text, else its value, title or alt (or its image's). */
+function controlLabel(el: Element): string {
+  const img = el.querySelector('img');
+  return (el.textContent?.trim()
+    || el.getAttribute('value')
+    || el.getAttribute('title')
+    || el.getAttribute('alt')
+    || img?.getAttribute('alt')
+    || img?.getAttribute('title')
+    || '').trim();
+}
+
+/**
+ * The *Folytatás* control, found by what it says rather than by where it sits:
+ * a link, button or image input whose label is the word alone, ignoring case,
+ * accents and trailing punctuation. Matching the whole label, not a substring,
+ * keeps a narration sentence that merely mentions continuing from qualifying.
+ */
+function findProceed(doc: Document): Action | null {
+  const candidates = doc.querySelectorAll<HTMLElement>('a, button, input[type="submit"], input[type="button"], input[type="image"]');
+  for (const el of Array.from(candidates)) {
+    const label = controlLabel(el);
+    if (foldAccents(label).replace(/[\s.!…>»]+$/u, '') !== PROCEED_LABEL) continue;
+    return { label, trigger: () => el.click() };
+  }
+  return null;
+}
+
+/** One of the battle page's image controls (`balk`/`jobbk`/`menekul`), or null. */
+function battleControl(doc: Document, name: 'balk' | 'jobbk' | 'menekul'): Action | null {
+  const input = Array.from(doc.querySelectorAll<HTMLInputElement>('input[type="image"]'))
+    .find((el) => basename(el.getAttribute('src') ?? '') === name);
+  if (!input) return null;
+  return {
+    label: input.getAttribute('title')?.trim() || BATTLE_ACTION_FALLBACK_LABELS[name],
+    trigger: () => input.click(),
+  };
+}
+
+/** Read the fight shortcuts' controls off any page; absent ones are null. */
+export function extractFightControls(doc: Document): FightControls {
+  return {
+    leftHand: battleControl(doc, 'balk'),
+    rightHand: battleControl(doc, 'jobbk'),
+    flee: battleControl(doc, 'menekul'),
+    proceed: findProceed(doc),
+  };
 }
 
 export function extractBattle(doc: Document): BattleState {

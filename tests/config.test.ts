@@ -18,6 +18,9 @@ import {
   getMarketTab,
   setMarketTab,
   MARKET_TAB_KEY,
+  getKeyboardShortcuts,
+  setKeyboardShortcuts,
+  KEYBOARD_SHORTCUTS_KEY,
 } from '../src/utils/config';
 import { QUEST_TILE_PREF_KEY } from '../src/shared/prefKeys';
 
@@ -60,6 +63,21 @@ describe('platform-override config', () => {
   it('returns null for an unrecognised stored value', () => {
     GM_setValue(PLATFORM_OVERRIDE_KEY, 'tablet');
     expect(getPlatformOverride()).toBeNull();
+  });
+});
+
+describe('keyboard-shortcuts config', () => {
+  // They shipped always-on; a player who never opens the setting keeps them.
+  it('is on when nothing is stored', () => {
+    GM_setValue(KEYBOARD_SHORTCUTS_KEY, '');
+    expect(getKeyboardShortcuts()).toBe(true);
+  });
+
+  it('round-trips off and back on', () => {
+    setKeyboardShortcuts(false);
+    expect(getKeyboardShortcuts()).toBe(false);
+    setKeyboardShortcuts(true);
+    expect(getKeyboardShortcuts()).toBe(true);
   });
 });
 

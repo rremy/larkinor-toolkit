@@ -96,4 +96,31 @@ describe('ConfigDrawer platform toggle', () => {
     fireEvent.click(container.querySelector('[data-key="kajal"]')!);
     expect(onToggle).toHaveBeenCalledWith('kajal');
   });
+
+  describe('keyboard shortcuts', () => {
+    it('is left out where no keys are bound (mobile)', () => {
+      render(<ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()} />);
+      expect(screen.queryByText('Billentyűparancsok')).toBeNull();
+    });
+
+    it('shows the setting and what each key does', () => {
+      const { container } = render(<ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()}
+        shortcuts={{ on: true, onToggle: vi.fn() }} />);
+      expect(screen.getByText('Billentyűparancsok')).toBeTruthy();
+      expect(container.querySelector('[data-shortcuts="on"]')?.getAttribute('aria-pressed')).toBe('true');
+      expect(screen.getByText('A / D vagy ← / → harcban')).toBeTruthy();
+      expect(screen.getByText('Támadás bal / jobb kézzel')).toBeTruthy();
+      expect(screen.getByText('Szóköz a harc végén')).toBeTruthy();
+    });
+
+    it('turns them off, and does nothing for the choice already made', () => {
+      const onToggle = vi.fn();
+      const { container } = render(<ConfigDrawer enabled={[]} onToggle={vi.fn()} onClose={vi.fn()}
+        shortcuts={{ on: true, onToggle }} />);
+      fireEvent.click(container.querySelector('[data-shortcuts="on"]')!);
+      expect(onToggle).not.toHaveBeenCalled();
+      fireEvent.click(container.querySelector('[data-shortcuts="off"]')!);
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+  });
 });

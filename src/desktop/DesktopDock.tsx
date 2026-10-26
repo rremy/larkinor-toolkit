@@ -1,18 +1,18 @@
 import { h, type JSX } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import type { FreeMoveState } from '@/utils/domExtract';
+import type { Action, FightControls, FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { QuestSet } from '@/shared/data';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { hasOpenPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
-import { useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
+import { shortcutDigit, useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 import { InventoryPanel } from '@/desktop/InventoryPanel';
 import { MarketPanel } from '@/desktop/MarketPanel';
 import type { HomeState } from '@/utils/homeExtract';
@@ -47,6 +47,10 @@ export interface DesktopDockProps {
   crafting?: { state: CraftingHallState; loader: DataLoader } | null;
   /** Name of the monster being fought, when we are on the battle screen. */
   battleMonsterName?: string | null;
+  /** The weapon-hand attacks, flee and the *Folytatás* control, for the shortcuts. */
+  fight?: FightControls | null;
+  /** The page's exit button, which Esc presses. */
+  exit?: Action | null;
   /** Force the minimal (config + database) form regardless of state. */
   dbButtonOnly?: boolean;
   /**
@@ -90,7 +94,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, crafting = null, battleMonsterName = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -114,6 +118,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const [craftingOpen, setCraftingOpen] = useState(() => getPanelOpen(CRAFTING_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
+  const [shortcutsOn, setShortcutsOn] = useState(() => getKeyboardShortcuts());
+  const toggleShortcuts = () => {
+    setShortcutsOn(!shortcutsOn);
+    setKeyboardShortcuts(!shortcutsOn);
+  };
 
   // No actions to offer means nothing but the DB button is useful: either the
   // page genuinely has none, or the game markup changed under us.
@@ -221,7 +230,12 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     else if (selectedMonster) setSelectedMonster(null);
   };
 
-  // `directions`/`hotkeyActions` (fresh arrays each render) and the two
+  // The number keys run the quick actions in the order they are drawn: the
+  // icon row, then the text buttons. Each shows its key while they are on.
+  const quickActions = [...hotkeyActions, ...buttonActions];
+  const keyFor = (index: number): string | null => (shortcutsOn ? shortcutDigit(index) : null);
+
+  // `directions`/`quickActions` (fresh arrays each render) and the two
   // handlers below are intentionally left unmemoized. useKeyboardShortcuts
   // re-subscribes its listener whenever any of these change, so this does
   // cause listener churn on every render — but memoizing them (e.g. with
@@ -232,7 +246,10 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     doc,
     directions: state?.directions ?? [],
     attack,
-    hotkeyActions,
+    quickActions,
+    fight,
+    exit,
+    enabled: shortcutsOn,
     modalOpen,
     onOpenDatabase: openDatabase,
     onCloseModal: closeTopModal,
@@ -253,14 +270,16 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         <>
           {hotkeyActions.length > 0 && (
             <div class="lc-dock-row">
-              <HotkeyRow actions={hotkeyActions} />
+              <HotkeyRow actions={hotkeyActions} keyFor={keyFor} />
             </div>
           )}
 
           {buttonActions.length > 0 && (
             <div class="lc-dock-row lc-dock-row--wrap">
               {buttonActions.map((action, i) => (
-                <button key={`act${i}`} class="lc-dock-btn" onClick={() => action.trigger()}>
+                <button key={`act${i}`} class="lc-dock-btn"
+                  aria-keyshortcuts={keyFor(hotkeyActions.length + i) ?? undefined}
+                  onClick={() => action.trigger()}>
                   {action.label}
                 </button>
               ))}
@@ -329,6 +348,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
           enabled={enabled}
           variant="modal"
           onToggle={toggleHotkey}
+          shortcuts={{ on: shortcutsOn, onToggle: toggleShortcuts }}
           onClose={closeConfig}
         />
       )}

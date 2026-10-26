@@ -24,6 +24,21 @@ export function setEnabledHotkeys(keys: string[]): void {
   GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(keys));
 }
 
+/** GM storage key holding whether the desktop keyboard shortcuts are on. */
+export const KEYBOARD_SHORTCUTS_KEY = 'lc-keyboard-shortcuts';
+
+/**
+ * Whether the desktop keyboard shortcuts are on. On unless turned off: they
+ * shipped always-on, so a player who never opens the setting keeps them.
+ */
+export function getKeyboardShortcuts(): boolean {
+  return (GM_getValue(KEYBOARD_SHORTCUTS_KEY, '') as string) !== 'off';
+}
+
+export function setKeyboardShortcuts(on: boolean): void {
+  GM_setValue(KEYBOARD_SHORTCUTS_KEY, on ? '' : 'off');
+}
+
 /** GM storage key holding the manual mobile/desktop override ('' = automatic). */
 export const PLATFORM_OVERRIDE_KEY = 'lc-platform-override';
 

@@ -3,6 +3,7 @@ import { JSDOM } from 'jsdom';
 import {
   extractFreeMove,
   extractBattle,
+  extractFightControls,
   extractLogin,
   extractDungeon,
   extractDungeonSides,
@@ -796,5 +797,49 @@ describe('dungeonDirectionInputs', () => {
 
     expect(dungeonDirectionInputs(doc).map((d) => d.side).sort()).toEqual(['N', 'W']);
     expect(dungeonDirectionInputs(doc)[0].input.tagName).toBe('INPUT');
+  });
+});
+
+describe('extractFightControls', () => {
+  it('finds the two weapon-hand attacks of a battle page', () => {
+    const doc = makeDoc(BATTLE_HTML);
+    const clicks: string[] = [];
+    doc.querySelectorAll('input[type="image"]').forEach((el) =>
+      el.addEventListener('click', () => clicks.push(el.getAttribute('src') ?? '')));
+    const fight = extractFightControls(doc);
+    fight.leftHand?.trigger();
+    fight.rightHand?.trigger();
+    fight.flee?.trigger();
+    expect(clicks.map((src) => src.split('/').pop())).toEqual(['balk.gif', 'jobbk.gif', 'menekul.gif']);
+  });
+
+  it('finds no hands off a battle page', () => {
+    const fight = extractFightControls(makeDoc(FREEMOVE_HTML));
+    expect(fight.leftHand).toBeNull();
+    expect(fight.rightHand).toBeNull();
+    expect(fight.flee).toBeNull();
+  });
+
+  it.each([
+    ['a narration link', '<font face="Comic sans MS">A szörny meghalt.<br><a href="#" id="go">Folytatás</a></font>'],
+    ['a link with trailing punctuation', '<a href="#" id="go">folytatás...</a>'],
+    ['a submit button', '<input type="submit" id="go" value="Folytatás">'],
+    ['an image input', '<input type="image" id="go" src="tovabb.gif" title="Folytatás">'],
+    ['a linked image', '<a href="#" id="go"><img src="x.gif" alt="Folytatás"></a>'],
+  ])('finds the Folytatás control as %s', (_, html) => {
+    const doc = makeDoc(html);
+    const go = doc.getElementById('go')!;
+    const click = vi.fn((e: Event) => e.preventDefault());
+    go.addEventListener('click', click);
+    const { proceed } = extractFightControls(doc);
+    expect(proceed).not.toBeNull();
+    proceed!.trigger();
+    expect(click).toHaveBeenCalledTimes(1);
+  });
+
+  // Only the word on its own: a sentence about continuing is not the control.
+  it('ignores a link that only mentions continuing', () => {
+    const doc = makeDoc('<a href="#">Folytatás a következő oldalon</a><a href="#">Vissza</a>');
+    expect(extractFightControls(doc).proceed).toBeNull();
   });
 });

@@ -11,7 +11,7 @@
 
 import { h, render } from 'preact';
 import { detectPage, PageType } from '@/utils/pageDetector';
-import { extractBattle, extractDungeon, extractFreeMove } from '@/utils/domExtract';
+import { extractBattle, extractDungeon, extractFightControls, extractFreeMove, extractImageControl } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { extractCraftingHall, type CraftingHallState } from '@/utils/craftingExtract';
@@ -304,6 +304,11 @@ export function bootDesktop(doc: Document): void {
   const marketState = extractMarketState(pageType, doc);
   const crafting = extractCrafting(pageType, doc);
   const battleMonsterName = extractBattleMonsterName(pageType, doc);
+  // Read on every page, not only battles: the page that ends a fight is not
+  // verified to be a battle page, and a control that is not drawn reads null.
+  const fight = extractFightControls(doc);
+  // Every building marks its way out with the same `vissza.gif` control.
+  const exit = extractImageControl(doc, 'vissza');
 
   const root = mountDockRoot(doc);
   if (!root) return;
@@ -318,7 +323,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, crafting, battleMonsterName, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

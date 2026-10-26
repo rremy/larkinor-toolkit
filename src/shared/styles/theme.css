@@ -370,6 +370,11 @@
 }
 .lc-config-platform-btn--on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
 .lc-config-note { margin: 0; font-size: 11px; color: var(--muted); }
+.lc-config-shortcuts { margin: 0 0 6px; display: grid; gap: 3px; font-size: 13px; }
+.lc-config-shortcuts--off { opacity: 0.5; }
+.lc-config-shortcut { display: flex; gap: 10px; }
+.lc-config-shortcut dt { min-width: 140px; color: var(--accent); font-weight: bold; }
+.lc-config-shortcut dd { margin: 0; color: var(--text); }
 .lc-stat-row { display: flex; align-items: center; gap: 10px; }
 .lc-stat-label { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
 .lc-stat-value { font-size: 13px; color: var(--muted); min-width: 80px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
