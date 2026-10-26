@@ -137,3 +137,12 @@ export function craftSelectedKey(hall: CraftingHallKind): string {
 export function explorerFiltersKey(tab: string): string {
   return `lc-explorer-filters-${tab}`;
 }
+
+/**
+ * A database list tab's sort column and direction, as `columns.ts`'s
+ * `SortState` in JSON — kept per tab for the same reason as its filters, and
+ * changed only by clicking a column header.
+ */
+export function explorerSortKey(tab: string): string {
+  return `lc-explorer-sort-${tab}`;
+}

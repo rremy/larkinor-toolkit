@@ -14,6 +14,8 @@ interface DataTableProps<T> {
   defaultSortKey?: string;
   /** Initial sort direction (default ascending). */
   defaultSortAsc?: boolean;
+  /** Told of every header click's resulting sort, so a caller can keep it. */
+  onSortChange?: (key: string, asc: boolean) => void;
   /**
    * Turns a row into a compare subject, enabling the hover/long-press diff
    * against the worn set. Omitted for tabs with nothing to compare (items,
@@ -68,7 +70,7 @@ function DataRow<T extends Record<string, unknown>>(
 export function DataTable<T extends Record<string, unknown>>(
   props: DataTableProps<T>,
 ): VNode {
-  const { columns, rows, onSelect, selected, defaultSortKey, defaultSortAsc, subjectOf } = props;
+  const { columns, rows, onSelect, selected, defaultSortKey, defaultSortAsc, onSortChange, subjectOf } = props;
   const firstSortable = columns.find((c) => !c.num) ?? columns[0];
   const [sortKey, setSortKey] = useState<string>(
     defaultSortKey ?? (firstSortable ? firstSortable.key : ''),
@@ -80,12 +82,10 @@ export function DataTable<T extends Record<string, unknown>>(
   const slice = sorted.slice(0, ROW_CAP);
 
   function onHeaderClick(key: string) {
-    if (key === sortKey) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
+    const asc = key === sortKey ? !sortAsc : true;
+    setSortKey(key);
+    setSortAsc(asc);
+    onSortChange?.(key, asc);
   }
 
   return (

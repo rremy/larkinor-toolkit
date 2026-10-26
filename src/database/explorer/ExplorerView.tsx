@@ -3,14 +3,14 @@ import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import type { EntityTab } from './columns';
-import { COLS, DEFAULT_SORT } from './columns';
+import { COLS, parseSortState, serialiseSortState } from './columns';
 import { FILTERS, applyFilters, parseFilterState, serialiseFilterState, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
 import { DetailPanel } from './DetailPanel';
 import { buildLookups, type DetailLookups } from './lookups';
 import { fromArmor, fromWeapon, type CompareSubject } from '@/shared/compare';
-import { explorerFiltersKey } from '@/shared/prefKeys';
+import { explorerFiltersKey, explorerSortKey } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 
 type Row = Record<string, unknown>;
@@ -25,8 +25,8 @@ interface ExplorerViewProps {
   /** Open the map focused on a shop's cell (from the detail panel). */
   onShowCell: (cellId: string) => void;
   /**
-   * Where each tab's filters are kept, so a tab switch or the game's page
-   * reload does not wipe a search. Absent: filters reset as they always did.
+   * Where each tab's filters and sort are kept, so a tab switch or the game's
+   * page reload does not wipe a search. Absent: both reset as they always did.
    */
   prefStore?: PrefStore;
 }
@@ -81,6 +81,13 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
     prefStore?.write(explorerFiltersKey(tab), serialiseFilterState(next));
   };
 
+  // The table is keyed by tab, so it remounts on a switch and reads the
+  // stored sort afresh as its default.
+  const sort = parseSortState(prefStore?.read(explorerSortKey(tab)) ?? null, tab);
+  const changeSort = (key: string, asc: boolean) => {
+    prefStore?.write(explorerSortKey(tab), serialiseSortState({ key, asc }));
+  };
+
   const visible = applyFilters(rows, FILTERS[tab], filterState);
   const selected = selectedId != null
     ? rows.find((r) => r.id === selectedId) ?? null
@@ -110,8 +117,9 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
             rows={visible}
             selected={selected ?? undefined}
             onSelect={(row) => onSelect(row.id as number)}
-            defaultSortKey={DEFAULT_SORT[tab].key}
-            defaultSortAsc={DEFAULT_SORT[tab].asc}
+            defaultSortKey={sort.key}
+            defaultSortAsc={sort.asc}
+            onSortChange={changeSort}
             subjectOf={subjectOf}
           />
         </div>
