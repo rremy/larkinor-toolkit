@@ -118,7 +118,16 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     image input reading just *Folytatás* — on every page, because which page type ends a fight
     was never captured live. The config drawer's *Billentyűparancsok* section turns all of it
     off (`lc-keyboard-shortcuts`, on unless stored `off`) and lists every key; Escape still
-    closes a modal when off. Mobile binds no keys, so it gets no such section. The dock renders on every page,
+    closes a modal when off. Mobile binds no keys, so it gets no such section.
+    **What stands the shortcuts down, and what must not.** Only the dock's own drawers (⚙, the
+    monster card) and a **full-size** panel do — asked per keystroke through `hasBlockingPanel`
+    in `DockedPanel.tsx`. Three ways they used to die silently, all fixed in 0.10.1: the panels'
+    open flags are persisted, so leaving the market or home with its panel open left the flag
+    true on every later page, where no such panel is even drawn; a panel docked beside the game
+    (minimised — the quest map while walking a labyrinth) counted as covering it; and focus
+    stays on whatever was clicked last, so yielding *every* key to a focused dock control left
+    them dead after any click in the dock. Now a docked panel leaves the keys and Esc to the
+    game (its ✕ closes it), and a focused dock control keeps only Space, which presses it. The dock renders on every page,
     including ones we don't recognise; only free-move gets the full action set.
   - Because the game page stays visible on desktop, **no CSS may use an unscoped element
     selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
