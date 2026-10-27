@@ -3,27 +3,49 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { getPanelMinimized, setPanelMinimized } from '@/utils/config';
 
 /**
- * Close handlers of the panels currently open, outermost first. Panels nest — an
- * inventory item opens the database over it — so Escape has to close the
- * innermost one and leave the rest standing.
+ * The panels currently open, outermost first. Panels nest — an inventory item
+ * opens the database over it — so Escape has to close the innermost one and
+ * leave the rest standing.
  *
  * Module-level rather than context because the panels do not share a Preact
  * tree in every case, and the stack has to survive across them.
  */
-const openPanels: Array<() => void> = [];
+interface OpenPanel {
+  close: () => void;
+  /** Read live: minimising does not re-register the panel. */
+  docked: () => boolean;
+}
+
+const openPanels: OpenPanel[] = [];
+
+/**
+ * A panel docked beside the game leaves the game playable, so it leaves the
+ * keyboard to the game too: Escape closes only a full-size panel, and only a
+ * full-size one stands the game's shortcuts down.
+ */
+function innermostBlocking(): OpenPanel | undefined {
+  for (let i = openPanels.length - 1; i >= 0; i -= 1) {
+    if (!openPanels[i].docked()) return openPanels[i];
+  }
+  return undefined;
+}
 
 function handleEscape(event: KeyboardEvent): void {
   if (event.code !== 'Escape') return;
   if (event.ctrlKey || event.altKey || event.metaKey) return;
-  const closeInnermost = openPanels[openPanels.length - 1];
-  if (!closeInnermost) return;
+  const panel = innermostBlocking();
+  if (!panel) return;
   event.preventDefault();
-  closeInnermost();
+  panel.close();
 }
 
-/** True while any panel is open — lets other Escape handlers stand down. */
-export function hasOpenPanel(): boolean {
-  return openPanels.length > 0;
+/**
+ * True while a full-size panel is open — it covers the game, so the game's
+ * shortcuts and the other Escape handlers stand down. A panel docked beside
+ * the game does not count.
+ */
+export function hasBlockingPanel(): boolean {
+  return innermostBlocking() !== undefined;
 }
 
 export interface DockedPanelProps {
@@ -70,15 +92,18 @@ export function DockedPanel({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  // The same for the docked state, which the stack reads at keydown time.
+  const dockedRef = useRef(false);
+
   useEffect(() => {
     if (!open) return;
 
-    const close = () => onCloseRef.current();
-    openPanels.push(close);
+    const panel: OpenPanel = { close: () => onCloseRef.current(), docked: () => dockedRef.current };
+    openPanels.push(panel);
     if (openPanels.length === 1) document.addEventListener('keydown', handleEscape);
 
     return () => {
-      const at = openPanels.indexOf(close);
+      const at = openPanels.indexOf(panel);
       if (at >= 0) openPanels.splice(at, 1);
       if (openPanels.length === 0) document.removeEventListener('keydown', handleEscape);
     };
@@ -94,6 +119,7 @@ export function DockedPanel({
 
   // A stored preference must not dock the panel where there is nowhere to dock.
   const docked = minimizable && minimized;
+  dockedRef.current = docked;
 
   return (
     <div class={`lc-db-overlay${docked ? ' lc-db-overlay--minimized' : ''}`}>

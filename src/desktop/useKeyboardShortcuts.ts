@@ -2,7 +2,7 @@
 // of its own, but it does have text inputs (chat), so the editable-target guard
 // is what actually makes single-letter bindings safe: typing "wasd" into chat
 // must never walk the character across the map. See handleKeyDown below for
-// the full guard order (modifiers, auto-repeat, modal, setting, dock, editable target)
+// the full guard order (modifiers, auto-repeat, modal, setting, dock Space, editable target)
 // and why each one runs where it does.
 
 import { useEffect } from 'preact/hooks';
@@ -37,6 +37,12 @@ export interface KeyboardShortcutOptions {
   enabled?: boolean;
   /** True while any desktop modal is open — suppresses all but Escape. */
   modalOpen: boolean;
+  /**
+   * Asked on every keystroke whether a full-size panel covers the game; while
+   * one does, it counts as a modal. A function, not a flag: minimising a panel
+   * does not re-render the dock. A panel docked beside the game says no.
+   */
+  panelOpen?: () => boolean;
   onOpenDatabase: () => void;
   onCloseModal: () => void;
 }
@@ -95,7 +101,7 @@ function digitIndex(code: string): number {
 /** Installs the document-level key bindings for the lifetime of the caller. */
 export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
   const {
-    doc, directions, attack, quickActions, fight = null, exit = null, enabled = true, modalOpen, onOpenDatabase, onCloseModal,
+    doc, directions, attack, quickActions, fight = null, exit = null, enabled = true, modalOpen, panelOpen, onOpenDatabase, onCloseModal,
   } = options;
 
   useEffect(() => {
@@ -115,7 +121,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
       // the database overlay's filter input is editable, and Escape must
       // still reach it from inside that input. Every other key is suppressed
       // underneath the modal regardless of target.
-      if (modalOpen) {
+      if (modalOpen || panelOpen?.()) {
         if (event.code === 'Escape') {
           event.preventDefault();
           onCloseModal();
@@ -125,10 +131,12 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
 
       if (!enabled) return;
 
-      // The dock's own controls (collapse toggle, action buttons, ...) must
-      // behave natively — e.g. Space activating a focused button — rather
-      // than being reinterpreted as a game shortcut such as the attack key.
-      if (isInsideDockRoot(event.target)) return;
+      // A focused dock control (collapse toggle, action buttons, a docked
+      // panel's tabs, ...) keeps Space, which presses it natively, rather than
+      // having it reinterpreted as the attack key. Only Space: focus stays on
+      // whatever was clicked last, so yielding every key here left the
+      // shortcuts dead after any click in the dock until the page was clicked.
+      if (event.code === 'Space' && isInsideDockRoot(event.target)) return;
 
       if (isEditableTarget(event.target)) return;
 
@@ -192,5 +200,5 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
 
     doc.addEventListener('keydown', handleKeyDown);
     return () => doc.removeEventListener('keydown', handleKeyDown);
-  }, [doc, directions, attack, quickActions, fight, exit, enabled, modalOpen, onOpenDatabase, onCloseModal]);
+  }, [doc, directions, attack, quickActions, fight, exit, enabled, modalOpen, panelOpen, onOpenDatabase, onCloseModal]);
 }

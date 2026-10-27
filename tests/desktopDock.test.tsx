@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, MARKET_OPEN_KEY, DB_MINIMIZED_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -50,6 +50,8 @@ describe('DesktopDock', () => {
     GM_setValue(DB_ROUTE_KEY, '');
     GM_setValue(CRAFTING_OPEN_KEY, '');
     GM_setValue(KEYBOARD_SHORTCUTS_KEY, '');
+    GM_setValue(MARKET_OPEN_KEY, '');
+    GM_setValue(DB_MINIMIZED_KEY, '');
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {
@@ -94,6 +96,38 @@ describe('DesktopDock', () => {
       GM_setValue(KEYBOARD_SHORTCUTS_KEY, 'off');
       const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
       expect(keys(container)).toEqual([]);
+    });
+
+    // Leaving the market with its panel open stores the flag; the next page
+    // draws no market panel, so nothing covers the game.
+    it('keeps working on a page without the panel a stored flag still names', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['as']));
+      GM_setValue(MARKET_OPEN_KEY, 'true');
+      const state = makeState();
+      render(<DesktopDock doc={document} state={state} db={null} />);
+      fireEvent.keyDown(document.body, { code: 'Digit1' });
+      expect(state.actions[2].trigger).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps working beside a database docked next to the game', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['as']));
+      GM_setValue(DB_OPEN_KEY, 'true');
+      GM_setValue(DB_MINIMIZED_KEY, 'true');
+      const state = makeState();
+      const { unmount } = render(<DesktopDock doc={document} state={state} db={null} />);
+      fireEvent.keyDown(document.body, { code: 'Digit1' });
+      expect(state.actions[2].trigger).toHaveBeenCalledTimes(1);
+      unmount();
+    });
+
+    it('stands down while the database covers the game', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['as']));
+      GM_setValue(DB_OPEN_KEY, 'true');
+      const state = makeState();
+      const { unmount } = render(<DesktopDock doc={document} state={state} db={null} />);
+      fireEvent.keyDown(document.body, { code: 'Digit1' });
+      expect(state.actions[2].trigger).not.toHaveBeenCalled();
+      unmount();
     });
 
     it('numbers nothing past the tenth', () => {

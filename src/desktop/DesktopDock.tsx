@@ -10,7 +10,7 @@ import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
-import { hasOpenPanel } from '@/components/DockedPanel';
+import { hasBlockingPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
 import { shortcutDigit, useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 import { InventoryPanel } from '@/desktop/InventoryPanel';
@@ -212,10 +212,13 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     }
   }, [doc, db]);
 
-  // The crafting flag is persisted, so it can be true on a page with no hall;
-  // only a panel actually on screen may suppress the shortcuts.
-  const modalOpen = selectedMonster !== null || configOpen || dbOpen || inventoryOpen || marketOpen
-    || (crafting !== null && craftingOpen);
+  // The dock's own drawers. The panels (database, inventory, market, crafting)
+  // answer for themselves through `hasBlockingPanel`, which counts only one
+  // actually on screen and full-size: their open flags are persisted, so a
+  // flag alone can be true on a page that draws no such panel — which silently
+  // switched every shortcut off after leaving the market with its panel open —
+  // and a panel docked beside the game leaves the game, keys included, usable.
+  const modalOpen = selectedMonster !== null || configOpen;
 
   /**
    * Closes the topmost drawer. Panels are not handled here: DockedPanel owns
@@ -225,7 +228,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
    * open it is the top layer and nothing here should act.
    */
   const closeTopModal = () => {
-    if (hasOpenPanel()) return;
+    if (hasBlockingPanel()) return;
     if (configOpen) closeConfig();
     else if (selectedMonster) setSelectedMonster(null);
   };
@@ -251,6 +254,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     exit,
     enabled: shortcutsOn,
     modalOpen,
+    panelOpen: hasBlockingPanel,
     onOpenDatabase: openDatabase,
     onCloseModal: closeTopModal,
   });

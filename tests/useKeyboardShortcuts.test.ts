@@ -255,6 +255,39 @@ describe('useKeyboardShortcuts', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  // Focus stays on whatever was clicked last; only Space belongs to it.
+  it('still moves while a dock control has focus', () => {
+    const doc = makeGameDoc('<div id="lc-dock-root"><button id="cfg">⚙</button></div>');
+    const north = dir('north');
+    const first = hotkey('kajal');
+    mountHook(baseOptions(doc, { directions: [north], quickActions: [first] }));
+
+    const cfg = doc.getElementById('cfg')!;
+    press(doc, 'KeyW', {}, cfg);
+    press(doc, 'Digit1', {}, cfg);
+
+    expect(north.trigger).toHaveBeenCalledTimes(1);
+    expect(first.trigger).toHaveBeenCalledTimes(1);
+  });
+
+  // A panel docked beside the game leaves the keys to the game.
+  it('asks on every key whether a full-size panel covers the game', () => {
+    const doc = makeGameDoc();
+    const north = dir('north');
+    let covered = true;
+    const onCloseModal = vi.fn();
+    mountHook(baseOptions(doc, { directions: [north], panelOpen: () => covered, onCloseModal }));
+
+    press(doc, 'KeyW');
+    press(doc, 'Escape');
+    expect(north.trigger).not.toHaveBeenCalled();
+    expect(onCloseModal).toHaveBeenCalledTimes(1);
+
+    covered = false;
+    press(doc, 'KeyW');
+    expect(north.trigger).toHaveBeenCalledTimes(1);
+  });
+
   it('removes its listener on unmount', () => {
     const doc = makeGameDoc();
     const north = dir('north');
