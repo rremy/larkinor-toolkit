@@ -73,6 +73,17 @@ export function applyMarketRates<T extends PricedRow>(rows: T[], rates: MarketRa
 }
 
 /**
+ * One item's market price: its shop price times the captured rate for its game
+ * id, rounded like `applyMarketRates`. Null without rates, an id, a price, or a
+ * rate for that id — for the page rows that carry the id but no database row.
+ */
+export function marketPriceFor(id: string | null, price: number | null, rates: MarketRates | null): number | null {
+  if (!rates || id === null || price === null) return null;
+  const percent = rates.rates[id];
+  return typeof percent === 'number' && Number.isFinite(percent) ? Math.round((price * percent) / 100) : null;
+}
+
+/**
  * Wraps a loader so weapons, armours and items carry live market prices. The
  * rates are read through `readRates` on every load, so a caller holding the
  * loader across pages still sees the latest capture.

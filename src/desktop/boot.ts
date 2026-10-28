@@ -15,6 +15,7 @@ import { extractBattle, extractDungeon, extractFightControls, extractFreeMove, e
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { extractShop, type ShopState } from '@/utils/shopExtract';
+import { extractCharacterPage, type CharacterPageState } from '@/utils/characterPageExtract';
 import { parseMarketRates } from '@/shared/marketRates';
 import { MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
 import { extractCraftingHall, type CraftingHallState } from '@/utils/craftingExtract';
@@ -105,6 +106,20 @@ function extractShopState(pageType: PageType, doc: Document): ShopState | null {
     return extractShop(doc, parseMarketRates(getPref(MARKET_RATES_PREF_KEY)));
   } catch (err) {
     console.warn('[Larkinor UI] Shop extraction failed; shop panel unavailable:', err);
+    return null;
+  }
+}
+
+/**
+ * The character page's state, for the dock's Karakterlap panel. Null anywhere
+ * else, and on failure: the game's own page still works beside the dock.
+ */
+function extractCharacterState(pageType: PageType, doc: Document): CharacterPageState | null {
+  if (pageType !== PageType.Character) return null;
+  try {
+    return extractCharacterPage(doc, parseMarketRates(getPref(MARKET_RATES_PREF_KEY)));
+  } catch (err) {
+    console.warn('[Larkinor UI] Character page extraction failed; character panel unavailable:', err);
     return null;
   }
 }
@@ -321,6 +336,7 @@ export function bootDesktop(doc: Document): void {
   const homeState = extractInventoryState(pageType, doc);
   const marketState = extractMarketState(pageType, doc);
   const shopState = extractShopState(pageType, doc);
+  const characterState = extractCharacterState(pageType, doc);
   const crafting = extractCrafting(pageType, doc);
   const battleMonsterName = extractBattleMonsterName(pageType, doc);
   // Read on every page, not only battles: the page that ends a fight is not
@@ -336,13 +352,20 @@ export function bootDesktop(doc: Document): void {
   let openQuestsSignal = 0;
   let openQuestTarget: { set: QuestSet; id: string } | null = null;
 
+  // The character page is the only page that prints the worn equipment set, and
+  // the only place it can be changed, so capturing on every visit keeps the
+  // stored loadout current by construction. Captured before it is read below,
+  // so the character panel's own compare cards measure against the set this page
+  // shows, not the one from the previous visit.
+  if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
   // The worn set, for the compare card on the inventory and market rows and in
   // the database overlay. Read once at boot: the game reloads on every action.
   const loadout = readLoadout();
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, characterState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
@@ -368,10 +391,6 @@ export function bootDesktop(doc: Document): void {
     });
   }
 
-  // The character page is the only page that prints the worn equipment set, and
-  // the only place it can be changed, so capturing on every visit keeps the
-  // stored loadout current by construction.
-  if (pageType === PageType.Character) captureLoadout(doc, setPref);
 
   // The market's buy form quotes the current rate of every item it trades, and
   // the rates drift — so each visit refreshes the database's market prices.

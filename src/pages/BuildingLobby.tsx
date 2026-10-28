@@ -1,7 +1,10 @@
 import { h, type JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import type { BuildingLobbyState } from '@/utils/craftingExtract';
 import type { BuildingOption } from '@/utils/domExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseButton } from '@/components/DatabaseButton';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { silver } from '@/components/MarketRows';
 
 // The Erőd's and the Mágustorony's lobbies as a phone page: nothing but the
@@ -22,11 +25,13 @@ function Control({ option, wide }: { option: BuildingOption; wide?: boolean }): 
 }
 
 export function BuildingLobby({ state }: BuildingLobbyProps): JSX.Element {
+  const [dbOpen, setDbOpen] = useState(false);
   return (
     <div class="lc-page">
       <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
       <div class="lc-mkt-stats">
         <span class="lc-mkt-gold" title="Pénzed">💰 {silver(state.gold)}</span>
+        <DatabaseButton onClick={() => setDbOpen(true)} />
       </div>
       <div class="lc-mkt-body">
         <div class="lc-mkt-actions">
@@ -34,6 +39,7 @@ export function BuildingLobby({ state }: BuildingLobbyProps): JSX.Element {
           {state.exit && <Control option={state.exit} wide />}
         </div>
       </div>
+      <DatabaseOverlay open={dbOpen} onClose={() => setDbOpen(false)} />
     </div>
   );
 }

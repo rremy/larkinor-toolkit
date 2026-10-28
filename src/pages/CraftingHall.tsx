@@ -1,7 +1,10 @@
 import { h, type JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import type { DataLoader } from '@/shared/data';
 import type { CraftingHallState } from '@/utils/craftingExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseButton } from '@/components/DatabaseButton';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { CraftingPanel } from '@/components/CraftingPanel';
 import { HallSideSection } from '@/components/HallSideForm';
 import { ManualCraft } from '@/components/ManualCraft';
@@ -16,11 +19,13 @@ export interface CraftingHallProps {
 }
 
 export function CraftingHall({ state, loader }: CraftingHallProps): JSX.Element {
+  const [dbOpen, setDbOpen] = useState(false);
   return (
     <div class="lc-page">
       <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
       <div class="lc-mkt-stats">
         <span class="lc-mkt-gold" title="Pénzed">💰 {silver(state.gold)}</span>
+        <DatabaseButton onClick={() => setDbOpen(true)} />
       </div>
       <div class="lc-mkt-body">
         <CraftingPanel state={state} loader={loader} />
@@ -35,6 +40,7 @@ export function CraftingHall({ state, loader }: CraftingHallProps): JSX.Element 
           </div>
         )}
       </div>
+      <DatabaseOverlay open={dbOpen} onClose={() => setDbOpen(false)} />
     </div>
   );
 }

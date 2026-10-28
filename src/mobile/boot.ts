@@ -38,6 +38,8 @@ import { Shop } from '@/pages/Shop';
 import { Bank } from '@/pages/Bank';
 import { Arena } from '@/pages/Arena';
 import { PalaceQuest } from '@/pages/PalaceQuest';
+import { Character } from '@/pages/Character';
+import { extractCharacterPage, type CharacterPageState } from '@/utils/characterPageExtract';
 import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Mobile boot (proxy-DOM pattern): extract the game state, move the original
@@ -65,6 +67,7 @@ type PageState =
   | { pageType: PageType.Bank; state: BankState }
   | { pageType: PageType.Arena; state: ArenaState }
   | { pageType: PageType.PalaceQuest; state: PalaceQuestState }
+  | { pageType: PageType.Character; state: CharacterPageState }
   | { pageType: PageType.ForgeHall | PageType.MageHall; state: CraftingHallState };
 
 /**
@@ -88,6 +91,7 @@ const NO_MONSTER_PAGES: ReadonlySet<PageType> = new Set([
   PageType.Login, PageType.Dungeon, PageType.Home, PageType.Market,
   PageType.ForgeLobby, PageType.ForgeHall, PageType.MageLobby, PageType.MageHall,
   PageType.Shop, PageType.Church, PageType.Bank, PageType.Arena, PageType.Palace, PageType.PalaceQuest,
+  PageType.Character,
 ]);
 
 /** Extracts the page state for a page type we render, or null to skip it. */
@@ -118,6 +122,8 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractArena(doc) };
     case PageType.PalaceQuest:
       return { pageType, state: extractPalaceQuest(doc) };
+    case PageType.Character:
+      return { pageType, state: extractCharacterPage(doc, parseMarketRates(getPref(MARKET_RATES_PREF_KEY))) };
     case PageType.ForgeHall:
     case PageType.MageHall: {
       // A hall without its crafting form means the markup changed under us:
@@ -154,9 +160,9 @@ export function bootMobile(doc: Document): void {
 
   // The character page is the only page that prints the worn equipment set, and
   // the only place it can be changed — so capturing on every visit keeps the
-  // stored loadout current by construction. Like the quest offer above, this
-  // runs before the early return: the page has no state of its own and mobile
-  // deliberately renders nothing on it.
+  // stored loadout current by construction. It runs before the page is taken
+  // over, so the compare card on the character view's own backpack rows reads
+  // the set the page has just printed.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
 
   // The market's buy form quotes the current rate of every item it trades, and
@@ -257,6 +263,9 @@ export function bootMobile(doc: Document): void {
         break;
       case PageType.PalaceQuest:
         render(provide(h(PalaceQuest, { state: pageState.state })), root);
+        break;
+      case PageType.Character:
+        render(provide(h(Character, { state: pageState.state })), root);
         break;
       case PageType.ForgeHall:
       case PageType.MageHall:

@@ -50,8 +50,8 @@ describe('MarketPanel', () => {
     const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const meta = rowFor(container, 'jáspis').querySelector('.lc-mkt-meta')!.textContent!;
 
-    expect(meta).toContain('bolti ár 50');
-    expect(meta).toContain('piaci ár 85');
+    expect(meta).toContain('bolti ár: 50');
+    expect(meta).toContain('piaci ár: 85');
   });
 
   it('shows no market price for an item the market does not price', () => {
@@ -265,10 +265,10 @@ describe('MarketPanel', () => {
     const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
     const meta = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-meta')!.textContent!;
 
-    expect(meta).toContain('bolti ár 124');
-    expect(meta).toContain('piaci ár 701');   // 124 x 565%
+    expect(meta).toContain('bolti ár: 124');
+    expect(meta).toContain('piaci ár: 701');   // 124 x 565%
     // Hungarian groups from five digits, so 4200 carries no separator.
-    expect(meta).toContain('összesen 4200'); // 700 x 6, the asking total
+    expect(meta).toContain('összesen: 4200'); // 700 x 6, the asking total
   });
 
   describe('searching the standing offers', () => {

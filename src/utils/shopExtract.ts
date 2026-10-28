@@ -22,7 +22,7 @@ import {
   parseGold,
   type BuildingOption,
 } from '@/utils/domExtract';
-import type { MarketRates } from '@/shared/marketRates';
+import { marketPriceFor, type MarketRates } from '@/shared/marketRates';
 
 export type ShopKind = 'general' | 'weapon' | 'church';
 
@@ -121,12 +121,6 @@ function toNumber(raw: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function marketPriceOf(id: string | null, price: number | null, rates: MarketRates | null): number | null {
-  if (!rates || id === null || price === null) return null;
-  const percent = rates.rates[id];
-  return typeof percent === 'number' ? Math.round((price * percent) / 100) : null;
-}
-
 /** "88 arany" → { amount: 88, name: "arany" }; a label without a count keeps its text. */
 function parseCountLabel(text: string): { amount: number; name: string } {
   const m = text.trim().match(/^(\d+)\s+(.*)$/);
@@ -177,7 +171,7 @@ export function extractShop(doc: Document, rates: MarketRates | null = null): Sh
       ? parseCuccDetail(buyDetails[index])
       : parseCuccDetail(`Név: ${parseCountLabel(option.text).name}`);
     const unitPrice = toNumber(buyPrices[index]) ?? detail.price;
-    return { ...detail, index, id: option.value, unitPrice, marketPrice: marketPriceOf(option.value, detail.price, rates) };
+    return { ...detail, index, id: option.value, unitPrice, marketPrice: marketPriceFor(option.value, detail.price, rates) };
   });
 
   const bulk = readBulkList(doc);
@@ -202,7 +196,7 @@ export function extractShop(doc: Document, rates: MarketRates | null = null): Sh
       index,
       id: option.value,
       sellPrice,
-      marketPrice: marketPriceOf(option.value, detail.price, rates),
+      marketPrice: marketPriceFor(option.value, detail.price, rates),
       bulkIndex: bulkEntry?.enabled ? bulkEntry.index : null,
       sellable,
     };

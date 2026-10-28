@@ -21,7 +21,7 @@ export interface StatBarProps {
 }
 
 /** Simple stacked-cylinder database glyph, tinted via currentColor. */
-function DbIcon() {
+export function DbIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <ellipse cx="12" cy="5" rx="8" ry="3" />

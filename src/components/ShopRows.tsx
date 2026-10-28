@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { ShopActions, ShopBuyItem, ShopSellItem } from '@/utils/shopExtract';
 import type { BuildingOption } from '@/utils/domExtract';
 import { matchesSearch } from '@/shared/text';
+import { useStoredSort } from '@/hooks/useStoredSort';
 import { NameLine, NumberField, Toolbar, silver, type ColumnLabels } from '@/components/MarketRows';
 
 // The shops' two lists — what the shop sells, and what it will buy from you —
@@ -99,9 +100,9 @@ function BuyRow({ item, gold, onBuy, onOpenDetail }: BuyRowProps): JSX.Element {
       <div class="lc-mkt-cell">
         <NameLine text={item.name} detailName={item.name} pricePercent={null} onOpenDetail={onOpenDetail} detail={item} />
         <div class="lc-mkt-meta">
-          {item.unitPrice !== null && <span>ár {silver(item.unitPrice)}</span>}
+          {item.unitPrice !== null && <span>ár: {silver(item.unitPrice)}</span>}
           {item.weight > 0 && <span>{silver(item.weight)} kg</span>}
-          {item.marketPrice !== null && <span class="lc-shop-market">piaci ár {silver(item.marketPrice)}</span>}
+          {item.marketPrice !== null && <span class="lc-shop-market">piaci ár: {silver(item.marketPrice)}</span>}
           {total !== null && (
             <span
               class={`lc-mkt-total${tooExpensive ? ' lc-mkt-total--short' : ''}`}
@@ -131,8 +132,7 @@ export interface ShopBuyListProps {
 
 export function ShopBuyList({ items, gold, onBuy, onOpenDetail }: ShopBuyListProps): JSX.Element {
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<BuySortKey>('name');
-  const [asc, setAsc] = useState(true);
+  const { sortKey, setSortKey, asc, flip } = useStoredSort('shop-buy', BUY_SORT_OPTIONS.map(([k]) => k), { key: 'name', asc: true });
   const shown = sortRows(items.filter((i) => matchesSearch(i.name, search)), sortKey, asc, buyNumber);
 
   return (
@@ -145,7 +145,7 @@ export function ShopBuyList({ items, gold, onBuy, onOpenDetail }: ShopBuyListPro
           sortKey={sortKey}
           onSortKey={setSortKey}
           asc={asc}
-          onFlip={() => setAsc((v) => !v)}
+          onFlip={flip}
           options={BUY_SORT_OPTIONS}
         />
       )}
@@ -211,10 +211,10 @@ function SellRow({ item, picked, onPick, onSell, onOpenDetail }: SellRowProps): 
         <NameLine text={item.name} detailName={item.name} pricePercent={null} onOpenDetail={onOpenDetail} detail={item} />
         <div class="lc-mkt-meta">
           <span>{item.amount} db</span>
-          {item.sellPrice !== null && <span>elad. ár {silver(item.sellPrice)}</span>}
-          {item.price !== null && <span>bolti ár {silver(item.price)}</span>}
-          {item.marketPrice !== null && <span class="lc-shop-market">piaci ár {silver(item.marketPrice)}</span>}
-          {single && total !== null && <span class="lc-mkt-total">összesen {silver(total)}</span>}
+          {item.sellPrice !== null && <span>elad. ár: {silver(item.sellPrice)}</span>}
+          {item.price !== null && <span>bolti ár: {silver(item.price)}</span>}
+          {item.marketPrice !== null && <span class="lc-shop-market">piaci ár: {silver(item.marketPrice)}</span>}
+          {single && total !== null && <span class="lc-mkt-total">összesen: {silver(total)}</span>}
           {!item.sellable && <span>itt nem eladható</span>}
         </div>
       </div>
@@ -254,8 +254,7 @@ export interface ShopSellListProps {
  */
 export function ShopSellList({ items, onSellOne, onSellMany, onOpenDetail }: ShopSellListProps): JSX.Element {
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<SellSortKey>('name');
-  const [asc, setAsc] = useState(true);
+  const { sortKey, setSortKey, asc, flip } = useStoredSort('shop-sell', SELL_SORT_OPTIONS.map(([k]) => k), { key: 'name', asc: true });
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
   const [armed, setArmed] = useState(false);
 
@@ -308,7 +307,7 @@ export function ShopSellList({ items, onSellOne, onSellMany, onOpenDetail }: Sho
           sortKey={sortKey}
           onSortKey={setSortKey}
           asc={asc}
-          onFlip={() => setAsc((v) => !v)}
+          onFlip={flip}
           options={SELL_SORT_OPTIONS}
         />
       )}

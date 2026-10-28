@@ -4,6 +4,7 @@ import { askPercent, type MarketItem, type MarketListing } from '@/utils/marketE
 import { matchesSearch } from '@/shared/text';
 import { MARKET_SORT_OPTIONS, sortItems, sortListings, type MarketSortKey } from '@/desktop/marketSort';
 import { useCompare } from '@/hooks/useCompare';
+import { useStoredSort } from '@/hooks/useStoredSort';
 import { fromDetail } from '@/shared/compare';
 import type { DetailLike } from '@/shared/loadout';
 
@@ -167,9 +168,9 @@ function OfferRow({ item, offered, onOffer, onOpenDetail }: OfferRowProps): JSX.
           {/* Both prices, side by side: the shop's is the alternative to selling
               here, and the market's is what this panel is offering at. Showing
               only the latter (inside the Ár input) made them hard to compare. */}
-          {item.price !== null && <span>bolti ár {silver(item.price)}</span>}
-          {item.suggestedPrice !== null && <span>piaci ár {silver(item.suggestedPrice)}</span>}
-          {priceValid && <span class="lc-mkt-total">összesen {silver(price * qty)}</span>}
+          {item.price !== null && <span>bolti ár: {silver(item.price)}</span>}
+          {item.suggestedPrice !== null && <span>piaci ár: {silver(item.suggestedPrice)}</span>}
+          {priceValid && <span class="lc-mkt-total">összesen: {silver(price * qty)}</span>}
         </div>
       </div>
 
@@ -218,9 +219,9 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
           detail={listing.detail}
         />
         <div class="lc-mkt-meta">
-          {listing.shopPrice !== null && <span>bolti ár {silver(listing.shopPrice)}</span>}
-          {listing.suggestedPrice !== null && <span>piaci ár {silver(listing.suggestedPrice)}</span>}
-          {asking !== null && <span class="lc-mkt-total">összesen {silver(asking * qty)}</span>}
+          {listing.shopPrice !== null && <span>bolti ár: {silver(listing.shopPrice)}</span>}
+          {listing.suggestedPrice !== null && <span>piaci ár: {silver(listing.suggestedPrice)}</span>}
+          {asking !== null && <span class="lc-mkt-total">összesen: {silver(asking * qty)}</span>}
         </div>
       </div>
 
@@ -237,6 +238,8 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
     </div>
   );
 }
+
+const MARKET_SORT_KEYS: MarketSortKey[] = MARKET_SORT_OPTIONS.map(([key]) => key);
 
 /** A column's control labels, spelled out so each one is separately addressable. */
 export interface ColumnLabels {
@@ -313,8 +316,7 @@ export interface OfferableListProps {
 export function OfferableList({ items, listings, onOffer, onOpenDetail }: OfferableListProps): JSX.Element {
   const [search, setSearch] = useState('');
   // By name ascending to begin with, as in the home view.
-  const [sortKey, setSortKey] = useState<MarketSortKey>('name');
-  const [asc, setAsc] = useState(true);
+  const { sortKey, setSortKey, asc, flip } = useStoredSort('market-offer', MARKET_SORT_KEYS, { key: 'name', asc: true });
 
   const shown = sortItems(items.filter((i) => matchesSearch(i.name, search)), sortKey, asc);
   const offered = offeredAmounts(listings);
@@ -329,7 +331,7 @@ export function OfferableList({ items, listings, onOffer, onOpenDetail }: Offera
           sortKey={sortKey}
           onSortKey={setSortKey}
           asc={asc}
-          onFlip={() => setAsc((v) => !v)}
+          onFlip={flip}
         />
       )}
       <div class="lc-mkt-list">
@@ -358,8 +360,7 @@ export interface ListingListProps {
 /** Offers already standing, revocable. */
 export function ListingList({ listings, onOpenDetail }: ListingListProps): JSX.Element {
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<MarketSortKey>('name');
-  const [asc, setAsc] = useState(true);
+  const { sortKey, setSortKey, asc, flip } = useStoredSort('market-listings', MARKET_SORT_KEYS, { key: 'name', asc: true });
 
   // Matched against the item's name, not the offer's whole label: every label
   // ends "… ezüst/db. áron", so a label search returned the entire column for
@@ -381,7 +382,7 @@ export function ListingList({ listings, onOpenDetail }: ListingListProps): JSX.E
           sortKey={sortKey}
           onSortKey={setSortKey}
           asc={asc}
-          onFlip={() => setAsc((v) => !v)}
+          onFlip={flip}
         />
       )}
       <div class="lc-mkt-list">

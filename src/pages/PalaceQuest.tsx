@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { PalaceQuestState } from '@/utils/buildingExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { DatabaseButton } from '@/components/DatabaseButton';
 import { ControlButton } from '@/components/BuildingControls';
 
 // The palace's quest room as a phone page: the quest on offer — its number, the
@@ -19,14 +20,28 @@ export function PalaceQuest({ state }: PalaceQuestProps): JSX.Element {
   // the quest only when this changes, so each press must change it.
   const [questOpen, setQuestOpen] = useState(0);
   const [showQuest, setShowQuest] = useState(false);
+  // Whether this open should land on the offered quest; the plain database
+  // button opens wherever the database was last left.
+  const [landOnQuest, setLandOnQuest] = useState(false);
   const openQuest = (): void => {
     setQuestOpen((n) => n + 1);
+    setLandOnQuest(true);
     setShowQuest(true);
   };
+  const openDatabase = (): void => {
+    setLandOnQuest(false);
+    setShowQuest(true);
+  };
+  const questTarget = landOnQuest && offer?.questId ? offer.questId : null;
 
   return (
     <div class="lc-page">
       <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
+
+      <div class="lc-mkt-stats">
+        <span class="lc-shop-title">Küldetésterem</span>
+        <DatabaseButton onClick={openDatabase} />
+      </div>
 
       <div class="lc-mkt-body">
         {offer && (
@@ -51,9 +66,9 @@ export function PalaceQuest({ state }: PalaceQuestProps): JSX.Element {
 
       <DatabaseOverlay
         open={showQuest}
-        initialTab={offer?.questId ? 'quests' : undefined}
+        initialTab={questTarget ? 'quests' : undefined}
         initialTabKey={questOpen}
-        initialQuest={offer?.questId ? { set: 'royal', id: offer.questId } : null}
+        initialQuest={questTarget ? { set: 'royal', id: questTarget } : null}
         onClose={() => setShowQuest(false)}
       />
     </div>

@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { ShopState } from '@/utils/shopExtract';
 import { getShopTab, setShopTab, type ShopTab } from '@/utils/config';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseButton } from '@/components/DatabaseButton';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { silver } from '@/components/MarketRows';
 import { ShopActionButtons, ShopBuyList, ShopSellList } from '@/components/ShopRows';
@@ -43,6 +44,8 @@ export function Shop({ state }: ShopProps): JSX.Element {
       <div class="lc-mkt-stats">
         <span class="lc-shop-title">{state.title}</span>
         <span class="lc-mkt-gold" title="Pénzed">💰 {silver(state.gold)}</span>
+        {/* '' opens the database plainly: no item name to land on. */}
+        <DatabaseButton onClick={() => setDbName('')} />
       </div>
 
       <div class="lc-home-tabs">

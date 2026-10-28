@@ -106,6 +106,9 @@ export function setMarketTab(tab: MarketTab): void {
   GM_setValue(MARKET_TAB_KEY, tab);
 }
 
+export const CHARACTER_MINIMIZED_KEY = 'lc-character-minimized';
+export const CHARACTER_OPEN_KEY = 'lc-character-open';
+
 export const SHOP_MINIMIZED_KEY = 'lc-shop-minimized';
 export const SHOP_OPEN_KEY = 'lc-shop-open';
 
@@ -133,6 +136,27 @@ export function getShopTab(): ShopTab | null {
 
 export function setShopTab(tab: ShopTab): void {
   GM_setValue(SHOP_TAB_KEY, tab);
+}
+
+/** GM storage key holding the character page's last selected tab. */
+export const CHARACTER_TAB_KEY = 'lc-character-tab';
+
+export type CharacterTab = 'overview' | 'backpack' | 'settings';
+
+const CHARACTER_TABS: CharacterTab[] = ['overview', 'backpack', 'settings'];
+
+/**
+ * The tab the character page was last left on — remembered because equipping,
+ * dropping and saving each reload the page, and landing back on the overview
+ * after every item moved would make sorting a backpack a chore.
+ */
+export function getCharacterTab(): CharacterTab | null {
+  const raw = GM_getValue(CHARACTER_TAB_KEY, '') as string;
+  return CHARACTER_TABS.includes(raw as CharacterTab) ? (raw as CharacterTab) : null;
+}
+
+export function setCharacterTab(tab: CharacterTab): void {
+  GM_setValue(CHARACTER_TAB_KEY, tab);
 }
 
 /**

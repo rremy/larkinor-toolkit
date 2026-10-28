@@ -20,7 +20,7 @@ const ITEMS: HomeItem[] = [
 describe('InventoryList', () => {
   it('filters by name (case-insensitive)', () => {
     const { getByPlaceholderText, container } = render(
-      <InventoryList items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
+      <InventoryList sortList="test-inventory" items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
     );
     fireEvent.input(getByPlaceholderText(/Keresés/), { target: { value: 'AGY' } });
     const rows = container.querySelectorAll('.lc-inv-row');
@@ -31,7 +31,7 @@ describe('InventoryList', () => {
   it('finds an accented name typed without accents', () => {
     // Nobody types the accents: "gyikbor" has to find "gyíkbőr".
     const { getByPlaceholderText, container } = render(
-      <InventoryList items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
+      <InventoryList sortList="test-inventory" items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
     );
     fireEvent.input(getByPlaceholderText(/Keresés/), { target: { value: 'gyikbor' } });
     const rows = container.querySelectorAll('.lc-inv-row');
@@ -41,7 +41,7 @@ describe('InventoryList', () => {
 
   it('sorts by total weight descending', () => {
     const { getByLabelText, getByText, container } = render(
-      <InventoryList items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
+      <InventoryList sortList="test-inventory" items={ITEMS} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={vi.fn()} />,
     );
     fireEvent.change(getByLabelText('Rendezés'), { target: { value: 'totalWeight' } });
     fireEvent.click(getByText('↓')); // toggle to descending
@@ -52,7 +52,7 @@ describe('InventoryList', () => {
   it('move defaults to the full amount and passes the chosen qty', () => {
     const onMove = vi.fn();
     const { container } = render(
-      <InventoryList items={[ITEMS[0]]} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={onMove} onOpenDetail={vi.fn()} />,
+      <InventoryList sortList="test-inventory" items={[ITEMS[0]]} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={onMove} onOpenDetail={vi.fn()} />,
     );
     const row = container.querySelector('.lc-inv-row')!;
     within(row as HTMLElement).getByTitle('Hátizsákba').click();
@@ -62,7 +62,7 @@ describe('InventoryList', () => {
   it('opens the detail when the name is clicked', () => {
     const onOpenDetail = vi.fn();
     const { getByText } = render(
-      <InventoryList items={[ITEMS[1]]} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={onOpenDetail} />,
+      <InventoryList sortList="test-inventory" items={[ITEMS[1]]} moveGlyph="🎒" moveTitle="Hátizsákba" onMove={vi.fn()} onOpenDetail={onOpenDetail} />,
     );
     fireEvent.click(getByText('agyar'));
     expect(onOpenDetail).toHaveBeenCalledWith(ITEMS[1]);

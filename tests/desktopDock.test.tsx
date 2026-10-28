@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, MARKET_OPEN_KEY, DB_MINIMIZED_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, MARKET_OPEN_KEY, DB_MINIMIZED_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY, CHARACTER_OPEN_KEY } from '../src/utils/config';
 import { makeShopState } from './support/shopState';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
@@ -53,6 +53,7 @@ describe('DesktopDock', () => {
     GM_setValue(KEYBOARD_SHORTCUTS_KEY, '');
     GM_setValue(MARKET_OPEN_KEY, '');
     GM_setValue(SHOP_OPEN_KEY, '');
+    GM_setValue(CHARACTER_OPEN_KEY, '');
     GM_setValue(DB_MINIMIZED_KEY, '');
   });
 

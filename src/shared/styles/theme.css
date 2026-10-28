@@ -317,6 +317,12 @@
 }
 .lc-statbar-btn:active { color: var(--accent); border-color: var(--accent); }
 .lc-statbar-btn svg { display: block; }
+/* The same button on pages without a stat bar: pushed to the end of whatever
+   row carries it — a page's money line, or the home page's tab strip. */
+.lc-db-btn { margin-left: auto; }
+.lc-home-tabs .lc-db-btn { align-self: center; margin: 0 8px; }
+/* A page's ✕ sits right after the database button, so the two share the corner. */
+.lc-db-btn + .lc-exit-btn { margin-left: -6px; }
 
 /* Free-move hotkey icon row (enabled + available quick actions) */
 .lc-hotkeys { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -1869,6 +1875,31 @@
 .lc-bld-text { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text); }
 .lc-bld-reward { margin: 0; font-size: 13px; color: var(--good); }
 .lc-bld-reward b { color: var(--text); }
+.lc-mkt-revoke-btn:disabled { color: var(--muted); border-color: var(--border); cursor: not-allowed; }
+
+/* --- Character page ----------------------------------------------------------- */
+.lc-char-slot { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--row-border); }
+.lc-char-slot:last-child { border-bottom: 0; }
+.lc-char-slot-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.lc-char-pairs { display: flex; flex-direction: column; gap: 4px; }
+.lc-char-pairs > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.lc-char-pairs span { color: var(--muted); }
+.lc-char-pairs b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+/* A backpack item's slot buttons, under its figures. */
+.lc-char-equip { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.lc-char-attrs { display: flex; flex-direction: column; gap: 6px; }
+.lc-char-attr { display: grid; grid-template-columns: minmax(0, 1fr) 44px auto; align-items: center; gap: 8px; font-size: 13.5px; }
+.lc-char-attr b { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+.lc-char-steps { display: flex; gap: 4px; }
+/* A slot's replacements: collapsed behind one button, so five slots of
+   candidates do not bury the rest of the overview. */
+.lc-char-swap { align-self: flex-start; margin-top: 4px; }
+.lc-char-none { font-size: 11px; color: var(--muted); }
+.lc-char-candidate { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 0 0 8px; border-left: 2px solid var(--accent-dim); }
+/* Name and button side by side even in a narrow column, where the market's
+   container rule would otherwise stretch the name across the whole row. */
+.lc-char-candidate .lc-mkt-cell { grid-column: auto; }
+.lc-page > .lc-mkt-body .lc-cap { margin-top: 10px; }
 
 .lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
 .lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }

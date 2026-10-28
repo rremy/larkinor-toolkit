@@ -1,6 +1,9 @@
 import { h, type JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import type { BankState } from '@/utils/buildingExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseButton } from '@/components/DatabaseButton';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { silver } from '@/components/MarketRows';
 import { AmountForm, ControlButton } from '@/components/BuildingControls';
 
@@ -13,9 +16,15 @@ export interface BankProps {
 }
 
 export function Bank({ state }: BankProps): JSX.Element {
+  const [dbOpen, setDbOpen] = useState(false);
   return (
     <div class="lc-page">
       <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
+
+      <div class="lc-mkt-stats">
+        <span class="lc-shop-title">Bank</span>
+        <DatabaseButton onClick={() => setDbOpen(true)} />
+      </div>
 
       <div class="lc-bld-figures">
         <div class="lc-bld-figure">
@@ -54,6 +63,8 @@ export function Bank({ state }: BankProps): JSX.Element {
           <ControlButton option={state.exit} wide />
         </div>
       </div>
+
+      <DatabaseOverlay open={dbOpen} onClose={() => setDbOpen(false)} />
     </div>
   );
 }

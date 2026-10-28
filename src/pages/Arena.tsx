@@ -1,6 +1,8 @@
 import { h, type JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import type { ArenaState } from '@/utils/buildingExtract';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { StatBar } from '@/components/StatBar';
 import { silver } from '@/components/MarketRows';
 import { AmountForm, ControlButton } from '@/components/BuildingControls';
@@ -14,9 +16,10 @@ export interface ArenaProps {
 
 export function Arena({ state }: ArenaProps): JSX.Element {
   const { clone } = state;
+  const [dbOpen, setDbOpen] = useState(false);
   return (
     <div class="lc-page">
-      <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} />
+      <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} onDatabase={() => setDbOpen(true)} />
       <NarrationPanel text={state.narration} db={null} onMonsterClick={() => {}} />
 
       <div class="lc-mkt-body">
@@ -48,6 +51,8 @@ export function Arena({ state }: ArenaProps): JSX.Element {
           )}
         </section>
       </div>
+
+      <DatabaseOverlay open={dbOpen} onClose={() => setDbOpen(false)} />
     </div>
   );
 }

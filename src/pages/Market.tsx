@@ -4,6 +4,7 @@ import type { MarketState } from '@/utils/marketExtract';
 import { getMarketTab, setMarketTab, type MarketTab } from '@/utils/config';
 import { CapacityMeter } from '@/components/CapacityMeter';
 import { NarrationPanel } from '@/components/NarrationPanel';
+import { DatabaseButton } from '@/components/DatabaseButton';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { ListingList, OfferableList, silver } from '@/components/MarketRows';
 import { MarketBuy } from '@/components/MarketBuy';
@@ -77,6 +78,7 @@ export function Market({ state }: MarketProps): JSX.Element {
           )
         )}
         <CapacityMeter label="Hátizsák &amp; test" icon="🎒" used={state.weight.used} max={state.weight.max} />
+        <DatabaseButton onClick={() => setDbName('')} />
       </div>
 
       <div class="lc-home-tabs">

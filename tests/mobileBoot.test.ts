@@ -97,7 +97,7 @@ describe('bootMobile', () => {
     }
   });
 
-  it('captures the loadout on the character page and renders nothing there', () => {
+  it('captures the loadout on the character page, then takes the page over', () => {
     const doc = new JSDOM(`<html><head></head><body>
       <form name="urlap"><input type="hidden" name="oldalTipus" value="otPlayerSettings"></form>
       <table><tr><td>Név: Remy Szint: 23</td></tr>
@@ -110,9 +110,9 @@ describe('bootMobile', () => {
     const stored = vi.mocked(GM_setValue).mock.calls.find(([key]) => key === LOADOUT_PREF_KEY);
     expect(stored).toBeDefined();
     expect(parseLoadout(stored![1] as string)!.slots.head!.name).toBe('ent sisak');
-    // ...and the page itself was left completely alone.
-    expect(doc.getElementById('lc-root')).toBeNull();
-    expect(doc.getElementById('lc-offscreen')).toBeNull();
+    // ...and the page was taken over, the worn set shown on its overview.
+    expect(doc.getElementById('lc-offscreen')).not.toBeNull();
+    expect(doc.querySelector('#lc-root .lc-char-slot')!.parentElement!.textContent).toContain('ent sisak');
   });
   it('takes over a crafting hall and a crafting lobby', () => {
     const hall = new JSDOM(`<html><head></head><body>

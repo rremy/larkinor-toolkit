@@ -4,6 +4,7 @@ import type { HomeState, HomeItem } from '@/utils/homeExtract';
 import { CapacityMeter } from '@/components/CapacityMeter';
 import { InventoryList } from '@/components/InventoryList';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { DatabaseButton } from '@/components/DatabaseButton';
 
 export interface HomeProps {
   state: HomeState;
@@ -47,6 +48,7 @@ export function Home({ state, showGeneral = true, layout = 'tabs' }: HomeProps):
               <CapacityMeter label="Ház telítettsége" used={state.house.used} max={state.house.max} />
               <InventoryList
                 items={state.house.items}
+                sortList="home-house"
                 moveGlyph="🎒"
                 moveTitle="Hátizsákba"
                 onMove={(it, qty) => state.house.move(it, qty)}
@@ -62,6 +64,7 @@ export function Home({ state, showGeneral = true, layout = 'tabs' }: HomeProps):
               <CapacityMeter label="Hátizsák &amp; test" used={state.backpack.used} max={state.backpack.max} />
               <InventoryList
                 items={state.backpack.items}
+                sortList="home-backpack"
                 moveGlyph="⌂"
                 moveTitle="Házba"
                 onMove={(it, qty) => state.backpack.move(it, qty)}
@@ -90,6 +93,7 @@ export function Home({ state, showGeneral = true, layout = 'tabs' }: HomeProps):
             Általános
           </button>
         )}
+        <DatabaseButton onClick={() => { setDbName(undefined); setDbOpen(true); }} />
       </div>
 
       {tab !== 'gen' && (
@@ -104,6 +108,7 @@ export function Home({ state, showGeneral = true, layout = 'tabs' }: HomeProps):
       {tab === 'haz' && (
         <InventoryList
           items={state.house.items}
+                sortList="home-house"
           moveGlyph="🎒"
           moveTitle="Hátizsákba"
           onMove={(it, qty) => state.house.move(it, qty)}
@@ -114,6 +119,7 @@ export function Home({ state, showGeneral = true, layout = 'tabs' }: HomeProps):
       {tab === 'bag' && (
         <InventoryList
           items={state.backpack.items}
+                sortList="home-backpack"
           moveGlyph="⌂"
           moveTitle="Házba"
           onMove={(it, qty) => state.backpack.move(it, qty)}

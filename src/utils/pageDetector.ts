@@ -55,8 +55,8 @@ export function detectPage(doc: Document): PageType {
     case 'otSajathaz':
       return PageType.Home;
     // The character page ("karakterlap"): the only page that prints the worn
-    // equipment set, and the only place equipment can be changed. Nothing is
-    // rendered on it — the boots capture the loadout and leave the page alone.
+    // equipment set, and the only place equipment can be changed. Both boots
+    // capture the loadout on it; mobile also takes the page over.
     case 'otPlayerSettings':
       return PageType.Character;
     // The two crafting buildings are two pages each: a lobby of training and

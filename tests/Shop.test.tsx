@@ -108,8 +108,8 @@ describe('Shop — selling', () => {
   it('shows the shop price beside the market price', () => {
     const { container } = render(<Shop state={makeShopState()} />);
     const meta = rowFor(container, 'sárkánykarom').querySelector('.lc-mkt-meta')!.textContent!;
-    expect(meta).toContain('elad. ár 405');
-    expect(meta).toContain('piaci ár 24');
+    expect(meta).toContain('elad. ár: 405');
+    expect(meta).toContain('piaci ár: 24');
   });
 
   it('offers a tick box only where the page allows a bulk sale', () => {

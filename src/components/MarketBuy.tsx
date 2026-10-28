@@ -60,8 +60,8 @@ function PurchaseRow({ purchase, gold, onOpenDetail }: PurchaseRowProps): JSX.El
           <span>{stock} db</span>
           {/* The three figures that decide a purchase: what is asked, what the
               shop charges, and what the market pays for it. */}
-          {purchase.unitPrice !== null && <span>kért ár {silver(purchase.unitPrice)}</span>}
-          {purchase.shopPrice !== null && <span>bolti ár {silver(purchase.shopPrice)}</span>}
+          {purchase.unitPrice !== null && <span>kért ár: {silver(purchase.unitPrice)}</span>}
+          {purchase.shopPrice !== null && <span>bolti ár: {silver(purchase.shopPrice)}</span>}
           {total !== null && (
             <span
               class={`lc-mkt-total${tooExpensive ? ' lc-mkt-total--short' : ''}`}

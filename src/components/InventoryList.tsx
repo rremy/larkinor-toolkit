@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { HomeItem } from '@/utils/homeExtract';
 import { InventoryRow } from '@/components/InventoryRow';
 import { matchesSearch } from '@/shared/text';
+import { useStoredSort } from '@/hooks/useStoredSort';
 
 export interface InventoryListProps {
   items: HomeItem[];
@@ -10,6 +11,8 @@ export interface InventoryListProps {
   moveTitle: string;
   onMove: (item: HomeItem, qty: number) => void;
   onOpenDetail: (item: HomeItem) => void;
+  /** Names the list whose sort is remembered — the house and the backpack each keep their own. */
+  sortList: string;
 }
 
 type SortKey = 'name' | 'weight' | 'totalWeight' | 'amount' | 'price';
@@ -22,10 +25,9 @@ const SORT_OPTIONS: Array<[SortKey, string]> = [
   ['price', 'Ár'],
 ];
 
-export function InventoryList({ items, moveGlyph, moveTitle, onMove, onOpenDetail }: InventoryListProps): JSX.Element {
+export function InventoryList({ items, moveGlyph, moveTitle, onMove, onOpenDetail, sortList }: InventoryListProps): JSX.Element {
   const [query, setQuery] = useState('');
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [asc, setAsc] = useState(true);
+  const { sortKey, setSortKey, asc, flip } = useStoredSort(sortList, SORT_OPTIONS.map(([k]) => k), { key: 'name', asc: true });
 
   const dir = asc ? 1 : -1;
   const visible = items
@@ -54,7 +56,7 @@ export function InventoryList({ items, moveGlyph, moveTitle, onMove, onOpenDetai
         >
           {SORT_OPTIONS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
         </select>
-        <button class="lc-inv-dir" aria-label="Sorrend" onClick={() => setAsc((v) => !v)}>{asc ? '↓' : '↑'}</button>
+        <button class="lc-inv-dir" aria-label="Sorrend" onClick={flip}>{asc ? '↓' : '↑'}</button>
       </div>
       <div class="lc-inv-list">
         {visible.map((it) => (

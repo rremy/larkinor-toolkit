@@ -5,7 +5,7 @@ import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { QuestSet } from '@/shared/data';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY, CHARACTER_OPEN_KEY } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
@@ -16,6 +16,8 @@ import { shortcutDigit, useKeyboardShortcuts } from '@/desktop/useKeyboardShortc
 import { InventoryPanel } from '@/desktop/InventoryPanel';
 import { MarketPanel } from '@/desktop/MarketPanel';
 import { ShopPanel } from '@/desktop/ShopPanel';
+import { CharacterPanel } from '@/desktop/CharacterPanel';
+import type { CharacterPageState } from '@/utils/characterPageExtract';
 import type { ShopState } from '@/utils/shopExtract';
 import type { HomeState } from '@/utils/homeExtract';
 import type { MarketState } from '@/utils/marketExtract';
@@ -45,6 +47,8 @@ export interface DesktopDockProps {
   homeState?: HomeState | null;
   /** Market state, when we are on the market page. */
   marketState?: MarketState | null;
+  /** The character page's state, when we are on it. */
+  characterState?: CharacterPageState | null;
   /** Shop state, when we are in a shop or the Templom. */
   shopState?: ShopState | null;
   /** Crafting hall state and its data loader, when we are in a crafting hall. */
@@ -98,7 +102,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -122,6 +126,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const [craftingOpen, setCraftingOpen] = useState(() => getPanelOpen(CRAFTING_OPEN_KEY));
   const [shopOpen, setShopOpen] = useState(() => getPanelOpen(SHOP_OPEN_KEY));
+  const [characterOpen, setCharacterOpen] = useState(() => getPanelOpen(CHARACTER_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
   const [shortcutsOn, setShortcutsOn] = useState(() => getKeyboardShortcuts());
   const toggleShortcuts = () => {
@@ -197,6 +202,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   const setMarket = (open: boolean) => {
     setMarketOpen(open);
     setPanelOpen(MARKET_OPEN_KEY, open);
+  };
+
+  const setCharacter = (open: boolean) => {
+    setCharacterOpen(open);
+    setPanelOpen(CHARACTER_OPEN_KEY, open);
   };
 
   const setShop = (open: boolean) => {
@@ -325,6 +335,11 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
                 Piac
               </button>
             )}
+            {characterState && (
+              <button class="lc-dock-btn lc-dock-character" onClick={() => setCharacter(true)}>
+                Karakterlap
+              </button>
+            )}
             {shopState && (
               <button class="lc-dock-btn lc-dock-shop" onClick={() => setShop(true)}>
                 {shopState.title || 'Bolt'}
@@ -390,6 +405,10 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
       {marketState && (
         <MarketPanel open={marketOpen} state={marketState} onClose={() => setMarket(false)} />
+      )}
+
+      {characterState && (
+        <CharacterPanel open={characterOpen} state={characterState} onClose={() => setCharacter(false)} />
       )}
 
       {shopState && (
