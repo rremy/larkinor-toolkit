@@ -14,6 +14,9 @@ import { detectPage, PageType } from '@/utils/pageDetector';
 import { extractBattle, extractDungeon, extractFightControls, extractFreeMove, extractImageControl } from '@/utils/domExtract';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
+import { extractShop, type ShopState } from '@/utils/shopExtract';
+import { parseMarketRates } from '@/shared/marketRates';
+import { MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
 import { extractCraftingHall, type CraftingHallState } from '@/utils/craftingExtract';
 import { createDataLoader, gmSource, type DataLoader, type MonsterDatabase, type QuestSet } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
@@ -88,6 +91,20 @@ function extractMarketState(pageType: PageType, doc: Document): MarketState | nu
     return extractMarket(doc);
   } catch (err) {
     console.warn('[Larkinor UI] Market extraction failed; market panel unavailable:', err);
+    return null;
+  }
+}
+
+/**
+ * Shop state, for the dock's shop panel — the two shops and the Templom. Null
+ * anywhere else, and on failure: the game's own forms still work.
+ */
+function extractShopState(pageType: PageType, doc: Document): ShopState | null {
+  if (pageType !== PageType.Shop && pageType !== PageType.Church) return null;
+  try {
+    return extractShop(doc, parseMarketRates(getPref(MARKET_RATES_PREF_KEY)));
+  } catch (err) {
+    console.warn('[Larkinor UI] Shop extraction failed; shop panel unavailable:', err);
     return null;
   }
 }
@@ -303,6 +320,7 @@ export function bootDesktop(doc: Document): void {
   const state = extractDockState(pageType, doc);
   const homeState = extractInventoryState(pageType, doc);
   const marketState = extractMarketState(pageType, doc);
+  const shopState = extractShopState(pageType, doc);
   const crafting = extractCrafting(pageType, doc);
   const battleMonsterName = extractBattleMonsterName(pageType, doc);
   // Read on every page, not only battles: the page that ends a fight is not
@@ -324,7 +342,7 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }

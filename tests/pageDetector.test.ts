@@ -71,6 +71,15 @@ describe('detectPage', () => {
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['otEkszeresz', PageType.Bank],
+    ['otArena', PageType.Arena],
+    ['otPalota', PageType.Palace],
+    ['otPalotaKuldetes', PageType.PalaceQuest],
+  ])('returns the building type for oldalTipus=%s', (oldalTipus, type) => {
+    expect(detectPage(makeDoc(oldalTipus))).toBe(type);
+  });
+
   it('returns Unknown and warns for a genuinely unrecognised value', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(detectPage(makeDoc('otValamiUj'))).toBe(PageType.Unknown);

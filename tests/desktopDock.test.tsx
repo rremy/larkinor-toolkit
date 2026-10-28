@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/preact';
 import { JSDOM } from 'jsdom';
 import { DesktopDock } from '../src/desktop/DesktopDock';
-import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, MARKET_OPEN_KEY, DB_MINIMIZED_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY } from '../src/utils/config';
+import { DOCK_COLLAPSED_KEY, ENABLED_HOTKEYS_KEY, KEYBOARD_SHORTCUTS_KEY, MARKET_OPEN_KEY, DB_MINIMIZED_KEY, INVENTORY_OPEN_KEY, DB_OPEN_KEY, DB_ROUTE_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY } from '../src/utils/config';
+import { makeShopState } from './support/shopState';
 import type { FreeMoveState } from '../src/utils/domExtract';
 import type { HomeState } from '../src/utils/homeExtract';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
@@ -51,7 +52,23 @@ describe('DesktopDock', () => {
     GM_setValue(CRAFTING_OPEN_KEY, '');
     GM_setValue(KEYBOARD_SHORTCUTS_KEY, '');
     GM_setValue(MARKET_OPEN_KEY, '');
+    GM_setValue(SHOP_OPEN_KEY, '');
     GM_setValue(DB_MINIMIZED_KEY, '');
+  });
+
+  it('offers a shop panel named after the shop, and only in a shop', () => {
+    const { container, rerender } = render(
+      <DesktopDock doc={document} state={null} db={null} shopState={makeShopState({ title: 'Fegyverbolt' })} dbButtonOnly />,
+    );
+    const button = container.querySelector<HTMLButtonElement>('.lc-dock-shop')!;
+    expect(button.textContent).toBe('Fegyverbolt');
+
+    fireEvent.click(button);
+    expect(GM_getValue(SHOP_OPEN_KEY, '')).toBeTruthy();
+    expect(document.querySelector('.lc-shop-bulk, .lc-mkt-buy-btn')).toBeTruthy();
+
+    rerender(<DesktopDock doc={document} state={null} db={null} dbButtonOnly />);
+    expect(container.querySelector('.lc-dock-shop')).toBeNull();
   });
 
   it('renders enabled actions as icon hotkeys and the rest as text buttons', () => {

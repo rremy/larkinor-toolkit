@@ -239,7 +239,7 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
 }
 
 /** A column's control labels, spelled out so each one is separately addressable. */
-interface ColumnLabels {
+export interface ColumnLabels {
   search: string;
   sort: string;
   direction: string;
@@ -257,21 +257,27 @@ const OFFERED_LABELS: ColumnLabels = {
   direction: 'Felkínált tárgyaim sorrendje',
 };
 
-interface ToolbarProps {
+interface ToolbarProps<K extends string> {
   labels: ColumnLabels;
   search: string;
   onSearch: (value: string) => void;
-  sortKey: MarketSortKey;
-  onSortKey: (key: MarketSortKey) => void;
+  sortKey: K;
+  onSortKey: (key: K) => void;
   asc: boolean;
   onFlip: () => void;
+  /** The sort keys offered, with their labels — the market's own by default. */
+  options?: ReadonlyArray<readonly [K, string]>;
 }
 
 /**
  * Search, sort key and direction — the home view's toolbar, one per column, with
- * that view's own select and button classes so the two read alike.
+ * that view's own select and button classes so the two read alike. Shared with
+ * the shops, which sort on keys of their own.
  */
-export function Toolbar({ labels, search, onSearch, sortKey, onSortKey, asc, onFlip }: ToolbarProps): JSX.Element {
+export function Toolbar<K extends string = MarketSortKey>({
+  labels, search, onSearch, sortKey, onSortKey, asc, onFlip,
+  options = MARKET_SORT_OPTIONS as unknown as ReadonlyArray<readonly [K, string]>,
+}: ToolbarProps<K>): JSX.Element {
   return (
     <div class="lc-mkt-toolbar">
       <input
@@ -286,9 +292,9 @@ export function Toolbar({ labels, search, onSearch, sortKey, onSortKey, asc, onF
         class="lc-inv-sort"
         aria-label={labels.sort}
         value={sortKey}
-        onChange={(e) => onSortKey((e.target as HTMLSelectElement).value as MarketSortKey)}
+        onChange={(e) => onSortKey((e.target as HTMLSelectElement).value as K)}
       >
-        {MARKET_SORT_OPTIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        {options.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
       </select>
       <button class="lc-inv-dir" aria-label={labels.direction} onClick={onFlip}>{asc ? '↓' : '↑'}</button>
     </div>

@@ -13,6 +13,17 @@ import { getPref, setPref } from '@/utils/config';
 import { extractHome, type HomeState } from '@/utils/homeExtract';
 import { extractMarket, type MarketState } from '@/utils/marketExtract';
 import { extractBuildingLobby, extractCraftingHall, type BuildingLobbyState, type CraftingHallState } from '@/utils/craftingExtract';
+import { extractShop, type ShopState } from '@/utils/shopExtract';
+import {
+  extractArena,
+  extractBank,
+  extractPalaceQuest,
+  type ArenaState,
+  type BankState,
+  type PalaceQuestState,
+} from '@/utils/buildingExtract';
+import { parseMarketRates } from '@/shared/marketRates';
+import { MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
 import { createDataLoader, gmSource, type MonsterDatabase } from '@/shared/data';
 import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { FreeMove } from '@/pages/FreeMove';
@@ -23,6 +34,10 @@ import { Home } from '@/pages/Home';
 import { Market } from '@/pages/Market';
 import { BuildingLobby } from '@/pages/BuildingLobby';
 import { CraftingHall } from '@/pages/CraftingHall';
+import { Shop } from '@/pages/Shop';
+import { Bank } from '@/pages/Bank';
+import { Arena } from '@/pages/Arena';
+import { PalaceQuest } from '@/pages/PalaceQuest';
 import baseStyles from '@/shared/styles/theme.css?raw';
 
 // Mobile boot (proxy-DOM pattern): extract the game state, move the original
@@ -45,7 +60,11 @@ type PageState =
   | { pageType: PageType.Dungeon; state: DungeonState }
   | { pageType: PageType.Home; state: HomeState }
   | { pageType: PageType.Market; state: MarketState }
-  | { pageType: PageType.ForgeLobby | PageType.MageLobby; state: BuildingLobbyState }
+  | { pageType: PageType.ForgeLobby | PageType.MageLobby | PageType.Palace; state: BuildingLobbyState }
+  | { pageType: PageType.Shop | PageType.Church; state: ShopState }
+  | { pageType: PageType.Bank; state: BankState }
+  | { pageType: PageType.Arena; state: ArenaState }
+  | { pageType: PageType.PalaceQuest; state: PalaceQuestState }
   | { pageType: PageType.ForgeHall | PageType.MageHall; state: CraftingHallState };
 
 /**
@@ -68,6 +87,7 @@ function ensureMobileViewport(doc: Document): void {
 const NO_MONSTER_PAGES: ReadonlySet<PageType> = new Set([
   PageType.Login, PageType.Dungeon, PageType.Home, PageType.Market,
   PageType.ForgeLobby, PageType.ForgeHall, PageType.MageLobby, PageType.MageHall,
+  PageType.Shop, PageType.Church, PageType.Bank, PageType.Arena, PageType.Palace, PageType.PalaceQuest,
 ]);
 
 /** Extracts the page state for a page type we render, or null to skip it. */
@@ -87,7 +107,17 @@ function extractPageState(pageType: PageType, doc: Document): PageState | null {
       return { pageType, state: extractMarket(doc) };
     case PageType.ForgeLobby:
     case PageType.MageLobby:
+    case PageType.Palace:
       return { pageType, state: extractBuildingLobby(doc) };
+    case PageType.Shop:
+    case PageType.Church:
+      return { pageType, state: extractShop(doc, parseMarketRates(getPref(MARKET_RATES_PREF_KEY))) };
+    case PageType.Bank:
+      return { pageType, state: extractBank(doc) };
+    case PageType.Arena:
+      return { pageType, state: extractArena(doc) };
+    case PageType.PalaceQuest:
+      return { pageType, state: extractPalaceQuest(doc) };
     case PageType.ForgeHall:
     case PageType.MageHall: {
       // A hall without its crafting form means the markup changed under us:
@@ -212,7 +242,21 @@ export function bootMobile(doc: Document): void {
         break;
       case PageType.ForgeLobby:
       case PageType.MageLobby:
+      case PageType.Palace:
         render(provide(h(BuildingLobby, { state: pageState.state })), root);
+        break;
+      case PageType.Shop:
+      case PageType.Church:
+        render(provide(h(Shop, { state: pageState.state })), root);
+        break;
+      case PageType.Bank:
+        render(provide(h(Bank, { state: pageState.state })), root);
+        break;
+      case PageType.Arena:
+        render(provide(h(Arena, { state: pageState.state })), root);
+        break;
+      case PageType.PalaceQuest:
+        render(provide(h(PalaceQuest, { state: pageState.state })), root);
         break;
       case PageType.ForgeHall:
       case PageType.MageHall:

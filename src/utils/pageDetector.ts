@@ -13,6 +13,10 @@ export enum PageType {
   ForgeHall = 'ForgeHall',
   MageLobby = 'MageLobby',
   MageHall = 'MageHall',
+  Bank = 'Bank',
+  Arena = 'Arena',
+  Palace = 'Palace',
+  PalaceQuest = 'PalaceQuest',
   Unknown = 'Unknown',
 }
 
@@ -66,6 +70,18 @@ export function detectPage(doc: Document): PageType {
       return PageType.MageLobby;
     case 'otMagustoronyBelso':
       return PageType.MageHall;
+    // The page type says jeweller, but the building is the bank: its title,
+    // its forms (Banktev/Bankkiv/Bankkir) and everything it does.
+    case 'otEkszeresz':
+      return PageType.Bank;
+    case 'otArena':
+      return PageType.Arena;
+    // The palace is a lobby of entrances; of the rooms behind them only the
+    // quest room has been seen (the statistics and house rooms stay Unknown).
+    case 'otPalota':
+      return PageType.Palace;
+    case 'otPalotaKuldetes':
+      return PageType.PalaceQuest;
     default:
       console.warn(`[Larkinor UI] Unrecognised oldalTipus "${oldalTipus ?? '(missing)'}" — rendering skipped`);
       return PageType.Unknown;

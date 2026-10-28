@@ -1800,6 +1800,76 @@
    looks pressable. */
 .lc-mkt-earnings--static { cursor: default; }
 
+/* --- Shops (Vegyesbolt, Fegyverbolt, Templom) ------------------------------
+   The market's row, one field fewer: name and figures, quantity, button. A sell
+   row leads with the bulk-sale tick box, or an empty cell holding its column. */
+.lc-shop-row { grid-template-columns: minmax(0, 1fr) 58px auto; }
+.lc-shop-row--sell { grid-template-columns: 22px minmax(0, 1fr) 58px auto; }
+.lc-shop-row--picked { background: var(--accent-dim); }
+/* An item this shop will not buy: still listed, so the backpack reads whole, but
+   dimmed — its quantity and button are disabled too. */
+.lc-shop-row--inactive .lc-mkt-cell { opacity: 0.45; }
+@container (max-width: 420px) {
+  .lc-shop-row { grid-template-columns: 1fr auto; }
+  .lc-shop-row--sell { grid-template-columns: 22px 1fr auto; }
+  .lc-shop-row .lc-mkt-cell { grid-column: 1 / -1; }
+  .lc-shop-row--sell .lc-mkt-cell { grid-column: 2 / -1; }
+  .lc-shop-row--sell .lc-mkt-field { grid-column: 2; }
+}
+.lc-shop-pick { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.lc-shop-pick--none { cursor: default; }
+/* What the market would pay — the figure that says "not to the shop". */
+.lc-shop-market { color: var(--accent); }
+.lc-shop-title { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* The bulk-sale bar, pinned to the bottom of the scrolling list so the running
+   total stays in view while rows are ticked. */
+.lc-shop-bulk {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.lc-shop-bulk-sum { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-shop-bulk-all {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+.lc-shop-bulk-all:disabled { color: var(--muted); cursor: not-allowed; }
+/* Armed: the next press sells every ticked stack. */
+.lc-shop-bulk-sell--armed { border-color: var(--bad); color: var(--bad); }
+
+.lc-shop-ailments { padding: 10px 12px; margin-bottom: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; }
+.lc-shop-ailments h3 { margin: 0 0 4px; font-size: 13px; color: var(--accent); }
+.lc-shop-ailments p { margin: 0; font-size: 13px; white-space: pre-line; }
+
+/* --- Bank, arena, palace quest room ----------------------------------------- */
+.lc-bld-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 10px 10px 0; }
+.lc-bld-figures--inline { padding: 0; }
+.lc-bld-figure { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; }
+.lc-bld-figure span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.lc-bld-figure b { font-size: 15px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.lc-bld-amount { display: flex; align-items: flex-end; gap: 8px; padding: 6px 0; }
+.lc-bld-amount .lc-mkt-field { flex: 1; }
+.lc-bld-section { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); }
+.lc-bld-section h3 { margin: 0; font-size: 14px; color: var(--accent); }
+.lc-bld-text { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text); }
+.lc-bld-reward { margin: 0; font-size: 13px; color: var(--good); }
+.lc-bld-reward b { color: var(--text); }
+
 .lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
 .lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
 .lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }

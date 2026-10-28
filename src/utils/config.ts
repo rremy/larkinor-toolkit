@@ -106,6 +106,35 @@ export function setMarketTab(tab: MarketTab): void {
   GM_setValue(MARKET_TAB_KEY, tab);
 }
 
+export const SHOP_MINIMIZED_KEY = 'lc-shop-minimized';
+export const SHOP_OPEN_KEY = 'lc-shop-open';
+
+/** GM storage key holding the shop view's last selected tab. */
+export const SHOP_TAB_KEY = 'lc-shop-tab';
+
+/**
+ * The shop tabs, shared by every shop and both platforms. Desktop shows only the
+ * first two (the page's other controls stay on the visible game page), and the
+ * Templom has no `sell`: a stored tab a view does not offer falls back to `buy`.
+ */
+export type ShopTab = 'buy' | 'sell' | 'other';
+
+const SHOP_TABS: ShopTab[] = ['buy', 'sell', 'other'];
+
+/**
+ * The tab the shop was last left on, or null when none is stored. Remembered for
+ * the market's reason: every purchase and sale reloads the page, and landing back
+ * on the buy tab after each sale would make selling a stack of rows a chore.
+ */
+export function getShopTab(): ShopTab | null {
+  const raw = GM_getValue(SHOP_TAB_KEY, '') as string;
+  return SHOP_TABS.includes(raw as ShopTab) ? (raw as ShopTab) : null;
+}
+
+export function setShopTab(tab: ShopTab): void {
+  GM_setValue(SHOP_TAB_KEY, tab);
+}
+
 /**
  * The user's manual platform choice, or null for automatic detection. Values
  * other than the two known platforms are treated as "no override" so a stale or

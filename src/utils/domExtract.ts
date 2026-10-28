@@ -216,7 +216,23 @@ function extractStatusIcons(doc: Document): StatusIcon[] {
  */
 export function extractNarration(doc: Document): string {
   const el = doc.querySelector('font[face="Comic sans MS"]');
-  if (!el) return '';
+  return el ? flattenNarration(doc, el) : '';
+}
+
+/**
+ * The narration of a building page. These print headings and side panels in the
+ * same font *before* the narration — the shops' "Vétel", the bank's "Számlád",
+ * the quest room's brief — so the first such block is the wrong one there. The
+ * narration box on every building page measured is the positioned div 600px
+ * wide; anything else falls back to `extractNarration`'s first-block rule.
+ */
+export function extractBuildingNarration(doc: Document): string {
+  const fonts = Array.from(doc.querySelectorAll('font[face="Comic sans MS"]'));
+  const inBox = fonts.find((el) => /width:\s*600px/.test(el.closest('div')?.getAttribute('style') ?? ''));
+  return inBox ? flattenNarration(doc, inBox) : extractNarration(doc);
+}
+
+function flattenNarration(doc: Document, el: Element): string {
   // The narration uses <br> for line breaks; textContent would drop them, so
   // convert <br> to newlines first, then read the text (stripping <b> etc.).
   const tmp = doc.createElement('div');
@@ -242,7 +258,8 @@ function extractNarrationLinks(doc: Document): NarrationLink[] {
     .map(({ anchor, text }) => ({ text, trigger: () => anchor.click() }));
 }
 
-function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {
+/** Gold and the two stat pairs, from any page that prints the stat block. */
+export function extractStats(doc: Document): { gold: number; hp: number; hpMax: number; mp: number; mpMax: number } {
   const text = doc.body.textContent ?? '';
   const gold = parseGold(text);
   // The game prints these as "max / current" (e.g. "Életpont: 303 / 214") on

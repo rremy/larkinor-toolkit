@@ -76,6 +76,27 @@ describe('bootMobile', () => {
     expect(parseMarketRates(stored![1] as string)!.rates).toEqual({ 37: 170 });
   });
 
+  it('takes over a shop, a bank, the arena and both palace rooms', () => {
+    const pages: Array<[string, string]> = [
+      ['otVegyesbolt', '<form name="vetelUrlap"><select name="targy"><option value="1">1 kaja</option></select></form><script>vetelTargyak[0]="Név: kaja\\nÁr: 2 ezüst\\n";vetelArak[0]="2";</script>'],
+      ['otTemplom', '<form name="vetelUrlap"><select name="targy"><option value="20">1 manaital</option></select></form><script>vetelTargyak[0]="Név: manaital\\nÁr: 180 ezüst\\n";</script>'],
+      ['otEkszeresz', '<form name="Banktev"><input type="text" name="penzbe"><input type="image" src="/ikon/elad.gif" title="Beteszel"></form>'],
+      ['otArena', '<input type="image" src="/ikon/tamadas.gif" title="Elkezded a dicsőséges csatát!">'],
+      ['otPalota', '<input type="image" src="/ikon/vallalkuldbe.gif" title="Küldetést vállalsz">'],
+      ['otPalotaKuldetes', '<input type="image" src="/ikon/vallkuld.gif" title="Vállalod a küldetést">'],
+    ];
+    for (const [oldalTipus, body] of pages) {
+      const doc = new JSDOM(`<html><head></head><body>
+        <form name="urlap"><input type="hidden" name="oldalTipus" value="${oldalTipus}"></form>${body}
+      </body></html>`).window.document;
+
+      bootMobile(doc);
+
+      expect(doc.getElementById('lc-offscreen'), oldalTipus).not.toBeNull();
+      expect(doc.querySelector('#lc-root button'), oldalTipus).not.toBeNull();
+    }
+  });
+
   it('captures the loadout on the character page and renders nothing there', () => {
     const doc = new JSDOM(`<html><head></head><body>
       <form name="urlap"><input type="hidden" name="oldalTipus" value="otPlayerSettings"></form>
