@@ -67,6 +67,14 @@ export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
 export const LOADOUT_PREF_KEY = 'lc-loadout';
 
 /**
+ * PrefStore key holding the serialised `MarketRates` — the percentage of shop
+ * price the market pays per item, captured on every market visit. Read by the
+ * hosted database to keep `marketPrice` current; written only by the boots'
+ * market capture.
+ */
+export const MARKET_RATES_PREF_KEY = 'lc-market-rates';
+
+/**
  * PrefStore key holding the royal quest the game itself names as active
  * (`Aktuális küldetés: (39)`).
  *

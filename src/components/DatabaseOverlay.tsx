@@ -7,6 +7,8 @@ import { USERSCRIPT_DATA_BASE_URL } from '@/shared/publicUrl';
 import { DockedPanel } from '@/components/DockedPanel';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute, getPref, setPref, readLoadout } from '@/utils/config';
+import { parseMarketRates, withMarketRates } from '@/shared/marketRates';
+import { MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
 
 // Resolved once in @/shared/publicUrl and shared with both boot modules. Note
 // this is the *userscript* data URL (`/static/db`); the standalone database app
@@ -62,7 +64,16 @@ export function DatabaseOverlay({
   // created (and start GM_xmlhttpRequest calls) while the panel is closed — so
   // the hook is called unconditionally and DockedPanel renders nothing, and
   // therefore mounts no DatabaseApp, until `open`.
-  const loader = useMemo(() => createDataLoader(gmSource(), DATA_BASE_URL), []);
+  // Market prices are the static figures overlaid with the rates captured on the
+  // player's last market visit, so they track the live market rather than the
+  // day the database was scraped.
+  const loader = useMemo(
+    () => withMarketRates(
+      createDataLoader(gmSource(), DATA_BASE_URL),
+      () => parseMarketRates(getPref(MARKET_RATES_PREF_KEY)),
+    ),
+    [],
+  );
 
   // Remembers the tab and selection across the reload the game performs on every
   // action, so a minimised database comes back showing what it showed before.

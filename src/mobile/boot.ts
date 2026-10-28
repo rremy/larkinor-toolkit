@@ -6,6 +6,7 @@ import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
 import { getPref, setPref } from '@/utils/config';
@@ -127,6 +128,10 @@ export function bootMobile(doc: Document): void {
   // runs before the early return: the page has no state of its own and mobile
   // deliberately renders nothing on it.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // The market's buy form quotes the current rate of every item it trades, and
+  // the rates drift — so each visit refreshes the database's market prices.
+  if (pageType === PageType.Market) captureMarketRates(doc, setPref);
 
   // Runs on every page, like the pub and dungeon activations above: the
   // active-quest line is not tied to a page type we render, and the link the

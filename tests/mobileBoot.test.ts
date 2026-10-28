@@ -3,6 +3,8 @@ import { JSDOM } from 'jsdom';
 import { bootMobile } from '../src/mobile/boot';
 import { ENABLED_HOTKEYS_KEY } from '../src/utils/config';
 import { LOADOUT_PREF_KEY, parseLoadout } from '../src/shared/loadout';
+import { MARKET_RATES_PREF_KEY } from '../src/shared/prefKeys';
+import { parseMarketRates } from '../src/shared/marketRates';
 
 function gameDoc(oldalTipus: string): Document {
   return new JSDOM(`<html><head></head><body>
@@ -69,6 +71,9 @@ describe('bootMobile', () => {
 
     expect(doc.getElementById('lc-offscreen')).not.toBeNull();
     expect(doc.querySelector('#lc-root .lc-mkt-row')).not.toBeNull();
+    // ...and the visit refreshed the database's market rates.
+    const stored = vi.mocked(GM_setValue).mock.calls.find(([key]) => key === MARKET_RATES_PREF_KEY);
+    expect(parseMarketRates(stored![1] as string)!.rates).toEqual({ 37: 170 });
   });
 
   it('captures the loadout on the character page and renders nothing there', () => {

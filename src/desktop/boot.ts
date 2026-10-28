@@ -24,6 +24,7 @@ import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
 import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
 import { extractDungeonObservation, extractNarration } from '@/utils/domExtract';
@@ -353,6 +354,10 @@ export function bootDesktop(doc: Document): void {
   // the only place it can be changed, so capturing on every visit keeps the
   // stored loadout current by construction.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // The market's buy form quotes the current rate of every item it trades, and
+  // the rates drift — so each visit refreshes the database's market prices.
+  if (pageType === PageType.Market) captureMarketRates(doc, setPref);
 
   // Inside a labyrinth, work out which maze cell the player is standing in and
   // store it, so the quests tab marks it. Anywhere else, forget it — a position
