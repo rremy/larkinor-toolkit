@@ -20,7 +20,7 @@ larkinor-toolkit/
 │   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
 │   │   └── desktop.css
 │   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx, BuildingLobby.tsx, CraftingHall.tsx,
-│   │                        #   Shop.tsx, Bank.tsx, Arena.tsx, PalaceQuest.tsx (mobile)
+│   │                        #   Shop.tsx, Bank.tsx, Arena.tsx, PalaceQuest.tsx, Character.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
 │   │                        #   MarketRows/MarketBuy/MarketActions, ShopRows, CraftingPanel (shared by both platforms),
 │   │                        #   HallSideForm, BuildingControls
@@ -94,7 +94,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
 - **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, `otEkszeresz`→Bank, `otArena`→Arena, `otPalota`→Palace, `otPalotaKuldetes`→PalaceQuest, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market, the four crafting-building pages, the two shops and the Templom, the Bank, the Aréna and both palace rooms, and leaves the rest untouched; desktop adds its dock to every page, with a shop panel in the shops and the Templom.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, `otEkszeresz`→Bank, `otArena`→Arena, `otPalota`→Palace, `otPalotaKuldetes`→PalaceQuest, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market, the four crafting-building pages, the two shops and the Templom, the Bank, the Aréna, both palace rooms and the character page, and leaves the rest untouched; desktop adds its dock to every page, with a shop panel in the shops and the Templom and a character panel on the character page.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
@@ -633,6 +633,36 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     it prints**, not by looking for `Bal kéz:`. Keying off one label means a page
     printing a different subset of slots finds nothing at all, and scoring also
     stops an unrelated cell that happens to print `Test:` from winning.
+  - **Mobile takes the page over** (`src/utils/characterPageExtract.ts` +
+    `src/pages/Character.tsx`, tabs *Karakter / Hátizsák / Fejlődés*), after the
+    loadout capture has run. **Desktop docks the same view** (`CharacterPanel`,
+    `embedded`: no header line — the panel has its title and ✕, the dock its database
+    button, the visible page its exit). Both boots capture the loadout **before**
+    reading it, or the view's own compare cards measure against the previous visit's set. Facts measured on 2026-10-28:
+    - Two image names are used twice: `eldob` (single drop, and the mass drop in
+      `#cuccLayer`) and `mentes` (attributes, *Fokozat*, *Gyorsgomb*). Saved pages
+      rename the duplicates (`eldob(1).gif`), the live page does not — so these are
+      found by **where they sit** (inside the layer or not; the image right after
+      its select), never by name.
+    - The attribute fields are **empty until an image's `onload` fills them**
+      (`tulajdonsagFeltolt`), which may not have run when the boot reads the page.
+      Values come from that function's text; saving writes every field and
+      `kapottpont` itself and then clicks the save, whose handler reads exactly those.
+    - **The game has no "take off" for a single slot**: gear changes by putting
+      another item in (or everything at once with `hatizsakba2`). So each slot on the
+      *Karakter* tab lists the backpack items that fit it, beside what is worn there,
+      and says outright when nothing does — offering the buttons only on the backpack
+      tab left a player with no wearable spares looking at a page with no way to
+      change gear. Fit is read from `Típus` + `Fajta` through `armorTarget` (a shield
+      goes in a hand). Drops, single and mass, take two
+      presses — a dropped item is gone.
+    - The backpack sorts by name, quantity, unit weight, total weight, price and
+      stack value. Weights can be negative (antiballaszt, −20 kg) and sort as such.
+    - The figures are read from the stat block, not the body text: item details
+      print `Név:` too, and script text is part of `body.textContent`.
+  - **Never `instanceof HTMLInputElement` on a page element.** The game's elements
+    belong to the page's window, not the userscript sandbox's (nor a test's JSDOM),
+    so the check is false for every one of them. Compare `tagName` and attributes.
   - A capture saved through Playwright's `browser_evaluate` is a **JSON-encoded
     string**, not HTML. Feeding it to JSDOM finds no anchors and reads every slot
     as null, which looks exactly like an extractor bug; `JSON.parse` it first.
@@ -796,6 +826,17 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   `A munka, amit vállalhatsz, a következő: (47)` — a royal `Quest.id`, linked to the
   quest database — then the brief, closed by `Jutalmad`. The palace lobby is the
   generic `BuildingLobby`.
+- **Every page mobile takes over opens the database plainly**, not only through an
+  item's name: the stat bar's button where a page has a stat bar (free move, battle,
+  dungeon, arena), `DatabaseButton` at the end of the money/title line or the tab strip
+  everywhere else. Row details read `label: value` (`ár: 810`, `piaci ár: 24 300`).
+- **Every sortable list remembers its sort** (`src/hooks/useStoredSort.ts`, key
+  `lc-sort-<list>`: `market-offer`, `market-listings`, `shop-buy`, `shop-sell`,
+  `home-house`, `home-backpack`, `character-backpack`). The game reloads the page on
+  every trade, move and equip, so a sort held in component state reset after each one —
+  exactly while a sorted list is being worked through. A stored key the list no longer
+  offers is ignored. New sortable lists use the hook, never a bare `useState`; the test
+  setup clears `lc-sort-*` before each test, since any list test may write one.
 - **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow
