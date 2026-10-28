@@ -316,6 +316,9 @@ function Backpack({ state, onOpenDetail }: { state: CharacterPageState; onOpenDe
 
   const shown = sortBackpack(state.backpack.filter((i) => matchesSearch(i.name, search)), sortKey, asc);
   const chosen = state.backpack.filter((i) => i.bulkIndex !== null && picked.has(i.bulkIndex));
+  // The mass drop takes whole stacks, so what it frees is each stack's total.
+  const chosenWeight = chosen.reduce((sum, i) => sum + i.totalWeight, 0);
+  const loadAfter = state.load ? ` · terhelés: ${kg(state.load.used - chosenWeight)} / ${kg(state.load.max)} kg` : '';
 
   // From the previous selection, so taps landing before a re-render all count.
   const toggle = (item: BackpackItem): void => {
@@ -363,7 +366,9 @@ function Backpack({ state, onOpenDetail }: { state: CharacterPageState; onOpenDe
       {state.backpack.some((i) => i.bulkIndex !== null) && (
         <div class="lc-shop-bulk">
           <span class="lc-shop-bulk-sum">
-            {chosen.length === 0 ? 'Jelöld ki, amit egészben eldobnál' : `${chosen.length} tétel kijelölve`}
+            {chosen.length === 0
+              ? 'Jelöld ki, amit egészben eldobnál'
+              : `${chosen.length} tétel kijelölve — ${kg(chosenWeight)} kg${loadAfter}`}
           </span>
           <button
             class={`lc-mkt-revoke-btn${armed ? ' lc-shop-bulk-sell--armed' : ''}`}

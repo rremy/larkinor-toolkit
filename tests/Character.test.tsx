@@ -219,6 +219,26 @@ describe('Character (mobile)', () => {
     expect(s.dropMany).toHaveBeenCalledWith([s.backpack[0]]);
   });
 
+  it('sums the ticked stacks\' weight and shows the load left after dropping them', () => {
+    GM_setValue(CHARACTER_TAB_KEY, 'backpack');
+    const s = makeState({
+      load: { used: 157.0339, max: 146 },
+      backpack: [
+        item('arany', 0, { amount: 88, weight: 0.1, totalWeight: 8.8 }),
+        item('bot', 1, { weight: 1.2, totalWeight: 1.2 }),
+        item('bőrsisak', 2),
+      ],
+    });
+    const { container } = render(<Character state={s} />);
+    fireEvent.click(rowFor(container, 'arany').querySelector('input[type="checkbox"]')!);
+    fireEvent.click(rowFor(container, 'bot').querySelector('input[type="checkbox"]')!);
+
+    const sum = container.querySelector('.lc-shop-bulk-sum')!.textContent!;
+    expect(sum).toContain('2 tétel kijelölve');
+    expect(sum).toMatch(/10 kg/);
+    expect(sum).toMatch(/terhelés: 147,034 \/ 146 kg/);
+  });
+
   it('spends attribute points up to what is free, then saves them', () => {
     GM_setValue(CHARACTER_TAB_KEY, 'settings');
     const s = makeState();
