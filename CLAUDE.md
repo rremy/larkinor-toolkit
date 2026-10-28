@@ -19,9 +19,11 @@ larkinor-toolkit/
 │   │   ├── boot.ts · DesktopDock.tsx
 │   │   ├── enhanceNarration.ts · useKeyboardShortcuts.ts
 │   │   └── desktop.css
-│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx, BuildingLobby.tsx, CraftingHall.tsx (mobile)
+│   ├── pages/               # FreeMove.tsx, Battle.tsx, Dungeon.tsx, Login.tsx, Home.tsx, Market.tsx, BuildingLobby.tsx, CraftingHall.tsx,
+│   │                        #   Shop.tsx, Bank.tsx, Arena.tsx, PalaceQuest.tsx (mobile)
 │   ├── components/          # StatBar, NavPad, NarrationPanel, MonsterCard, DatabaseOverlay
-│   │                        #   MarketRows/MarketBuy/MarketActions, CraftingPanel (shared by both platforms), HallSideForm
+│   │                        #   MarketRows/MarketBuy/MarketActions, ShopRows, CraftingPanel (shared by both platforms),
+│   │                        #   HallSideForm, BuildingControls
 │   ├── hooks/               # useHotkeyConfig
 │   ├── utils/               # platform, pageDetector, domExtract, narration, hotkeys, config
 │   ├── shared/
@@ -92,7 +94,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Two-script pattern**: tiny hand-written loader (`loader/larkinor-loader.user.js`) fetches and `eval`s the built main script on every page load (cache-busted with `?v=`). Update the UI by re-uploading the built file — no reinstall.
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
 - **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
-- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market and the four crafting-building pages, and leaves the rest untouched; desktop adds its dock to every page.
+- **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, `otEkszeresz`→Bank, `otArena`→Arena, `otPalota`→Palace, `otPalotaKuldetes`→PalaceQuest, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market, the four crafting-building pages, the two shops and the Templom, the Bank, the Aréna and both palace rooms, and leaves the rest untouched; desktop adds its dock to every page, with a shop panel in the shops and the Templom.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
@@ -751,6 +753,49 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     only. Mobile takes over all four pages; desktop adds a docked panel in the halls only.
     The Erőd hall's trap form prices itself through the page's own `kerdojel` control
     (`jelezAr`), which mobile clicks rather than re-implementing the formula.
+- **The shops (`otVegyesbolt`, `otFegyverbolt`) and the Templom share one form**
+  (`src/utils/shopExtract.ts`; measured 2026-10-28, see
+  `docs/superpowers/specs/2026-10-28-shops-and-buildings-design.md`). Facts that cost
+  measurement:
+  - Buy (`vetelUrlap`) and sell-one (`eladasUrlap`) each carry a `targy` select whose
+    option `value` is the game item id — the key `lc-market-rates` uses, so every row
+    gets a market price with no database lookup. The shop pays **half the Ár**
+    (`Elad.ár`, also `eladasArak[i]`).
+  - **Mass sale is a different list from single sale.** `#cuccLayer` lists the whole
+    backpack, and the page **disables what this shop will not take in bulk** — the
+    general store sells a sword one at a time but not in bulk. Rows join the two by
+    lower-cased name; a bulk entry with no sell row still gets a (bulk-only) row.
+    Its checkboxes are `.click()`ed so their own `onclick` flips `cuccArray[i]`, then
+    the layer's own `elad` button submits `svSelejtezes`, selling **whole stacks** —
+    which is why the UI's bulk sale takes two presses.
+  - **What the bulk list disables is what this shop does not buy at all** — the
+    single-sale list is identical in both shops, so it is the only per-shop signal.
+    Such rows stay listed but are dimmed, with quantity, button and tick box
+    disabled, and sink to the end whichever way the list is sorted (the market's
+    rule for rows it cannot price). Measured: the Fegyverbolt takes weapons only,
+    the Vegyesbolt everything but weapons and church goods; church goods
+    (`templomi árú`) are refused by both. No bulk list, or no entry for a name, says
+    nothing and leaves the row sellable.
+  - The sell quantity starts at **1**, not the stack: a shop sale cannot be undone,
+    and the market often pays many times more.
+  - Three `elad.gif` buttons may share a page — find a button **inside its form or
+    layer**, never by basename alone.
+  - The Templom (`Church`) has the buy form only; its prayers, insurance and
+    collection box are plain titled controls, shown on mobile and left on the visible
+    page on desktop.
+- **On building pages the narration is not the first Comic Sans block.** The shops
+  print *Vétel*/*Eladás* headings in that font first, the bank *Számlád*, the quest
+  room the quest brief. The narration is the positioned div `width:600px` on all seven
+  pages measured; `extractBuildingNarration` prefers it and falls back to
+  `extractNarration`'s first-block rule, which every older page keeps.
+- **Bank, Aréna, Palota, Küldetésterem** (`src/utils/buildingExtract.ts`, mobile only).
+  The bank's `oldalTipus` is `otEkszeresz` (jeweller) — it is the bank. Its four
+  buttons are all `elad.gif` and are told apart by form (`Banktev`, `Bankkiv`,
+  `Bankkir`) or title. Amount controls fill the field their handler reads
+  (`penzbe`, `penzki`, `sajatklon.feltettpenz`) and then click. The quest room prints
+  `A munka, amit vállalhatsz, a következő: (47)` — a royal `Quest.id`, linked to the
+  quest database — then the brief, closed by `Jutalmad`. The palace lobby is the
+  generic `BuildingLobby`.
 - **The game's total width is 791px** (its widest element is the top banner; a right-hand sidebar runs `653–791`). Everything past that is empty page on a desktop window, which is where the minimised database overlay docks — `src/desktop/boot.ts` publishes it as `--lc-game-right`. It is a **constant, deliberately not measured**: the page carries third-party ad content that renders past the game, so taking the widest element on the page put the docked overlay's left edge too far right. The layout is fixed-pixel and ignores the viewport, so there is nothing to adapt to. The usable docked width is `window width − 791`: generous on a wide monitor (~720px at 1513), cramped below about 1200.
 
 ## Development workflow
