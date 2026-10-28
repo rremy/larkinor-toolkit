@@ -99,6 +99,50 @@ describe('MarketBuy — offers', () => {
     expect(row.textContent).toContain('50');   // the item's shop price
   });
 
+  it("rates each offer by its own asking price, not the market's quote", () => {
+    // The live figures: szén-hidragén at 370 ezüst, asked at 9250 and 11 100,
+    // both quoted by the market at 2500%.
+    const s = makeMarketState({
+      catalogue: [entry('77', 'szén-hidragén', 2500)],
+      searchedName: 'szén-hidragén',
+      purchases: [
+        purchase('szén-hidragén', 0, { quantity: 23, unitPrice: 9250, shopPrice: 370, percent: 2500 }),
+        purchase('szén-hidragén', 1, { quantity: 19, unitPrice: 11100, shopPrice: 370, percent: 2500 }),
+      ],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+    const rates = Array.from(container.querySelectorAll('.lc-mkt-row .lc-mkt-pct')).map((el) => el.textContent);
+
+    expect(rates).toEqual(['2500%', '3000%']);
+    // The market's own rate is shared by every offer, so it heads the list once.
+    expect(container.querySelector('.lc-mkt-buy-head')!.textContent).toContain('2500%');
+  });
+
+  it('greys an offer the market quotes no rate for', () => {
+    const s = makeMarketState({
+      searchedName: 'jáspis',
+      purchases: [
+        purchase('jáspis', 0, { unitPrice: 80, shopPrice: 50, percent: 170 }),
+        purchase('jáspis', 1, { unitPrice: 80, shopPrice: 50, percent: null }),
+      ],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+    const badges = container.querySelectorAll('.lc-mkt-row .lc-mkt-pct');
+
+    expect(badges[0].classList.contains('lc-mkt-pct--unquoted')).toBe(false);
+    expect(badges[1].classList.contains('lc-mkt-pct--unquoted')).toBe(true);
+  });
+
+  it('shows no row rate without a shop price to measure against', () => {
+    const s = makeMarketState({
+      searchedName: 'jáspis',
+      purchases: [purchase('jáspis', 0, { unitPrice: 80, shopPrice: null, percent: 170 })],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+
+    expect(container.querySelector('.lc-mkt-row .lc-mkt-pct')).toBeNull();
+  });
+
   it('buys one unit by default', () => {
     const s = state();
     const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);

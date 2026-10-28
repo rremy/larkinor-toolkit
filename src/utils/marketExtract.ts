@@ -272,6 +272,17 @@ export function suggestPrice(price: number | null, percent: number | null): numb
 }
 
 /**
+ * An asking price as a percentage of the shop price — the scale the market
+ * quotes its rate on, so offers of one item can be told apart at a glance
+ * (9250 at a 370 shop price is 2500%, 11 100 is 3000%). Null when either figure
+ * is missing or the shop price is not positive.
+ */
+export function askPercent(unitPrice: number | null, shopPrice: number | null): number | null {
+  if (unitPrice === null || shopPrice === null || shopPrice <= 0) return null;
+  return Math.round((unitPrice / shopPrice) * 100);
+}
+
+/**
  * Reads the quantity and asking price out of an offer's label, which the game
  * formats as "6 db. agyar 700 ezüst/db. áron". Both null if it does not match —
  * the label is the game's prose, so it is not worth trusting blindly.

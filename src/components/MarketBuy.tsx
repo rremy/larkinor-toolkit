@@ -1,8 +1,8 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import type { MarketCatalogueEntry, MarketPurchase, MarketState } from '@/utils/marketExtract';
+import { askPercent, type MarketCatalogueEntry, type MarketPurchase, type MarketState } from '@/utils/marketExtract';
 import { matchesSearch } from '@/shared/text';
-import { NameLine, NumberField, silver } from '@/components/MarketRows';
+import { NameLine, NumberField, rateTitle, silver } from '@/components/MarketRows';
 
 // The buy side of the market. The game's own version is a 1424-entry dropdown
 // with no search, and the flow is two steps with a page load between them:
@@ -39,6 +39,10 @@ function PurchaseRow({ purchase, gold, onOpenDetail }: PurchaseRowProps): JSX.El
   const clampQty = (n: number) => Math.max(1, Math.min(Number.isFinite(n) ? n : 1, stock));
   const total = purchase.unitPrice === null ? null : purchase.unitPrice * qty;
   const tooExpensive = total !== null && total > gold;
+  // The row's own rate, not the market's: every offer of one item shares the
+  // market's quoted rate (the header shows it), so only the asking price's rate
+  // tells the offers apart.
+  const rowPercent = askPercent(purchase.unitPrice, purchase.shopPrice);
 
   return (
     <div class="lc-mkt-row">
@@ -46,8 +50,9 @@ function PurchaseRow({ purchase, gold, onOpenDetail }: PurchaseRowProps): JSX.El
         <NameLine
           text={purchase.detail?.name ?? purchase.label}
           detailName={purchase.detail?.name ?? null}
-          pricePercent={purchase.pricePercent}
-          assumedRate={false}
+          pricePercent={rowPercent}
+          pricePercentTitle={rateTitle('A kért ár', purchase.pricePercent)}
+          unquoted={purchase.pricePercent === null}
           onOpenDetail={onOpenDetail}
           detail={purchase.detail}
         />
@@ -93,6 +98,10 @@ export function MarketBuy({ state, onOpenDetail }: MarketBuyProps): JSX.Element 
   const shown = matches.slice(0, MAX_MATCHES);
 
   const pick = (item: MarketCatalogueEntry): void => state.search(item);
+  // The market's quoted rate for the searched item. The same for every offer of
+  // it, so it heads the list once rather than repeating on each row. Both names
+  // come from parsing the same catalogue label, so they match exactly.
+  const searchedPercent = state.catalogue.find((e) => e.name === state.searchedName)?.pricePercent ?? null;
 
   return (
     <div class="lc-mkt-buy">
@@ -137,6 +146,9 @@ export function MarketBuy({ state, onOpenDetail }: MarketBuyProps): JSX.Element 
         ) : (
           <header class="lc-mkt-buy-head">
             <h3>🛒 {state.searchedName}</h3>
+            {searchedPercent !== null && (
+              <span class="lc-mkt-pct" title="A piac által jegyzett árfolyam">piac {searchedPercent}%</span>
+            )}
             <span class="lc-home-count">{state.purchases.length}</span>
           </header>
         )}

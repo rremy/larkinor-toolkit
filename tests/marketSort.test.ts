@@ -163,6 +163,14 @@ describe('sortListings', () => {
     expect(labels(sortListings([many, few], 'price', true))).toEqual(['few', 'many']);
   });
 
+  it("sorts by the asking price's own rate, the figure the badge shows", () => {
+    // The market quotes the same rate for both; only the asking prices differ.
+    const cheap = listing('cheap', { unitPrice: 9250, shopPrice: 370, pricePercent: 2500 });  // 2500%
+    const dear = listing('dear', { unitPrice: 11100, shopPrice: 370, pricePercent: 2500 });   // 3000%
+
+    expect(labels(sortListings([dear, cheap], 'percent', true))).toEqual(['cheap', 'dear']);
+  });
+
   it('sorts by weight through the detail block', () => {
     const light = listing('light', { detail: detail('light', { weight: 0.2, totalWeight: 1 }) });
     const heavy = listing('heavy', { detail: detail('heavy', { weight: 8, totalWeight: 80 }) });

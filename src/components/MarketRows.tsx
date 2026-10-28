@@ -1,6 +1,6 @@
 import { h, type ComponentChildren, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import { DEFAULT_PRICE_PERCENT, type MarketItem, type MarketListing } from '@/utils/marketExtract';
+import { askPercent, type MarketItem, type MarketListing } from '@/utils/marketExtract';
 import { matchesSearch } from '@/shared/text';
 import { MARKET_SORT_OPTIONS, sortItems, sortListings, type MarketSortKey } from '@/desktop/marketSort';
 import { useCompare } from '@/hooks/useCompare';
@@ -18,14 +18,28 @@ export function silver(n: number): string {
   return n.toLocaleString('hu-HU');
 }
 
+/**
+ * Hover text for a row's own rate: what the figure measures, and the market's
+ * quoted rate to judge it against — the badge itself no longer shows the quote.
+ */
+export function rateTitle(whose: string, marketPercent: number | null): string {
+  const quote = marketPercent === null ? 'a piac nem jegyez árfolyamot' : `a piaci árfolyam ${marketPercent}%`;
+  return `${whose} a bolti ár ennyi százaléka — ${quote}`;
+}
+
 interface NameLineProps {
   /** The clickable text: an item's name, or an offer's whole label. */
   text: string;
   /** Name to open the database on, or null to render the text as plain. */
   detailName: string | null;
   pricePercent: number | null;
-  /** True when a price exists but the market quotes no rate for it. */
-  assumedRate: boolean;
+  /** Hover text for the rate badge, when the figure needs explaining. */
+  pricePercentTitle?: string;
+  /**
+   * True when the market quotes no rate for the item, so the badge's figure has
+   * nothing to be judged against — drawn muted rather than accented.
+   */
+  unquoted?: boolean;
   onOpenDetail: (name: string) => void;
   /** Parsed stat block, when there is one, for the compare card. */
   detail?: DetailLike | null;
@@ -33,8 +47,10 @@ interface NameLineProps {
   children?: ComponentChildren;
 }
 
-/** Item name plus its market rate. Shared so every column reads identically. */
-export function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDetail, detail, children }: NameLineProps): JSX.Element {
+/** Item name plus its rate badge. Shared so every column reads identically. */
+export function NameLine({
+  text, detailName, pricePercent, pricePercentTitle, unquoted = false, onOpenDetail, detail, children,
+}: NameLineProps): JSX.Element {
   // Here rather than in each row, so every column gets the compare card from one
   // wiring — offerable backpack items, standing offers and purchases alike.
   const cmp = useCompare(detail ? fromDetail(detail) : null);
@@ -52,16 +68,9 @@ export function NameLine({ text, detailName, pricePercent, assumedRate, onOpenDe
       ) : (
         <span class="lc-mkt-name">{text}</span>
       )}
-      {pricePercent !== null ? (
-        <span class="lc-mkt-pct">{pricePercent}%</span>
-      ) : assumedRate && (
-        /* The market does not quote this item, so the rate behind the suggested
-           price is ours. Marked, so the figure is not mistaken for the game's. */
-        <span
-          class="lc-mkt-pct lc-mkt-pct--assumed"
-          title={`A piac nem adja meg az árfolyamot — ${DEFAULT_PRICE_PERCENT}%-kal számolva`}
-        >
-          {DEFAULT_PRICE_PERCENT}%?
+      {pricePercent !== null && (
+        <span class={`lc-mkt-pct${unquoted ? ' lc-mkt-pct--unquoted' : ''}`} title={pricePercentTitle}>
+          {pricePercent}%
         </span>
       )}
       {children}
@@ -138,8 +147,9 @@ function OfferRow({ item, offered, onOffer, onOpenDetail }: OfferRowProps): JSX.
         <NameLine
           text={item.name}
           detailName={item.name}
-          pricePercent={item.pricePercent}
-          assumedRate={item.suggestedPrice !== null}
+          pricePercent={askPercent(priceValid ? price : null, item.price)}
+          pricePercentTitle={rateTitle('Az árad', item.pricePercent)}
+          unquoted={item.pricePercent === null}
           onOpenDetail={onOpenDetail}
           detail={item}
         >
@@ -201,8 +211,9 @@ function ListingRow({ listing, onOpenDetail }: ListingRowProps): JSX.Element {
         <NameLine
           text={name ?? listing.label}
           detailName={name}
-          pricePercent={listing.pricePercent}
-          assumedRate={listing.suggestedPrice !== null}
+          pricePercent={askPercent(asking, listing.shopPrice)}
+          pricePercentTitle={rateTitle('Az árad', listing.pricePercent)}
+          unquoted={listing.pricePercent === null}
           onOpenDetail={onOpenDetail}
           detail={listing.detail}
         />

@@ -9,7 +9,7 @@
 // The same key reads from different fields in each column, hence one accessor
 // per type rather than an index into a shared shape.
 
-import type { MarketItem, MarketListing } from '@/utils/marketExtract';
+import { askPercent, type MarketItem, type MarketListing } from '@/utils/marketExtract';
 
 export type MarketSortKey =
   | 'name'
@@ -57,7 +57,8 @@ function listingNumber(listing: MarketListing, key: NumericSortKey): number | nu
     // shows, and Ár is the shop price the asking price competes with.
     case 'amount': return listing.quantity;
     case 'price': return listing.shopPrice;
-    case 'percent': return listing.pricePercent;
+    // The asking price's own rate, which is what the row's badge shows.
+    case 'percent': return askPercent(listing.unitPrice, listing.shopPrice);
     case 'market': return listing.suggestedPrice;
     // The asking total, counted exactly as the row prints it.
     case 'total': return listing.unitPrice === null ? null : listing.unitPrice * (listing.quantity ?? 1);

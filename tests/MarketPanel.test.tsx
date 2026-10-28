@@ -62,15 +62,16 @@ describe('MarketPanel', () => {
     expect(meta).not.toContain('bolti ár');
   });
 
-  it('marks an assumed rate as ours rather than the market\'s', () => {
-    // bölényszakáll is priced but unquoted on the live page: the suggestion is
-    // then a guess and must not read as the game's own figure.
+  it('rates an unquoted item by the price it will be offered at', () => {
+    // bölényszakáll is priced but unquoted on the live page, so the pre-filled
+    // price is a guess — and the hover text says the market quotes nothing.
     const state = makeMarketState({ items: [item('bölényszakáll', 5, 40, null, 4)] });
     const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
     const badge = container.querySelector('.lc-mkt-pct')!;
 
-    expect(badge.textContent).toBe('500%?');
-    expect(badge.classList.contains('lc-mkt-pct--assumed')).toBe(true);
+    expect(badge.textContent).toBe('500%');
+    expect(badge.getAttribute('title')).toContain('nem jegyez');
+    expect(badge.classList.contains('lc-mkt-pct--unquoted')).toBe(true);
     // 40 x 500%
     expect(container.querySelectorAll<HTMLInputElement>('.lc-mkt-field input')[1].value).toBe('200');
   });
@@ -80,9 +81,22 @@ describe('MarketPanel', () => {
     expect(rowFor(container, 'ezüst').querySelector('.lc-mkt-pct')).toBeNull();
   });
 
-  it('shows the market percentage so the suggested price is explainable', () => {
+  it('rates the pre-filled price, which starts at the market rate', () => {
     const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
-    expect(rowFor(container, 'jáspis').querySelector('.lc-mkt-pct')!.textContent).toBe('170%');
+    const badge = rowFor(container, 'jáspis').querySelector('.lc-mkt-pct')!;
+    expect(badge.textContent).toBe('170%');
+    expect(badge.classList.contains('lc-mkt-pct--unquoted')).toBe(false);
+  });
+
+  it('follows the price typed into the row, keeping the market rate in the hover text', () => {
+    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
+    const row = rowFor(container, 'jáspis');
+
+    fireEvent.input(row.querySelectorAll('.lc-mkt-field input')[1], { target: { value: '100' } });
+
+    const badge = row.querySelector('.lc-mkt-pct')!;
+    expect(badge.textContent).toBe('200%'); // 100 / 50
+    expect(badge.getAttribute('title')).toContain('170%');
   });
 
   it('offers the pre-filled values in one click', () => {
@@ -203,13 +217,26 @@ describe('MarketPanel', () => {
     });
   });
 
-  it('shows the market percentage on a standing offer, as the offerable rows do', () => {
-    // Same badge, so an asking price in the label can be judged against what the
-    // market actually pays.
-    const { container } = render(<MarketPanel open state={makeMarketState()} onClose={vi.fn()} />);
-    const offers = container.querySelectorAll('.lc-home-col')[1];
+  it("rates a standing offer by its own asking price, not the market's", () => {
+    // 1000 asked at a 124 shop price, where the market quotes 565%.
+    const state = makeMarketState({
+      listings: [listing('1 db. agyar 1000 ezüst/db. áron', 0, 'agyar', 565, { quantity: 1, unitPrice: 1000, shopPrice: 124 })],
+    });
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const badge = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-pct')!;
 
-    expect(offers.querySelector('.lc-mkt-pct')!.textContent).toBe('565%');
+    expect(badge.textContent).toBe('806%');
+    expect(badge.getAttribute('title')).toContain('565%');
+  });
+
+  it('greys a standing offer the market quotes no rate for', () => {
+    const state = makeMarketState({
+      listings: [listing('1 db. agyar 1000 ezüst/db. áron', 0, 'agyar', null, { quantity: 1, unitPrice: 1000, shopPrice: 124 })],
+    });
+    const { container } = render(<MarketPanel open state={state} onClose={vi.fn()} />);
+    const badge = container.querySelectorAll('.lc-home-col')[1].querySelector('.lc-mkt-pct')!;
+
+    expect(badge.classList.contains('lc-mkt-pct--unquoted')).toBe(true);
   });
 
   it('omits the badge on an offer with no percentage to show', () => {
