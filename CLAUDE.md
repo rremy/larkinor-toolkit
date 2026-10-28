@@ -704,6 +704,24 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     is a state the page states outright, and a missing line means the page was not
     recognised. `earnings` is therefore `number | null`: zero disables the collect
     button, null never does.
+  - **Every visit refreshes the database's `marketPrice`.** The catalogue's
+    `(3000%)` is the rate the market pays on the item's shop price, and the option
+    `value` is the database's own item id (338 = *1 hetes kenyér*, 26 ezüst → 780).
+    `captureMarketRates` stores `{id → %}` under `lc-market-rates`, and
+    `DatabaseOverlay` wraps its loader in `withMarketRates`
+    (`src/shared/marketRates.ts`), so the explorer shows `price × % / 100`, falling
+    back to the scraped static figure for an unquoted item or a null `price` (274
+    rows carry one despite the type). Rates, not prices, are stored — the shop
+    price is already in the data. The standalone site never sees them (other
+    origin).
+  - **A row's `%` badge is that row's own price, never the market's quote**
+    (`askPercent` = price ÷ bolti ár): the asking price on a purchase or a standing
+    listing, the Ár field as it is typed on an offerable row. Every offer of one
+    item shares the market's quote, so a quote-per-row badge could not tell
+    9250 from 11 100 at a 370 shop price (2500% vs 3000%). The quote moved to the
+    badge's hover text, and to the buy view's header once per searched item.
+    A badge for an item the market quotes no rate for is drawn grey
+    (`lc-mkt-pct--unquoted`): its figure has nothing to be judged against.
   - Mobile shows the four jobs as tabs (Felkínálható / Felkínált / Vétel / Egyéb);
     the desktop panel has two (Eladás keeps the two-column split, Vétel is the
     same shared buy view), with the page's own actions in a bar above both.
