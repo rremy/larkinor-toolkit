@@ -6,7 +6,7 @@ import { CHARACTER_MINIMIZED_KEY, CHARACTER_OPEN_KEY, CHARACTER_TAB_KEY } from '
 import type { CharacterPageState } from '../src/utils/characterPageExtract';
 
 const state = (): CharacterPageState => ({
-  name: 'Remy', level: 34, xp: 77718605, hp: [573, 573], mp: [416, 416], defense: 124, load: null, loadout: null,
+  name: 'Remy', level: 34, xp: 77718605, hp: { current: 500, max: 573 }, mp: { current: 416, max: 416 }, defense: 124, load: null, loadout: null,
   backpack: [{
     name: 'bot', index: 0, id: '4', slots: ['rightHand', 'leftHand'], bulkIndex: 0, marketPrice: null,
     type: 'fegyver', weight: 2, amount: 1, totalWeight: 2, price: 6, magical: false, attrs: [],

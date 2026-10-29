@@ -1885,6 +1885,9 @@
 .lc-char-pairs > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
 .lc-char-pairs span { color: var(--muted); }
 .lc-char-pairs b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+/* A curse: the game's own icon carries its meaning, so it leads the name. */
+.lc-char-curse span { display: flex; align-items: center; gap: 6px; }
+.lc-char-curse img { width: 20px; height: 20px; flex: none; }
 /* A backpack item's slot buttons, under its figures. */
 .lc-char-equip { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .lc-char-attrs { display: flex; flex-direction: column; gap: 6px; }

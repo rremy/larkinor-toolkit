@@ -1,6 +1,6 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import type { BackpackItem, CharacterPageState, ChoiceSetting, AttributeKey } from '@/utils/characterPageExtract';
+import type { BackpackItem, CharacterPageState, ChoiceSetting, AttributeKey, Gauge } from '@/utils/characterPageExtract';
 import { getCharacterTab, setCharacterTab, type CharacterTab } from '@/utils/config';
 import { useStoredSort } from '@/hooks/useStoredSort';
 import { SLOT_LABEL, SLOT_ORDER, attrOf, type EquippedItem, type Slot } from '@/shared/loadout';
@@ -37,7 +37,8 @@ function Figure({ label, value }: { label: string; value: string }): JSX.Element
   );
 }
 
-const pair = (p: [number, number] | null): string => (p ? `${silver(p[0])} / ${silver(p[1])}` : '—');
+/** Current first, as the stat bar shows it — the page itself prints the maximum first. */
+const gauge = (g: Gauge | null): string => (g ? `${silver(g.current)} / ${silver(g.max)}` : '—');
 
 /** One worn item's headline figures: damage for a weapon, defence for armour. */
 function wornSummary(item: EquippedItem): string {
@@ -129,8 +130,8 @@ function Overview({ state, onOpenDetail }: { state: CharacterPageState; onOpenDe
         <Figure label="Szint" value={state.level === null ? '—' : String(state.level)} />
         <Figure label="Tapasztalat" value={state.xp === null ? '—' : silver(state.xp)} />
         <Figure label="Védettség" value={state.defense === null ? '—' : String(state.defense)} />
-        <Figure label="Életpont" value={pair(state.hp)} />
-        <Figure label="Varázspont" value={pair(state.mp)} />
+        <Figure label="Életpont" value={gauge(state.hp)} />
+        <Figure label="Varázspont" value={gauge(state.mp)} />
       </div>
       {state.load && <CapacityMeter label="Terhelés" icon="🎒" used={state.load.used} max={state.load.max} />}
 
@@ -147,7 +148,14 @@ function Overview({ state, onOpenDetail }: { state: CharacterPageState; onOpenDe
 
       {state.curses.length > 0 && (
         <Section title="Rontások">
-          <p class="lc-bld-text">{state.curses.join('\n')}</p>
+          <div class="lc-char-pairs">
+            {state.curses.map((c) => (
+              <div key={c.name} class="lc-char-curse">
+                <span>{c.iconUrl && <img src={c.iconUrl} alt="" />}{c.name}</span>
+                {c.count !== null && <b>{c.count}</b>}
+              </div>
+            ))}
+          </div>
         </Section>
       )}
 

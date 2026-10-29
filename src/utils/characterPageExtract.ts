@@ -65,13 +65,30 @@ export interface ChoiceSetting {
   save: (value: string) => void;
 }
 
+/** A figure the game prints as "max/current", read into named halves. */
+export interface Gauge {
+  current: number;
+  max: number;
+}
+
+/**
+ * One line of the Rontások box. A curse the character carries is drawn as an
+ * icon whose `title` is its only description, followed by a figure (`:1`); the
+ * box otherwise prints a plain sentence saying there is none (no icon, no figure).
+ */
+export interface Curse {
+  name: string;
+  count: number | null;
+  iconUrl: string | null;
+}
+
 export interface CharacterPageState {
   name: string;
   level: number | null;
   xp: number | null;
-  /** "Életpont: 573/573", the two figures in the page's order. */
-  hp: [number, number] | null;
-  mp: [number, number] | null;
+  /** "Életpont: 573/500" — printed max first, as on every page with a stat block. */
+  hp: Gauge | null;
+  mp: Gauge | null;
   defense: number | null;
   load: { used: number; max: number } | null;
   loadout: Loadout | null;
@@ -89,8 +106,8 @@ export interface CharacterPageState {
   stance: ChoiceSetting | null;
   /** "Gyorsgombod". */
   quickKey: ChoiceSetting | null;
-  /** "Rontások", as printed — "Semmi ilyesmi nincs rajtad!!!" when clean. */
-  curses: string[];
+  /** "Rontások": one entry per curse, or the "Semmi ilyesmi nincs rajtad!!!" sentence when clean. */
+  curses: Curse[];
   attackSpells: Array<{ name: string; stats: string }>;
   skills: Array<{ name: string; value: string }>;
   otherSpells: string[];
@@ -125,10 +142,10 @@ function slotsFor(detail: ParsedDetail): Slot[] {
   return target.kind === 'hand' ? ['rightHand', 'leftHand'] : [target.slot];
 }
 
-/** "573/573" after `label`, or null. */
-function pairAfter(text: string, label: string): [number, number] | null {
+/** "Életpont: 573/500" after `label`, or null — the game prints the maximum first. */
+function gaugeAfter(text: string, label: string): Gauge | null {
   const m = text.match(new RegExp(`${label}:\\s*(\\d+)\\s*/\\s*(\\d+)`));
-  return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : null;
+  return m ? { current: parseInt(m[2], 10), max: parseInt(m[1], 10) } : null;
 }
 
 function numberAfter(text: string, label: string): number | null {
@@ -142,8 +159,7 @@ function numberAfter(text: string, label: string): number | null {
  * its lines are split by `<br>` or by their own divs.
  */
 function sectionLines(doc: Document, heading: string): string[] {
-  const title = Array.from(doc.querySelectorAll('b')).find((b) => b.textContent?.trim() === heading);
-  const box = title?.closest('center')?.parentElement;
+  const box = sectionBox(doc, heading);
   if (!box) return [];
   const tmp = doc.createElement('div');
   tmp.innerHTML = box.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<\/div>/gi, '\n');
@@ -151,6 +167,31 @@ function sectionLines(doc: Document, heading: string): string[] {
     .split('\n')
     .map((l) => l.replace(/\s+/g, ' ').trim())
     .filter((l) => l && l !== heading);
+}
+
+function sectionBox(doc: Document, heading: string): Element | null {
+  const title = Array.from(doc.querySelectorAll('b')).find((b) => b.textContent?.trim() === heading);
+  return title?.closest('center')?.parentElement ?? null;
+}
+
+/**
+ * The Rontások box. Each curse is an icon titled with its description and then
+ * a bold `:1` — so reading the text alone keeps only the `:1` and loses which
+ * curse it is. With no icon at all the box is the "none" sentence.
+ */
+function curses(doc: Document): Curse[] {
+  const box = sectionBox(doc, 'Rontások');
+  const icons = Array.from(box?.querySelectorAll('img') ?? []);
+  if (icons.length === 0) return sectionLines(doc, 'Rontások').map((name) => ({ name, count: null, iconUrl: null }));
+  return icons.map((icon) => {
+    const figure = icon.nextElementSibling?.tagName === 'B' ? icon.nextElementSibling.textContent ?? '' : '';
+    const count = figure.match(/:\s*(\d+)/);
+    return {
+      name: (icon.getAttribute('title') ?? '').trim() || basename(icon.getAttribute('src') ?? ''),
+      count: count ? parseInt(count[1], 10) : null,
+      iconUrl: absolutizeGameUrl(icon.getAttribute('src') ?? '') || null,
+    };
+  });
 }
 
 /** The value each attribute field is given by the page's own filler function. */
@@ -267,8 +308,8 @@ export function extractCharacterPage(doc: Document, rates: MarketRates | null = 
     name: statBlock?.querySelector('b')?.textContent?.trim() ?? stats.match(/Név:\s*(\S+)/)?.[1] ?? '',
     level: numberAfter(stats, 'Szint'),
     xp: numberAfter(stats, 'Tapasztalati pont'),
-    hp: pairAfter(stats, 'Életpont'),
-    mp: pairAfter(stats, 'Varázspont'),
+    hp: gaugeAfter(stats, 'Életpont'),
+    mp: gaugeAfter(stats, 'Varázspont'),
     defense: numberAfter(stats, 'Védettség'),
     load: load ? { used: parseFloat(load[1]), max: parseFloat(load[2]) } : null,
     loadout: extractCharacter(doc),
@@ -307,7 +348,7 @@ export function extractCharacterPage(doc: Document, rates: MarketRates | null = 
     },
     stance: choiceSetting(attrForm, 'valasztas'),
     quickKey: choiceSetting(attrForm, 'shortcut'),
-    curses: sectionLines(doc, 'Rontások'),
+    curses: curses(doc),
     attackSpells,
     skills: sectionLines(doc, 'Képzettségek:').flatMap((line) => {
       const m = line.match(/^(.+?):\s*(.+)$/);

@@ -27,7 +27,7 @@ const PAGE_HTML = `
     <input type="image" src="/ikon/eldob.gif" title="Eldobod a kijelölt cuccot!">
   </div>
   <div><font face="Comic sans MS"> Név: <b>Remy</b> <input type="image" src="/ikon/envelope.gif" title="E-mail címed titkos :-(">
-    <br>Szint: <b>34</b><br>Tapasztalati pont: <b>77718605</b><br>Életpont: <b>500/573</b><br>Varázspont: <b>416/416</b><br>Védettség: <b>124</b><br></font></div>
+    <br>Szint: <b>34</b><br>Tapasztalati pont: <b>77718605</b><br>Életpont: <b>573/500</b><br>Varázspont: <b>416/416</b><br>Védettség: <b>124</b><br></font></div>
   <input type="image" src="/ikon/vissza.gif" title="Kilépés a karakterlapból">
   <input type="image" src="/ikon/test_be.gif" title="Kiválasztott tárgy testre helyezése.">
   <input type="image" src="/ikon/fej_be.gif" title="Kiválasztott tárgy fejre helyezése.">
@@ -69,7 +69,9 @@ describe('extractCharacterPage — reading', () => {
   it('reads the character\'s figures', () => {
     const s = extractCharacterPage(page());
     expect([s.name, s.level, s.xp, s.defense]).toEqual(['Remy', 34, 77718605, 124]);
-    expect(s.hp).toEqual([500, 573]);
+    // The page prints "max/current"; the state names them, so no reader has to know.
+    expect(s.hp).toEqual({ current: 500, max: 573 });
+    expect(s.mp).toEqual({ current: 416, max: 416 });
     expect(s.load).toEqual({ used: 62.4061, max: 146 });
     expect(s.loadout!.slots.leftHand!.name).toBe('hiper bűzíj');
   });
@@ -109,10 +111,22 @@ describe('extractCharacterPage — reading', () => {
 
   it('reads curses, skills and spells', () => {
     const s = extractCharacterPage(page());
-    expect(s.curses).toEqual(['Semmi ilyesmi nincs rajtad!!!']);
+    expect(s.curses).toEqual([{ name: 'Semmi ilyesmi nincs rajtad!!!', count: null, iconUrl: null }]);
     expect(s.skills).toEqual([{ name: 'Szúró/vágó fegyver', value: '38' }, { name: 'Monsztalogia', value: '0' }]);
     expect(s.attackSpells).toEqual([{ name: 'Föld varázslat', stats: 'Szint-10 Maxsebzés-32' }]);
     expect(s.otherSpells).toEqual(['gyógyvarázs - 20 varázspontért 50 életpontot ad']);
+  });
+
+  it('names each curse by its icon\'s title, with the figure printed beside it', () => {
+    // Live markup (2026-10-29): the icon carries the only words; the text is just ":1".
+    const poisoned = PAGE_HTML.replace(
+      '<div><center><b>Rontások</b><br><div>Semmi ilyesmi nincs rajtad!!!</div></center></div>',
+      '<div><center><b>Rontások</b><br>\n<img src="/2/ikon/vanmereg.gif" border="0" title="Méreg! Mozgás közben sebződsz!"><b>:1&nbsp;&nbsp;</b>\n</center></div>',
+    );
+    const s = extractCharacterPage(new JSDOM(`<html><body>${poisoned}</body></html>`).window.document);
+    expect(s.curses).toEqual([
+      { name: 'Méreg! Mozgás közben sebződsz!', count: 1, iconUrl: 'https://l2.larkinor.hu/2/ikon/vanmereg.gif' },
+    ]);
   });
 });
 

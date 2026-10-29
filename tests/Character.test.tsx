@@ -16,7 +16,7 @@ function item(name: string, index: number, over: Partial<BackpackItem> = {}): Ba
 
 function makeState(over: Partial<CharacterPageState> = {}): CharacterPageState {
   return {
-    name: 'Remy', level: 34, xp: 77718605, hp: [573, 573], mp: [416, 416], defense: 124,
+    name: 'Remy', level: 34, xp: 77718605, hp: { current: 500, max: 573 }, mp: { current: 416, max: 416 }, defense: 124,
     load: { used: 62.4, max: 146 },
     loadout: {
       version: 2, playerLevel: 34, capturedAt: 0,
@@ -34,7 +34,7 @@ function makeState(over: Partial<CharacterPageState> = {}): CharacterPageState {
     saveAttributes: vi.fn(),
     stance: { options: [{ value: '0', label: 'félénk' }, { value: '2', label: 'átlagos' }], selected: '2', save: vi.fn() },
     quickKey: null,
-    curses: ['Semmi ilyesmi nincs rajtad!!!'],
+    curses: [{ name: 'Semmi ilyesmi nincs rajtad!!!', count: null, iconUrl: null }],
     attackSpells: [], skills: [{ name: 'Mágia', value: '10' }], otherSpells: [],
     emailPrivacy: null,
     exit: { label: 'Kilépés a karakterlapból', iconUrl: '', trigger: vi.fn() },
@@ -68,6 +68,24 @@ describe('Character (mobile)', () => {
     expect(container.textContent).toContain('dracoacél sisak');
     expect(container.textContent).toContain('védelem: 33');
     expect(container.textContent).toContain('Semmi ilyesmi nincs rajtad!!!');
+  });
+
+  it('shows life and mana current first, the way the stat bar does', () => {
+    const { container } = render(<Character state={makeState()} />);
+    const figure = (label: string) => [...container.querySelectorAll('.lc-bld-figure')]
+      .find((f) => f.querySelector('span')!.textContent === label)!.querySelector('b')!.textContent;
+    expect(figure('Életpont')).toBe('500 / 573');
+  });
+
+  it('names a curse beside its icon, with its figure', () => {
+    const s = makeState({
+      curses: [{ name: 'Méreg! Mozgás közben sebződsz!', count: 1, iconUrl: 'https://l2.larkinor.hu/2/ikon/vanmereg.gif' }],
+    });
+    const { container } = render(<Character state={s} />);
+    const row = container.querySelector('.lc-char-curse')!;
+    expect(row.querySelector('img')!.getAttribute('src')).toBe('https://l2.larkinor.hu/2/ikon/vanmereg.gif');
+    expect(row.textContent).toContain('Méreg! Mozgás közben sebződsz!');
+    expect(row.querySelector('b')!.textContent).toBe('1');
   });
 
   it('offers each slot the backpack items that fit it, right beside the worn one', () => {
