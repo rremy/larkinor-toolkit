@@ -164,6 +164,10 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - Quest 27 ships **seven** `<table>`s on one page. They are not seven floors — they are
     seven alternate views of the *same* maze (a hand-made "where is each key" overlay); the
     parser takes the first table and drops the rest.
+  - **Rows are not reliably closed.** Quest 11 never closes its last `<tr>` (so a
+    `</tr>`-anchored match dropped its whole bottom row) and quest 28 opens one row twice.
+    A row therefore runs to its `</tr>` or the next `<tr`, and a row holding no `<td>` is
+    dropped, as the browser draws it at zero height.
   - **The blank tile is ambiguous, and only the drawn walls resolve it.** `nop.jpg` is a plain
     white image (`black.jpg` in the tavern set behaves the same), and both sources use it for
     two unrelated things: an empty room *inside* the maze, and the untouched canvas *around* a

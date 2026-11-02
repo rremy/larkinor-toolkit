@@ -393,6 +393,11 @@ describe('parseQuestPage', () => {
     expect(q.cells.length).toBeGreaterThan(0);
   });
 
+  it('keeps quest 11\'s last row, whose <tr> the source never closes', () => {
+    const q = parse(11);
+    expect(q.cells.at(-1)).toMatchObject({ row: 7, col: 8, rawImage: 'goblinharcmuvesz_k.gif' });
+  });
+
   it('preserves szel edges in quest 39', () => {
     const q = parse(39);
     expect(q.cells.some((c) => Object.values(c.edges).some((e) => e.kind === 'szel'))).toBe(true);
@@ -419,7 +424,7 @@ describe('parseQuestPage', () => {
   // fixture with different content, fails loudly instead of silently.
   it.each([
     { id: 1, rows: 2, cols: 4 },
-    { id: 11, rows: 7, cols: 9 },
+    { id: 11, rows: 8, cols: 9 },
     { id: 20, rows: 8, cols: 11 },
     { id: 27, rows: 8, cols: 11 },
     { id: 39, rows: 12, cols: 12 },
@@ -483,9 +488,9 @@ describe('parseQuestPage error paths', () => {
     expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no rows');
   });
 
-  it('throws naming the quest id when the maze table has rows but no cells', () => {
+  it('counts a row holding no cell as no row at all', () => {
     const html = raw.replace(/<table>[\s\S]*?<\/table>/, '<table><tr></tr></table>');
-    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no cells');
+    expect(() => parseQuestPage(html, 1, resolveAll)).toThrow('quest 1: maze has no rows');
   });
 });
 

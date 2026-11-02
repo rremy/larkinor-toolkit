@@ -281,7 +281,13 @@ export function parseQuestPage(html, id, resolveMonster) {
   if (!tableMatch) throw new Error(`quest ${id}: no maze table`);
   const table = tableMatch[1];
 
-  const rowHtml = [...table.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map((m) => m[1]);
+  // A row runs until its `</tr>` or the next `<tr`, whichever comes first:
+  // quest 11 never closes its last row, and requiring the closing tag
+  // silently dropped it. Quest 28 opens one row twice, so a row holding no
+  // cell is dropped — the browser draws it with zero height.
+  const rowHtml = [...table.matchAll(/<tr[^>]*>((?:(?!<\/?tr[\s>])[\s\S])*)/gi)]
+    .map((m) => m[1])
+    .filter((row) => /<td/i.test(row));
   if (rowHtml.length === 0) throw new Error(`quest ${id}: maze has no rows`);
 
   const cells = [];
