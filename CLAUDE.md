@@ -102,7 +102,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   (`readLoginName`) and calls `setCharacter` before either boot, and `config.ts` stores the
   listed keys as `<key>@<login>`. Never store "the current character" itself: two tabs would
   overwrite each other's.
-  - **Per character:** loadout, active royal quest, labyrinth position and pending step, the
+  - **Per character:** loadout, map position, active royal quest, labyrinth position and pending step, the
     quest set and per-set selection, quest progress (cleared tiles, hidden locks), free-move
     hotkeys, the recipe per hall, the explorer filters, and every panel's open flag, tab and
     the database route (one tab plays one character, so this also stops tab A's open panel
@@ -160,6 +160,13 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
 - **Hash-routed tabs**: Fegyverek (Weapons), Vértek (Armors), Tárgyak (Items), Szörnyek (Monsters), Térkép (Map), Küldetések (Quests).
 - **Explorer components** (`explorer/`): sortable/filterable DataTable with side DetailPanel, FilterBar with presets, ColumnDef/FilterDef system per tab. Each tab's filters are kept in the `PrefStore` (`lc-explorer-filters-<tab>`), so neither a tab switch nor the game's page reload wipes a search — only *Szűrők törlése* does. A stored key the tab no longer filters on is dropped on read, never applied invisibly. The sort column and direction are kept the same way (`lc-explorer-sort-<tab>`), changed only by a header click — *Szűrők törlése* leaves them alone; the defaults are max damage (weapons) and defence (armours) descending, level/price ascending elsewhere.
 - **Map viewer** (`map/`): clickable districts with cell details and resident monsters.
+  **It marks where the player stands**: every free-move page draws its tile as `tajk/<id>.gif`,
+  whose id is the map data's `imageId`, so both boots store it under `lc-map-position`
+  (`captureMapPosition`, before anything renders, or a database already open on the map would
+  read the previous tile). It is **never cleared**, unlike the labyrinth position: buildings,
+  fights and labyrinths all happen in the tile last walked onto. The map opens on it (a routed
+  target cell wins), draws a cyan ring and a 📍 pin — the labyrinth marker's colour — and offers
+  *📍 Ugrás a helyemre* to jump back. The standalone site never has one (other origin).
 - **Quest viewer** (`quests/`): royal quests 1–63 as interactive mazes. 1–45 were scraped once
   from a third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
   `static/db/quests.json` via `npm run scrape:quests` (`scripts/quests/scrape.mjs` +

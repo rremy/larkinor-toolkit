@@ -3,6 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { describe, it, expect } from 'vitest';
 import { MapView } from '@/database/map/MapView';
 import type { DataLoader, MapData, ShopData } from '@/shared/data';
+import type { PrefStore } from '@/database/DatabaseApp';
+import { MAP_POSITION_PREF_KEY } from '@/shared/prefKeys';
+
+function storeWith(values: Record<string, string>): PrefStore {
+  return { read: (key) => values[key] ?? null, write: (key, value) => { values[key] = value; } };
+}
 
 function makeLoader(): DataLoader {
   const map: MapData = {
@@ -116,4 +122,41 @@ describe('MapView', () => {
     expect(matched.length).toBe(1);
     expect(matched[0].querySelector('.row-id')?.textContent).toBe('44');
   });
+
+  describe('current position', () => {
+    it('marks the tile the player was last seen on and opens on it', async () => {
+      const prefStore = storeWith({ [MAP_POSITION_PREF_KEY]: '13' });
+      const { container } = render(<MapView loader={makeLoader()} prefStore={prefStore} />);
+      await waitFor(() => expect(container.querySelector('td.cell.here[data-id="13"]')).toBeTruthy());
+      expect(container.querySelectorAll('td.cell.here')).toHaveLength(1);
+      expect(container.querySelector('td.cell.here .map-here-pin')).toBeTruthy();
+      expect(container.querySelector('td.cell.selected[data-id="13"]')).toBeTruthy();
+      expect(screen.getByText(/Itt állsz/)).toBeTruthy();
+    });
+
+    it('leaves the selection to a routed target cell', async () => {
+      const prefStore = storeWith({ [MAP_POSITION_PREF_KEY]: '13' });
+      const { container } = render(<MapView loader={makeLoader()} prefStore={prefStore} targetCellId="44" />);
+      await waitFor(() => expect(container.querySelector('td.cell.selected[data-id="44"]')).toBeTruthy());
+      expect(container.querySelector('td.cell.here[data-id="13"]')).toBeTruthy();
+    });
+
+    it('jumps back to the position from the stats line', async () => {
+      const prefStore = storeWith({ [MAP_POSITION_PREF_KEY]: '13' });
+      const { container } = render(<MapView loader={makeLoader()} prefStore={prefStore} />);
+      await waitFor(() => expect(container.querySelector('td.cell.focused[data-id="13"]')).toBeTruthy());
+      fireEvent.click(container.querySelector('td.cell.hub') as HTMLElement);
+      await waitFor(() => expect(container.querySelector('td.cell.selected[data-id="44"]')).toBeTruthy());
+      fireEvent.click(screen.getByRole('button', { name: /helyemre/ }));
+      await waitFor(() => expect(container.querySelector('td.cell.selected[data-id="13"]')).toBeTruthy());
+    });
+
+    it('draws no marker without a stored position', async () => {
+      const { container } = render(<MapView loader={makeLoader()} prefStore={storeWith({})} />);
+      await screen.findByText('Negyedek');
+      expect(container.querySelector('td.cell.here')).toBeNull();
+      expect(screen.queryByRole('button', { name: /helyemre/ })).toBeNull();
+    });
+  });
 });
+

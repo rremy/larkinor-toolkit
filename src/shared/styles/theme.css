@@ -908,6 +908,23 @@
 .lc-db .map-view .swatch.sea { background: var(--sea); }
 .lc-db .map-view .swatch.wall { background: var(--map-wall); border-color: var(--map-wall-border); }
 .lc-db .map-view .swatch.hub { background: var(--varos); box-shadow: 0 0 0 2px var(--accent) inset; }
+/* The tile the player was last seen on (free move, see captureMapPosition.ts).
+   The labyrinth marker's cyan, so "you are here" reads the same on both maps.
+   An inset ring rather than an outline: hover, selection and the focus flash
+   all draw outlines, and the position must survive all three. */
+.lc-db .map-view td.cell.here { box-shadow: inset 0 0 0 3px var(--quest-here-ring), inset 0 0 0 5px var(--quest-item-edge); }
+.lc-db .map-view .map-here-pin {
+  position: absolute; top: 4px; left: 4px; z-index: 1;
+  font-size: 16px; line-height: 1; padding: 2px 3px; border-radius: 3px;
+  background: var(--quest-here-ring); color: var(--quest-void);
+  pointer-events: none;
+}
+.lc-db .map-view .map-here-btn {
+  margin-left: 10px; padding: 2px 8px; font-size: 12px; cursor: pointer;
+  color: var(--text); background: var(--panel); border: 1px solid var(--quest-here-ring); border-radius: 3px;
+}
+.lc-db .map-view .map-here-btn:hover { background: var(--accent-dim); }
+.lc-db .map-view .cell-detail .here-note { color: var(--quest-here-ring); font-weight: bold; margin-bottom: 4px; }
 /* POI filter highlight */
 .lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
 .lc-db .map-view.filter-active td.cell.match { outline: 2px solid var(--accent); z-index: 2; box-shadow: 0 0 12px var(--cell-match-glow); }

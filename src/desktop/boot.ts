@@ -28,6 +28,7 @@ import { renderActiveQuestLink } from '@/desktop/activeQuestLink';
 import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { captureMapPosition } from '@/utils/captureMapPosition';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
@@ -358,6 +359,12 @@ export function bootDesktop(doc: Document): void {
   // so the character panel's own compare cards measure against the set this page
   // shows, not the one from the previous visit.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // Free move draws the tile the player stands on, which the map marks. Kept
+  // across every other page: buildings, fights and labyrinths all happen in the
+  // tile last walked onto. Captured before anything renders, so a database
+  // already open on the map reads this page's tile rather than the last one.
+  if (pageType === PageType.FreeMove) captureMapPosition(doc, setPref);
 
   // The worn set, for the compare card on the inventory and market rows and in
   // the database overlay. Read once at boot: the game reloads on every action.

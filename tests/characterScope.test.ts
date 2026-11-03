@@ -30,6 +30,7 @@ import { readLoginName } from '../src/utils/domExtract';
 import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   LOADOUT_PREF_KEY,
+  MAP_POSITION_PREF_KEY,
   MARKET_RATES_PREF_KEY,
   QUEST_DETAILS_PREF_KEY,
   QUEST_MOVE_PREF_KEY,
@@ -73,6 +74,7 @@ describe('isCharacterKey', () => {
     QUEST_POSITION_PREF_KEY,
     QUEST_MOVE_PREF_KEY,
     QUEST_SET_PREF_KEY,
+    MAP_POSITION_PREF_KEY,
     questSelectedKey('royal'),
     questSelectedKey('tavern'),
     questClearedKey('royal', '39'),

@@ -7,6 +7,9 @@ import {
 } from './mapMeta';
 import { CellDetail } from './CellDetail';
 import { Legend } from './Legend';
+import type { PrefStore } from '../DatabaseApp';
+import { MAP_POSITION_PREF_KEY } from '@/shared/prefKeys';
+import { parseMapPosition } from '@/shared/mapPosition';
 
 /** The city's own 10×10 block, always drawn even where nothing is explored. */
 const GRID_SIZE = 10;
@@ -18,10 +21,21 @@ interface MapViewProps {
    * (deep link or a shop's location link). Re-focuses whenever it changes.
    */
   targetCellId?: string | null;
+  /**
+   * Where the tile the player was last seen on is read from
+   * (`MAP_POSITION_PREF_KEY`). Absent, or holding nothing — the standalone
+   * site, another origin, never does — the map draws no marker.
+   */
+  prefStore?: PrefStore;
 }
 
 /** How long the target cell keeps its focus-pulse highlight (ms). */
 const FOCUS_MS = 3800;
+
+/** The pin on the tile the player was last seen on. */
+function HerePin(): VNode {
+  return <span class="map-here-pin" title="Itt állsz">📍</span>;
+}
 
 /** Does a cell contain a POI matching the active `data-poi` filter? */
 function cellMatchesFilter(cell: MapCell, poi: string): boolean {
@@ -41,11 +55,19 @@ function span(values: number[]): [number, number] {
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
-  const { loader, targetCellId = null } = props;
+  const { loader, targetCellId = null, prefStore } = props;
+  // Read once: the game reloads the page on every step, remounting the view.
+  const [hereId] = useState(() => parseMapPosition(prefStore?.read(MAP_POSITION_PREF_KEY) ?? null));
   const [map, setMap] = useState<MapData | null>(null);
   const [owners, setOwners] = useState<ShopOwners>({});
-  const [selectedId, setSelectedId] = useState<string | null>(targetCellId);
+  const [selectedId, setSelectedId] = useState<string | null>(targetCellId ?? hereId);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  // A fresh object per request, so asking for the same cell twice focuses twice.
+  // A routed target wins; otherwise the map opens on the player.
+  const [focusTarget, setFocusTarget] = useState<{ id: string } | null>(() => {
+    const id = targetCellId ?? hereId;
+    return id ? { id } : null;
+  });
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const gridRef = useRef<HTMLTableElement>(null);
 
@@ -60,19 +82,24 @@ export function MapView(props: MapViewProps): VNode {
     return () => { cancelled = true; };
   }, [loader]);
 
-  // Focus the routed target cell: select it, scroll it into view and flash the
+  useEffect(() => {
+    if (targetCellId) setFocusTarget({ id: targetCellId });
+  }, [targetCellId]);
+
+  // Focus the requested cell: select it, scroll it into view and flash the
   // pulse highlight for a few seconds (ported from the legacy `focusCell`).
   useEffect(() => {
-    if (!targetCellId || !map) return;
-    setSelectedId(targetCellId);
-    setFocusedId(targetCellId);
+    if (!focusTarget || !map) return;
+    const { id } = focusTarget;
+    setSelectedId(id);
+    setFocusedId(id);
     const raf = requestAnimationFrame(() => {
-      const td = gridRef.current?.querySelector(`td.cell[data-id="${targetCellId}"]`);
+      const td = gridRef.current?.querySelector(`td.cell[data-id="${id}"]`);
       td?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
     });
     const timer = setTimeout(() => setFocusedId(null), FOCUS_MS);
     return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
-  }, [targetCellId, map]);
+  }, [focusTarget, map]);
 
   const positions = useMemo(
     () => (map ? layoutCells(map.cells, map.edges ?? {}) : new Map<string, GridPos>()),
@@ -111,6 +138,11 @@ export function MapView(props: MapViewProps): VNode {
       <div class="map-stats">
         {cellById.size} mező felderítve · {districtCount} negyed · grid ID kódolás{' '}
         <code>&lt;sor&gt;&lt;oszlop&gt;</code> (sor 0 = észak)
+        {hereId && (
+          <button type="button" class="map-here-btn" onClick={() => setFocusTarget({ id: hereId })}>
+            📍 Ugrás a helyemre
+          </button>
+        )}
       </div>
       <div class="map-layout">
         <div class="map-wrap">
@@ -133,9 +165,11 @@ export function MapView(props: MapViewProps): VNode {
                         <td
                           key={c}
                           data-id={id}
-                          class="cell unexplored"
+                          class={`cell unexplored${id === hereId ? ' here' : ''}`}
                           onClick={() => setSelectedId(id)}
-                        />
+                        >
+                          {id === hereId && <HerePin />}
+                        </td>
                       );
                     }
                     const id = cell.imageId;
@@ -145,6 +179,7 @@ export function MapView(props: MapViewProps): VNode {
                     if (id === HUB_ID) classes.push('hub');
                     if (id === selectedId) classes.push('selected');
                     if (id === focusedId) classes.push('focused');
+                    if (id === hereId) classes.push('here');
                     if (matches) classes.push('match');
                     const blockers = cell.blockers ?? {};
                     const walls = cellWalls(cell);
@@ -177,6 +212,7 @@ export function MapView(props: MapViewProps): VNode {
                           </div>
                           <div class="row-id">{id}</div>
                         </div>
+                        {id === hereId && <HerePin />}
                         {MAP_SIDES.map((dir) => {
                           const blocker = blockers[dir];
                           if (blocker) {
@@ -198,6 +234,7 @@ export function MapView(props: MapViewProps): VNode {
             cell={selectedCell}
             position={selectedCell ? positions.get(selectedCell.imageId) ?? null : null}
             owners={selectedId != null ? owners[selectedId] : undefined}
+            isHere={selectedId != null && selectedId === hereId}
           />
           <Legend activeFilter={activeFilter} onToggleFilter={toggleFilter} />
         </div>

@@ -10,6 +10,8 @@ interface CellDetailProps {
   position?: GridPos | null;
   /** Building-icon → shop-owner name for this cell (e.g. `vegyesbolt.gif`). */
   owners?: Record<string, string>;
+  /** Whether this is the tile the player was last seen on. */
+  isHere?: boolean;
 }
 
 /**
@@ -18,7 +20,7 @@ interface CellDetailProps {
  * (explorer.html:868-892).
  */
 export function CellDetail(props: CellDetailProps): VNode {
-  const { cell, position = null, owners = {} } = props;
+  const { cell, position = null, owners = {}, isHere = false } = props;
 
   if (!cell) {
     return (
@@ -41,6 +43,7 @@ export function CellDetail(props: CellDetailProps): VNode {
         {cell.district} <span class="meta">(id {cell.imageId})</span>
       </h3>
       {position && <div class="meta">row {position.row} · col {position.col}</div>}
+      {isHere && <div class="here-note">📍 Itt állsz</div>}
       <img class="terrain" src={`${TERRAIN_BASE}${cell.imageSrc}`} alt="" loading="lazy" />
       {cell.buildings.length > 0 && (
         <div>

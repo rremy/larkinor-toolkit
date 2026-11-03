@@ -340,7 +340,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         </div>
       </header>
       {route.tab === 'map' ? (
-        <MapView loader={loader} targetCellId={route.cell} />
+        <MapView loader={loader} targetCellId={route.cell} prefStore={prefStore} />
       ) : route.tab === 'quests' ? (
         <QuestView
           loader={loader}

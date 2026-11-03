@@ -6,6 +6,7 @@ import { activateActiveQuest } from '@/utils/activateActiveQuest';
 import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosition } from '@/utils/activateDungeonPosition';
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
+import { captureMapPosition } from '@/utils/captureMapPosition';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
@@ -164,6 +165,12 @@ export function bootMobile(doc: Document): void {
   // over, so the compare card on the character view's own backpack rows reads
   // the set the page has just printed.
   if (pageType === PageType.Character) captureLoadout(doc, setPref);
+
+  // Free move draws the tile the player stands on, which the map marks. Kept
+  // across every other page: buildings, fights and labyrinths all happen in the
+  // tile last walked onto. Captured before anything renders, so a database
+  // already open on the map reads this page's tile rather than the last one.
+  if (pageType === PageType.FreeMove) captureMapPosition(doc, setPref);
 
   // The market's buy form quotes the current rate of every item it trades, and
   // the rates drift — so each visit refreshes the database's market prices.

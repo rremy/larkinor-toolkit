@@ -60,6 +60,16 @@ export const LEGACY_QUEST_SELECTED_PREF_KEY = 'lc-quest-selected';
 export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
 
 /**
+ * PrefStore key holding the city map tile the player was last seen on (a
+ * `MapCell.imageId`), captured on every free-move page.
+ *
+ * Never cleared, unlike the labyrinth position: a building, a fight or a
+ * labyrinth all happen *in* the tile last walked onto, so it stays the right
+ * answer until the next free-move page names another. The map marks it.
+ */
+export const MAP_POSITION_PREF_KEY = 'lc-map-position';
+
+/**
  * PrefStore key holding the serialised `Loadout` — what the player is wearing,
  * captured on every character-page visit. Read by the compare card on every
  * surface; written only by the boots' loadout capture.
