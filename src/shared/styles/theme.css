@@ -1018,15 +1018,8 @@
   border-color: var(--quest-here-dim);
   box-shadow: none;
 }
-.lc-db .quest-cell.here::before { animation: lc-here-pulse 1.4s ease-in-out infinite; }
-@keyframes lc-here-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
-}
-@media (prefers-reduced-motion: reduce) {
-  /* The ring and the pin badge carry it without the motion. */
-  .lc-db .quest-cell.here::before { animation: none; }
-}
+/* A confident position is steady, not pulsing: it is redrawn on every step the
+   game reloads for, and the ring and the pin badge carry it on their own. */
 .lc-db .quest-badge.here { background: var(--quest-here-ring); color: var(--quest-void); }
 /* A cell whose work is done. Dimming is applied to the *contents* rather than
    the cell, on purpose: `opacity` on `.quest-cell` would take its walls with

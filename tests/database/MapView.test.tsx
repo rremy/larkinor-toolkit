@@ -132,6 +132,8 @@ describe('MapView', () => {
       expect(container.querySelector('td.cell.here .map-here-pin')).toBeTruthy();
       expect(container.querySelector('td.cell.selected[data-id="13"]')).toBeTruthy();
       expect(screen.getByText(/Itt állsz/)).toBeTruthy();
+      // Opened on every page load, so neither glide nor flash.
+      expect(container.querySelector('td.cell.focused')).toBeNull();
     });
 
     it('leaves the selection to a routed target cell', async () => {
@@ -144,7 +146,9 @@ describe('MapView', () => {
     it('jumps back to the position from the stats line', async () => {
       const prefStore = storeWith({ [MAP_POSITION_PREF_KEY]: '13' });
       const { container } = render(<MapView loader={makeLoader()} prefStore={prefStore} />);
-      await waitFor(() => expect(container.querySelector('td.cell.focused[data-id="13"]')).toBeTruthy());
+      await waitFor(() => expect(container.querySelector('td.cell.selected[data-id="13"]')).toBeTruthy());
+      // Let the opening focus land first, or it would overwrite the click.
+      await new Promise((resolve) => setTimeout(resolve, 50));
       fireEvent.click(container.querySelector('td.cell.hub') as HTMLElement);
       await waitFor(() => expect(container.querySelector('td.cell.selected[data-id="44"]')).toBeTruthy());
       fireEvent.click(screen.getByRole('button', { name: /helyemre/ }));

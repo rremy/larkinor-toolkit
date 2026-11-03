@@ -29,6 +29,12 @@ interface MapViewProps {
   prefStore?: PrefStore;
 }
 
+/** A cell to select and scroll to; `animate` glides there and flashes it. */
+interface FocusTarget {
+  id: string;
+  animate: boolean;
+}
+
 /** How long the target cell keeps its focus-pulse highlight (ms). */
 const FOCUS_MS = 3800;
 
@@ -63,10 +69,13 @@ export function MapView(props: MapViewProps): VNode {
   const [selectedId, setSelectedId] = useState<string | null>(targetCellId ?? hereId);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   // A fresh object per request, so asking for the same cell twice focuses twice.
-  // A routed target wins; otherwise the map opens on the player.
-  const [focusTarget, setFocusTarget] = useState<{ id: string } | null>(() => {
-    const id = targetCellId ?? hereId;
-    return id ? { id } : null;
+  // A routed target wins; otherwise the map opens on the player. Only a routed
+  // target is animated: the player's tile is focused on every page load, and
+  // the game reloads on every step, so a glide and a flash each time would be
+  // noise rather than news.
+  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(() => {
+    if (targetCellId) return { id: targetCellId, animate: true };
+    return hereId ? { id: hereId, animate: false } : null;
   });
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const gridRef = useRef<HTMLTableElement>(null);
@@ -83,20 +92,22 @@ export function MapView(props: MapViewProps): VNode {
   }, [loader]);
 
   useEffect(() => {
-    if (targetCellId) setFocusTarget({ id: targetCellId });
+    if (targetCellId) setFocusTarget({ id: targetCellId, animate: true });
   }, [targetCellId]);
 
-  // Focus the requested cell: select it, scroll it into view and flash the
-  // pulse highlight for a few seconds (ported from the legacy `focusCell`).
+  // Focus the requested cell: select it and scroll it into view; an animated
+  // focus glides there and flashes the pulse highlight for a few seconds
+  // (ported from the legacy `focusCell`).
   useEffect(() => {
     if (!focusTarget || !map) return;
-    const { id } = focusTarget;
+    const { id, animate } = focusTarget;
     setSelectedId(id);
-    setFocusedId(id);
     const raf = requestAnimationFrame(() => {
       const td = gridRef.current?.querySelector(`td.cell[data-id="${id}"]`);
-      td?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+      td?.scrollIntoView({ block: 'center', inline: 'center', behavior: animate ? 'smooth' : 'auto' });
     });
+    if (!animate) return () => cancelAnimationFrame(raf);
+    setFocusedId(id);
     const timer = setTimeout(() => setFocusedId(null), FOCUS_MS);
     return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
   }, [focusTarget, map]);
@@ -139,7 +150,7 @@ export function MapView(props: MapViewProps): VNode {
         {cellById.size} mező felderítve · {districtCount} negyed · grid ID kódolás{' '}
         <code>&lt;sor&gt;&lt;oszlop&gt;</code> (sor 0 = észak)
         {hereId && (
-          <button type="button" class="map-here-btn" onClick={() => setFocusTarget({ id: hereId })}>
+          <button type="button" class="map-here-btn" onClick={() => setFocusTarget({ id: hereId, animate: false })}>
             📍 Ugrás a helyemre
           </button>
         )}

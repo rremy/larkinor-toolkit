@@ -46,14 +46,14 @@ const SETS: QuestSet[] = ['royal', 'tavern'];
 const SPOTLIGHT_MS = 1800;
 
 /**
- * Scroll a maze cell into the middle of the view. Guarded rather than
- * optional-chained: jsdom ships no scrollIntoView, and a missing scroll must
- * not break the selection that matters.
+ * Scroll a maze cell into the middle of the view, gliding when `smooth`. Guarded
+ * rather than optional-chained: jsdom ships no scrollIntoView, and a missing
+ * scroll must not break the selection that matters.
  */
-function scrollCellIntoView(wrap: HTMLElement | null, row: number, col: number): void {
+function scrollCellIntoView(wrap: HTMLElement | null, row: number, col: number, smooth: boolean): void {
   const el = wrap?.querySelector(`.quest-cell[data-row="${row}"][data-col="${col}"]`);
   if (el && typeof el.scrollIntoView === 'function') {
-    el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+    el.scrollIntoView({ block: 'center', inline: 'center', behavior: smooth ? 'smooth' : 'auto' });
   }
 }
 
@@ -387,6 +387,9 @@ export function QuestView(props: QuestViewProps): VNode {
    *
    * The effect does not re-fire on re-renders, so a later manual click stands:
    * `position` is state and `questPosition` is either that same object or null.
+   *
+   * The scroll jumps rather than glides: the game reloads on every step, so this
+   * runs on every page inside a labyrinth, where a glide each time is noise.
    */
   useEffect(() => {
     if (!questPosition?.exact || !quest) return;
@@ -396,7 +399,7 @@ export function QuestView(props: QuestViewProps): VNode {
     setSelectedCell(cell);
 
     const raf = requestAnimationFrame(
-      () => scrollCellIntoView(gridWrapRef.current, target.row, target.col),
+      () => scrollCellIntoView(gridWrapRef.current, target.row, target.col, false),
     );
     return () => cancelAnimationFrame(raf);
   }, [questPosition, quest]);
@@ -409,7 +412,7 @@ export function QuestView(props: QuestViewProps): VNode {
    */
   function revealCell(cell: QuestCell) {
     setSelectedCell(cell);
-    scrollCellIntoView(gridWrapRef.current, cell.row, cell.col);
+    scrollCellIntoView(gridWrapRef.current, cell.row, cell.col, true);
     if (selectedQuestId == null) return;
     setSpotlight({ questId: selectedQuestId, cell: cellKey(cell) });
     if (spotlightTimerRef.current !== null) clearTimeout(spotlightTimerRef.current);

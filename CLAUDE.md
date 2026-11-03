@@ -166,7 +166,8 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   read the previous tile). It is **never cleared**, unlike the labyrinth position: buildings,
   fights and labyrinths all happen in the tile last walked onto. The map opens on it (a routed
   target cell wins), draws a cyan ring and a 📍 pin — the labyrinth marker's colour — and offers
-  *📍 Ugrás a helyemre* to jump back. The standalone site never has one (other origin).
+  *📍 Ugrás a helyemre* to jump back. Opening on it neither glides nor flashes (a routed target
+  still does): the game reloads on every step, so an animation there replays on every move. The standalone site never has one (other origin).
 - **Quest viewer** (`quests/`): royal quests 1–63 as interactive mazes. 1–45 were scraped once
   from a third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
   `static/db/quests.json` via `npm run scrape:quests` (`scripts/quests/scrape.mjs` +
@@ -485,8 +486,9 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       was in 35) — an *ambiguous* hit never does, because a set of candidates is no evidence of
       which maze the player is in, and moving the tab on one would drag the reader away with no
       way back.
-    - An exact hit is drawn as a solid pulsing ring plus a `📍` badge and **selects** the cell
-      (handing over its detail panel for free); an ambiguous match draws a dashed dimmed ring
+    - An exact hit is drawn as a solid, steady ring plus a `📍` badge and **selects** the cell
+      (handing over its detail panel for free), scrolled to without a glide — it is redrawn on
+      every step, so a pulse or a glide would replay on every move; an ambiguous match draws a dashed dimmed ring
       on each candidate, no badge and no selection. Three pins would read as three players
       rather than one uncertainty. The ring is inset past the wall edges — like the objective
       ring, and for a sharper reason: on the tile the player is standing on, which way they
