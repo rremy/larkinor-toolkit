@@ -88,7 +88,10 @@ Open the config drawer from the dock (desktop) or the UI (mobile) to choose whic
 quick actions appear as icon buttons, and to override platform detection —
 handy on a tablet, or to see the desktop dock on a phone. The override takes
 effect on the next page load. Settings persist through your userscript manager's
-storage.
+storage. Anything about a character — worn gear, quests and quest progress, quick
+actions, open panels, database filters — is kept per character, so several
+characters can be played side by side in one browser; market prices, layout and
+sort choices are shared.
 
 ## Development
 

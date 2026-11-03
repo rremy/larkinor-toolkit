@@ -1,9 +1,16 @@
 // Persistent local UI config, stored via ViolentMonkey's GM storage (the same
 // mechanism used for the remembered login name). Survives across page loads and
-// the loader/eval boundary.
+// the loader/eval boundary. Keys about one character are stored per character —
+// see "Per-character storage" below.
 
 import type { Platform } from '@/utils/platform';
-import { QUEST_TILE_PREF_KEY } from '@/shared/prefKeys';
+import {
+  ACTIVE_ROYAL_QUEST_PREF_KEY,
+  QUEST_MOVE_PREF_KEY,
+  QUEST_POSITION_PREF_KEY,
+  QUEST_SET_PREF_KEY,
+  QUEST_TILE_PREF_KEY,
+} from '@/shared/prefKeys';
 import { LOADOUT_PREF_KEY, parseLoadout, type Loadout } from '@/shared/loadout';
 
 /** GM storage key holding the JSON array of enabled hotkey tevFajta values. */
@@ -11,7 +18,7 @@ export const ENABLED_HOTKEYS_KEY = 'lc-enabled-hotkeys';
 
 /** The tevFajta values the user has enabled as free-move hotkey icons. */
 export function getEnabledHotkeys(): string[] {
-  const raw = GM_getValue(ENABLED_HOTKEYS_KEY, '[]');
+  const raw = gmGet(ENABLED_HOTKEYS_KEY);
   try {
     const parsed = JSON.parse(raw || '[]');
     return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
@@ -21,7 +28,7 @@ export function getEnabledHotkeys(): string[] {
 }
 
 export function setEnabledHotkeys(keys: string[]): void {
-  GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(keys));
+  gmSet(ENABLED_HOTKEYS_KEY, JSON.stringify(keys));
 }
 
 /** GM storage key holding whether the desktop keyboard shortcuts are on. */
@@ -32,11 +39,11 @@ export const KEYBOARD_SHORTCUTS_KEY = 'lc-keyboard-shortcuts';
  * shipped always-on, so a player who never opens the setting keeps them.
  */
 export function getKeyboardShortcuts(): boolean {
-  return (GM_getValue(KEYBOARD_SHORTCUTS_KEY, '') as string) !== 'off';
+  return gmGet(KEYBOARD_SHORTCUTS_KEY) !== 'off';
 }
 
 export function setKeyboardShortcuts(on: boolean): void {
-  GM_setValue(KEYBOARD_SHORTCUTS_KEY, on ? '' : 'off');
+  gmSet(KEYBOARD_SHORTCUTS_KEY, on ? '' : 'off');
 }
 
 /** GM storage key holding the manual mobile/desktop override ('' = automatic). */
@@ -98,12 +105,12 @@ const MARKET_TABS: MarketTab[] = ['offer', 'listings', 'buy', 'other'];
  * treated as none, so a stale or hand-edited key degrades to the default tab.
  */
 export function getMarketTab(): MarketTab | null {
-  const raw = GM_getValue(MARKET_TAB_KEY, '') as string;
+  const raw = gmGet(MARKET_TAB_KEY);
   return MARKET_TABS.includes(raw as MarketTab) ? (raw as MarketTab) : null;
 }
 
 export function setMarketTab(tab: MarketTab): void {
-  GM_setValue(MARKET_TAB_KEY, tab);
+  gmSet(MARKET_TAB_KEY, tab);
 }
 
 export const CHARACTER_MINIMIZED_KEY = 'lc-character-minimized';
@@ -130,12 +137,12 @@ const SHOP_TABS: ShopTab[] = ['buy', 'sell', 'other'];
  * on the buy tab after each sale would make selling a stack of rows a chore.
  */
 export function getShopTab(): ShopTab | null {
-  const raw = GM_getValue(SHOP_TAB_KEY, '') as string;
+  const raw = gmGet(SHOP_TAB_KEY);
   return SHOP_TABS.includes(raw as ShopTab) ? (raw as ShopTab) : null;
 }
 
 export function setShopTab(tab: ShopTab): void {
-  GM_setValue(SHOP_TAB_KEY, tab);
+  gmSet(SHOP_TAB_KEY, tab);
 }
 
 /** GM storage key holding the character page's last selected tab. */
@@ -151,12 +158,12 @@ const CHARACTER_TABS: CharacterTab[] = ['overview', 'backpack', 'settings'];
  * after every item moved would make sorting a backpack a chore.
  */
 export function getCharacterTab(): CharacterTab | null {
-  const raw = GM_getValue(CHARACTER_TAB_KEY, '') as string;
+  const raw = gmGet(CHARACTER_TAB_KEY);
   return CHARACTER_TABS.includes(raw as CharacterTab) ? (raw as CharacterTab) : null;
 }
 
 export function setCharacterTab(tab: CharacterTab): void {
-  GM_setValue(CHARACTER_TAB_KEY, tab);
+  gmSet(CHARACTER_TAB_KEY, tab);
 }
 
 /**
@@ -165,21 +172,21 @@ export function setCharacterTab(tab: CharacterTab): void {
  * hand-edited key degrades to auto-detection rather than a broken UI.
  */
 export function getPlatformOverride(): Platform | null {
-  const raw = GM_getValue(PLATFORM_OVERRIDE_KEY, '') as string;
+  const raw = gmGet(PLATFORM_OVERRIDE_KEY);
   return raw === 'mobile' || raw === 'desktop' ? raw : null;
 }
 
 export function setPlatformOverride(value: Platform | null): void {
-  GM_setValue(PLATFORM_OVERRIDE_KEY, value ?? '');
+  gmSet(PLATFORM_OVERRIDE_KEY, value ?? '');
 }
 
 /** Whether the desktop dock is collapsed to its handle. */
 export function getDockCollapsed(): boolean {
-  return (GM_getValue(DOCK_COLLAPSED_KEY, '') as string) === 'true';
+  return gmGet(DOCK_COLLAPSED_KEY) === 'true';
 }
 
 export function setDockCollapsed(value: boolean): void {
-  GM_setValue(DOCK_COLLAPSED_KEY, value ? 'true' : '');
+  gmSet(DOCK_COLLAPSED_KEY, value ? 'true' : '');
 }
 
 /**
@@ -189,11 +196,11 @@ export function setDockCollapsed(value: boolean): void {
  * remember independently.
  */
 export function getPanelMinimized(key: string): boolean {
-  return (GM_getValue(key, '') as string) === 'true';
+  return gmGet(key) === 'true';
 }
 
 export function setPanelMinimized(key: string, value: boolean): void {
-  GM_setValue(key, value ? 'true' : '');
+  gmSet(key, value ? 'true' : '');
 }
 
 /**
@@ -202,11 +209,11 @@ export function setPanelMinimized(key: string, value: boolean): void {
  * the move was made from and force it to be reopened each time.
  */
 export function getPanelOpen(key: string): boolean {
-  return (GM_getValue(key, '') as string) === 'true';
+  return gmGet(key) === 'true';
 }
 
 export function setPanelOpen(key: string, value: boolean): void {
-  GM_setValue(key, value ? 'true' : '');
+  gmSet(key, value ? 'true' : '');
 }
 
 /**
@@ -220,11 +227,119 @@ export function setPanelOpen(key: string, value: boolean): void {
  * unparseable one degrades to its default route.
  */
 export function getDbRoute(): string | null {
-  return (GM_getValue(DB_ROUTE_KEY, '') as string) || null;
+  return gmGet(DB_ROUTE_KEY) || null;
 }
 
 export function setDbRoute(route: string): void {
-  GM_setValue(DB_ROUTE_KEY, route);
+  gmSet(DB_ROUTE_KEY, route);
+}
+
+// ---------------------------------------------------------------------------
+// Per-character storage
+//
+// One browser often plays several characters, side by side in tabs. Whatever
+// describes a character — the gear they wear, the quest they are on, where they
+// stand in a labyrinth, which panel their tab had open — is stored under the key
+// suffixed with the page's login name (`lc-loadout@remy`), so one character's
+// state never shows up on another's pages. What describes the game, the device
+// or the player's taste (market rates, platform, sort orders, zoom) stays shared.
+//
+// The login name is read off each page (`readLoginName`), never stored as "the
+// current character": two tabs would overwrite each other's.
+// ---------------------------------------------------------------------------
+
+/**
+ * Shared GM key naming the character that inherits the quest progress stored
+ * before storage was split per character: the first one seen afterwards.
+ */
+export const LEGACY_OWNER_KEY = 'lc-legacy-owner';
+
+/** Keys stored per character. Families of keys are matched by prefix below. */
+const CHARACTER_KEYS: ReadonlySet<string> = new Set([
+  LOADOUT_PREF_KEY,
+  ACTIVE_ROYAL_QUEST_PREF_KEY,
+  QUEST_POSITION_PREF_KEY,
+  QUEST_MOVE_PREF_KEY,
+  QUEST_SET_PREF_KEY,
+  ENABLED_HOTKEYS_KEY,
+  DB_OPEN_KEY,
+  INVENTORY_OPEN_KEY,
+  MARKET_OPEN_KEY,
+  CRAFTING_OPEN_KEY,
+  CHARACTER_OPEN_KEY,
+  SHOP_OPEN_KEY,
+  DB_ROUTE_KEY,
+  MARKET_TAB_KEY,
+  SHOP_TAB_KEY,
+  CHARACTER_TAB_KEY,
+]);
+
+/**
+ * Prefixes of the per-character key families built in `prefKeys.ts`: the quest
+ * selected per set, quest progress, the recipe per hall, the explorer filters
+ * (a level filter suits one character and not the next).
+ */
+const CHARACTER_KEY_PREFIXES = [
+  'lc-quest-selected-',
+  'lc-quest-cleared-',
+  'lc-quest-hidden-locks-',
+  'lc-craft-selected-',
+  'lc-explorer-filters-',
+];
+
+/**
+ * Per-character keys the legacy owner keeps reading from their shared,
+ * pre-split value until writing their own. Only progress: everything else is
+ * rebuilt by visiting a page (the loadout by the character sheet, a position by
+ * the next step), so adopting it would only risk showing another character's.
+ */
+const LEGACY_PROGRESS_PREFIXES = ['lc-quest-cleared-', 'lc-quest-hidden-locks-'];
+
+/**
+ * The login name this page belongs to; null when the page names none, and
+ * undefined until the entry point has looked. Undefined leaves every key as
+ * written, which is the state unit tests run in.
+ */
+let character: string | null | undefined;
+
+/**
+ * Sets whose storage this page reads and writes. Called once by the entry
+ * point, before either boot; null (a page naming no character, such as the
+ * login page) makes every per-character key read empty and drop its writes.
+ */
+export function setCharacter(login: string | null): void {
+  character = login;
+  if (login !== null && !GM_getValue<string>(LEGACY_OWNER_KEY, '')) GM_setValue(LEGACY_OWNER_KEY, login);
+}
+
+/** Whether `key` is stored per character rather than shared. */
+export function isCharacterKey(key: string): boolean {
+  return CHARACTER_KEYS.has(key) || CHARACTER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
+/** The GM key `key` is stored under on this page, or null when it cannot be stored here. */
+function storageKey(key: string): string | null {
+  if (character === undefined || !isCharacterKey(key)) return key;
+  return character === null ? null : `${key}@${character}`;
+}
+
+/** Reads a stored string, '' when absent. */
+function gmGet(key: string): string {
+  const stored = storageKey(key);
+  if (stored === null) return '';
+  // Absent is told apart from '' so a reset written as '' is never undone by
+  // falling back to the legacy value.
+  const value = GM_getValue<string | null>(stored, null);
+  if (value !== null) return value;
+  const legacyOwner = stored !== key && GM_getValue<string>(LEGACY_OWNER_KEY, '') === character;
+  return legacyOwner && LEGACY_PROGRESS_PREFIXES.some((prefix) => key.startsWith(prefix))
+    ? GM_getValue<string>(key, '')
+    : '';
+}
+
+function gmSet(key: string, value: string): void {
+  const stored = storageKey(key);
+  if (stored !== null) GM_setValue(stored, value);
 }
 
 /**
@@ -236,11 +351,11 @@ export function setDbRoute(route: string): void {
  * first key stored this way, but not expected to be the last.
  */
 export function getPref(key: string): string | null {
-  return (GM_getValue(key, '') as string) || null;
+  return gmGet(key) || null;
 }
 
 export function setPref(key: string, value: string): void {
-  GM_setValue(key, value);
+  gmSet(key, value);
 }
 
 /**

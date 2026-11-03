@@ -538,6 +538,17 @@ export function extractBattle(doc: Document): BattleState {
   };
 }
 
+/**
+ * The account logged in on this page, lower-cased, or null when the page names
+ * none. Every in-game page carries it as a hidden field of the shared `urlap`
+ * form; the login page's own `loginname` is a text field the player types into,
+ * so only the hidden one counts.
+ */
+export function readLoginName(doc: Document): string | null {
+  const value = doc.querySelector<HTMLInputElement>('input[type="hidden"][name="loginname"]')?.value.trim();
+  return value ? value.toLowerCase() : null;
+}
+
 /** GM storage key under which the last-used login name is remembered. */
 export const LOGIN_USERNAME_KEY = 'lc-login-username';
 

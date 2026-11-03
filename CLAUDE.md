@@ -95,6 +95,28 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - **Critical**: because the loader `eval`s the main script, the main script's GM calls run in the **loader's** grant sandbox. The loader MUST `@grant` everything the main script uses: `GM_addStyle`, `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`. Missing any → `ReferenceError` on boot.
 - **Proxy-DOM pattern** (mobile only): on a page we handle (FreeMove, Battle, Dungeon, Login, Home), extract game state from the live DOM, move the original DOM into an off-screen `#lc-offscreen` container (never destroy), mount a Preact app into `#lc-root`. UI actions `.click()` the original hidden controls so the game's own form logic runs unchanged. The desktop mode does **not** do this — see *Two platform modes* below.
 - **Page detection** (`utils/pageDetector.ts`): read hidden `input[name="oldalTipus"]` — `otVilag`→FreeMove, `otHarc`→Battle, `otTemplom`→Church, `otLogin`→Login, `otLabirintus`→Dungeon, `otSajathaz`→Home, `otVegyesbolt`/`otFegyverbolt`→Shop, `otPiac`→Market, `otErod`→ForgeLobby, `otErodBelso`→ForgeHall, `otMagustorony`→MageLobby, `otMagustoronyBelso`→MageHall, `otEkszeresz`→Bank, `otArena`→Arena, `otPalota`→Palace, `otPalotaKuldetes`→PalaceQuest, else→Unknown. Mobile renders FreeMove, Battle, Login, Dungeon, Home, Market, the four crafting-building pages, the two shops and the Templom, the Bank, the Aréna, both palace rooms and the character page, and leaves the rest untouched; desktop adds its dock to every page, with a shop panel in the shops and the Templom and a character panel on the character page.
+- **Storage is per character where it describes one** (`src/utils/config.ts`, *Per-character
+  storage*). One browser often plays several characters side by side in tabs, and a shared
+  `lc-loadout` compared character B's database against character A's gear. Every in-game page
+  carries the account as a hidden `urlap` field (`loginname`); `main.ts` reads it
+  (`readLoginName`) and calls `setCharacter` before either boot, and `config.ts` stores the
+  listed keys as `<key>@<login>`. Never store "the current character" itself: two tabs would
+  overwrite each other's.
+  - **Per character:** loadout, active royal quest, labyrinth position and pending step, the
+    quest set and per-set selection, quest progress (cleared tiles, hidden locks), free-move
+    hotkeys, the recipe per hall, the explorer filters, and every panel's open flag, tab and
+    the database route (one tab plays one character, so this also stops tab A's open panel
+    reappearing in tab B).
+  - **Shared:** market rates, data caches, platform/keyboard/dock choices, panels' minimised
+    flags, sort orders, quest zoom and details, and the remembered login name.
+  - **A new key must be classified**: add it to `CHARACTER_KEYS` or `CHARACTER_KEY_PREFIXES`
+    if it describes the character, and to `tests/characterScope.test.ts` either way. All GM
+    access goes through `config.ts` except the login name and the data cache, both shared.
+  - A page naming no character (the login page) reads per-character keys as empty and drops
+    their writes. Unit tests never call `setCharacter`, which leaves every key as written.
+  - **Upgrade:** the first character seen after the split becomes `lc-legacy-owner` and keeps
+    reading the old shared quest progress until writing their own. Nothing else carries over:
+    the loadout and the position rebuild themselves on the next character-sheet visit or step.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
