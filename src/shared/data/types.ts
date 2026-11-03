@@ -15,7 +15,29 @@ export interface ShopRef {
   price: number;
 }
 
-export interface Weapon {
+/**
+ * What the player owns of an item, laid over the database rows in-game by
+ * `withInventory` (src/shared/inventory.ts). Absent on every row when nothing
+ * has been recorded — always, on the standalone site.
+ */
+export interface Ownership {
+  /** Total across every location, or null when none is owned. */
+  owned?: number | null;
+  /** Where it is, one entry per location holding any. */
+  holdings?: Holding[];
+}
+
+/** Where an owned item is: worn, in the backpack, in the house, on offer at the market. */
+export type HoldingLocation = 'worn' | 'backpack' | 'house' | 'market';
+
+export interface Holding {
+  location: HoldingLocation;
+  quantity: number;
+  /** When that location was last read off a page. */
+  capturedAt: number;
+}
+
+export interface Weapon extends Ownership {
   id: number;
   name: string;
   weight: number;
@@ -37,7 +59,7 @@ export interface Weapon {
   shops: ShopRef[];
 }
 
-export interface Armor {
+export interface Armor extends Ownership {
   id: number;
   name: string;
   weight: number;
@@ -55,7 +77,7 @@ export interface Armor {
   shops?: ShopRef[];
 }
 
-export interface Item {
+export interface Item extends Ownership {
   id: number;
   name: string;
   weight: number;

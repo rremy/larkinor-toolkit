@@ -102,7 +102,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   (`readLoginName`) and calls `setCharacter` before either boot, and `config.ts` stores the
   listed keys as `<key>@<login>`. Never store "the current character" itself: two tabs would
   overwrite each other's.
-  - **Per character:** loadout, map position, active royal quest, labyrinth position and pending step, the
+  - **Per character:** loadout, inventory, map position, active royal quest, labyrinth position and pending step, the
     quest set and per-set selection, quest progress (cleared tiles, hidden locks), free-move
     hotkeys, the recipe per hall, the explorer filters, and every panel's open flag, tab and
     the database route (one tab plays one character, so this also stops tab A's open panel
@@ -701,6 +701,26 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - A capture saved through Playwright's `browser_evaluate` is a **JSON-encoded
     string**, not HTML. Feeding it to JSDOM finds no anchors and reads every slot
     as null, which looks exactly like an extractor bug; `JSON.parse` it first.
+- **The database knows what you own** (`src/shared/inventory.ts` + `src/utils/captureInventory.ts`).
+  No page lists everything, so each **location** is a snapshot of the last page that listed it,
+  replaced whole on every visit and stamped with its time, under the per-character
+  `lc-inventory`: the **backpack** from the character sheet, home, a shop's sell list or a
+  crafting hall's ingredient list; the **house** from home; the **market** (standing offers) from
+  the market. What is **worn** is read from the stored loadout instead of being stored twice.
+  Facts and choices that matter:
+  - **Only a page that lists a location whole may write it**, because a capture replaces it: a
+    partial list reads as having sold the rest. That is why the market's *Felkínálható* list —
+    what may be offered, not what is carried — never writes the backpack.
+  - **Match by game id where the page gives one, by name only where it does not.** Ids are
+    unique across weapons, armours and items (0 collisions over 3323 rows); 15 names are not,
+    so an entry carrying an id never falls back to its name. Home and market entries carry no
+    id; the character sheet, shops and crafting halls do.
+  - Silver (`ezüst`) is listed like an item on all of these pages and is dropped: it is money.
+  - `withInventory` wraps the overlay's loader like `withMarketRates`, adding `owned` (total, or
+    null) and `holdings` (per location) to every row. Without any record the rows come back
+    untouched, and the explorer drops the *Nálad* column and the *Nálad van* filter wherever no
+    row carries `owned` — always, on the standalone site. The detail panel lists the locations
+    with their capture time, and a recipe line says how many of each ingredient you hold.
 - **The compare card** (`src/hooks/useCompare.tsx` + `CompareCard`) diffs a hovered
   weapon or armour against the worn set on the explorer tables, the Home inventory
   and the Market panel, reading the loadout from a `LoadoutContext` that both

@@ -12,6 +12,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
   weapons: [
     { key: 'id', label: 'ID', num: true, cls: 'right dim' },
     { key: 'name', label: 'Név', cls: 'name' },
+    { key: 'owned', label: 'Nálad', num: true, cls: 'right' },
     { key: 'level', label: 'Szint', num: true, cls: 'right' },
     { key: 'type', label: 'Típus' },
     { key: 'maxDamage', label: 'Max seb.', num: true, cls: 'right' },
@@ -25,6 +26,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
   armors: [
     { key: 'id', label: 'ID', num: true, cls: 'right dim' },
     { key: 'name', label: 'Név', cls: 'name' },
+    { key: 'owned', label: 'Nálad', num: true, cls: 'right' },
     { key: 'level', label: 'Szint', num: true, cls: 'right' },
     { key: 'type', label: 'Típus' },
     { key: 'defense', label: 'Védelem', num: true, cls: 'right' },
@@ -37,6 +39,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
   items: [
     { key: 'id', label: 'ID', num: true, cls: 'right dim' },
     { key: 'name', label: 'Név', cls: 'name' },
+    { key: 'owned', label: 'Nálad', num: true, cls: 'right' },
     { key: 'minLevel', label: 'Min. szint', num: true, cls: 'right' },
     { key: 'defense', label: 'Védelem', num: true, cls: 'right' },
     { key: 'magical', label: 'Mág.', bool: true, cls: 'center' },
@@ -58,6 +61,13 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
     { key: 'location', label: 'Előfordulás' },
   ],
 };
+
+/**
+ * The ownership column and filter key. Present on weapon, armour and item rows
+ * only in-game (`withInventory`), so the explorer drops both wherever no row
+ * carries it — always, on the standalone site.
+ */
+export const OWNED_KEY = 'owned';
 
 export interface SortState {
   key: string;

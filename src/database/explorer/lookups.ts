@@ -15,6 +15,8 @@ export interface DetailLookups {
   usedIn: Map<number, UsedInEntry[]>;
   /** monster id → monster, for enriching `droppedBy` lists. */
   monstersById: Map<number, Monster>;
+  /** item id → how many the player owns, for the recipe list (in-game only). */
+  ownedById: Map<number, number>;
 }
 
 /** Singular Hungarian noun per owner type, for the "Mire használható" list. */
@@ -55,7 +57,11 @@ export function buildLookups(
   items.forEach((i) => push(i, 'items'));
 
   const monstersById = new Map(monsters.map((m) => [m.id, m]));
-  return { usedIn, monstersById };
+  const ownedById = new Map<number, number>();
+  for (const row of [...weapons, ...armors, ...items]) {
+    if (row.owned) ownedById.set(row.id, row.owned);
+  }
+  return { usedIn, monstersById, ownedById };
 }
 
 /** Sort `usedIn` entries by owner level (nulls last), then name. */

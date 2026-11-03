@@ -7,6 +7,7 @@ import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosi
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
+import { captureInventory } from '@/utils/captureInventory';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
@@ -171,6 +172,10 @@ export function bootMobile(doc: Document): void {
   // tile last walked onto. Captured before anything renders, so a database
   // already open on the map reads this page's tile rather than the last one.
   if (pageType === PageType.FreeMove) captureMapPosition(doc, setPref);
+
+  // What the player owns, from whichever page lists a location of it (see
+  // captureInventory), so the database can say how many of an item they have.
+  captureInventory(pageType, doc, getPref, setPref);
 
   // The market's buy form quotes the current rate of every item it trades, and
   // the rates drift — so each visit refreshes the database's market prices.

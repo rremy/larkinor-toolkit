@@ -8,6 +8,7 @@ import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   QUEST_MOVE_PREF_KEY,
   QUEST_POSITION_PREF_KEY,
+  INVENTORY_PREF_KEY,
   MAP_POSITION_PREF_KEY,
   QUEST_SET_PREF_KEY,
   QUEST_TILE_PREF_KEY,
@@ -258,6 +259,7 @@ export const LEGACY_OWNER_KEY = 'lc-legacy-owner';
 /** Keys stored per character. Families of keys are matched by prefix below. */
 const CHARACTER_KEYS: ReadonlySet<string> = new Set([
   LOADOUT_PREF_KEY,
+  INVENTORY_PREF_KEY,
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   QUEST_POSITION_PREF_KEY,
   QUEST_MOVE_PREF_KEY,

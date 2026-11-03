@@ -1,5 +1,5 @@
 import { h, type VNode } from 'preact';
-import type { Weapon, Armor, Item } from '@/shared/data';
+import type { Weapon, Armor, Item, Holding, HoldingLocation } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import type { EntityTab } from './columns';
@@ -17,6 +17,19 @@ interface DetailPanelProps {
   onShowCell: (cellId: string) => void;
   /** Cross-dataset lookups for the usedIn / droppedBy sections (once loaded). */
   lookups?: DetailLookups;
+}
+
+/** Where an owned item is, as the detail panel names it. */
+const HOLDING_LABEL: Record<HoldingLocation, string> = {
+  worn: 'rajtad',
+  backpack: 'hátizsák',
+  house: 'ház',
+  market: 'piacon',
+};
+
+/** When a location was last read off a page, e.g. `11. 03. 14:20`. */
+function capturedLabel(at: number): string {
+  return new Date(at).toLocaleString('hu', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 /** Render a stat value: booleans as badges, numbers Hungarian-localised. */
@@ -54,6 +67,7 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
   const droppedBy = Array.isArray(rec.droppedBy)
     ? (rec.droppedBy as { monsterId: number; qty: number }[])
     : [];
+  const holdings = Array.isArray(rec.holdings) ? (rec.holdings as Holding[]) : [];
   const drops = Array.isArray(rec.drops)
     ? (rec.drops as { name: string; qty: number; id: number }[])
     : [];
@@ -91,6 +105,20 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
         })}
       </dl>
 
+      {holdings.length > 0 && (
+        <div>
+          <h3>Nálad ({Number(rec.owned).toLocaleString('hu')})</h3>
+          <ul>
+            {holdings.map((held) => (
+              <li key={held.location}>
+                {HOLDING_LABEL[held.location]}: {held.quantity.toLocaleString('hu')}
+                <span class="qty"> · {capturedLabel(held.capturedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {shops.length > 0 && (
         <div>
           <h3>Boltokban kapható ({shops.length})</h3>
@@ -115,6 +143,9 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
                 {c.id
                   ? <a class="ref" onClick={() => onJump('items', Number(c.id))}>{c.name}</a>
                   : c.name}
+                {c.id && lookups?.ownedById.has(Number(c.id)) && (
+                  <span class="qty"> · nálad {lookups.ownedById.get(Number(c.id))!.toLocaleString('hu')}</span>
+                )}
               </li>
             ))}
           </ul>

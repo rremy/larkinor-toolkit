@@ -29,6 +29,7 @@ import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosi
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
+import { captureInventory } from '@/utils/captureInventory';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
@@ -365,6 +366,10 @@ export function bootDesktop(doc: Document): void {
   // tile last walked onto. Captured before anything renders, so a database
   // already open on the map reads this page's tile rather than the last one.
   if (pageType === PageType.FreeMove) captureMapPosition(doc, setPref);
+
+  // What the player owns, from whichever page lists a location of it (see
+  // captureInventory), so the database can say how many of an item they have.
+  captureInventory(pageType, doc, getPref, setPref);
 
   // The worn set, for the compare card on the inventory and market rows and in
   // the database overlay. Read once at boot: the game reloads on every action.

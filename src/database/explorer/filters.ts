@@ -90,6 +90,7 @@ export const FILTERS: Record<EntityTab, FilterDef[]> = {
     { type: 'range', key: 'marketPrice', label: 'Piaci ár' },
     { type: 'tri', key: 'magical', label: 'Mágikus' },
     { type: 'tri', key: 'vampiric', label: 'Vámpirizál' },
+    { type: 'tri', key: 'owned', label: 'Nálad van' },
   ],
   armors: [
     { type: 'search', key: 'name', label: 'Keresés (név)' },
@@ -99,6 +100,7 @@ export const FILTERS: Record<EntityTab, FilterDef[]> = {
     { type: 'range', key: 'price', label: 'Ár' },
     { type: 'range', key: 'marketPrice', label: 'Piaci ár' },
     { type: 'tri', key: 'magical', label: 'Mágikus' },
+    { type: 'tri', key: 'owned', label: 'Nálad van' },
   ],
   items: [
     { type: 'search', key: 'name', label: 'Keresés (név)' },
@@ -107,6 +109,7 @@ export const FILTERS: Record<EntityTab, FilterDef[]> = {
     { type: 'range', key: 'marketPrice', label: 'Piaci ár' },
     { type: 'range', key: 'weight', label: 'Súly' },
     { type: 'tri', key: 'magical', label: 'Mágikus' },
+    { type: 'tri', key: 'owned', label: 'Nálad van' },
   ],
   monsters: [
     { type: 'search', key: 'name', label: 'Keresés (név)' },

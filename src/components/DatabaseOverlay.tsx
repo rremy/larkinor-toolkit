@@ -8,7 +8,8 @@ import { DockedPanel } from '@/components/DockedPanel';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { DB_MINIMIZED_KEY, getDbRoute, setDbRoute, getPref, setPref, readLoadout } from '@/utils/config';
 import { parseMarketRates, withMarketRates } from '@/shared/marketRates';
-import { MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
+import { parseInventory, withInventory } from '@/shared/inventory';
+import { INVENTORY_PREF_KEY, MARKET_RATES_PREF_KEY } from '@/shared/prefKeys';
 
 // Resolved once in @/shared/publicUrl and shared with both boot modules. Note
 // this is the *userscript* data URL (`/static/db`); the standalone database app
@@ -66,11 +67,16 @@ export function DatabaseOverlay({
   // therefore mounts no DatabaseApp, until `open`.
   // Market prices are the static figures overlaid with the rates captured on the
   // player's last market visit, so they track the live market rather than the
-  // day the database was scraped.
+  // day the database was scraped. Every row also carries what this character
+  // owns of it (see src/shared/inventory.ts).
   const loader = useMemo(
-    () => withMarketRates(
-      createDataLoader(gmSource(), DATA_BASE_URL),
-      () => parseMarketRates(getPref(MARKET_RATES_PREF_KEY)),
+    () => withInventory(
+      withMarketRates(
+        createDataLoader(gmSource(), DATA_BASE_URL),
+        () => parseMarketRates(getPref(MARKET_RATES_PREF_KEY)),
+      ),
+      () => parseInventory(getPref(INVENTORY_PREF_KEY)),
+      readLoadout,
     ),
     [],
   );

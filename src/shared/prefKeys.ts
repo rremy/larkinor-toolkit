@@ -70,6 +70,13 @@ export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
 export const MAP_POSITION_PREF_KEY = 'lc-map-position';
 
 /**
+ * PrefStore key holding the serialised `Inventory` (src/shared/inventory.ts) —
+ * what the player owns, by location, as last listed by each page. Read by the
+ * hosted database to show ownership; written only by the boots' capture.
+ */
+export const INVENTORY_PREF_KEY = 'lc-inventory';
+
+/**
  * PrefStore key holding the serialised `Loadout` — what the player is wearing,
  * captured on every character-page visit. Read by the compare card on every
  * surface; written only by the boots' loadout capture.

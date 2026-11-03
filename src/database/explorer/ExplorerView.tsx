@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { DataLoader, Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import type { EntityTab } from './columns';
-import { COLS, parseSortState, serialiseSortState } from './columns';
+import { COLS, OWNED_KEY, parseSortState, serialiseSortState } from './columns';
 import { FILTERS, applyFilters, parseFilterState, serialiseFilterState, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
@@ -88,7 +88,13 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
     prefStore?.write(explorerSortKey(tab), serialiseSortState({ key, asc }));
   };
 
-  const visible = applyFilters(rows, FILTERS[tab], filterState);
+  // Ownership is laid over the rows in-game only; without it the column and
+  // the filter would only ever say "—", so they go.
+  const tracksOwnership = rows.some((row) => OWNED_KEY in row);
+  const columns = tracksOwnership ? COLS[tab] : COLS[tab].filter((c) => c.key !== OWNED_KEY);
+  const filterDefs = tracksOwnership ? FILTERS[tab] : FILTERS[tab].filter((f) => f.key !== OWNED_KEY);
+
+  const visible = applyFilters(rows, filterDefs, filterState);
   const selected = selectedId != null
     ? rows.find((r) => r.id === selectedId) ?? null
     : null;
@@ -103,7 +109,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
 
   return (
     <div class={`db-view${selected ? ' has-selection' : ''}`}>
-      <Filters defs={FILTERS[tab]} state={filterState} onChange={changeFilters} />
+      <Filters defs={filterDefs} state={filterState} onChange={changeFilters} />
       <div class="counts">
         {loading
           ? 'Betöltés…'
@@ -113,7 +119,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
         <div class="table-wrap">
           <DataTable
             key={tab}
-            columns={COLS[tab]}
+            columns={columns}
             rows={visible}
             selected={selected ?? undefined}
             onSelect={(row) => onSelect(row.id as number)}
