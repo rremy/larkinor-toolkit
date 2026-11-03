@@ -8,6 +8,8 @@ import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
 import { captureInventory } from '@/utils/captureInventory';
+import { loadItemIndex, mayMentionItems, type ItemIndex } from '@/shared/itemMentions';
+import { ItemIndexContext } from '@/components/ItemIndexContext';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { readLoadout } from '@/utils/config';
@@ -231,6 +233,7 @@ export function bootMobile(doc: Document): void {
   doc.body.appendChild(root);
 
   let db: MonsterDatabase | null = null;
+  let items: ItemIndex | null = null;
 
   // The worn set, for the compare card on the inventory rows and in the
   // database overlay. Provided around every page we render, so an overlay
@@ -238,7 +241,11 @@ export function bootMobile(doc: Document): void {
   const loadout = readLoadout();
 
   const renderPage = () => {
-    const provide = (page: ComponentChildren) => h(LoadoutContext.Provider, { value: loadout }, page);
+    const provide = (page: ComponentChildren) => h(
+      LoadoutContext.Provider,
+      { value: loadout },
+      h(ItemIndexContext.Provider, { value: items }, page),
+    );
     switch (pageState.pageType) {
       case PageType.FreeMove:
         render(provide(h(FreeMove, { state: pageState.state, db })), root);
@@ -287,6 +294,18 @@ export function bootMobile(doc: Document): void {
   };
 
   renderPage(); // immediate render (db=null; login/dungeon never need it)
+
+  // The item names, for linking what the narration counts out. Only fetched
+  // when the page's text could hold such a mention at all: they are three of
+  // the larger data files, and most pages never print one.
+  if (mayMentionItems(doc.body.textContent ?? '')) {
+    loadItemIndex(createDataLoader(gmSource(), DATA_BASE_URL))
+      .then((loaded) => {
+        items = loaded;
+        renderPage();
+      })
+      .catch((err) => console.warn('[Larkinor UI] Failed to load item names:', err));
+  }
 
   // Pages with no monster references skip the shared monster fetch: the login
   // and dungeon screens have none, Home and the market use the DB overlay's own

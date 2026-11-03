@@ -624,6 +624,28 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
 - Monster (battle): `img[title*="letpontja"]` → name before the comma, HP after `életpontja:`.
 - Narration: the `font[face="Comic sans MS"]` block; `<br>` is converted to newlines (rendered with `white-space: pre-line`).
 - **Monster detection uses narration sentence templates** (`utils/narration.ts` → `ENCOUNTER_PATTERNS`), each capturing the monster name, resolved against the DB. Add new templates as single-capture-group regexes to that array (there are unit tests per template).
+- **Items and silver the narration counts out are highlighted, and named items link to the
+  database** (`src/shared/itemMentions.ts`; mobile in `NarrationPanel` through `ItemIndexContext`,
+  desktop by `enhanceItemMentions` through the same splice as the monster links). The game prints
+  counts in two shapes, both from recorded sessions: `<n> darab <name in the accusative>` (dig
+  results, purchases, taking an item out) and `<n> db <name as written>` (a corpse's loot list,
+  one per line). Facts that matter:
+  - **The accusative has to be undone** — `aranyat` → arany, `kaját` → kaja, `imamalmot` →
+    imamalom, `kenyeret` → kenyér. `nominativeCandidates` tries the bare `-t`, a linking vowel, a
+    lengthened final a/e, a dropped stem vowel, a shortened long vowel and a `-v-` stem, in that
+    order, over the longest leading run of words that names an entry (a clause may run on past
+    the name). `tests/itemMentions.test.ts` pins every phrase from the logs against the real data.
+  - A name it cannot resolve is **still highlighted**, just not linked (a short clause whole, a
+    long one by its first word), and so is silver (`1 250 ezüstöt`, `(+ 37 ezüst)`), which has no
+    entry to link to.
+  - The clause is read in a **lookahead**, so a second count inside an unpunctuated clause is
+    still found; overlapping mentions keep the first.
+  - The item names (weapons, armours, items) are loaded **only when the page text matches
+    `mayMentionItems`**: they are three of the larger files and most pages print no count. Desktop
+    marks silver straight away when no load is needed.
+  - On desktop a building page's narration is the `width:600px` box, not the first Comic Sans
+    block, so both are enhanced. Mobile opens a database overlay of the panel's own, so every page
+    showing narration gets the links alike; desktop opens the dock's via `openItemSignal`.
 - **The game wraps every monster name in `<b><font color="…">`**, with a trailing space inside the tag:
   `Valami <b><font color="#DF4B22">Gyakorlott vízmágus </font></b> csámborog a közelben!`
   So the encounter sentence is split across three text nodes while the name sits in one. Anything matching these templates against the live DOM must match the **flattened** block text and then map the captured name back to its node — matching per text node finds nothing at all, since no single node holds a whole template. `src/desktop/enhanceNarration.ts` does this; the mobile path is unaffected because `extractNarration` flattens first. When flattening, convert `<br>` to a newline, or sentences either side of a line break concatenate and a boundary-anchored pattern can match across them.

@@ -1,8 +1,12 @@
 import { h, Fragment } from 'preact';
 import type { ComponentChildren } from 'preact';
+import { useContext, useState } from 'preact/hooks';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { NarrationLink } from '@/utils/domExtract';
 import { findMonsterMentions } from '@/utils/narration';
+import { findItemMentions } from '@/shared/itemMentions';
+import { ItemIndexContext } from '@/components/ItemIndexContext';
+import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 
 export interface NarrationPanelProps {
   text: string;
@@ -28,6 +32,11 @@ interface Span {
 }
 
 export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink }: NarrationPanelProps) {
+  const items = useContext(ItemIndexContext);
+  // The item a counted-out mention was tapped on, opened in a database overlay
+  // of the panel's own, so every page that shows narration gets it alike.
+  const [openItemId, setOpenItemId] = useState<number | null>(null);
+
   if (!text) {
     return <div class="lc-narration lc-section">{text}</div>;
   }
@@ -85,6 +94,32 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink
     });
   }
 
+  // Items and silver the narration counts out ("Kiástál 16 darab aranyat!"),
+  // pushed last so a monster or a narration link starting at the same index
+  // wins. One the database can name links to its entry; the rest are only
+  // highlighted, as is everything until the item names have loaded.
+  for (const mention of findItemMentions(text, items)) {
+    const label = text.slice(mention.index, mention.index + mention.length);
+    const { item } = mention;
+    spans.push({
+      index: mention.index,
+      length: mention.length,
+      node: item
+        ? (
+          <span
+            class="lc-item-mention lc-item-link"
+            role="button"
+            tabIndex={0}
+            title={item.name}
+            onClick={() => setOpenItemId(item.id)}
+          >
+            {label}
+          </span>
+        )
+        : <span class="lc-item-mention">{label}</span>,
+    });
+  }
+
   if (spans.length === 0) {
     return <div class="lc-narration lc-section">{text}</div>;
   }
@@ -108,5 +143,13 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink
     nodes.push(<Fragment key="end">{text.slice(cursor)}</Fragment>);
   }
 
-  return <div class="lc-narration lc-section">{nodes}</div>;
+  return (
+    <Fragment>
+      <div class="lc-narration lc-section">{nodes}</div>
+      {/* Beside the box, not in it: the narration's pre-line spacing would leak in. */}
+      {openItemId !== null && (
+        <DatabaseOverlay open initialItemId={openItemId} onClose={() => setOpenItemId(null)} />
+      )}
+    </Fragment>
+  );
 }

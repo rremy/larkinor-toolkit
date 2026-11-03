@@ -86,6 +86,13 @@ export interface DesktopDockProps {
    * `initialQuest`.
    */
   openQuestTarget?: { set: QuestSet; id: string } | null;
+  /**
+   * Bumped by the boot when an item the narration counts out is clicked
+   * (enhanceItemMentions lives outside this tree), opening the database on
+   * `openItemId`. Same counter semantics as `openQuestsSignal`.
+   */
+  openItemSignal?: number;
+  openItemId?: number | null;
 }
 
 /**
@@ -102,7 +109,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null, openItemSignal = 0, openItemId = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -170,6 +177,15 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     setDatabase(true);
   };
 
+  // Open the database on one entry: a monster card's drop, or an item the
+  // narration counts out.
+  const openItem = (id: number) => {
+    setSelectedMonster(null);
+    setDbItemId(id);
+    setDbInitialTab(null);
+    setDatabase(true);
+  };
+
   // The dungeon-only shortcut: open straight on the quests view, with no
   // quest id, so the overlay's own "remember the last selected quest"
   // behaviour restores whichever quest the player last had open. Bumping
@@ -193,6 +209,12 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     // on every render instead of only when the signal changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openQuestsSignal]);
+
+  // Drive the database onto a narration item — see `openItemSignal`.
+  useEffect(() => {
+    if (openItemSignal > 0 && openItemId !== null) openItem(openItemId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openItemSignal]);
 
   const setInventory = (open: boolean) => {
     setInventoryOpen(open);
@@ -374,7 +396,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         monster={selectedMonster}
         variant="modal"
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setDbInitialTab(null); setDatabase(true); }}
+        onItemClick={openItem}
       />
 
       {configOpen && (

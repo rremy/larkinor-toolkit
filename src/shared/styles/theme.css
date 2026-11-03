@@ -43,6 +43,9 @@
   --cell-match-glow: rgba(212, 162, 89, 0.6);
   --cell-focus-glow: rgba(212, 162, 89, 0.85);
   --cell-focus-glow-strong: rgba(212, 162, 89, 1);
+  /* An item or silver the narration counts out. A red that reads on the dark
+     mobile UI and the game's own light page alike. */
+  --item-mention: #e2483a;
   /* Quest maze (Küldetések) — lock colours, tuned for the dark background
      rather than copied raw from the source site's white-page palette. */
   --lock-vas: #b06a6a;
@@ -195,6 +198,19 @@
 .lc-narration-link:active {
   color: var(--text);
 }
+
+/* An item or silver the narration counts out ("16 darab aranyat"), on both
+   platforms: in #lc-root on mobile, spliced into the game's narration on
+   desktop (see enhanceItemMentions.ts). One the database names is a link. */
+.lc-item-mention {
+  color: var(--item-mention);
+  font-weight: bold;
+}
+.lc-item-link {
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+.lc-item-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* Active-quest phrase in narration text — mobile counterpart of desktop's .lc-active-quest */
 #lc-root .lc-quest-link {

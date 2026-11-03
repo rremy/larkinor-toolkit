@@ -30,6 +30,8 @@ import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
 import { captureInventory } from '@/utils/captureInventory';
+import { loadItemIndex, mayMentionItems, type ItemRef } from '@/shared/itemMentions';
+import { enhanceItemMentions } from '@/desktop/enhanceItemMentions';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
@@ -353,6 +355,8 @@ export function bootDesktop(doc: Document): void {
   let db: MonsterDatabase | null = null;
   let openQuestsSignal = 0;
   let openQuestTarget: { set: QuestSet; id: string } | null = null;
+  let openItemSignal = 0;
+  let openItemId: number | null = null;
 
   // The character page is the only page that prints the worn equipment set, and
   // the only place it can be changed, so capturing on every visit keeps the
@@ -377,13 +381,31 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, characterState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, characterState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget, openItemSignal, openItemId })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
   };
 
   renderDock();
+
+  // Items and silver the narration counts out ("Kiástál 16 darab aranyat!") are
+  // highlighted, and an item the database names opens it there. The item names
+  // are only fetched when the page's text could hold such a mention: they are
+  // three of the larger data files, and most pages never print one.
+  const openNarrationItem = (item: ItemRef) => {
+    openItemId = item.id;
+    openItemSignal += 1;
+    renderDock();
+  };
+  if (mayMentionItems(doc.body.textContent ?? '')) {
+    loadItemIndex(createDataLoader(gmSource(), DATA_BASE_URL))
+      .then((index) => enhanceItemMentions(doc, index, openNarrationItem))
+      .catch((err) => console.warn('[Larkinor UI] Item highlighting failed:', err));
+  } else {
+    // Silver needs no names, so a page that can only mention silver is marked now.
+    enhanceItemMentions(doc, new Map(), openNarrationItem);
+  }
 
   // The game names the active royal quest in its narration on ordinary pages.
   // Remember it (never switching the set — see activateActiveQuest) and make
