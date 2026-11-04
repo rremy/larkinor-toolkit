@@ -10,6 +10,10 @@ describe('findDirectionHints', () => {
     expect(brief('A labirintus bejárata északkeletre van.')).toEqual([['labyrinth', 'NE', 'A labirintus bejárata']]);
   });
 
+  it('points at a quest\'s reward', () => {
+    expect(brief('A jutalom tőled északra van.')).toEqual([['reward', 'N', 'A jutalom']]);
+  });
+
   it('points at a player flying the airship, with how far they have come', () => {
     expect(brief('RemyNe tőled északkeletre már 63 lépést tett meg a Parszi léghajó segítségével.'))
       .toEqual([['airship', 'NE', 'RemyNe (63 lépés)']]);
@@ -33,6 +37,10 @@ describe('findDirectionHints', () => {
       + 'Egy ismeretlen szörny mászkál a közelben! Megtámadod?!\nismeretlen szörny feléd indul!\n'
       + 'Aktuális küldetés: (11)\nA labirintus bejárata délnyugatra  van.';
     expect(brief(text)).toEqual([['labyrinth', 'SW', 'A labirintus bejárata']]);
+    // Live narration of 2026-11-04: the reward line sits beside the entrance's.
+    expect(brief('A Parszi léghajó nálad van.\nA jutalom tőled északra van.\nTovábbmész...\n'
+      + 'Aktuális küldetés: (11)\nA labirintus bejárata délnyugatra  van.'))
+      .toEqual([['reward', 'N', 'A jutalom'], ['labyrinth', 'SW', 'A labirintus bejárata']]);
     expect(brief('Kutek\u00a0tőled délre\u00a0 már 7 lépést tett meg a Parszi léghajó segítségével.'))
       .toEqual([['airship', 'S', 'Kutek (7 lépés)']]);
   });

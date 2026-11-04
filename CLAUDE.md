@@ -648,14 +648,15 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     showing narration gets the links alike; desktop opens the dock's via `openItemSignal`.
 - **What the narration says lies in a direction is drawn around the arrows**
   (`src/utils/directionHints.ts`; mobile in `NavPad`, desktop by `directionIndicators.ts`).
-  Four templates, each printed by the game in a recorded session: the labyrinth entrance
+  Five templates, each printed by the game in a recorded session: the labyrinth entrance
   (`A labirintus bejárata délnyugatra van.`, the game's own door `2/ikon/labirintus.gif`), a
+  quest's reward (`A jutalom tőled északra van.` ⭐), a
   player on the airship (`<név> tőled északkeletre már 63 lépést tett meg a Parszi léghajó
   segítségével.` 🎈), a monster that fled (`<szörny> északra menekült előled!`, the game's
   encounter icon `2/ikon/tamadas.gif` — a monster's portrait is a whole scene, unreadable at icon
   size) and the game's hint (`Valami azt súgja, jobb lenne délre menni!` ❗). The game draws no
-  icon of its own for the last two. Read per sentence from the current page only and never stored: the first
-  two are reprinted on every step, the others matter only on the page that says so. A labyrinth
+  icon of its own for the last two, nor for the reward. Read per sentence from the current page only and never stored: the first
+  three are reprinted on every step, the others matter only on the page that says so. A labyrinth
   cell's own wall/corridor text is deliberately not a template — it describes the cell.
   - **The game bolds the direction and prints two spaces after it** —
     `A labirintus bejárata <b>délnyugatra</b>  van.` (live, 2026-11-03) — so each sentence's

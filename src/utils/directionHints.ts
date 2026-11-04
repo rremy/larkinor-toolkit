@@ -1,17 +1,17 @@
 // Things the narration says are somewhere in a direction — the labyrinth
-// entrance, a player flying the airship, a monster that fled, the game's own
-// hint — shown as icons around the direction buttons, so the way to go is read
+// entrance, a quest's reward, a player flying the airship, a monster that
+// fled, the game's own hint — shown as icons around the direction buttons, so the way to go is read
 // off the pad instead of out of a sentence.
 //
 // Each template was printed by the game in a recorded session. They are read
 // per sentence, from the page's narration only, and nothing is remembered:
-// the entrance and the airship lines are reprinted on every step, and a fled
+// the entrance, the reward and the airship lines are reprinted on every step, and a fled
 // monster matters only on the page that says so.
 
 /** The eight compass directions, as the indicators are placed. */
 export type Compass = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
 
-export type DirectionHintKind = 'labyrinth' | 'airship' | 'fled' | 'hint';
+export type DirectionHintKind = 'labyrinth' | 'reward' | 'airship' | 'fled' | 'hint';
 
 export interface DirectionHint {
   kind: DirectionHintKind;
@@ -30,10 +30,12 @@ const GAME_ICONS = 'https://l2.larkinor.hu/2/ikon';
  * The icon each kind is drawn as. The game's own where it has one — the door
  * of its labyrinth-entrance button, the encounter icon it shows when a monster
  * is near (a monster's portrait is a whole scene, unreadable at this size) —
- * and an emoji for the airship and the hint, which it draws no icon for.
+ * and an emoji for the reward, the airship and the hint, which it draws no
+ * icon for.
  */
 export const HINT_ICON: Record<DirectionHintKind, HintIcon> = {
   labyrinth: { image: `${GAME_ICONS}/labirintus.gif` },
+  reward: { emoji: '⭐' },
   airship: { emoji: '🎈' },
   fled: { image: `${GAME_ICONS}/tamadas.gif` },
   hint: { emoji: '❗' },
@@ -66,6 +68,11 @@ const TEMPLATES: Template[] = [
     kind: 'labyrinth',
     pattern: new RegExp(String.raw`^A labirintus bejárata ${DIR} van`),
     label: () => 'A labirintus bejárata',
+  },
+  {
+    kind: 'reward',
+    pattern: new RegExp(String.raw`^A jutalom tőled ${DIR} van`),
+    label: () => 'A jutalom',
   },
   {
     // `<name> tőled <dir> már <n> lépést tett meg a Parszi léghajó segítségével.`
