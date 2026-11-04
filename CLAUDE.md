@@ -646,6 +646,28 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   - On desktop a building page's narration is the `width:600px` box, not the first Comic Sans
     block, so both are enhanced. Mobile opens a database overlay of the panel's own, so every page
     showing narration gets the links alike; desktop opens the dock's via `openItemSignal`.
+- **What the narration says lies in a direction is drawn around the arrows**
+  (`src/utils/directionHints.ts`; mobile in `NavPad`, desktop by `directionIndicators.ts`).
+  Four templates, each printed by the game in a recorded session: the labyrinth entrance
+  (`A labirintus bejárata délnyugatra van.`, the game's own door `2/ikon/labirintus.gif`), a
+  player on the airship (`<név> tőled északkeletre már 63 lépést tett meg a Parszi léghajó
+  segítségével.` 🎈), a monster that fled (`<szörny> északra menekült előled!`, the game's
+  encounter icon `2/ikon/tamadas.gif` — a monster's portrait is a whole scene, unreadable at icon
+  size) and the game's hint (`Valami azt súgja, jobb lenne délre menni!` ❗). The game draws no
+  icon of its own for the last two. Read per sentence from the current page only and never stored: the first
+  two are reprinted on every step, the others matter only on the page that says so. A labyrinth
+  cell's own wall/corridor text is deliberately not a template — it describes the cell.
+  - **The game bolds the direction and prints two spaces after it** —
+    `A labirintus bejárata <b>délnyugatra</b>  van.` (live, 2026-11-03) — so each sentence's
+    whitespace runs are collapsed before matching. Matched as written, the entrance never showed.
+  - A **diagonal** sits in the corner between its two arrows (north-east: right of the north
+    arrow, above the east one); a **cardinal** straddles its arrow's outer edge. On desktop not a
+    full step beyond: the stat lines sit right above the cross and the action select right below.
+  - The icons are **click-through** (`pointer-events: none`) on both platforms: one drawn over
+    an arrow must behave as the arrow. The price is no hover tooltip on desktop.
+  - Desktop measures the game's arrows once (fixed-pixel layout) and works the cross out from
+    whichever arrows the page draws — it draws one only per open side — assuming symmetry; with no
+    arrow on one axis and only one on the other there is nothing to place against.
 - **The game wraps every monster name in `<b><font color="…">`**, with a trailing space inside the tag:
   `Valami <b><font color="#DF4B22">Gyakorlott vízmágus </font></b> csámborog a közelben!`
   So the encounter sentence is split across three text nodes while the name sits in one. Anything matching these templates against the live DOM must match the **flattened** block text and then map the captured name back to its node — matching per text node finds nothing at all, since no single node holds a whole template. `src/desktop/enhanceNarration.ts` does this; the mobile path is unaffected because `extractNarration` flattens first. When flattening, convert `<br>` to a newline, or sentences either side of a line break concatenate and a boundary-anchored pattern can match across them.

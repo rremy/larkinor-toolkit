@@ -12,6 +12,7 @@ import { HotkeyRow } from '@/components/HotkeyRow';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { findActiveQuest } from '@/utils/activeQuest';
+import { findDirectionHints } from '@/utils/directionHints';
 
 export interface DungeonProps {
   state: DungeonState;
@@ -61,7 +62,7 @@ export function Dungeon({ state }: DungeonProps): JSX.Element {
         <QuestionPanel question={state.question} />
       ) : (
         <>
-          <NavPad directions={state.directions} cornerLeft={state.settingsButton} cornerRight={state.restButton}>
+          <NavPad directions={state.directions} cornerLeft={state.settingsButton} cornerRight={state.restButton} hints={findDirectionHints(state.narration)}>
             <HotkeyRow actions={hotkeyActions} />
           </NavPad>
 

@@ -12,6 +12,7 @@ import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { findActiveQuest } from '@/utils/activeQuest';
+import { findDirectionHints } from '@/utils/directionHints';
 
 export interface FreeMoveProps {
   state: FreeMoveState;
@@ -46,7 +47,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
         <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setQuestRoute(null); setDbOpen(true); }} />
       </div>
 
-      <NavPad directions={state.directions} attack={state.attack} cornerLeft={state.settingsButton} cornerRight={state.restButton}>
+      <NavPad directions={state.directions} attack={state.attack} cornerLeft={state.settingsButton} cornerRight={state.restButton} hints={findDirectionHints(state.narration)}>
         <HotkeyRow actions={hotkeyActions} />
       </NavPad>
 

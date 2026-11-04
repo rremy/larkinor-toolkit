@@ -32,6 +32,8 @@ import { captureMapPosition } from '@/utils/captureMapPosition';
 import { captureInventory } from '@/utils/captureInventory';
 import { loadItemIndex, mayMentionItems, type ItemRef } from '@/shared/itemMentions';
 import { enhanceItemMentions } from '@/desktop/enhanceItemMentions';
+import { renderDirectionIndicators } from '@/desktop/directionIndicators';
+import { findDirectionHints } from '@/utils/directionHints';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
 import { renderQuestOfferNote } from '@/desktop/questOfferNote';
@@ -388,6 +390,14 @@ export function bootDesktop(doc: Document): void {
   };
 
   renderDock();
+
+  // What the narration says lies in a direction — the labyrinth entrance, a
+  // player on the airship, a monster that fled — as icons around the arrows.
+  try {
+    renderDirectionIndicators(doc, findDirectionHints(extractNarration(doc)));
+  } catch (err) {
+    console.warn('[Larkinor UI] Direction indicators failed:', err);
+  }
 
   // Items and silver the narration counts out ("Kiástál 16 darab aranyat!") are
   // highlighted, and an item the database names opens it there. The item names

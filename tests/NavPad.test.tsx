@@ -96,3 +96,33 @@ describe('NavPad', () => {
     expect(container.querySelector('.lc-navpad-corner')).toBeNull();
   });
 });
+
+describe('NavPad direction hints', () => {
+  const north = makeOption('north', 'Észak');
+  const hint = (dir: string, kind: string, label: string) => ({ dir, kind, label }) as never;
+
+  it('draws a diagonal in the corner cell between its arrows', () => {
+    const { container } = render(<NavPad directions={[north]} hints={[hint('NE', 'labyrinth', 'A labirintus bejárata')]} />);
+    const cells = container.querySelectorAll('.lc-navpad-grid > *');
+    // Row-major 3×3: the north-east corner is the third cell.
+    expect(cells[2].querySelector<HTMLImageElement>('img[title="A labirintus bejárata"]')?.src)
+      .toBe('https://l2.larkinor.hu/2/ikon/labirintus.gif');
+  });
+
+  it('badges a cardinal on its arrow, or in its cell when the side is closed', () => {
+    const { container } = render(
+      <NavPad directions={[north]} hints={[hint('N', 'fled', 'Dagonyadisznó'), hint('S', 'airship', 'Kutek (7 lépés)')]} />,
+    );
+    const cells = container.querySelectorAll('.lc-navpad-grid > *');
+    expect(cells[1].querySelector<HTMLImageElement>('img[title="Dagonyadisznó"]')?.src)
+      .toBe('https://l2.larkinor.hu/2/ikon/tamadas.gif');
+    expect(cells[7].querySelector('[title="Kutek (7 lépés)"]')?.textContent).toBe('🎈');
+    // The arrow itself still works and is still named by its direction.
+    expect(screen.getByRole('button', { name: 'north' })).toBeTruthy();
+  });
+
+  it('draws nothing extra without hints', () => {
+    const { container } = render(<NavPad directions={[north]} />);
+    expect(container.querySelector('.lc-dir-hint')).toBeNull();
+  });
+});

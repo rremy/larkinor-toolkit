@@ -202,3 +202,22 @@
   cursor: pointer;
 }
 .lc-active-quest:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* What the narration says lies in a direction, floated around the game's own
+   arrow cross (see directionIndicators.ts). Outside #lc-dock-root like the
+   narration links, so a plain .lc-* / #lc-* selector. Above the game's layers
+   (the chat panel is z-index 10); each group is centred on its point.
+   Click-through, so an icon over an arrow is the arrow: the indicator only
+   shows the way, it must never stand between the player and the button. */
+#lc-dir-indicators { position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none; }
+#lc-dir-indicators .lc-dir-hints {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 1px;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+  filter: drop-shadow(0 0 2px var(--dock-shadow));
+}
+#lc-dir-indicators img.lc-dir-hint { display: block; width: 20px; height: 20px; }

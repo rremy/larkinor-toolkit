@@ -428,7 +428,21 @@
 .lc-navpad-corner-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
 .lc-navpad-grid { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 6px; }
 .lc-navpad-cell { width: 64px; height: 64px; }
-.lc-navpad-btn { width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+.lc-navpad-btn { position: relative; width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+/* What the narration says lies in a direction (directionHints.ts): a diagonal
+   fills its corner cell, a cardinal straddles its arrow's outer edge — never a
+   corner of it, which would read as the diagonal. */
+.lc-navpad-diagonal, .lc-navpad-empty { display: flex; align-items: center; justify-content: center; }
+.lc-navpad .lc-dir-hints { display: flex; gap: 2px; line-height: 1; pointer-events: none; }
+.lc-navpad-diagonal .lc-dir-hints, .lc-navpad-empty .lc-dir-hints { font-size: 30px; }
+.lc-navpad-btn .lc-dir-hints { position: absolute; font-size: 18px; }
+/* The game's own icons (door, encounter) sized like the emoji beside them. */
+.lc-navpad .lc-dir-hints img.lc-dir-hint { display: block; width: 30px; height: 30px; }
+.lc-navpad-btn .lc-dir-hints img.lc-dir-hint { width: 20px; height: 20px; }
+.lc-navpad-grid > :nth-child(2) .lc-dir-hints { top: -10px; left: 50%; transform: translateX(-50%); }
+.lc-navpad-grid > :nth-child(8) .lc-dir-hints { bottom: -10px; left: 50%; transform: translateX(-50%); }
+.lc-navpad-grid > :nth-child(4) .lc-dir-hints { left: -10px; top: 50%; transform: translateY(-50%); }
+.lc-navpad-grid > :nth-child(6) .lc-dir-hints { right: -10px; top: 50%; transform: translateY(-50%); }
 .lc-navpad-btn:active { background: var(--accent-dim); border-color: var(--accent); }
 .lc-navpad-centre { background: var(--panel-2); border-radius: 50%; border: 1px solid var(--border); }
 .lc-navpad-attack { width: 64px; height: 64px; padding: 0; border-radius: 50%; border: 1px solid var(--bad); background: var(--panel); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
