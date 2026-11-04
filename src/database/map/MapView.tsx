@@ -104,7 +104,11 @@ export function MapView(props: MapViewProps): VNode {
     setSelectedId(id);
     const raf = requestAnimationFrame(() => {
       const td = gridRef.current?.querySelector(`td.cell[data-id="${id}"]`);
-      td?.scrollIntoView({ block: 'center', inline: 'center', behavior: animate ? 'smooth' : 'auto' });
+      // Guarded rather than optional-chained, like the quest maze's scroll: jsdom
+      // ships no scrollIntoView, and a missing scroll must not break the selection.
+      if (td && typeof td.scrollIntoView === 'function') {
+        td.scrollIntoView({ block: 'center', inline: 'center', behavior: animate ? 'smooth' : 'auto' });
+      }
     });
     if (!animate) return () => cancelAnimationFrame(raf);
     setFocusedId(id);
