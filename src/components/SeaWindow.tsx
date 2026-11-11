@@ -2,7 +2,7 @@ import { h, type JSX } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { DataLoader, MapData } from '@/shared/data';
 import { indexChart, type ChartIndex } from '@/shared/seaChart';
-import { parseSeaPosition } from '@/shared/seaPosition';
+import { parseSeaPosition, SEA_POSITION_EVENT } from '@/shared/seaPosition';
 import { SEA_POSITION_PREF_KEY, type ReadPref } from '@/shared/prefKeys';
 import { SeaChartView, nearestHarbourDirection, type ChartBounds, type ChartDirection } from '@/database/map/SeaChartView';
 
@@ -54,8 +54,16 @@ export function SeaWindow({ loader, readPref, atSea, version = 0, onOpenChart }:
     return () => { cancelled = true; };
   }, [loader]);
 
+  // A position set by hand in the database arrives as an event, not a version.
+  const [heard, setHeard] = useState(0);
+  useEffect(() => {
+    const onPosition = () => setHeard((n) => n + 1);
+    document.addEventListener(SEA_POSITION_EVENT, onPosition);
+    return () => document.removeEventListener(SEA_POSITION_EVENT, onPosition);
+  }, []);
+
   // Read on every version: the boot resolves the position after mounting us.
-  const here = useMemo(() => parseSeaPosition(readPref(SEA_POSITION_PREF_KEY)), [readPref, version]);
+  const here = useMemo(() => parseSeaPosition(readPref(SEA_POSITION_PREF_KEY)), [readPref, version, heard]);
 
   let body: JSX.Element;
   if (failed) {

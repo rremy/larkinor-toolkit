@@ -34,12 +34,19 @@ export function isSeaOrIsland(doc: Document): boolean {
   return readSeaPage(doc).place !== 'other';
 }
 
-/** Record the direction of every step clicked on this sea or island page. */
-export function armSeaMoveTracking(doc: Document, writePref: WritePref): void {
+/**
+ * Record the direction of every step clicked on this sea or island page.
+ *
+ * `isSettled` says whether this page has stored its own position yet. A step
+ * taken before then would leave the next page carrying on from the square
+ * before this one, so the position is forgotten instead.
+ */
+export function armSeaMoveTracking(doc: Document, writePref: WritePref, isSettled: () => boolean = () => true): void {
   for (const { side, input } of seaDirectionInputs(doc)) {
     input.addEventListener('click', () => {
       try {
         writePref(SEA_MOVE_PREF_KEY, side);
+        if (!isSettled()) writePref(SEA_POSITION_PREF_KEY, '');
       } catch (err) {
         console.warn('[Larkinor UI] Sea move: could not store the step:', err);
       }

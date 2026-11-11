@@ -22,6 +22,8 @@ export interface SeaPosition {
   source: SeaPositionSource;
   /** When it was written (ms since the epoch). */
   at: number;
+  /** The island picture drawn on this square, when it is an island tile. */
+  image?: string;
 }
 
 /** A stored position, or null when nothing usable is stored. */
@@ -31,7 +33,8 @@ export function parseSeaPosition(raw: string | null): SeaPosition | null {
     const v = JSON.parse(raw) as Partial<SeaPosition>;
     if (!Number.isInteger(v.row) || !Number.isInteger(v.col)) return null;
     if (!SOURCES.includes(v.source as SeaPositionSource) || typeof v.at !== 'number') return null;
-    return { row: v.row as number, col: v.col as number, source: v.source as SeaPositionSource, at: v.at };
+    const base = { row: v.row as number, col: v.col as number, source: v.source as SeaPositionSource, at: v.at };
+    return typeof v.image === 'string' ? { ...base, image: v.image } : base;
   } catch {
     return null;
   }
@@ -44,4 +47,12 @@ export function serializeSeaPosition(p: SeaPosition): string {
 /** Whether a position lies on the city's own 10×10 block. */
 export function isInCity(p: { row: number; col: number }): boolean {
   return p.row >= 0 && p.row <= 9 && p.col >= 0 && p.col <= 9;
+}
+
+/**
+ * Whether the city map is the right view for a position: on the city block, or
+ * on any city tile — the strip north of row 0 (`-14`) lies outside the block.
+ */
+export function isOnCityMap(p: SeaPosition): boolean {
+  return p.source === 'city' || isInCity(p);
 }

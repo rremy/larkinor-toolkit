@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { MapTab } from '@/database/map/MapTab';
 import type { DataLoader, IslandTile, MapData, SeaChart } from '@/shared/data';
@@ -145,6 +145,29 @@ describe('MapTab', () => {
     store.values[SEA_POSITION_PREF_KEY] = at(-22, 24);
     document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
     expect(await screen.findByRole('heading', { name: /Lápapály/ })).toBeTruthy();
+  });
+
+  it('opens on the sea chart when asked once, without storing that as a route', async () => {
+    render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [SEA_POSITION_PREF_KEY]: at(4, 4) }), seaRequest: 1 }));
+    await waitFor(() => expect(square(0, 3)).not.toBeNull());
+    expect(screen.getByRole('button', { name: 'Tenger' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('opens on the city map on the strip north of row 0', () => {
+    const strip = serializeSeaPosition({ row: -1, col: 4, source: 'city', at: 0 });
+    render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [SEA_POSITION_PREF_KEY]: strip }) }));
+    expect(screen.getByRole('button', { name: 'Város' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('tells the page when the player sets their square by hand', async () => {
+    const heard = vi.fn();
+    document.addEventListener(SEA_POSITION_EVENT, heard);
+    render(h(MapTab, { loader: makeLoader(), targetCellId: 'sea', prefStore: storeWith({}), tracksPosition: true }));
+    await waitFor(() => expect(square(-7, -3)).not.toBeNull());
+    fireEvent.click(square(-7, -3)!);
+    fireEvent.click(screen.getByRole('button', { name: /Itt állok/ }));
+    expect(heard).toHaveBeenCalled();
+    document.removeEventListener(SEA_POSITION_EVENT, heard);
   });
 });
 

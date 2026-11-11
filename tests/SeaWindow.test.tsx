@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { readFileSync } from 'node:fs';
 import type { DataLoader, IslandTile, SeaChart } from '@/shared/data';
 import { SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
-import { serializeSeaPosition } from '@/shared/seaPosition';
+import { serializeSeaPosition, SEA_POSITION_EVENT } from '@/shared/seaPosition';
 import { SeaWindow } from '@/components/SeaWindow';
 
 const chart: SeaChart = JSON.parse(readFileSync('static/db/sea-chart.json', 'utf-8'));
@@ -70,4 +70,15 @@ describe('SeaWindow', () => {
     rerender(h(SeaWindow, { loader: makeLoader(), readPref, atSea: true, version: 1, onOpenChart: vi.fn() }));
     await waitFor(() => expect(container.querySelector('.lc-sea-square.here')?.getAttribute('data-row')).toBe('-8'));
   });
+
+  it('reads the position again when the page announces one', async () => {
+    let stored: string | null = null;
+    const readPref = (key: string) => (key === SEA_POSITION_PREF_KEY ? stored : null);
+    render(h(SeaWindow, { loader: makeLoader(), readPref, atSea: true, onOpenChart: vi.fn() }));
+    expect(await screen.findByText(/Elvesztettük a helyzeted/)).toBeTruthy();
+    stored = serializeSeaPosition({ row: -7, col: -3, source: 'manual', at: 0 });
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
+    await waitFor(() => expect(document.querySelector('.lc-sea-window .lc-sea-square.here')).not.toBeNull());
+  });
 });
+

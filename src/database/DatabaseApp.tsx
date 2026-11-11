@@ -4,7 +4,7 @@ import type { DataLoader, QuestSet } from '@/shared/data';
 import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
-import { MapTab, SEA_ROUTE_CELL } from './map/MapTab';
+import { MapTab } from './map/MapTab';
 import { QuestView } from './quests/QuestView';
 
 /**
@@ -319,8 +319,11 @@ export function DatabaseApp(props: DatabaseAppProps) {
       navigate('quests', initialQuest.set, initialQuest.id);
       return;
     }
+    // The sea window's request lands on the map tab as a one-shot, never as the
+    // stored `map/sea` route: a stored route would outrank the player's
+    // whereabouts on every later open, back in town included.
     if (initialTab === 'sea') {
-      navigate('map', SEA_ROUTE_CELL);
+      navigate('map', null);
       return;
     }
     navigate(initialTab, null);
@@ -344,7 +347,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         </div>
       </header>
       {route.tab === 'map' ? (
-        <MapTab loader={loader} targetCellId={route.cell} prefStore={prefStore} tracksPosition={tracksPosition} />
+        <MapTab loader={loader} targetCellId={route.cell} prefStore={prefStore} tracksPosition={tracksPosition} seaRequest={initialTab === 'sea' ? initialTabKey ?? 1 : undefined} />
       ) : route.tab === 'quests' ? (
         <QuestView
           loader={loader}

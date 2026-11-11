@@ -104,33 +104,52 @@ export function resolveSeaPosition(
     case 'observed':
       break;
   }
-  if (!index) return KEEP;
   const obs = page.observation;
   if (obs.place === 'other') return KEEP;
+  // Without the chart nothing can be placed; if the player moved, the stored
+  // square is now behind them, and carrying on from it would be confidently wrong.
+  if (!index) return step || obs.sailed || obs.departed ? LOST : KEEP;
+
+  const image = obs.place === 'island' ? obs.islandImage : null;
+  const seeded = image ? index.tileByImage(image) : null;
+  const learnedPin = !seeded && image ? pinnedSquare(learned, image) : null;
+  // Island tiles each draw their own picture, so a step that leaves the picture
+  // unchanged was refused (an overloaded backpack, a blocked side).
+  const refused = obs.place === 'island' && prev?.image !== undefined && prev.image === image;
+  const tracked = prev && step && !refused && (obs.place === 'island' || obs.sailed)
+    ? { row: prev.row + STEP[step].row, col: prev.col + STEP[step].col }
+    : null;
+  const fits = (row: number, col: number) =>
+    plausible(index, row, col, obs.place as 'sea' | 'island') && !contradicts(index, row, col, obs.place as 'sea' | 'island', obs.sides);
+  // Only a square the page can vouch for may teach a picture: never one set by hand.
+  const confirmedStart = prev !== null && prev.source !== 'manual';
 
   let next: SeaPosition | null = null;
   let learnable = false;
-  const seeded = obs.islandImage ? index.tileByImage(obs.islandImage) : null;
-  const pinned = seeded ?? (obs.islandImage ? pinnedSquare(learned, obs.islandImage) : null);
-
-  if (obs.place === 'island' && pinned) {
-    next = make(pinned.row, pinned.col, 'tile', now);
+  if (seeded) {
+    next = make(seeded.row, seeded.col, 'tile', now);
+  } else if (learnedPin) {
+    const elsewhere = tracked && (tracked.row !== learnedPin.row || tracked.col !== learnedPin.col);
+    if (elsewhere && confirmedStart && image && fits(tracked.row, tracked.col)) {
+      // The page and the learned picture disagree: flag the picture, guess neither.
+      return { position: null, lost: true, learn: { image, row: tracked.row, col: tracked.col }, keep: false };
+    }
+    next = make(learnedPin.row, learnedPin.col, 'tile', now);
   } else if (obs.place === 'sea' && obs.departed) {
     const square = departureSquare(prev, obs, index);
     if (!square) return LOST;
     next = make(square.row, square.col, 'departure', now);
-  } else if (prev && step && (obs.place === 'island' || obs.sailed)) {
-    next = make(prev.row + STEP[step].row, prev.col + STEP[step].col, 'move', now);
-    learnable = obs.place === 'island' && !seeded && obs.islandImage !== null;
+  } else if (tracked) {
+    next = make(tracked.row, tracked.col, 'move', now);
+    learnable = obs.place === 'island' && image !== null && confirmedStart;
   } else if (prev) {
-    next = prev;
+    next = { ...prev };
   } else {
     return KEEP;
   }
 
-  if (!plausible(index, next.row, next.col, obs.place) || contradicts(index, next.row, next.col, obs.place, obs.sides)) {
-    return LOST;
-  }
-  const learn = learnable && obs.islandImage ? { image: obs.islandImage, row: next.row, col: next.col } : null;
-  return stored(next, learn);
+  if (!fits(next.row, next.col)) return LOST;
+  const placed: SeaPosition = image ? { ...next, image } : { row: next.row, col: next.col, source: next.source, at: next.at };
+  const learn = learnable && image ? { image, row: next.row, col: next.col } : null;
+  return stored(placed, learn);
 }

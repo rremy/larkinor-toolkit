@@ -183,9 +183,11 @@ export function bootMobile(doc: Document): void {
   // before the async chart load, so a step taken at once is still recorded.
   const seaLoader = createDataLoader(gmSource(), DATA_BASE_URL);
   const seaPage = readSeaPage(doc);
-  if (seaPage.place !== 'other') armSeaMoveTracking(doc, setPref);
+  let seaSettled = false;
+  if (seaPage.place !== 'other') armSeaMoveTracking(doc, setPref, () => seaSettled);
   const seaPositionReady = activateSeaPosition(pageType, doc, seaLoader, getPref, setPref)
-    .catch((err) => { console.warn('[Larkinor UI] Sea position failed:', err); return null; });
+    .catch((err) => { console.warn('[Larkinor UI] Sea position failed:', err); return null; })
+    .finally(() => { seaSettled = true; });
   // The window around the player, at sea and on islands other than the city's.
   // Bumped once this page's position is stored, so the window reads it again.
   let seaVersion = 0;

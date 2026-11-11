@@ -2,7 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, MapData } from '@/shared/data';
 import { indexChart, type ChartIndex } from '@/shared/seaChart';
-import { isInCity, parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
+import { isInCity, isOnCityMap, parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
 import { MAP_MODE_PREF_KEY, SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { MapView } from './MapView';
@@ -22,6 +22,12 @@ interface MapTabProps {
   prefStore?: PrefStore;
   /** In-game only: the player's square can be set by hand. */
   tracksPosition?: boolean;
+  /**
+   * A one-shot request for the sea chart (the sea window's click), bumped on
+   * every request. Unlike the `#map/sea` route it is never stored, so the next
+   * plain open of the tab is decided by the player's whereabouts again.
+   */
+  seaRequest?: number;
 }
 
 /**
@@ -29,20 +35,26 @@ interface MapTabProps {
  * whereabouts (off the city island means the sea chart), then the view last
  * chosen with the switch.
  */
-function initialMode(targetCellId: string | null, here: SeaPosition | null, prefStore?: PrefStore): Mode {
-  if (targetCellId === SEA_ROUTE_CELL) return 'sea';
+function initialMode(targetCellId: string | null, here: SeaPosition | null, prefStore?: PrefStore, seaRequest?: number): Mode {
+  if (seaRequest || targetCellId === SEA_ROUTE_CELL) return 'sea';
   if (targetCellId) return 'city';
-  if (here) return isInCity(here) ? 'city' : 'sea';
+  if (here) return isOnCityMap(here) ? 'city' : 'sea';
   return prefStore?.read(MAP_MODE_PREF_KEY) === 'sea' ? 'sea' : 'city';
 }
 
 /** The Térkép tab: the city map, or the sea chart of the whole archipelago. */
 export function MapTab(props: MapTabProps): VNode {
-  const { loader, targetCellId = null, prefStore, tracksPosition = false } = props;
+  const { loader, targetCellId = null, prefStore, tracksPosition = false, seaRequest } = props;
   const [here, setHere] = useState(() => parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null));
-  const [mode, setMode] = useState<Mode>(() => initialMode(targetCellId, here, prefStore));
+  const [mode, setMode] = useState<Mode>(() => initialMode(targetCellId, here, prefStore, seaRequest));
   // Once the player picks a view, a position arriving later no longer moves them.
-  const chosen = useRef(false);
+  const chosen = useRef(Boolean(seaRequest));
+
+  useEffect(() => {
+    if (!seaRequest) return;
+    chosen.current = true;
+    setMode('sea');
+  }, [seaRequest]);
 
   // The page stores its position after the chart loads, which can be after this
   // tab opened (a database left open across a step): follow it when it lands.
@@ -50,7 +62,7 @@ export function MapTab(props: MapTabProps): VNode {
     const onPosition = () => {
       const next = parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null);
       setHere(next);
-      if (!chosen.current && !targetCellId && next) setMode(isInCity(next) ? 'city' : 'sea');
+      if (!chosen.current && !targetCellId && next) setMode(isOnCityMap(next) ? 'city' : 'sea');
     };
     document.addEventListener(SEA_POSITION_EVENT, onPosition);
     return () => document.removeEventListener(SEA_POSITION_EVENT, onPosition);
@@ -71,6 +83,8 @@ export function MapTab(props: MapTabProps): VNode {
     const position: SeaPosition = { row, col, source: 'manual', at: Date.now() };
     prefStore?.write(SEA_POSITION_PREF_KEY, serializeSeaPosition(position));
     setHere(position);
+    // The sea window beside the game reads the same store; tell it.
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
   };
 
   return (

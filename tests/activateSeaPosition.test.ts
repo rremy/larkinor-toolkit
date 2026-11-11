@@ -45,6 +45,22 @@ describe('armSeaMoveTracking', () => {
     (doc.querySelector('input[title="északra hajózol - tenger"]') as HTMLElement).click();
     expect(s.prefs.get(SEA_MOVE_PREF_KEY)).toBe('N');
   });
+
+  it('forgets the position when a step leaves before this page has placed the player', () => {
+    const doc = fixture('sea-departed-13');
+    const s = store({ [SEA_POSITION_PREF_KEY]: pos(1, 3, 'harbour') });
+    armSeaMoveTracking(doc, s.write, () => false);
+    (doc.querySelector('input[title="északra hajózol - tenger"]') as HTMLElement).click();
+    expect(s.prefs.get(SEA_POSITION_PREF_KEY)).toBe('');
+  });
+
+  it('keeps the position when the page has settled before the step', () => {
+    const doc = fixture('sea-departed-13');
+    const s = store({ [SEA_POSITION_PREF_KEY]: pos(0, 3, 'departure') });
+    armSeaMoveTracking(doc, s.write, () => true);
+    (doc.querySelector('input[title="északra hajózol - tenger"]') as HTMLElement).click();
+    expect(s.prefs.get(SEA_POSITION_PREF_KEY)).toBe(pos(0, 3, 'departure'));
+  });
 });
 
 describe('isSeaOrIsland', () => {
@@ -89,10 +105,17 @@ describe('activateSeaPosition', () => {
     expect(parseSeaPosition(s.prefs.get(SEA_POSITION_PREF_KEY) ?? null)).toMatchObject({ row: -7, col: -3 });
   });
 
-  it('leaves the position alone when the chart cannot be loaded', async () => {
+  it('loses the position when the ship moved but the chart cannot be loaded', async () => {
     const s = store({ [SEA_POSITION_PREF_KEY]: pos(1, 3, 'harbour') });
-    await expect(activateSeaPosition(PageType.FreeMove, fixture('sea-departed-13'), makeLoader(true), s.read, s.write, 5)).resolves.toBeDefined();
-    expect(s.prefs.get(SEA_POSITION_PREF_KEY)).toBe(pos(1, 3, 'harbour'));
+    await expect(activateSeaPosition(PageType.FreeMove, fixture('sea-departed-13'), makeLoader(true), s.read, s.write, 5)).resolves.toBeNull();
+    expect(s.prefs.get(SEA_POSITION_PREF_KEY)).toBe('');
+  });
+
+  it('leaves the position alone when nothing moved and the chart cannot be loaded', async () => {
+    const s = store({ [SEA_POSITION_PREF_KEY]: pos(-7, -3) });
+    const doc = docWith('<img src="/tajk/hajotengeren.gif"><input type="image" src="/2/ikon/eszak.gif" title="északra hajózol - tenger">');
+    await activateSeaPosition(PageType.FreeMove, doc, makeLoader(true), s.read, s.write, 5);
+    expect(s.prefs.get(SEA_POSITION_PREF_KEY)).toBe(pos(-7, -3));
   });
 
   it('remembers an island picture learned from a confirmed step', async () => {

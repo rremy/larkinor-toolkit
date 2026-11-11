@@ -112,8 +112,35 @@ describe('resolveSeaPosition', () => {
     expect(r(at(-20, 10), null, { kind: 'city', row: 4, col: 4 }).position).toMatchObject({ row: 4, col: 4, source: 'city' });
   });
 
-  it('keeps the stored value when the data is not loaded', () => {
-    expect(resolveSeaPosition(at(0, 3), 'N', sea({ sailed: true }), null, {}, 1).keep).toBe(true);
+  it('loses the position when a step is spent without the data to place it', () => {
+    expect(resolveSeaPosition(at(0, 3), 'N', sea({ sailed: true }), null, {}, 1)).toMatchObject({ position: null, lost: true });
+    expect(resolveSeaPosition(at(1, 3, 'harbour'), null, sea({ departed: true }), null, {}, 1)).toMatchObject({ lost: true });
+  });
+
+  it('keeps the stored value without data when nothing moved', () => {
+    expect(resolveSeaPosition(at(0, 3), null, sea({ sides: OPEN }), null, {}, 1).keep).toBe(true);
+  });
+
+  it('flags a learned picture that tracking places elsewhere, and loses the position', () => {
+    const learned: LearnedTiles = { 'szigx/a': { row: -23, col: 1 } };
+    const res = r(at(-24, 1, 'tile'), 'E', island('szigx/a', {}), learned);
+    expect(res).toMatchObject({ position: null, lost: true });
+    expect(res.learn).toEqual({ image: 'szigx/a', row: -24, col: 2 });
+  });
+
+  it('learns nothing from a square set by hand', () => {
+    expect(r(at(-24, 1, 'manual'), 'E', island('szigvar/szigvar_9-9', { N: 'coast' })).learn).toBeNull();
+  });
+
+  it('takes a step that leaves the same island picture as refused', () => {
+    const prev = { ...at(-24, 1, 'tile'), image: 'szigvar/szigvar_1-1' };
+    const res = r(prev, 'E', island('szigvar/szigvar_1-1', {}));
+    expect(res.position).toMatchObject({ row: -24, col: 1 });
+    expect(res.learn).toBeNull();
+  });
+
+  it('remembers the island picture with the position', () => {
+    expect(r(at(-24, 1), 'E', island('szigvar/szigvar_9-9', {})).position).toMatchObject({ image: 'szigvar/szigvar_9-9' });
   });
 });
 
