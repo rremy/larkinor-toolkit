@@ -181,6 +181,38 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   target cell wins), draws a cyan ring and a 📍 pin — the labyrinth marker's colour — and offers
   *📍 Ugrás a helyemre* to jump back. Opening on it neither glides nor flashes (a routed target
   still does): the game reloads on every step, so an animation there replays on every move. The standalone site never has one (other origin).
+- **Sea and islands** (`map/MapTab.tsx`, `SeaChartView.tsx`, `src/components/SeaWindow.tsx`,
+  `src/utils/seaExtract.ts` + `seaTracking.ts` + `activateSeaPosition.ts`; design in
+  `docs/superpowers/specs/2026-11-11-sea-and-island-maps-design.md`). The Térkép tab has a
+  *Város / Tenger* switch; in-game a window around the player shows at sea and on islands other
+  than the city's (a dock row on desktop, in place of the tile picture on mobile). Facts measured
+  live on 2026-11-11, each costly to rediscover:
+  - **The sea is the city map's grid, extended.** The fan chart
+    (`larkinorcenter.hu/szigetvilag2.html`, 48×72 `<td>`s) maps fan `(r, c)` to our `(r − 36, c − 5)`;
+    the city harbours land on cells 13/41/84. **Harbour buildings are named by that grid**:
+    `/2/epulet/<row><col>kikoto.gif` (`-2224kikoto.gif` = (−22, 24)), read by `harbourById`.
+  - **A sea page never names its square** (`tajk/hajotengeren.gif` everywhere), so the position
+    (`lc-sea-position`, per character) is carried by moves: a city tile or harbour picture states
+    it, leaving a harbour (`Elindulsz a hajóddal`) puts the ship beside it, each step
+    (`lc-sea-move`, capture phase on the game's own controls) moves it one square. A sea fight's
+    battle page opens with `Tovább hajózol...` too — it is in the square sailed into; fleeing
+    did not move the ship (two observations).
+  - **All four sides are always drawn**: `<dir> hajózol - tenger|kikötő` buttons, `szarazfold.gif`
+    `<dir> szárazföld` for coast. **Vowel harmony**: `északra`, `nyugatra` but `délre`, `keletre` —
+    a `-ra`-only pattern misses south and east (this cost an hour of wrong conclusions).
+  - **Every page checks the position against the chart and clears it on a contradiction** — never
+    a guess. At sea both ways; on an island only "walkable where the chart has sea", since the fan
+    chart's island interiors are approximate. Two `unknown` squares are skipped by every check.
+  - **Island tiles name themselves by picture**: Thord-Artin as `nagysziget/szig_<c>-<r>` — the fan
+    site's own names, rows counting **north** — at `(−12 − r, c + 22)`; the small western island
+    as `szighar/…`, `szigmag/…` with no usable numbering. Only `szig*` and `nagysziget` directories
+    count as islands. Unplaced pictures are learned (`lc-sea-learned-tiles`, shared) from confirmed
+    steps only, and a picture seen on two squares never pins again.
+  - **A harbour may be unfinished**: the small island's accepted the ship but would not let it
+    leave (the player used hómport). `islands.json` records each Thord-Artin building's state.
+  - The fan chart draws its legend **inside the table** (fan rows 1–8, cols 1 and 39): those swatches
+    are not land, and the `o` beside "Kikötő" is not a harbour. The lone `F` square is a harbour.
+    `npm run build:sea` rebuilds `sea-chart.json`/`islands.json` from `scripts/sea/archive/`.
 - **Quest viewer** (`quests/`): royal quests 1–63 as interactive mazes. 1–45 were scraped once
   from a third-party fan site (`https://www.larkinorcenter.hu/kirkuld.html`) into the committed
   `static/db/quests.json` via `npm run scrape:quests` (`scripts/quests/scrape.mjs` +

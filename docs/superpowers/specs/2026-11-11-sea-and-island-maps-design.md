@@ -1,6 +1,6 @@
 # Sea and island maps — design
 
-**Status:** draft 2026-11-11
+**Status:** implemented 2026-11-11 (plan: `docs/superpowers/plans/2026-11-11-sea-and-island-maps.md`)
 **Builds on:** the city map (`src/database/map/`, `static/db/map-data.json`), its
 position marker (`captureMapPosition`, `lc-map-position`), and the move tracking
 pattern of the labyrinths (`src/utils/trackDungeonMove.ts`,

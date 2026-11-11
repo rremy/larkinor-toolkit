@@ -82,6 +82,13 @@ already cleared — a monster killed, a question answered, a trap sprung — gra
 out on their own, with a per-quest reset if you'd rather clear the slate by
 hand; and a marker follows your character step by step as you walk the maze.
 
+The map tab also has a **Tenger** view: the whole archipelago, drawn from the
+fan chart at larkinorcenter.hu, with every harbour and Thord-Artin tile by tile
+(names, districts, buildings and how far each one is built). In the game the
+toolkit tracks where your ship is from your moves — the sea never says — and
+shows the squares around you in a small window while you sail or walk an
+island, with an arrow toward the nearest harbour when none is in view.
+
 ## Configuration
 
 Open the config drawer from the dock (desktop) or the UI (mobile) to choose which
@@ -181,6 +188,9 @@ alongside both artifacts and fetched at runtime with a build-stamped `?v=` for
 cache busting. The userscript fetches it via `GM_xmlhttpRequest` (which bypasses
 CORS); the standalone site fetches it same-origin, resolved relative to wherever
 the site is served from.
+
+`sea-chart.json` and `islands.json` are built by `npm run build:sea` from fan
+pages committed under `scripts/sea/archive/`.
 
 Hungarian text in this data is UTF-8 and must stay that way — Latin-1/Latin-2
 mojibake (`õ` for `ő`) silently breaks monster-name matching against the live
