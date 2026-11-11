@@ -23,6 +23,12 @@
   --kezdo: #d6c075;  --sotet: #5e4378;  --szikla: #7d6a55;
   --erdo: #4f7a3e;   --mocsar: #5a6a3a; --temeto: #38322f;
   --demon: #861a48;  --unexplored: #221b16;
+  --sivatag: #cdbb8a; --hegyseg: #8f5a3a;
+  /* The sea chart (src/database/map/SeaChartView.tsx). */
+  --sea-cell: 18px;
+  --sea-unexplored: #4a4540;
+  --sea-unknown: #3a3a44;
+  --sea-grid-line: rgba(0, 0, 0, 0.18);
   /* Map view (Térkép) — cell/POI/blocker chrome */
   --unexplored-border: #2a3e58;
   --unexplored-glyph: rgba(255, 255, 255, 0.18);
@@ -955,6 +961,35 @@
 }
 .lc-db .map-view .map-here-btn:hover { background: var(--accent-dim); }
 .lc-db .map-view .cell-detail .here-note { color: var(--quest-here-ring); font-weight: bold; margin-bottom: 4px; }
+/* The sea chart: a CSS grid of divs (never a table: quirks mode, see CLAUDE.md).
+   Scoped by its own lc- class, so the same rules serve the database tab, the
+   desktop dock window and the mobile window. */
+.lc-sea-chart { display: grid; gap: 0; width: max-content; background: var(--sea); border: 1px solid var(--border); }
+.lc-sea-square {
+  width: var(--sea-cell); height: var(--sea-cell); box-sizing: border-box;
+  display: grid; place-items: center; font-size: calc(var(--sea-cell) * 0.7); line-height: 1;
+  color: var(--poi-text); box-shadow: inset 0 0 0 0.5px var(--sea-grid-line); cursor: default;
+}
+.lc-sea-square.water { background: var(--sea); }
+.lc-sea-square.unexplored { background: var(--sea-unexplored); }
+.lc-sea-square.unknown { background: var(--sea-unknown); }
+.lc-sea-square.land { background: var(--szikla); }
+.lc-sea-square.varos { background: var(--varos); }
+.lc-sea-square.magus { background: var(--magus); }
+.lc-sea-square.harcos { background: var(--harcos); }
+.lc-sea-square.kezdo { background: var(--kezdo); }
+.lc-sea-square.sotet { background: var(--sotet); }
+.lc-sea-square.szikla { background: var(--szikla); }
+.lc-sea-square.erdo { background: var(--erdo); }
+.lc-sea-square.mocsar { background: var(--mocsar); }
+.lc-sea-square.temeto { background: var(--temeto); }
+.lc-sea-square.demon { background: var(--demon); }
+.lc-sea-square.sivatag { background: var(--sivatag); }
+.lc-sea-square.hegyseg { background: var(--hegyseg); }
+.lc-sea-square.selected { box-shadow: inset 0 0 0 2px var(--accent); }
+/* The labyrinth marker's cyan, as on the city map. */
+.lc-sea-square.here { box-shadow: inset 0 0 0 2px var(--quest-here-ring); }
+.lc-sea-here { font-size: calc(var(--sea-cell) * 0.8); }
 /* POI filter highlight */
 .lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
 .lc-db .map-view.filter-active td.cell.match { outline: 2px solid var(--accent); z-index: 2; box-shadow: 0 0 12px var(--cell-match-glow); }
