@@ -9,7 +9,7 @@ import type { PrefStore } from '../DatabaseApp';
 import { MapView } from './MapView';
 import { SeaChartView, type ChartBounds } from './SeaChartView';
 import { SeaDetail } from './SeaDetail';
-import { layoutCells } from './mapMeta';
+import { islandMapCells, layoutCells } from './mapMeta';
 
 /** The route segment that asks the map tab for the sea chart: `#map/sea`. */
 export const SEA_ROUTE_CELL = 'sea';
@@ -80,6 +80,14 @@ export function MapTab(props: MapTabProps): VNode {
   }, [prefStore]);
 
   const auto = placeOf(here, data?.index ?? null);
+  // Thord-Artin drawn by the city map, in its style.
+  const thordArtin = useMemo(
+    () => (data ? islandMapCells(data.index.tiles.filter((t) => t.island === THORD_ARTIN)) : null),
+    [data],
+  );
+  const hereTile = here && data && auto === 'thord-artin'
+    ? (here.image ?? data.index.tileAt(here.row, here.col)?.image ?? null)
+    : null;
   const view: WorldMap = picked ?? auto ?? parseWorldMap(prefStore?.read(MAP_MODE_PREF_KEY) ?? null) ?? 'larkinor';
 
   const choose = (next: WorldMap) => {
@@ -102,6 +110,8 @@ export function MapTab(props: MapTabProps): VNode {
     body = <div class="map-view"><div class="map-stats">Nem sikerült betölteni a tengeri térképet.</div></div>;
   } else if (!data) {
     body = <div class="map-view"><div class="map-stats">Betöltés…</div></div>;
+  } else if (view === 'thord-artin' && thordArtin) {
+    body = <MapView key={`ta-${hereTile ?? ''}`} loader={loader} island={thordArtin} hereCellId={hereTile} />;
   } else {
     body = (
       <ChartPane

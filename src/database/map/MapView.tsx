@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, MapData, MapCell } from '@/shared/data';
 import {
   DISTRICT_CLASS, DISTRICT_SHORT, POI_EMOJI, POI_LABEL, HUB_ID, MAP_SIDES,
-  CLAN_POI, buildShopOwners, cellWalls, layoutCells, type GridPos, type ShopOwners,
+  CLAN_POI, buildShopOwners, cellWalls, layoutCells, type GridPos, type IslandMapData, type ShopOwners,
 } from './mapMeta';
 import { CellDetail } from './CellDetail';
 import { Legend } from './Legend';
@@ -27,6 +27,13 @@ interface MapViewProps {
    * site, another origin, never does — the map draws no marker.
    */
   prefStore?: PrefStore;
+  /**
+   * Draw this island instead of loading the city (Thord-Artin): its cells sit at
+   * their own squares, and each writes its tile name where a city cell writes
+   * its id. The player's tile comes from `hereCellId`, not the city position.
+   */
+  island?: IslandMapData;
+  hereCellId?: string | null;
 }
 
 /** A cell to select and scroll to; `animate` glides there and flashes it. */
@@ -49,8 +56,9 @@ function cellMatchesFilter(cell: MapCell, poi: string): boolean {
   return cell.buildings.some((b) => b.icon === poi);
 }
 
-/** Inclusive `[min, max]` over `values`, widened to cover the city block. */
-function span(values: number[]): [number, number] {
+/** Inclusive `[min, max]` over `values`, widened to cover the city block unless drawing an island. */
+function span(values: number[], cityBlock: boolean): [number, number] {
+  if (!cityBlock) return [Math.min(...values), Math.max(...values)];
   return [Math.min(0, ...values), Math.max(GRID_SIZE - 1, ...values)];
 }
 
@@ -61,10 +69,11 @@ function span(values: number[]): [number, number] {
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
-  const { loader, targetCellId = null, prefStore } = props;
+  const { loader, targetCellId = null, prefStore, island, hereCellId = null } = props;
   // Read once: the game reloads the page on every step, remounting the view.
-  const [hereId] = useState(() => parseMapPosition(prefStore?.read(MAP_POSITION_PREF_KEY) ?? null));
-  const [map, setMap] = useState<MapData | null>(null);
+  const [cityHereId] = useState(() => parseMapPosition(prefStore?.read(MAP_POSITION_PREF_KEY) ?? null));
+  const hereId = island ? hereCellId : cityHereId;
+  const [map, setMap] = useState<MapData | null>(() => (island ? { cells: island.cells, edges: {} } : null));
   const [owners, setOwners] = useState<ShopOwners>({});
   const [selectedId, setSelectedId] = useState<string | null>(targetCellId ?? hereId);
   const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -81,6 +90,7 @@ export function MapView(props: MapViewProps): VNode {
   const gridRef = useRef<HTMLTableElement>(null);
 
   useEffect(() => {
+    if (island) return undefined;
     let cancelled = false;
     Promise.all([loader.loadMap(), loader.loadItemShops(), loader.loadWeaponShops()])
       .then(([map, itemShops, weaponShops]) => {
@@ -117,8 +127,8 @@ export function MapView(props: MapViewProps): VNode {
   }, [focusTarget, map]);
 
   const positions = useMemo(
-    () => (map ? layoutCells(map.cells, map.edges ?? {}) : new Map<string, GridPos>()),
-    [map],
+    () => (island ? island.positions : map ? layoutCells(map.cells, map.edges ?? {}) : new Map<string, GridPos>()),
+    [map, island],
   );
 
   if (!map) {
@@ -140,8 +150,8 @@ export function MapView(props: MapViewProps): VNode {
     if (pos) cellAt.set(`${pos.row},${pos.col}`, cell);
   }
   const placed = [...positions.values()];
-  const [minRow, maxRow] = span(placed.map((p) => p.row));
-  const [minCol, maxCol] = span(placed.map((p) => p.col));
+  const [minRow, maxRow] = span(placed.map((p) => p.row), !island);
+  const [minCol, maxCol] = span(placed.map((p) => p.col), !island);
   const rowIndexes = Array.from({ length: maxRow - minRow + 1 }, (_, i) => minRow + i);
   const colIndexes = Array.from({ length: maxCol - minCol + 1 }, (_, i) => minCol + i);
 
@@ -151,8 +161,9 @@ export function MapView(props: MapViewProps): VNode {
   return (
     <div class={`map-view${activeFilter ? ' filter-active' : ''}`}>
       <div class="map-stats">
-        {cellById.size} mező felderítve · {districtCount} negyed · grid ID kódolás{' '}
-        <code>&lt;sor&gt;&lt;oszlop&gt;</code> (sor 0 = észak)
+        {island
+          ? <>{cellById.size} mező · {districtCount} negyed · a rajongói térkép (larkinorcenter.hu) alapján</>
+          : <>{cellById.size} mező felderítve · {districtCount} negyed · grid ID kódolás{' '}<code>&lt;sor&gt;&lt;oszlop&gt;</code> (sor 0 = észak)</>}
         {hereId && (
           <button type="button" class="map-here-btn" onClick={() => setFocusTarget({ id: hereId, animate: false })}>
             📍 Ugrás a helyemre
@@ -225,7 +236,7 @@ export function MapView(props: MapViewProps): VNode {
                               >C</span>
                             ))}
                           </div>
-                          <div class="row-id">{id}</div>
+                          <div class="row-id">{island ? island.names[id] ?? '' : id}</div>
                         </div>
                         {id === hereId && <HerePin />}
                         {MAP_SIDES.map((dir) => {
@@ -250,6 +261,7 @@ export function MapView(props: MapViewProps): VNode {
             position={selectedCell ? positions.get(selectedCell.imageId) ?? null : null}
             owners={selectedId != null ? owners[selectedId] : undefined}
             isHere={selectedId != null && selectedId === hereId}
+            title={island && selectedId != null ? island.names[selectedId] : undefined}
           />
           <Legend activeFilter={activeFilter} onToggleFilter={toggleFilter} />
         </div>

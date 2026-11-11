@@ -12,6 +12,8 @@ interface CellDetailProps {
   owners?: Record<string, string>;
   /** Whether this is the tile the player was last seen on. */
   isHere?: boolean;
+  /** An island tile's name, shown above its district. */
+  title?: string;
 }
 
 /**
@@ -20,7 +22,7 @@ interface CellDetailProps {
  * (explorer.html:868-892).
  */
 export function CellDetail(props: CellDetailProps): VNode {
-  const { cell, position = null, owners = {}, isHere = false } = props;
+  const { cell, position = null, owners = {}, isHere = false, title } = props;
 
   if (!cell) {
     return (
@@ -39,9 +41,14 @@ export function CellDetail(props: CellDetailProps): VNode {
 
   return (
     <div class="cell-detail">
-      <h3>
-        {cell.district} <span class="meta">(id {cell.imageId})</span>
-      </h3>
+      {title && <h3>{title}</h3>}
+      {title ? (
+        <div class="meta"><h4 class="cell-detail-district">{cell.district}</h4></div>
+      ) : (
+        <h3>
+          {cell.district} <span class="meta">(id {cell.imageId})</span>
+        </h3>
+      )}
       {position && <div class="meta">row {position.row} · col {position.col}</div>}
       {isHere && <div class="here-note">📍 Itt állsz</div>}
       <img class="terrain" src={`${TERRAIN_BASE}${cell.imageSrc}`} alt="" loading="lazy" />
@@ -55,6 +62,7 @@ export function CellDetail(props: CellDetailProps): VNode {
                 <li key={b.icon + b.name}>
                   {POI_EMOJI[b.icon] ?? ''} {POI_LABEL[b.icon] ?? b.name ?? b.icon}
                   {owner ? <span class="qty"> ({owner})</span> : null}
+                  {b.note ? <span class="qty"> — {b.note}</span> : null}
                 </li>
               );
             })}

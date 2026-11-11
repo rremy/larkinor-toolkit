@@ -39,6 +39,10 @@ function storeWith(values: Record<string, string>): PrefStore & { values: Record
 const at = (row: number, col: number, source: SeaPosition['source'] = 'move', image?: string) =>
   serializeSeaPosition({ row, col, source, at: 0, ...(image ? { image } : {}) });
 
+function cell(id: string): Element | null {
+  return document.querySelector(`td.cell[data-id="${id}"]`);
+}
+
 function square(row: number, col: number): Element | null {
   return document.querySelector(`.lc-sea-square[data-row="${row}"][data-col="${col}"]`);
 }
@@ -58,9 +62,9 @@ describe('MapTab — the map of where you are', () => {
 
   it('opens on Thord-Artin on one of its tiles, the player marked', async () => {
     render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [SEA_POSITION_PREF_KEY]: at(-22, 25, 'tile', 'nagysziget/szig_3-10') }) }));
-    await waitFor(() => expect(square(-22, 25)?.classList.contains('here')).toBe(true));
+    await waitFor(() => expect(cell('nagysziget/szig_3-10')?.classList.contains('here')).toBe(true));
     expect(pressed()).toBe('Thord-Artin');
-    expect(square(-22, 25)!.querySelector('.lc-sea-name')?.textContent).toBe('Kígyófa');
+    expect(cell('nagysziget/szig_3-10')!.querySelector('.row-id')?.textContent).toBe('Kígyófa');
   });
 
   it('opens on the sea chart on the ship', async () => {
@@ -74,10 +78,12 @@ describe('MapTab — the map of where you are', () => {
     await waitFor(() => expect(pressed()).toBe('Tenger'));
   });
 
-  it('draws only Thord-Artin on its map', async () => {
+  it('draws Thord-Artin in the city map’s style, and only Thord-Artin', async () => {
     render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [SEA_POSITION_PREF_KEY]: at(-22, 25, 'tile', 'nagysziget/szig_3-10') }) }));
-    await waitFor(() => expect(square(-22, 25)).not.toBeNull());
-    expect(square(0, 3)).toBeNull();
+    await waitFor(() => expect(cell('nagysziget/szig_2-10')).not.toBeNull());
+    expect(document.querySelector('table.map-grid')).not.toBeNull();
+    expect(cell('nagysziget/szig_2-10')!.className).toContain('mocsar');
+    expect(cell('13')).toBeNull();
   });
 
   it('follows the player to another place while they have not picked a map', async () => {
@@ -87,7 +93,7 @@ describe('MapTab — the map of where you are', () => {
     store.values[SEA_POSITION_PREF_KEY] = at(-22, 24, 'tile', 'nagysziget/szig_2-10');
     document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
     await waitFor(() => expect(pressed()).toBe('Thord-Artin'));
-    await waitFor(() => expect(square(-22, 24)?.classList.contains('here')).toBe(true));
+    await waitFor(() => expect(cell('nagysziget/szig_2-10')?.classList.contains('here')).toBe(true));
   });
 
   it('keeps a map the player picked', async () => {
@@ -126,18 +132,20 @@ describe('MapTab — the map of where you are', () => {
 describe('MapTab — squares and their details', () => {
   it('shows a Thord-Artin tile with its name, district and buildings', async () => {
     render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [MAP_MODE_PREF_KEY]: 'thord-artin' }) }));
-    await waitFor(() => expect(square(-22, 24)).not.toBeNull());
-    fireEvent.click(square(-22, 24)!);
+    await waitFor(() => expect(cell('nagysziget/szig_2-10')).not.toBeNull());
+    fireEvent.click(cell('nagysziget/szig_2-10')!);
     expect(screen.getByRole('heading', { name: /Lápapály/ })).toBeTruthy();
-    expect(screen.getByText(/Thord-Artin · mocsár/)).toBeTruthy();
-    expect(screen.getByText(/Kikötő — kész/)).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /mocsár/ })).toBeTruthy();
+    const places = document.querySelector('.cell-detail ul.list')!.textContent!;
+    expect(places).toContain('kikötő');
+    expect(places).not.toContain('szükséges');
   });
 
   it('shows the stone an unfinished harbour still needs', async () => {
     render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [MAP_MODE_PREF_KEY]: 'thord-artin' }) }));
-    await waitFor(() => expect(square(-13, 27)).not.toBeNull());
-    fireEvent.click(square(-13, 27)!);
-    expect(screen.getByText(/Kikötő — 493575 építőkő szükséges/)).toBeTruthy();
+    await waitFor(() => expect(cell('nagysziget/szig_5-1')).not.toBeNull());
+    fireEvent.click(cell('nagysziget/szig_5-1')!);
+    expect(screen.getByText(/493575 építőkő szükséges/)).toBeTruthy();
   });
 
   it('shows the city cell detail for a square of the city block on the sea chart', async () => {
@@ -148,12 +156,12 @@ describe('MapTab — squares and their details', () => {
   });
 
   it('moves the detail panel along with the player until a square is picked', async () => {
-    const store = storeWith({ [SEA_POSITION_PREF_KEY]: at(-22, 25, 'tile', 'nagysziget/szig_3-10') });
+    const store = storeWith({ [SEA_POSITION_PREF_KEY]: at(-6, -3) });
     render(h(MapTab, { loader: makeLoader(), prefStore: store }));
-    expect(await screen.findByRole('heading', { name: /Kígyófa/ })).toBeTruthy();
-    store.values[SEA_POSITION_PREF_KEY] = at(-22, 24, 'tile', 'nagysziget/szig_2-10');
+    expect(await screen.findByText('sor -6 · oszlop -3')).toBeTruthy();
+    store.values[SEA_POSITION_PREF_KEY] = at(-7, -3);
     document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
-    expect(await screen.findByRole('heading', { name: /Lápapály/ })).toBeTruthy();
+    expect(await screen.findByText('sor -7 · oszlop -3')).toBeTruthy();
   });
 
   it('lets the player set their square by hand, in-game only, and tells the page', async () => {

@@ -96,6 +96,8 @@ export interface Item extends Ownership {
 export interface Building {
   name: string;
   icon: string;
+  /** What an unfinished island building still needs (`493575 építőkő szükséges`). */
+  note?: string;
 }
 
 export interface MapCell {

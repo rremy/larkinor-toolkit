@@ -903,6 +903,9 @@
 .lc-db .map-view td.cell.mocsar { background: var(--mocsar); }
 .lc-db .map-view td.cell.temeto { background: var(--temeto); color: var(--temeto-text); }
 .lc-db .map-view td.cell.demon  { background: var(--demon); }
+/* Only the islands have these two (Thord-Artin drawn by the city map). */
+.lc-db .map-view td.cell.sivatag { background: var(--sivatag); }
+.lc-db .map-view td.cell.hegyseg { background: var(--hegyseg); }
 .lc-db .map-view td.cell.hub    { box-shadow: 0 0 0 2px var(--accent) inset; }
 .lc-db .map-view td.cell .blocker { position: absolute; background: var(--sea); border: 1px solid var(--blocker-border); z-index: 1; display: grid; place-items: center; font-size: 9px; color: var(--blocker-text); pointer-events: none; }
 .lc-db .map-view td.cell .wall { position: absolute; background: var(--map-wall); border: 1px solid var(--map-wall-border); z-index: 1; pointer-events: none; }
@@ -916,6 +919,7 @@
 .lc-db .map-view .cell-detail { padding: 12px; background: var(--cell-detail-bg); border-radius: 4px; min-height: 100px; font-size: 12px; line-height: 1.5; }
 .lc-db .map-view .cell-detail .placeholder { color: var(--muted); font-style: italic; }
 .lc-db .map-view .cell-detail h3 { margin: 0 0 4px; color: var(--accent); font-size: 15px; }
+.lc-db .map-view .cell-detail .cell-detail-district { margin: 0; font-size: 12px; font-weight: normal; color: var(--muted); }
 .lc-db .map-view .cell-detail .meta { color: var(--muted); margin-bottom: 8px; font-size: 11px; }
 .lc-db .map-view .cell-detail ul.list { margin: 4px 0 8px; padding-left: 18px; }
 .lc-db .map-view .cell-detail ul.list li { padding: 1px 0; display: list-item; }
@@ -941,6 +945,8 @@
 .lc-db .map-view .swatch.mocsar { background: var(--mocsar); }
 .lc-db .map-view .swatch.temeto { background: var(--temeto); }
 .lc-db .map-view .swatch.demon { background: var(--demon); }
+.lc-db .map-view .swatch.sivatag { background: var(--sivatag); }
+.lc-db .map-view .swatch.hegyseg { background: var(--hegyseg); }
 .lc-db .map-view .swatch.sea { background: var(--sea); }
 .lc-db .map-view .swatch.wall { background: var(--map-wall); border-color: var(--map-wall-border); }
 .lc-db .map-view .swatch.hub { background: var(--varos); box-shadow: 0 0 0 2px var(--accent) inset; }
