@@ -31,6 +31,7 @@ import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
   INVENTORY_PREF_KEY,
   LOADOUT_PREF_KEY,
+  MAP_MODE_PREF_KEY,
   MAP_POSITION_PREF_KEY,
   MARKET_RATES_PREF_KEY,
   QUEST_DETAILS_PREF_KEY,
@@ -116,6 +117,7 @@ describe('isCharacterKey', () => {
     sortPrefKey('shop-sell'),
     LEGACY_OWNER_KEY,
     SEA_LEARNED_TILES_PREF_KEY,
+    MAP_MODE_PREF_KEY,
   ])('shares %s between characters', (key) => {
     expect(isCharacterKey(key)).toBe(false);
   });

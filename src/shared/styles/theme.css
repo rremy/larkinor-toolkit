@@ -961,6 +961,10 @@
 }
 .lc-db .map-view .map-here-btn:hover { background: var(--accent-dim); }
 .lc-db .map-view .cell-detail .here-note { color: var(--quest-here-ring); font-weight: bold; margin-bottom: 4px; }
+/* Térkép tab: the Város / Tenger switch (src/database/map/MapTab.tsx). */
+.lc-db .map-mode-switch { display: flex; gap: 6px; margin-bottom: 10px; }
+.lc-db .map-mode-switch button { padding: 4px 14px; font-size: 13px; cursor: pointer; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 3px; }
+.lc-db .map-mode-switch button.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
 /* The sea chart: a CSS grid of divs (never a table: quirks mode, see CLAUDE.md).
    Scoped by its own lc- class, so the same rules serve the database tab, the
    desktop dock window and the mobile window. */

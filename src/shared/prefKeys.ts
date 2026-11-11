@@ -90,6 +90,12 @@ export const SEA_MOVE_PREF_KEY = 'lc-sea-move';
 export const SEA_LEARNED_TILES_PREF_KEY = 'lc-sea-learned-tiles';
 
 /**
+ * PrefStore key holding the map tab's last chosen view, `city` or `sea`. Only
+ * consulted when neither a route nor the player's whereabouts decide. Shared.
+ */
+export const MAP_MODE_PREF_KEY = 'lc-map-mode';
+
+/**
  * PrefStore key holding the serialised `Inventory` (src/shared/inventory.ts) —
  * what the player owns, by location, as last listed by each page. Read by the
  * hosted database to show ownership; written only by the boots' capture.

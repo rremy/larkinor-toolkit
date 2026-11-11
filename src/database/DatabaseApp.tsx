@@ -4,7 +4,7 @@ import type { DataLoader, QuestSet } from '@/shared/data';
 import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
-import { MapView } from './map/MapView';
+import { MapTab } from './map/MapTab';
 import { QuestView } from './quests/QuestView';
 
 /**
@@ -340,7 +340,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
         </div>
       </header>
       {route.tab === 'map' ? (
-        <MapView loader={loader} targetCellId={route.cell} prefStore={prefStore} />
+        <MapTab loader={loader} targetCellId={route.cell} prefStore={prefStore} tracksPosition={tracksPosition} />
       ) : route.tab === 'quests' ? (
         <QuestView
           loader={loader}
