@@ -117,6 +117,19 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - **Upgrade:** the first character seen after the split becomes `lc-legacy-owner` and keeps
     reading the old shared quest progress until writing their own. Nothing else carries over:
     the loadout and the position rebuild themselves on the next character-sheet visit or step.
+- **One game action per page** (`src/utils/actionLock.ts`, installed first in `main.ts`). Every
+  action reloads the page, and the page's form carries a time id (`idopont`): a double click or
+  double tap submits it twice, which can log the player out. Once the page starts leaving
+  (`beforeunload`), every click outside the toolkit's own UI is stopped at the window in the
+  capture phase, before the game's handlers and ours — including a toolkit button's `.click()` on
+  a hidden game control. Facts that decide the design:
+  - **The page leaving is the signal, not the click**: an attribute's `+`, an item's `alert`, the
+    mass-sale tick boxes and the price check stay on the page and may be pressed many times, so
+    locking on a click on a game control would break them.
+  - `form.submit()` fires neither `beforeunload` nor `navigate` synchronously, but both arrive on
+    the next task (8ms, measured in Chromium) — long before a second click can.
+  - Only a back-forward-cache restore (`pageshow` with `persisted`) unlocks; there is no timeout,
+    since re-sending a slow request's time id is exactly the logout this prevents.
 - **In-game database** accessible via "Adatbázis" overlay button (DatabaseOverlay component); reuses standalone DB components with `gmSource`.
 - **Two platform modes** (`utils/platform.ts`): `detectPlatform(window)` picks `mobile` when
   `(pointer: coarse)` matches or the viewport is under 900px, else `desktop`. A stored
