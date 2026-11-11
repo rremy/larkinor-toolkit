@@ -153,3 +153,26 @@ describe('quest routing', () => {
     });
   });
 });
+
+describe('DatabaseApp — the remembered map route', () => {
+  function memoryStore(initial: string | null) {
+    const store = { value: initial, read: () => store.value, write: (r: string) => { store.value = r; } };
+    return store;
+  }
+
+  it('opens a remembered map route without its cell, so the map of where you are decides', () => {
+    const routeStore = memoryStore('map/sea');
+    render(<DatabaseApp loader={stubLoader} routing="memory" routeStore={routeStore} />);
+    expect(document.querySelector('.map-mode-switch')).not.toBeNull();
+    expect(document.querySelector('.map-mode-switch button[aria-pressed="true"]')?.textContent).toBe('Larkinor');
+  });
+
+  it('remembers the map tab without the cell it was opened on', () => {
+    const routeStore = memoryStore('map');
+    render(<DatabaseApp loader={stubLoader} routing="memory" routeStore={routeStore} />);
+    fireEvent.click(screen.getByText('Fegyverek'));
+    expect(routeStore.value).toBe('weapons');
+    fireEvent.click(screen.getByText('Térkép'));
+    expect(routeStore.value).toBe('map');
+  });
+});

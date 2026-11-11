@@ -209,7 +209,12 @@ export function DatabaseApp(props: DatabaseAppProps) {
   const [route, setRoute] = useState<Route>(() => {
     if (routing === 'hash') return parseHash();
     const stored = routeStore?.read();
-    return stored ? parseRoute(stored) : DEFAULT_ROUTE;
+    if (!stored) return DEFAULT_ROUTE;
+    const restored = parseRoute(stored);
+    // A remembered map route never brings its cell back: the map tab then opens
+    // on the map of where the player is now, not on a cell (or `sea`) from an
+    // earlier page — which would otherwise outrank their whereabouts for good.
+    return restored.tab === 'map' ? { ...restored, cell: null } : restored;
   });
 
   useEffect(() => {
@@ -225,7 +230,7 @@ export function DatabaseApp(props: DatabaseAppProps) {
   function navigate(tab: Tab, first: string | null, second: string | null = null) {
     if (routing !== 'hash') {
       setRoute(routeFor(tab, first, second));
-      routeStore?.write(serializeRoute(tab, first, second));
+      routeStore?.write(tab === 'map' ? serializeRoute(tab, null, null) : serializeRoute(tab, first, second));
       return;
     }
     const next = hashFor(tab, first, second);
