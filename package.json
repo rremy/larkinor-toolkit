@@ -23,7 +23,8 @@
     "scrape:tavern": "node scripts/quests/scrapeTavern.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "serve": "python3 -m http.server 9000 --directory dist"
+    "serve": "python3 -m http.server 9000 --directory dist",
+    "build:sea": "node scripts/sea/build.mjs"
   },
   "dependencies": {
     "preact": "^10.23.0"

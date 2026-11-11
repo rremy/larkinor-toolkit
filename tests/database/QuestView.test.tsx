@@ -73,6 +73,8 @@ function makeLoader(overrides: Partial<DataLoader> = {}): DataLoader {
     loadItemShops: async () => ({ shops: [] }),
     loadWeaponShops: async () => ({ shops: [] }),
     loadQuests: vi.fn(async () => quests),
+    loadSeaChart: async () => ({ rows: { min: 0, max: 9 }, cols: { min: 0, max: 9 }, squares: [] }),
+    loadIslands: async () => [],
     loadTavernQuests: vi.fn(async () => tavernQuests),
     ...overrides,
   };

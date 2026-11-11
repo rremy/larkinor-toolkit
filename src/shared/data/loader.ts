@@ -1,5 +1,5 @@
 import type { DataSource } from './source';
-import type { Weapon, Armor, Item, MapData, ShopData, Quest } from './types';
+import type { Weapon, Armor, Item, MapData, ShopData, Quest, SeaChart, IslandTile } from './types';
 import { buildMonsterDatabase, type Monster, type MonsterDatabase } from './monsters';
 
 export interface DataLoader {
@@ -12,6 +12,8 @@ export interface DataLoader {
   loadWeaponShops(): Promise<ShopData>;
   loadQuests(): Promise<Quest[]>;
   loadTavernQuests(): Promise<Quest[]>;
+  loadSeaChart(): Promise<SeaChart>;
+  loadIslands(): Promise<IslandTile[]>;
 }
 
 /**
@@ -37,5 +39,7 @@ export function createDataLoader(source: DataSource, baseUrl: string): DataLoade
     loadWeaponShops: () => source.fetchJson<ShopData>(url('weapon-shops.json')),
     loadQuests: () => source.fetchJson<Quest[]>(url('quests.json')),
     loadTavernQuests: () => source.fetchJson<Quest[]>(url('tavern-quests.json')),
+    loadSeaChart: () => source.fetchJson<SeaChart>(url('sea-chart.json')),
+    loadIslands: () => source.fetchJson<IslandTile[]>(url('islands.json')),
   };
 }

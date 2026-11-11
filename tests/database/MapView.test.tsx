@@ -51,6 +51,8 @@ function makeLoader(): DataLoader {
     loadItemShops: async () => itemShops,
     loadWeaponShops: async () => weaponShops,
     loadQuests: async () => [],
+    loadSeaChart: async () => ({ rows: { min: 0, max: 9 }, cols: { min: 0, max: 9 }, squares: [] }),
+    loadIslands: async () => [],
     loadTavernQuests: async () => [],
   };
 }

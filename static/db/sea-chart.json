@@ -1,0 +1,1877 @@
+{
+  "rows": {
+    "min": -36,
+    "max": 35
+  },
+  "cols": {
+    "min": -5,
+    "max": 42
+  },
+  "squares": [
+    {
+      "row": -34,
+      "col": 25,
+      "kind": "unexplored",
+      "harbour": true
+    },
+    {
+      "row": -33,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -33,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -32,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": -32,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -32,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -32,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -31,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": -31,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -31,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -30,
+      "col": 24,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": -30,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -30,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -30,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 24,
+      "kind": "land",
+      "district": "sivatag"
+    },
+    {
+      "row": -29,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": -29,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 24,
+      "kind": "land",
+      "district": "sivatag"
+    },
+    {
+      "row": -28,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": -28,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": -27,
+      "col": 9,
+      "kind": "unknown"
+    },
+    {
+      "row": -27,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": -27,
+      "col": 24,
+      "kind": "land",
+      "district": "sivatag"
+    },
+    {
+      "row": -27,
+      "col": 25,
+      "kind": "land",
+      "district": "sivatag"
+    },
+    {
+      "row": -27,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -27,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -27,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": -27,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": -26,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": -26,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -26,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -26,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -26,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -26,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": -25,
+      "col": 23,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -25,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -25,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -25,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": -25,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": -25,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": -24,
+      "col": -1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -24,
+      "col": 1,
+      "kind": "land",
+      "district": "harcos-negyed",
+      "harbour": true
+    },
+    {
+      "row": -24,
+      "col": 2,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -24,
+      "col": 23,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -24,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -24,
+      "col": 25,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -24,
+      "col": 26,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -23,
+      "col": -1,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -23,
+      "col": 1,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -23,
+      "col": 2,
+      "kind": "unknown"
+    },
+    {
+      "row": -23,
+      "col": 23,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -23,
+      "col": 24,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -23,
+      "col": 25,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -23,
+      "col": 26,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -23,
+      "col": 27,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -22,
+      "col": -1,
+      "kind": "land",
+      "district": "hegység"
+    },
+    {
+      "row": -22,
+      "col": 24,
+      "kind": "land",
+      "district": "mocsár",
+      "harbour": true
+    },
+    {
+      "row": -22,
+      "col": 25,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -22,
+      "col": 26,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -22,
+      "col": 27,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -21,
+      "col": -1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -21,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -21,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": -21,
+      "col": 26,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -21,
+      "col": 27,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -20,
+      "col": -3,
+      "kind": "land",
+      "district": "mágus-negyed",
+      "harbour": true
+    },
+    {
+      "row": -20,
+      "col": -2,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": -20,
+      "col": -1,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": -20,
+      "col": 23,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": -20,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -20,
+      "col": 25,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -20,
+      "col": 26,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -20,
+      "col": 27,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -19,
+      "col": -2,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": -19,
+      "col": -1,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": -19,
+      "col": 23,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": -19,
+      "col": 24,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -19,
+      "col": 25,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -19,
+      "col": 26,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -18,
+      "col": 25,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -18,
+      "col": 26,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -17,
+      "col": 25,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -17,
+      "col": 26,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -17,
+      "col": 27,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -16,
+      "col": 25,
+      "kind": "land",
+      "district": "harcos-negyed",
+      "harbour": true
+    },
+    {
+      "row": -16,
+      "col": 26,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -16,
+      "col": 27,
+      "kind": "land",
+      "district": "városközpont"
+    },
+    {
+      "row": -15,
+      "col": 26,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -15,
+      "col": 27,
+      "kind": "land",
+      "district": "városközpont"
+    },
+    {
+      "row": -14,
+      "col": 27,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": -13,
+      "col": 2,
+      "kind": "unexplored"
+    },
+    {
+      "row": -13,
+      "col": 27,
+      "kind": "land",
+      "district": "harcos-negyed",
+      "harbour": true
+    },
+    {
+      "row": -12,
+      "col": 1,
+      "kind": "unexplored"
+    },
+    {
+      "row": -12,
+      "col": 2,
+      "kind": "unexplored"
+    },
+    {
+      "row": -1,
+      "col": 1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": -1,
+      "col": 4,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": -1,
+      "col": 5,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 0,
+      "col": 0,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 0,
+      "col": 4,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 0,
+      "col": 5,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 0,
+      "col": 6,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 0,
+      "col": 7,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "kind": "land",
+      "district": "kezdő-negyed",
+      "harbour": true
+    },
+    {
+      "row": 1,
+      "col": 4,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 1,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 3,
+      "col": 0,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "kind": "land",
+      "district": "erdő"
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "kind": "land",
+      "district": "kezdő-negyed"
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "kind": "land",
+      "district": "mágus-negyed"
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 3,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "kind": "land",
+      "district": "harcos-negyed",
+      "harbour": true
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "kind": "land",
+      "district": "városközpont"
+    },
+    {
+      "row": 4,
+      "col": 5,
+      "kind": "land",
+      "district": "városközpont"
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 4,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 5,
+      "col": 0,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 5,
+      "col": 4,
+      "kind": "land",
+      "district": "városközpont"
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 6,
+      "col": 0,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "kind": "land",
+      "district": "harcos-negyed"
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 6,
+      "col": 8,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 6,
+      "col": 9,
+      "kind": "land",
+      "district": "sziklabarlangok"
+    },
+    {
+      "row": 7,
+      "col": 0,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 7,
+      "col": 1,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 7,
+      "col": 3,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 7,
+      "col": 5,
+      "kind": "land",
+      "district": "temető"
+    },
+    {
+      "row": 7,
+      "col": 6,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 7,
+      "col": 8,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 8,
+      "col": 1,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 8,
+      "col": 2,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 8,
+      "col": 3,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "kind": "land",
+      "district": "sötét-negyed",
+      "harbour": true
+    },
+    {
+      "row": 8,
+      "col": 5,
+      "kind": "land",
+      "district": "temető"
+    },
+    {
+      "row": 8,
+      "col": 6,
+      "kind": "land",
+      "district": "temető"
+    },
+    {
+      "row": 8,
+      "col": 7,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 8,
+      "col": 8,
+      "kind": "land",
+      "district": "sötét-negyed"
+    },
+    {
+      "row": 9,
+      "col": 1,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 9,
+      "col": 2,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 9,
+      "col": 3,
+      "kind": "land",
+      "district": "mocsár"
+    },
+    {
+      "row": 22,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 22,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 23,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 22,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 24,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 25,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 26,
+      "col": 39,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 39,
+      "kind": "unexplored"
+    },
+    {
+      "row": 27,
+      "col": 40,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 22,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 33,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 39,
+      "kind": "unexplored"
+    },
+    {
+      "row": 28,
+      "col": 40,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 20,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 21,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 22,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 32,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 29,
+      "col": 39,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 19,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 20,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 21,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 22,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 31,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 34,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 35,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 36,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 37,
+      "kind": "unexplored"
+    },
+    {
+      "row": 30,
+      "col": 38,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 21,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 22,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 29,
+      "kind": "unexplored"
+    },
+    {
+      "row": 31,
+      "col": 30,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 23,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 24,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 27,
+      "kind": "unexplored"
+    },
+    {
+      "row": 32,
+      "col": 28,
+      "kind": "unexplored"
+    },
+    {
+      "row": 33,
+      "col": 25,
+      "kind": "unexplored"
+    },
+    {
+      "row": 33,
+      "col": 26,
+      "kind": "unexplored"
+    },
+    {
+      "row": 33,
+      "col": 27,
+      "kind": "unexplored"
+    }
+  ]
+}

@@ -119,6 +119,48 @@ export interface MapData {
   edges: Record<string, string>;
 }
 
+/**
+ * What a sea-chart square holds when it is not open sea. `unknown` marks the
+ * squares nobody has seen from a ship, which every side check skips.
+ */
+export type SeaSquareKind = 'land' | 'unexplored' | 'unknown';
+
+/** One square of the archipelago chart, in the city map's grid coordinates. */
+export interface SeaSquare {
+  row: number;
+  col: number;
+  kind: SeaSquareKind;
+  /** The district as the city map names it (`harcos-negyed`); approximate inside islands. */
+  district?: string;
+  harbour?: true;
+}
+
+/** The archipelago chart: every square that is not open sea (an absent square is sea). */
+export interface SeaChart {
+  rows: { min: number; max: number };
+  cols: { min: number; max: number };
+  squares: SeaSquare[];
+}
+
+export interface IslandBuilding {
+  name: string;
+  /** Finished; an unfinished building says what it still needs in `note`. */
+  ready: boolean;
+  note?: string;
+}
+
+/** An island tile, keyed by the picture the game draws for it under `/tajk/`. */
+export interface IslandTile {
+  /** The picture path below `/tajk/`, without `.gif`: `nagysziget/szig_2-10`. */
+  image: string;
+  row: number;
+  col: number;
+  island: string;
+  name?: string;
+  district?: string;
+  buildings?: IslandBuilding[];
+}
+
 export interface ShopLine {
   id: string;
   qty: number;

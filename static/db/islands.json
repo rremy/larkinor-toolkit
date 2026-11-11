@@ -1,0 +1,786 @@
+[
+  {
+    "image": "nagysziget/szig_3-22",
+    "row": -34,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Északi kikötő",
+    "district": "sötét-negyed"
+  },
+  {
+    "image": "nagysziget/szig_3-21",
+    "row": -33,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Lövegek",
+    "district": "sötét-negyed"
+  },
+  {
+    "image": "nagysziget/szig_4-21",
+    "row": -33,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "É-i Teleport"
+  },
+  {
+    "image": "nagysziget/szig_2-20",
+    "row": -32,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Lövegek",
+    "district": "sötét-negyed"
+  },
+  {
+    "image": "nagysziget/szig_3-20",
+    "row": -32,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Kútfalva"
+  },
+  {
+    "image": "nagysziget/szig_4-20",
+    "row": -32,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Léghajó"
+  },
+  {
+    "image": "nagysziget/szig_5-20",
+    "row": -32,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Északi Teleport"
+  },
+  {
+    "image": "nagysziget/szig_2-19",
+    "row": -31,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Jurtaikrek",
+    "district": "sötét-negyed"
+  },
+  {
+    "image": "nagysziget/szig_3-19",
+    "row": -31,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Agyartanya"
+  },
+  {
+    "image": "nagysziget/szig_4-19",
+    "row": -31,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Gombáslak"
+  },
+  {
+    "image": "nagysziget/szig_2-18",
+    "row": -30,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Városkapu",
+    "district": "sötét-negyed"
+  },
+  {
+    "image": "nagysziget/szig_3-18",
+    "row": -30,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Ültetvény",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_4-18",
+    "row": -30,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Apacstanya"
+  },
+  {
+    "image": "nagysziget/szig_5-18",
+    "row": -30,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Nagydarázs"
+  },
+  {
+    "image": "nagysziget/szig_1-17",
+    "row": -29,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Atombambusz",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-17",
+    "row": -29,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Termeszvár",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_3-17",
+    "row": -29,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Spirálhegy",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_4-17",
+    "row": -29,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Gigacsíra"
+  },
+  {
+    "image": "nagysziget/szig_5-17",
+    "row": -29,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Csóvástökök"
+  },
+  {
+    "image": "nagysziget/szig_6-17",
+    "row": -29,
+    "col": 28,
+    "island": "Thord-Artin",
+    "name": "Kráter"
+  },
+  {
+    "image": "nagysziget/szig_7-17",
+    "row": -29,
+    "col": 29,
+    "island": "Thord-Artin"
+  },
+  {
+    "image": "nagysziget/szig_1-16",
+    "row": -28,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Óriásgomba",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-16",
+    "row": -28,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Koponyásút",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_3-16",
+    "row": -28,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Aranycsille",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_4-16",
+    "row": -28,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Törzsi sír"
+  },
+  {
+    "image": "nagysziget/szig_5-16",
+    "row": -28,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Fügekaktusz"
+  },
+  {
+    "image": "nagysziget/szig_6-16",
+    "row": -28,
+    "col": 28,
+    "island": "Thord-Artin",
+    "name": "Vihargóc"
+  },
+  {
+    "image": "nagysziget/szig_7-16",
+    "row": -28,
+    "col": 29,
+    "island": "Thord-Artin",
+    "name": "Zuhatag"
+  },
+  {
+    "image": "nagysziget/szig_1-15",
+    "row": -27,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Galócáspart",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-15",
+    "row": -27,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Kaktuszpár",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_3-15",
+    "row": -27,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Acaule",
+    "district": "sivatag"
+  },
+  {
+    "image": "nagysziget/szig_4-15",
+    "row": -27,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Szalmabábok"
+  },
+  {
+    "image": "nagysziget/szig_5-15",
+    "row": -27,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Zergeösvény"
+  },
+  {
+    "image": "nagysziget/szig_6-15",
+    "row": -27,
+    "col": 28,
+    "island": "Thord-Artin",
+    "name": "Kúphegy"
+  },
+  {
+    "image": "nagysziget/szig_7-15",
+    "row": -27,
+    "col": 29,
+    "island": "Thord-Artin",
+    "name": "Őrtorony"
+  },
+  {
+    "image": "nagysziget/szig_1-14",
+    "row": -26,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Obeliszk",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-14",
+    "row": -26,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Bagolyvár",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_3-14",
+    "row": -26,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Mocsárpart",
+    "district": "mocsár"
+  },
+  {
+    "image": "nagysziget/szig_4-14",
+    "row": -26,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Zátonyrév"
+  },
+  {
+    "image": "nagysziget/szig_5-14",
+    "row": -26,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Kanyon"
+  },
+  {
+    "image": "nagysziget/szig_6-14",
+    "row": -26,
+    "col": 28,
+    "island": "Thord-Artin",
+    "name": "Pálmapart"
+  },
+  {
+    "image": "nagysziget/szig_1-13",
+    "row": -25,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Kockafák",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-13",
+    "row": -25,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Menedék",
+    "district": "erdő",
+    "buildings": [
+      {
+        "name": "Kocsma",
+        "ready": false,
+        "note": "498761 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-13",
+    "row": -25,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Belsődokk",
+    "district": "mocsár"
+  },
+  {
+    "image": "nagysziget/szig_4-13",
+    "row": -25,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Tószeglet",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_5-13",
+    "row": -25,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Minierdő"
+  },
+  {
+    "image": "nagysziget/szig_6-13",
+    "row": -25,
+    "col": 28,
+    "island": "Thord-Artin",
+    "name": "Trollterasz"
+  },
+  {
+    "image": "nagysziget/szig_1-12",
+    "row": -24,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Kardoskő",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-12",
+    "row": -24,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Viadukt",
+    "district": "hegység",
+    "buildings": [
+      {
+        "name": "Kocsma",
+        "ready": false,
+        "note": "496515 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-12",
+    "row": -24,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Jelzőtábla",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_4-12",
+    "row": -24,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Trollterasz",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_1-11",
+    "row": -23,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Meteórák",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-11",
+    "row": -23,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Thordi Erg",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_3-11",
+    "row": -23,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Ikerbérc",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_4-11",
+    "row": -23,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Yetilépcső",
+    "district": "hegység"
+  },
+  {
+    "image": "nagysziget/szig_5-11",
+    "row": -23,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Süveghegyek",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-10",
+    "row": -22,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Lápapály",
+    "district": "mocsár",
+    "buildings": [
+      {
+        "name": "Kikötő",
+        "ready": true
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-10",
+    "row": -22,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Kígyófa",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_4-10",
+    "row": -22,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Rúnakövek",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_5-10",
+    "row": -22,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Mangrove",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_2-9",
+    "row": -21,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Oltár",
+    "district": "erdő",
+    "buildings": [
+      {
+        "name": "Oltár",
+        "ready": true
+      },
+      {
+        "name": "Dicsőség tornya",
+        "ready": false,
+        "note": "997714 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-9",
+    "row": -21,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Kőszentély"
+  },
+  {
+    "image": "nagysziget/szig_4-9",
+    "row": -21,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Gombakert"
+  },
+  {
+    "image": "nagysziget/szig_5-9",
+    "row": -21,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Rémerdő",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_1-8",
+    "row": -20,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Kancsóka",
+    "district": "mocsár"
+  },
+  {
+    "image": "nagysziget/szig_2-8",
+    "row": -20,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Életfa",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_3-8",
+    "row": -20,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Erdei kapu",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_4-8",
+    "row": -20,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Fenyves",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_5-8",
+    "row": -20,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Ligeterdő",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_1-7",
+    "row": -19,
+    "col": 23,
+    "island": "Thord-Artin",
+    "name": "Ártér",
+    "district": "mocsár"
+  },
+  {
+    "image": "nagysziget/szig_2-7",
+    "row": -19,
+    "col": 24,
+    "island": "Thord-Artin",
+    "name": "Bánya",
+    "district": "erdő"
+  },
+  {
+    "image": "nagysziget/szig_3-7",
+    "row": -19,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Északi Erőd",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Erőd",
+        "ready": false,
+        "note": "490612 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_4-7",
+    "row": -19,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Malom",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Teleportkapu",
+        "ready": false,
+        "note": "991719 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-6",
+    "row": -18,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Temető",
+    "district": "harcos-negyed"
+  },
+  {
+    "image": "nagysziget/szig_4-6",
+    "row": -18,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Kőhíd",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Fegyverbolt",
+        "ready": false,
+        "note": "497626 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-5",
+    "row": -17,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Déli kaszinó",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Kaszinó",
+        "ready": true
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_4-5",
+    "row": -17,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Aréna",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Aréna",
+        "ready": false,
+        "note": "497942 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_5-5",
+    "row": -17,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Bolt",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Vegyesbolt",
+        "ready": false,
+        "note": "491870 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_3-4",
+    "row": -16,
+    "col": 25,
+    "island": "Thord-Artin",
+    "name": "Nyugati kikötő",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Kikötő",
+        "ready": true
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_4-4",
+    "row": -16,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Kézművesek",
+    "district": "harcos-negyed"
+  },
+  {
+    "image": "nagysziget/szig_5-4",
+    "row": -16,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Piac",
+    "district": "városközpont",
+    "buildings": [
+      {
+        "name": "Piac",
+        "ready": true
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_4-3",
+    "row": -15,
+    "col": 26,
+    "island": "Thord-Artin",
+    "name": "Templom",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Templom",
+        "ready": false
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_5-3",
+    "row": -15,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Palota",
+    "district": "városközpont",
+    "buildings": [
+      {
+        "name": "Palota",
+        "ready": false,
+        "note": "488134 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "nagysziget/szig_5-2",
+    "row": -14,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Halászfalu",
+    "district": "harcos-negyed"
+  },
+  {
+    "image": "nagysziget/szig_5-1",
+    "row": -13,
+    "col": 27,
+    "island": "Thord-Artin",
+    "name": "Déli kikötő -- harcos negyed",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Kikötő",
+        "ready": false,
+        "note": "493575 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "szighar/szighar_1-1",
+    "row": -24,
+    "col": 1,
+    "island": "Nyugati sziget",
+    "district": "harcos-negyed",
+    "buildings": [
+      {
+        "name": "Kikötő",
+        "ready": false,
+        "note": "299371 építőkő szükséges"
+      }
+    ]
+  },
+  {
+    "image": "szighar/szighar_2-1",
+    "row": -24,
+    "col": 2,
+    "island": "Nyugati sziget",
+    "district": "harcos-negyed"
+  },
+  {
+    "image": "szigmag/szigmag_2--21",
+    "row": -23,
+    "col": 1,
+    "island": "Nyugati sziget",
+    "district": "sivatag"
+  }
+]

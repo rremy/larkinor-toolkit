@@ -32,6 +32,8 @@ const stubLoader: DataLoader = {
     id: '12', set: 'royal', title: '12', description: 'Teszt küldetés', reward: '1 db ezüst', rows: 1, cols: 1,
     cells: [TEST_CELL],
   }]),
+  loadSeaChart: async () => ({ rows: { min: 0, max: 9 }, cols: { min: 0, max: 9 }, squares: [] }),
+  loadIslands: async () => [],
   loadTavernQuests: () => Promise.resolve([
     {
       id: 'GOMB', set: 'tavern', title: 'GÖMB', description: 'Teszt küldetés', reward: '1 db ezüst',

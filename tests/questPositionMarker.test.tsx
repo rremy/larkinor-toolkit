@@ -61,6 +61,8 @@ describe('QuestGrid position marker', () => {
 function makeLoader(): DataLoader {
   return {
     loadQuests: async () => royal,
+    loadSeaChart: async () => ({ rows: { min: 0, max: 9 }, cols: { min: 0, max: 9 }, squares: [] }),
+    loadIslands: async () => [],
     loadTavernQuests: async () => [],
     loadMonsters: async () => monsters,
     loadWeapons: async () => [],
