@@ -17,6 +17,8 @@ export enum PageType {
   Arena = 'Arena',
   Palace = 'Palace',
   PalaceQuest = 'PalaceQuest',
+  /** The harbour building (`otKikoto`): where a ship is boarded or docks. */
+  Harbour = 'Harbour',
   Unknown = 'Unknown',
 }
 
@@ -35,6 +37,10 @@ export function detectPage(doc: Document): PageType {
       return PageType.FreeMove;
     case 'otHarc':
       return PageType.Battle;
+    // The harbour building. Its picture names the harbour's grid square
+    // (`/2/epulet/-2224kikoto.gif`), which is where a voyage starts.
+    case 'otKikoto':
+      return PageType.Harbour;
     case 'otTemplom':
       return PageType.Church;
     // The pub is where tavern quests are handed out: its narration embeds the

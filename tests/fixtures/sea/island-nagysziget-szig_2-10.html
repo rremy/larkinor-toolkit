@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+<title>Larkinor</title>
+<style type="text/css">
+body {
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+ 
+}
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+<script language="JavaScript">
+
+function atalakitas(str)
+{
+	var jostr = new String();
+	for (var i=0; i<str.length; i++)
+	{	
+		if (str.charAt(i)=='ő') jostr += 'ő'; // ez a 4 szar az index szerver bugja miatt
+		else if (str.charAt(i)=='Ő') jostr += 'Ő';
+		else if (str.charAt(i)=='ű') jostr += 'ű';
+		else if (str.charAt(i)=='Ű') jostr += 'Ű';
+		else if (str.charAt(i)=='?') jostr += '%3F';
+		else if (str.charAt(i)=='+') jostr += '%2B';
+		else if (str.charAt(i)=='=') jostr += '%3D';
+		else if (str.charAt(i)==';') jostr += '%3B';
+		else if (str.charAt(i)=='<') jostr += '%3C';
+		else if (str.charAt(i)=='>') jostr += '%3E';
+		else if (str.charAt(i)=='%') jostr += '%25';
+		else if (str.charAt(i)=='#') jostr += '%23';
+		else if (str.charAt(i)=='"') jostr += '%22';
+        else if (str.charAt(i)=='&') jostr += '%26';
+		else if 
+		( ((str.charAt(i)>='a') && (str.charAt(i)<='z')) ||
+		  ((str.charAt(i)>='A') && (str.charAt(i)<='Z')) ||
+		  ((str.charAt(i)>='0') && (str.charAt(i)<='9')) ||
+		  ((str.charAt(i)>='a') && (str.charAt(i)<='z')) ||
+			(str.charAt(i)==' ') || (str.charAt(i)=='ö') || (str.charAt(i)=='Ö') ||
+			(str.charAt(i)=='í') || (str.charAt(i)=='Í') || (str.charAt(i)=='ü') ||
+			(str.charAt(i)=='Ó') || (str.charAt(i)=='ó') || (str.charAt(i)=='Ü') ||
+			(str.charAt(i)=='@') || (str.charAt(i)=='ú') || (str.charAt(i)=='é') ||
+			(str.charAt(i)=='!') || (str.charAt(i)=='Ú') || (str.charAt(i)=='É') ||
+			(str.charAt(i)=='á') || (str.charAt(i)==':') || (str.charAt(i)==',') ||
+			(str.charAt(i)=='Á') || (str.charAt(i)=='(') || (str.charAt(i)=='.') ||
+			(str.charAt(i)=='[') || (str.charAt(i)==')') || (str.charAt(i)==']') ||
+			(str.charAt(i)=='*') || (str.charAt(i)=='-') ||
+            (str.charAt(i)=='/') || (str.charAt(i)=='|') ||
+            (str.charAt(i)=='{') || (str.charAt(i)=='}') || (str.charAt(i)=='$'))
+				jostr += str.charAt(i);
+		else jostr += "*";
+	}
+	return jostr;
+}
+
+</script>
+
+<script language="JavaScript">
+
+
+</script>
+<style id="VMstdWXmBEt901C/N+sN">/* ================================================================
+   Larkinor UI — injected styles
+   All selectors scoped under #lc-root or .lc-* to avoid collisions
+   ================================================================ */
+
+:root {
+  --bg: #1a1410;
+  --panel: #25201b;
+  --panel-2: #2f2922;
+  --border: #3d342a;
+  --row-border: #2a241e;
+  --text: #e8dcc5;
+  --muted: #9d8e75;
+  --accent: #d4a259;
+  --accent-dim: rgba(212, 162, 89, 0.18);
+  --bad: #c46161;
+  --good: #6fb56f;
+  --mp: #4a7acc;
+  --sea: #2c4a6e;
+  --dock-shadow: rgba(0, 0, 0, 0.5);
+  /* District tints (Térkép / map view) */
+  --varos: #c8b27a;  --magus: #6d8db6;  --harcos: #b65d4a;
+  --kezdo: #d6c075;  --sotet: #5e4378;  --szikla: #7d6a55;
+  --erdo: #4f7a3e;   --mocsar: #5a6a3a; --temeto: #38322f;
+  --demon: #861a48;  --unexplored: #221b16;
+  /* Map view (Térkép) — cell/POI/blocker chrome */
+  --unexplored-border: #2a3e58;
+  --unexplored-glyph: rgba(255, 255, 255, 0.18);
+  --map-wrap-shadow: rgba(0, 0, 0, 0.4);
+  --row-id-text: rgba(0, 0, 0, 0.5);
+  --cell-label-text: rgba(0, 0, 0, 0.78);
+  --poi-bg: rgba(0, 0, 0, 0.45);
+  --poi-text: #fff;
+  --poi-clan-bg: rgba(212, 162, 89, 0.85);
+  --temeto-text: #ddd;
+  --blocker-border: #1c3654;
+  --blocker-text: rgba(255, 255, 255, 0.85);
+  --map-wall: #17120e;
+  --map-wall-border: rgba(212, 162, 89, 0.55);
+  --cell-detail-bg: rgba(0, 0, 0, 0.25);
+  --legend-active-bg: rgba(212, 162, 89, 0.32);
+  --swatch-border: rgba(0, 0, 0, 0.5);
+  --cell-match-glow: rgba(212, 162, 89, 0.6);
+  --cell-focus-glow: rgba(212, 162, 89, 0.85);
+  --cell-focus-glow-strong: rgba(212, 162, 89, 1);
+  /* An item or silver the narration counts out. A red that reads on the dark
+     mobile UI and the game's own light page alike. */
+  --item-mention: #e2483a;
+  /* Quest maze (Küldetések) — lock colours, tuned for the dark background
+     rather than copied raw from the source site's white-page palette. */
+  --lock-vas: #b06a6a;
+  --lock-rez: #c9954a;
+  --lock-bronz: #d98246;
+  --lock-ezust: #b9bcc2;
+  --lock-arany: #e3c454;
+  --lock-platina: #6fc08a;
+  --lock-tolvaj: #6f8fd6;
+  --lock-cso: #cf5f5f;
+  /* Violet: the one hue none of the other eight sits near. */
+  --lock-varazs: #a77bd4;
+  --quest-wall: #c9b998;
+  --quest-szel: #4b7fa8;
+  --quest-void: #191310;
+  --quest-tile-bg: #40352a;
+  --quest-badge-bg: rgba(0, 0, 0, 0.62);
+  --quest-key-glow: rgba(212, 162, 89, 0.85);
+  /* The quest objective ring. Achromatic on purpose: the maze is wall-to-wall
+     saturated sprite art (yellow, cyan, magenta, red backgrounds), so any hue
+     competes with something. A near-white stroke over a dark one reads on every
+     background, which no single colour does. */
+  --quest-item-ring: #fff6e0;
+  --quest-item-edge: rgba(0, 0, 0, 0.85);
+  /* The detected player position. A hue is affordable here where the objective
+     ring could not afford one, because this marker also carries a pin badge —
+     the colour only has to draw the eye, not carry the meaning on its own. Cyan
+     is the one direction the lock palette does not already use. */
+  --quest-here-ring: #4fd6ee;
+  --quest-here-dim: rgba(79, 214, 238, 0.55);
+  --quest-cleared-bg: #2b241c;
+}
+
+/* Off-screen container for original game DOM (proxy DOM pattern) */
+#lc-offscreen {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Root mount point */
+#lc-root {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+#lc-root *,
+#lc-root *::before,
+#lc-root *::after {
+  box-sizing: inherit;
+}
+
+/* Page layout wrapper */
+.lc-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Hero: image/cell with the stat bar floated over its bottom edge to save space */
+.lc-hero {
+  position: relative;
+}
+.lc-hero > .lc-stat-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(37, 32, 27, 0.6); /* --panel at 60% opacity */
+  border-bottom: none;
+}
+/* White text for readability over the image */
+.lc-hero > .lc-stat-bar,
+.lc-hero > .lc-stat-bar .lc-stat-value {
+  color: #fff;
+}
+
+/* Hero image (location / monster) — show the whole image, never crop */
+.lc-hero-img {
+  width: 100%;
+  max-height: 42vh;
+  object-fit: contain;
+  display: block;
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--border);
+}
+
+/* Section divider */
+.lc-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Buttons */
+.lc-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: center;
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.lc-btn:last-child {
+  margin-bottom: 0;
+}
+
+.lc-btn:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+/* Monster link in narration text */
+.lc-monster-link {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Action/quest link embedded in narration text */
+.lc-narration-link {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+.lc-narration-link:active {
+  color: var(--text);
+}
+
+/* An item or silver the narration counts out ("16 darab aranyat"), on both
+   platforms: in #lc-root on mobile, spliced into the game's narration on
+   desktop (see enhanceItemMentions.ts). One the database names is a link. */
+.lc-item-mention {
+  color: var(--item-mention);
+  font-weight: bold;
+}
+.lc-item-link {
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+.lc-item-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Active-quest phrase in narration text — mobile counterpart of desktop's .lc-active-quest */
+#lc-root .lc-quest-link {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+/* Bottom drawer overlay */
+.lc-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.lc-drawer {
+  width: 100%;
+  max-height: 80dvh;
+  background: var(--panel);
+  border-top: 2px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  overflow-y: auto;
+  padding: 16px;
+  animation: lc-slide-up 0.2s ease-out;
+}
+
+@keyframes lc-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Desktop variant: the same drawer components as a centered modal dialog,
+   centred over the *game* rather than over the window. The backdrop still
+   covers the whole viewport — everything dims and a click anywhere closes —
+   but its content box is pulled in to the game's own column (0 .. the right
+   edge published as --lc-game-right), so the dialog lands in the middle of
+   what the player is actually looking at. On a wide monitor the empty page
+   beside the game is most of the width, and centring on the viewport put the
+   card well to the right of the thing it describes.
+
+   Percentage padding resolves against the containing block, which for a fixed
+   element is the viewport, so this needs no measurement; max() collapses it
+   back to the plain inset once the window is no wider than the game. */
+.lc-drawer-backdrop--center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  padding-right: max(24px, calc(100% - var(--lc-game-right, 791px) + 24px));
+}
+
+.lc-drawer-backdrop--center > .lc-drawer {
+  position: relative;
+  width: auto;
+  min-width: 320px;
+  max-width: 520px;
+  max-height: 84dvh;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: lc-fade-in 0.15s ease-out;
+}
+
+@keyframes lc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Monster name made clickable inside the live game narration (desktop only). */
+.lc-narr-link {
+  color: var(--accent);
+  border-bottom: 1px dotted var(--accent);
+  cursor: pointer;
+}
+
+.lc-drawer-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.lc-drawer-close:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* StatBar */
+.lc-stat-bar { display: flex; flex-direction: column; gap: 8px; }
+.lc-statbar-btns {
+  margin-left: auto;   /* float the button group to the right end of the row */
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.lc-statbar-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.lc-statbar-btn:active { color: var(--accent); border-color: var(--accent); }
+.lc-statbar-btn svg { display: block; }
+/* The same button on pages without a stat bar: pushed to the end of whatever
+   row carries it — a page's money line, or the home page's tab strip. */
+.lc-db-btn { margin-left: auto; }
+.lc-home-tabs .lc-db-btn { align-self: center; margin: 0 8px; }
+/* A page's ✕ sits right after the database button, so the two share the corner. */
+.lc-db-btn + .lc-exit-btn { margin-left: -6px; }
+
+/* Free-move hotkey icon row (enabled + available quick actions) */
+.lc-hotkeys { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.lc-hotkey {
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lc-hotkey:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-hotkey-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* Config drawer */
+.lc-config-title { margin: 0 0 12px; padding-right: 36px; font-size: 16px; color: var(--accent); }
+.lc-config-hotkeys { display: flex; flex-direction: column; gap: 6px; }
+/* Separates the hotkey list from the next section's heading ("Felület") —
+   without this the heading sits flush against the last hotkey row. */
+.lc-config-hotkeys + .lc-config-title { margin-top: 20px; }
+.lc-config-hotkey {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.lc-config-hotkey--on { border-color: var(--accent); background: var(--accent-dim); }
+.lc-config-hotkey-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.lc-config-hotkey-label { flex: 1; }
+.lc-config-hotkey-check { color: var(--accent); font-weight: bold; width: 16px; text-align: center; }
+.lc-config-platform { display: flex; gap: 6px; margin-bottom: 8px; }
+.lc-config-platform-btn {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.lc-config-platform-btn--on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+.lc-config-note { margin: 0; font-size: 11px; color: var(--muted); }
+.lc-config-shortcuts { margin: 0 0 6px; display: grid; gap: 3px; font-size: 13px; }
+.lc-config-shortcuts--off { opacity: 0.5; }
+.lc-config-shortcut { display: flex; gap: 10px; }
+.lc-config-shortcut dt { min-width: 140px; color: var(--accent); font-weight: bold; }
+.lc-config-shortcut dd { margin: 0; color: var(--text); }
+.lc-stat-row { display: flex; align-items: center; gap: 10px; }
+.lc-stat-label { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.lc-stat-value { font-size: 13px; color: var(--muted); min-width: 80px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.lc-stat-bar-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+.lc-stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.lc-stat-bar-fill--hp { background: var(--bad); }
+.lc-stat-bar-fill--mp { background: var(--mp); }
+.lc-stat-gold .lc-stat-value { min-width: auto; text-align: left; }
+.lc-status-icons { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+.lc-status-icon { height: 14px; width: auto; display: block; }
+
+/* NavPad */
+.lc-navpad { display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
+/* Utility icons floated in the top corners, level with the north button */
+.lc-navpad-corner {
+  position: absolute;
+  top: 12px;
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lc-navpad-corner--left { left: 16px; }
+.lc-navpad-corner--right { right: 16px; }
+.lc-navpad-corner:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-corner-icon { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lc-navpad-grid { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 6px; }
+.lc-navpad-cell { width: 64px; height: 64px; }
+.lc-navpad-btn { position: relative; width: 64px; height: 64px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+/* What the narration says lies in a direction (directionHints.ts): a diagonal
+   fills its corner cell, a cardinal straddles its arrow's outer edge — never a
+   corner of it, which would read as the diagonal. */
+.lc-navpad-diagonal, .lc-navpad-empty { display: flex; align-items: center; justify-content: center; }
+.lc-navpad .lc-dir-hints { display: flex; gap: 2px; line-height: 1; pointer-events: none; }
+.lc-navpad-diagonal .lc-dir-hints, .lc-navpad-empty .lc-dir-hints { font-size: 30px; }
+.lc-navpad-btn .lc-dir-hints { position: absolute; font-size: 18px; }
+/* The game's own icons (door, encounter) sized like the emoji beside them. */
+.lc-navpad .lc-dir-hints img.lc-dir-hint { display: block; width: 30px; height: 30px; }
+.lc-navpad-btn .lc-dir-hints img.lc-dir-hint { width: 20px; height: 20px; }
+.lc-navpad-grid > :nth-child(2) .lc-dir-hints { top: -10px; left: 50%; transform: translateX(-50%); }
+.lc-navpad-grid > :nth-child(8) .lc-dir-hints { bottom: -10px; left: 50%; transform: translateX(-50%); }
+.lc-navpad-grid > :nth-child(4) .lc-dir-hints { left: -10px; top: 50%; transform: translateY(-50%); }
+.lc-navpad-grid > :nth-child(6) .lc-dir-hints { right: -10px; top: 50%; transform: translateY(-50%); }
+.lc-navpad-btn:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-centre { background: var(--panel-2); border-radius: 50%; border: 1px solid var(--border); }
+.lc-navpad-attack { width: 64px; height: 64px; padding: 0; border-radius: 50%; border: 1px solid var(--bad); background: var(--panel); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.lc-navpad-attack:active { background: var(--accent-dim); border-color: var(--accent); }
+.lc-navpad-attack-icon { width: 100%; height: 100%; object-fit: cover; }
+
+/* NarrationPanel — preserve <br>-derived newlines, collapse other whitespace */
+.lc-narration { font-size: 15px; line-height: 1.6; color: var(--text); min-height: 60px; white-space: pre-line; }
+
+/* MonsterCard */
+.lc-mc-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; padding-right: 36px; }
+.lc-mc-img { width: 72px; height: 72px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; flex-shrink: 0; }
+.lc-mc-name { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
+.lc-mc-level { font-size: 13px; color: var(--muted); }
+.lc-mc-location { font-size: 13px; color: var(--muted); }
+.lc-mc-stats { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; font-size: 14px; margin: 0 0 14px; }
+.lc-mc-stats dt { color: var(--muted); }
+.lc-mc-stats dd { margin: 0; }
+.lc-mc-drops h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px; }
+.lc-mc-drops ul { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+.lc-mc-drops li { padding: 3px 0; border-bottom: 1px dashed var(--border); }
+.lc-mc-drop-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.lc-mc-drop-link:active { color: var(--text); }
+
+/* Battle page — the two weapon attacks sit side by side in one row */
+.lc-battle-attacks {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lc-battle-attacks .lc-btn {
+  flex: 1;
+  margin-bottom: 0;
+}
+/* The elemental spells sit in a single icon row below the attacks */
+.lc-battle-spells {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lc-battle-spells .lc-btn {
+  flex: 1;
+  margin-bottom: 0;
+  padding: 8px;
+}
+.lc-battle-spell-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  object-fit: contain;
+}
+.lc-battle-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lc-battle-monster-name { font-size: 20px; font-weight: bold; color: var(--text); }
+.lc-battle-hp { font-size: 14px; color: var(--bad); }
+.lc-battle-level-badge { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 3px; }
+
+/* Buildings / places row (shop, church, rest, settings, ...) */
+.lc-buildings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.lc-building-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 84px;
+  padding: 8px 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.lc-building-btn:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.lc-building-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.lc-building-label {
+  text-align: center;
+  line-height: 1.2;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+/* Login page — centered card */
+.lc-login {
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+}
+.lc-login-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.lc-login-title {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.lc-login-error {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(196, 97, 97, 0.12);
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  color: var(--bad);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
+.lc-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lc-login-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.lc-login-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px; /* >=16px so mobile browsers don't zoom on focus */
+  border-radius: 6px;
+}
+.lc-login-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.lc-login-submit {
+  margin-top: 4px;
+  margin-bottom: 0;
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* Dungeon — composed cell picture */
+.lc-dungeon-cell-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--border);
+}
+/* The tiles carry the game's own z-index values (3..6). Those must stay inside
+   the picture: `position: relative` alone is not a stacking context, so they
+   would resolve against the root and paint over the stat bar floated across the
+   hero's bottom edge — which is positioned but z-index auto, i.e. level 0.
+   Hiding the HP/MP bars, the gold row and the config gear, and eating their
+   clicks with them. */
+.lc-dungeon-cell {
+  position: relative;
+  max-width: 100%;
+  isolation: isolate;
+}
+.lc-dungeon-tile {
+  position: absolute;
+  display: block;
+  image-rendering: pixelated;   /* keep the pixel art crisp when upscaled */
+}
+
+/* Dungeon question */
+.lc-question-prompt {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-line;
+}
+.lc-question-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.lc-question-answer {
+  text-align: left;
+  margin-bottom: 0;
+}
+.lc-question-answer--selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lc-question-submit {
+  margin-bottom: 0;
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.lc-question-submit:disabled {
+  opacity: 0.5;
+  color: var(--muted);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+/* ================================================================
+   ===== DB explorer =====
+   Ported from lc-database/explorer.html. Scoped under `.lc-db` so
+   these global-ish selectors (body/header/.badge/table) never leak
+   onto the live game page when this stylesheet is injected by the
+   userscript. Palette variables come from :root above.
+   ================================================================ */
+.lc-db {
+  margin: 0;
+  font: 14px/1.4 -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lc-db, .lc-db *, .lc-db *::before, .lc-db *::after { box-sizing: border-box; }
+
+/* Restore colour inheritance the browser withholds.
+   In-game the overlay renders inside the live game page, which has no usable
+   doctype and so runs in quirks mode. Two holes leave text at the document
+   default — black, all but invisible on our dark background:
+     - Quirks mode does not inherit colour into tables, so every cell resets
+       however light its ancestors are. The explorer and the map are both
+       tables, which is most of the overlay.
+     - Form controls never inherit colour, in any mode or document.
+   `inherit` rather than a literal so the more specific rules further down
+   (td.name, td.dim, button.clear, the map's cell labels) still win, and so the
+   value keeps tracking --text on .lc-db. */
+.lc-db table, .lc-db caption, .lc-db thead, .lc-db tbody, .lc-db tr,
+.lc-db th, .lc-db td,
+.lc-db input, .lc-db select, .lc-db option, .lc-db textarea, .lc-db button {
+  color: inherit;
+}
+
+.lc-db header.top {
+  padding: 12px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.lc-db header.top h1 { font-size: 17px; margin: 0; color: var(--accent); }
+.lc-db .tabs { display: flex; gap: 4px; }
+.lc-db .tab {
+  padding: 6px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 13px;
+}
+.lc-db .tab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.lc-db .counts { padding: 8px 18px; color: var(--muted); font-size: 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
+
+/* ---- Filters ---- */
+.lc-db .filters {
+  padding: 10px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.lc-db .field { display: flex; flex-direction: column; gap: 3px; }
+.lc-db .field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.lc-db .field input, .lc-db .field select {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: 3px;
+  font: inherit;
+  min-width: 70px;
+}
+.lc-db .field input:focus, .lc-db .field select:focus { outline: none; border-color: var(--accent); }
+.lc-db .field.range { flex-direction: row; align-items: center; gap: 6px; }
+.lc-db .field.range input { width: 75px; }
+.lc-db .field.search input { width: 220px; }
+.lc-db button.clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.lc-db button.clear:hover { color: var(--text); border-color: var(--accent); }
+
+/* ---- Table + detail layout ---- */
+.lc-db .db-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.lc-db .db-view .layout { display: flex; flex: 1; min-height: 0; }
+.lc-db .table-wrap { flex: 1; overflow: auto; }
+.lc-db table.db { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lc-db .db-view th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--muted);
+}
+.lc-db .db-view th:hover { color: var(--accent); }
+.lc-db .db-view th.sorted { color: var(--accent); }
+.lc-db .db-view th.sorted::after { content: ' \25BC'; font-size: 10px; }
+.lc-db .db-view th.sorted.asc::after { content: ' \25B2'; }
+.lc-db .db-view td { padding: 6px 10px; border-bottom: 1px solid var(--row-border); white-space: nowrap; }
+.lc-db .db-view tr.row:hover { background: var(--panel-2); cursor: pointer; }
+.lc-db .db-view tr.row.selected { background: var(--accent-dim); }
+.lc-db .db-view td.right { text-align: right; font-variant-numeric: tabular-nums; }
+.lc-db .db-view td.center { text-align: center; }
+.lc-db .db-view td.name { font-weight: 500; color: var(--accent); }
+.lc-db .db-view td.dim { color: var(--muted); }
+.lc-db .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 11px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.lc-db .badge.yes { color: var(--good); border-color: var(--good); }
+.lc-db .badge.no  { color: var(--bad); border-color: var(--bad); }
+
+/* ---- Detail panel ---- */
+.lc-db aside.db-detail {
+  flex: 1 1 25%;
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  overflow: auto;
+  padding: 14px 16px;
+  position: relative;
+  display: none;
+}
+.lc-db .db-view.has-selection aside.db-detail { display: block; }
+.lc-db .db-view.has-selection .table-wrap { flex: 1 1 75%; }
+.lc-db aside.db-detail h2 { margin: 0 0 4px 0; font-size: 18px; color: var(--accent); padding-right: 28px; }
+.lc-db aside.db-detail .close-detail {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 24px;
+  height: 24px;
+  line-height: 20px;
+  padding: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.lc-db aside.db-detail .close-detail:hover { color: var(--accent); border-color: var(--accent); }
+.lc-db aside.db-detail .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.lc-db aside.db-detail h3 {
+  margin: 14px 0 6px 0;
+  font-size: 13px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lc-db aside.db-detail .stats { display: grid; grid-template-columns: 130px 1fr; gap: 3px 12px; font-size: 13px; }
+.lc-db aside.db-detail .stats dt { color: var(--muted); }
+.lc-db aside.db-detail .stats dd { margin: 0; }
+.lc-db aside.db-detail ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+.lc-db aside.db-detail ul li { padding: 3px 0; border-bottom: 1px dashed var(--row-border); }
+.lc-db aside.db-detail a.ref { color: var(--accent); cursor: pointer; text-decoration: none; }
+.lc-db aside.db-detail a.ref:hover { text-decoration: underline; }
+.lc-db aside.db-detail .qty { color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-db aside.db-detail .empty { color: var(--muted); font-style: italic; padding: 4px 0; }
+.lc-db aside.db-detail .detail-img { vertical-align: middle; height: 80px; margin-left: 8px; border: 1px solid var(--border); border-radius: 3px; }
+.lc-db aside.db-detail .monster-thumb { vertical-align: middle; height: 32px; margin-right: 6px; border: 1px solid var(--border); border-radius: 3px; }
+.lc-db aside.db-detail .placeholder { color: var(--muted); padding: 60px 0; text-align: center; font-style: italic; }
+
+/* ================================================================
+   ===== Map =====
+   Ported from lc-database/explorer.html (MAP module) / map.html.
+   Scoped under `.lc-db`; district tint variables come from :root above.
+   ================================================================ */
+.lc-db .map-view { padding: 20px; font-family: Georgia, 'Times New Roman', serif; color: var(--text); }
+.lc-db .map-view .map-stats { color: var(--muted); font-size: 13px; margin: 0 auto 14px; max-width: 1280px; }
+.lc-db .map-view .map-layout { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.lc-db .map-view .map-wrap { background: var(--sea); padding: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: auto; box-shadow: 0 0 30px var(--map-wrap-shadow) inset; }
+.lc-db .map-view table.map-grid { border-collapse: separate; border-spacing: 2px; margin: 0 auto; width: auto; }
+.lc-db .map-view table.map-grid th, .lc-db .map-view table.map-grid td { padding: 0; }
+.lc-db .map-view table.map-grid th { color: var(--text); font-weight: normal; font-size: 11px; text-align: center; min-width: 88px; padding-bottom: 4px; background: transparent; border: 0; cursor: default; position: static; }
+.lc-db .map-view table.map-grid th.rh { text-align: right; padding-right: 6px; min-width: 24px; }
+.lc-db .map-view td.cell { width: 88px; height: 96px; background: var(--unexplored); border: 1px solid var(--border); border-radius: 3px; vertical-align: top; cursor: pointer; position: relative; transition: outline 0.1s; }
+.lc-db .map-view td.cell.unexplored { background: var(--sea); border: 1px solid var(--unexplored-border); }
+.lc-db .map-view td.cell.unexplored::after { content: "≈"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--unexplored-glyph); font-size: 24px; }
+.lc-db .map-view td.cell:hover { outline: 2px solid var(--accent); z-index: 2; }
+.lc-db .map-view td.cell.selected { outline: 2px solid var(--accent); z-index: 2; }
+.lc-db .map-view td.cell .inner { height: 100%; padding: 12px 8px 4px; display: flex; flex-direction: column; justify-content: space-between; }
+.lc-db .map-view .row-id { font-size: 9px; color: var(--row-id-text); font-family: monospace; text-align: right; }
+.lc-db .map-view .label { font-size: 10px; line-height: 1.1; color: var(--cell-label-text); font-weight: bold; text-shadow: 0 1px 0 var(--unexplored-glyph); text-align: center; }
+.lc-db .map-view .pois { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; }
+.lc-db .map-view .poi { font-size: 13px; line-height: 1; width: 18px; height: 18px; border-radius: 50%; background: var(--poi-bg); color: var(--poi-text); display: grid; place-items: center; cursor: help; }
+.lc-db .map-view .poi.clan { background: var(--poi-clan-bg); color: var(--bg); font-weight: bold; font-size: 11px; }
+/* District backgrounds */
+.lc-db .map-view td.cell.varos  { background: var(--varos); }
+.lc-db .map-view td.cell.magus  { background: var(--magus); }
+.lc-db .map-view td.cell.harcos { background: var(--harcos); }
+.lc-db .map-view td.cell.kezdo  { background: var(--kezdo); }
+.lc-db .map-view td.cell.sotet  { background: var(--sotet); }
+.lc-db .map-view td.cell.szikla { background: var(--szikla); }
+.lc-db .map-view td.cell.erdo   { background: var(--erdo); }
+.lc-db .map-view td.cell.mocsar { background: var(--mocsar); }
+.lc-db .map-view td.cell.temeto { background: var(--temeto); color: var(--temeto-text); }
+.lc-db .map-view td.cell.demon  { background: var(--demon); }
+.lc-db .map-view td.cell.hub    { box-shadow: 0 0 0 2px var(--accent) inset; }
+.lc-db .map-view td.cell .blocker { position: absolute; background: var(--sea); border: 1px solid var(--blocker-border); z-index: 1; display: grid; place-items: center; font-size: 9px; color: var(--blocker-text); pointer-events: none; }
+.lc-db .map-view td.cell .wall { position: absolute; background: var(--map-wall); border: 1px solid var(--map-wall-border); z-index: 1; pointer-events: none; }
+.lc-db .map-view td.cell :is(.blocker, .wall).N { top: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).S { bottom: -4px; left: 8%; right: 8%; height: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).W { left: -4px; top: 8%; bottom: 8%; width: 6px; }
+.lc-db .map-view td.cell :is(.blocker, .wall).E { right: -4px; top: 8%; bottom: 8%; width: 6px; }
+/* Side panel: cell detail on top, legend below */
+.lc-db .map-view .map-side { display: flex; flex-direction: column; gap: 12px; }
+/* Cell detail */
+.lc-db .map-view .cell-detail { padding: 12px; background: var(--cell-detail-bg); border-radius: 4px; min-height: 100px; font-size: 12px; line-height: 1.5; }
+.lc-db .map-view .cell-detail .placeholder { color: var(--muted); font-style: italic; }
+.lc-db .map-view .cell-detail h3 { margin: 0 0 4px; color: var(--accent); font-size: 15px; }
+.lc-db .map-view .cell-detail .meta { color: var(--muted); margin-bottom: 8px; font-size: 11px; }
+.lc-db .map-view .cell-detail ul.list { margin: 4px 0 8px; padding-left: 18px; }
+.lc-db .map-view .cell-detail ul.list li { padding: 1px 0; display: list-item; }
+.lc-db .map-view .cell-detail ul.list li .qty { color: var(--muted); }
+.lc-db .map-view .cell-detail img.terrain { display: block; margin: 8px auto; max-width: 100%; border: 1px solid var(--border); border-radius: 2px; }
+/* Legend (district colour key + filterable POI list) */
+.lc-db .map-view aside.legend { background: var(--panel); padding: 14px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+.lc-db .map-view aside.legend h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin: 14px 0 8px; }
+.lc-db .map-view aside.legend h2:first-child { margin-top: 0; }
+.lc-db .map-view aside.legend ul { margin: 0 0 10px; padding-left: 0; list-style: none; }
+.lc-db .map-view aside.legend li { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: var(--text); font-size: 12px; }
+.lc-db .map-view aside.legend li.filterable { cursor: pointer; padding: 4px 6px; border-radius: 3px; margin-left: -6px; }
+.lc-db .map-view aside.legend li.filterable:hover { background: var(--accent-dim); }
+.lc-db .map-view aside.legend li.filterable.active { background: var(--legend-active-bg); outline: 1px solid var(--accent); }
+.lc-db .map-view .swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid var(--swatch-border); flex-shrink: 0; }
+.lc-db .map-view .swatch.varos { background: var(--varos); }
+.lc-db .map-view .swatch.magus { background: var(--magus); }
+.lc-db .map-view .swatch.harcos { background: var(--harcos); }
+.lc-db .map-view .swatch.kezdo { background: var(--kezdo); }
+.lc-db .map-view .swatch.sotet { background: var(--sotet); }
+.lc-db .map-view .swatch.szikla { background: var(--szikla); }
+.lc-db .map-view .swatch.erdo { background: var(--erdo); }
+.lc-db .map-view .swatch.mocsar { background: var(--mocsar); }
+.lc-db .map-view .swatch.temeto { background: var(--temeto); }
+.lc-db .map-view .swatch.demon { background: var(--demon); }
+.lc-db .map-view .swatch.sea { background: var(--sea); }
+.lc-db .map-view .swatch.wall { background: var(--map-wall); border-color: var(--map-wall-border); }
+.lc-db .map-view .swatch.hub { background: var(--varos); box-shadow: 0 0 0 2px var(--accent) inset; }
+/* The tile the player was last seen on (free move, see captureMapPosition.ts).
+   The labyrinth marker's cyan, so "you are here" reads the same on both maps.
+   An inset ring rather than an outline: hover, selection and the focus flash
+   all draw outlines, and the position must survive all three. */
+.lc-db .map-view td.cell.here { box-shadow: inset 0 0 0 3px var(--quest-here-ring), inset 0 0 0 5px var(--quest-item-edge); }
+.lc-db .map-view .map-here-pin {
+  position: absolute; top: 4px; left: 4px; z-index: 1;
+  font-size: 16px; line-height: 1; padding: 2px 3px; border-radius: 3px;
+  background: var(--quest-here-ring); color: var(--quest-void);
+  pointer-events: none;
+}
+.lc-db .map-view .map-here-btn {
+  margin-left: 10px; padding: 2px 8px; font-size: 12px; cursor: pointer;
+  color: var(--text); background: var(--panel); border: 1px solid var(--quest-here-ring); border-radius: 3px;
+}
+.lc-db .map-view .map-here-btn:hover { background: var(--accent-dim); }
+.lc-db .map-view .cell-detail .here-note { color: var(--quest-here-ring); font-weight: bold; margin-bottom: 4px; }
+/* POI filter highlight */
+.lc-db .map-view.filter-active td.cell:not(.match) { opacity: 0.55; filter: saturate(0.75); }
+.lc-db .map-view.filter-active td.cell.match { outline: 2px solid var(--accent); z-index: 2; box-shadow: 0 0 12px var(--cell-match-glow); }
+.lc-db .map-view.filter-active td.cell.match .poi.matched { transform: scale(1.35); box-shadow: 0 0 0 2px var(--accent); }
+/* Focused cell flash (deep link #map/<cell> or a shop location link) */
+.lc-db .map-view td.cell.focused { outline: 3px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 18px var(--cell-focus-glow); animation: lc-cellPulse 1.2s ease-out 3; z-index: 3; }
+@keyframes lc-cellPulse {
+  0%, 100% { box-shadow: 0 0 18px var(--cell-focus-glow); }
+  50% { box-shadow: 0 0 28px var(--cell-focus-glow-strong); }
+}
+
+/* ---- Quest maze (Küldetések) ---- */
+/* Grid + divs, never a table: the in-game page is quirks mode, where table
+   cells refuse to inherit colour. */
+.lc-db .quest-grid {
+  display: grid;
+  gap: 0;
+  justify-content: start;
+  padding: 10px;
+}
+.lc-db .quest-cell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--quest-tile-bg);
+  cursor: pointer;
+  color: var(--text);
+}
+.lc-db .quest-cell.void { background: var(--quest-void); }
+/* The quest objective tile — the one cell the whole quest is about, and the
+   one marker that must survive being scanned at a glance.
+   Drawn as an ::after overlay rather than a box-shadow on the cell, for two
+   reasons found by looking at it: a sprite fills ~88% of the tile and paints
+   over any inset shadow, and giving `.quest-cell` its own `z-index` would make
+   it a stacking context — the same trap documented for `container-type`, where
+   a neighbour's background then clips the wall edge the two cells share.
+   The overlay is inset past those edges so it rings the tile without drawing
+   over the walls. */
+.lc-db .quest-cell.objective::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 3px solid var(--quest-item-ring);
+  border-radius: 2px;
+  /* Dark stroke on both sides of the light one, so the ring keeps its contrast
+     over a pale sprite as well as a dark tile. */
+  box-shadow: 0 0 0 2px var(--quest-item-edge), inset 0 0 0 2px var(--quest-item-edge);
+  z-index: 5;
+  pointer-events: none;
+  /* Nothing else on the grid moves, which is what makes this readable at a
+     glance in a wall of static sprite art. */
+  animation: lc-objective-pulse 1.8s ease-in-out infinite;
+}
+@keyframes lc-objective-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The double stroke alone still carries it — only the motion is dropped. */
+  .lc-db .quest-cell.objective::after { animation: none; }
+}
+/* Where the player is standing, as detected from the dungeon page's narration
+   and walls (see src/utils/dungeonPosition.ts).
+   Drawn as ::before for the same reasons the objective ring is drawn as ::after
+   — a sprite fills ~88% of the tile and would paint over an inset shadow, and
+   giving `.quest-cell` a z-index would make it a stacking context and let a
+   neighbour's background clip the shared wall edge. The two rings coexist on a
+   tile that is both, inset differently so neither hides the other. */
+.lc-db .quest-cell.here::before,
+.lc-db .quest-cell.maybe-here::before {
+  content: '';
+  position: absolute;
+  /* Inset past the wall edges, exactly as the objective ring is, so the marker
+     never hides the walls of the cell it marks — on the tile the player is
+     standing on, which way they can go is the whole point. */
+  inset: 3px;
+  border: 3px solid var(--quest-here-ring);
+  /* Dark stroke outside the bright one, so the ring holds its contrast over a
+     pale sprite as well as a dark tile. */
+  box-shadow: inset 0 0 0 2px var(--quest-item-edge);
+  /* Above the objective ring (5): if a cell is both, where the player *is* is
+     the more urgent fact. Below the badges (6) so the pin stays readable. */
+  z-index: 5;
+  pointer-events: none;
+}
+/* One of several candidates the narration could not separate. Dashed and dimmed
+   so it reads as "possibly", and unanimated so it never competes with a
+   confident position for attention. */
+.lc-db .quest-cell.maybe-here::before {
+  border-style: dashed;
+  border-color: var(--quest-here-dim);
+  box-shadow: none;
+}
+/* A confident position is steady, not pulsing: it is redrawn on every step the
+   game reloads for, and the ring and the pin badge carry it on their own. */
+.lc-db .quest-badge.here { background: var(--quest-here-ring); color: var(--quest-void); }
+/* A cell whose work is done. Dimming is applied to the *contents* rather than
+   the cell, on purpose: `opacity` on `.quest-cell` would take its walls with
+   it, and the walls are exactly what still matters on a tile you have already
+   emptied. The position marker (a ::before on the cell) and its badge stay at
+   full strength — standing on a cleared tile is the common case. */
+/* `:not(.void)` on every one of these, and not merely for tidiness: the two
+   rules have equal specificity and `.cleared` is declared later, so on a tile
+   that is both it would win — painting outside-the-maze canvas as finished work,
+   which is the one thing the palette must never blur. QuestGrid also refuses to
+   add the class there; this is the half that cannot be bypassed by a mark an
+   older build stored. */
+.lc-db .quest-cell.cleared:not(.void) { background: var(--quest-cleared-bg); }
+.lc-db .quest-cell.cleared:not(.void) .quest-sprite,
+.lc-db .quest-cell.cleared:not(.void) .quest-big-icon,
+.lc-db .quest-cell.cleared:not(.void) .quest-badge:not(.here):not(.cleared) {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+.lc-db .quest-badge.cleared { background: var(--quest-cleared-bg); color: var(--muted); }
+.lc-db .quest-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
+/* A cell picked from the key legend: the rest of the maze greys out for a
+   moment so the one tile can be found on a large grid. The *contents* fade,
+   never the cell — the same reason `.cleared` dims its contents: a filter or
+   opacity on `.quest-cell` makes it a stacking context, and a neighbour's
+   background would then paint over the wall edge the two share. Walls stay,
+   so the route to the key still reads. */
+.lc-db .quest-cell :is(.quest-sprite, .quest-big-icon, .quest-badges) {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit) :is(.quest-sprite, .quest-big-icon, .quest-badges),
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit)::before,
+.lc-db .quest-grid.spotlight-active .quest-cell:not(.spotlit)::after {
+  opacity: 0.15;
+  filter: grayscale(1);
+}
+.lc-db .quest-cell.spotlit {
+  outline: 3px solid var(--accent); outline-offset: -3px; z-index: 3;
+  animation: lc-spotlight-pulse 0.6s ease-in-out 3;
+}
+@keyframes lc-spotlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 14px 4px var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The greyed-out surroundings and the outline carry it without motion. */
+  .lc-db .quest-cell.spotlit { animation: none; }
+  .lc-db .quest-cell :is(.quest-sprite, .quest-big-icon, .quest-badges) { transition: none; }
+}
+/* --hit is set inline per cell from the hovered door's lock colour
+   (QuestGrid); --quest-key-glow is the fallback if that is ever absent. */
+.lc-db .quest-cell.key-hit { box-shadow: inset 0 0 0 3px var(--hit, var(--quest-key-glow)); z-index: 3; }
+.lc-db .quest-sprite {
+  position: absolute; inset: 0; margin: auto;
+  max-width: 88%; max-height: 88%;
+}
+.lc-db .quest-edge { position: absolute; z-index: 4; }
+.lc-db .quest-edge.N { top: -2px; left: 0; right: 0; height: 4px; }
+.lc-db .quest-edge.S { bottom: -2px; left: 0; right: 0; height: 4px; }
+.lc-db .quest-edge.W { left: -2px; top: 0; bottom: 0; width: 4px; }
+.lc-db .quest-edge.E { right: -2px; top: 0; bottom: 0; width: 4px; }
+/* One half of a side the two cells draw differently (see `splitEdges`): moved
+   off the shared line into its own cell, with a gap to the line, so a door seen
+   from one side only reads as belonging to that side, and two different doors
+   on one line show as two bars. */
+/* Shortened as well as inset: a full-length bar a few pixels off the line
+   still reads as the grid line itself. */
+.lc-db .quest-edge.split.N { top: 5px; left: 12%; right: 12%; }
+.lc-db .quest-edge.split.S { bottom: 5px; left: 12%; right: 12%; }
+.lc-db .quest-edge.split.W { left: 5px; top: 12%; bottom: 12%; }
+.lc-db .quest-edge.split.E { right: 5px; top: 12%; bottom: 12%; }
+.lc-db .quest-edge.wall { background: var(--quest-wall); }
+.lc-db .quest-edge.szel { background: var(--quest-szel); }
+.lc-db .quest-edge.door { cursor: help; }
+.lc-db .quest-edge.door:focus { outline: 2px solid var(--accent); }
+.lc-db .quest-edge.lock-vas { background: var(--lock-vas); }
+.lc-db .quest-edge.lock-rez { background: var(--lock-rez); }
+.lc-db .quest-edge.lock-bronz { background: var(--lock-bronz); }
+.lc-db .quest-edge.lock-ezust { background: var(--lock-ezust); }
+.lc-db .quest-edge.lock-arany { background: var(--lock-arany); }
+.lc-db .quest-edge.lock-platina { background: var(--lock-platina); }
+.lc-db .quest-edge.lock-tolvaj { background: var(--lock-tolvaj); }
+.lc-db .quest-edge.lock-cso { background: var(--lock-cso); }
+.lc-db .quest-edge.lock-varazs { background: var(--lock-varazs); }
+/* Trap and question cells: one big centred icon instead of a small corner
+   badge (owner feedback — those badges were too easy to miss). font-size is
+   set inline per cell from `tileSize` (QuestGrid.tsx), not here: a CSS
+   container-query unit would need `container-type` on `.quest-cell`, which
+   creates a stacking context per cell and would scope `.quest-edge`'s
+   z-index inside it — the shared wall lines straddling two cells rely on
+   `.quest-cell` staying `position: relative` with no stacking context of
+   its own so the later cell's background doesn't paint over the earlier
+   cell's edge. */
+.lc-db .quest-big-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 70%;
+  height: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background: var(--quest-badge-bg);
+  border-radius: 50%;
+  z-index: 6;
+  /* auto, not none: the icon carries its own `title` (e.g. "csapda"), which
+     needs hit-testing to show on hover — with `none` the hover fell through
+     to the cell underneath and showed its coordinate label instead. This
+     does not break the cell's own onClick: there is no stopPropagation here,
+     so a click on the icon still bubbles up to `.quest-cell`. */
+  pointer-events: auto;
+}
+.lc-db .quest-badges {
+  position: absolute; top: 1px; left: 1px; right: 1px;
+  display: flex; flex-wrap: wrap; gap: 1px; z-index: 5;
+  font-size: 10px; line-height: 1;
+  /* auto, not none — same reasoning as .quest-big-icon above: each badge's
+     own `title` needs hit-testing to be reachable by hover. */
+  pointer-events: auto;
+}
+.lc-db .quest-badge {
+  background: var(--quest-badge-bg); border-radius: 2px; padding: 1px;
+}
+/* The objective's centred glyph gets the same light-over-dark edge as its
+   ring, so the two read as one marker rather than two coincident ones.
+   Half the disc of a trap or question: the ring already carries the tile, so
+   the glyph only has to name it — at full size it buried the sprite. */
+.lc-db .quest-big-icon.objective {
+  width: 35%;
+  height: 35%;
+  box-shadow: 0 0 0 2px var(--quest-item-ring), 0 0 0 3px var(--quest-item-edge);
+}
+/* The key glyph is an emoji and ignores `color`, so its lock association is
+   carried by the border instead. */
+.lc-db .quest-badge.key { border: 2px solid transparent; }
+.lc-db .quest-badge.key.lock-vas { border-color: var(--lock-vas); }
+.lc-db .quest-badge.key.lock-rez { border-color: var(--lock-rez); }
+.lc-db .quest-badge.key.lock-bronz { border-color: var(--lock-bronz); }
+.lc-db .quest-badge.key.lock-ezust { border-color: var(--lock-ezust); }
+.lc-db .quest-badge.key.lock-arany { border-color: var(--lock-arany); }
+.lc-db .quest-badge.key.lock-platina { border-color: var(--lock-platina); }
+.lc-db .quest-badge.key.lock-tolvaj { border-color: var(--lock-tolvaj); }
+.lc-db .quest-badge.key.lock-cso { border-color: var(--lock-cso); }
+.lc-db .quest-badge.key.lock-varazs { border-color: var(--lock-varazs); }
+.lc-db .quest-legend h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
+/* Colour set explicitly: a button never inherits it (quirks-mode notes above),
+   and this one renders inside the in-game overlay too. */
+.lc-db .quest-door-toggle {
+  display: grid; place-items: center; padding: 1px; flex: none;
+  background: none; border: none; border-radius: 3px;
+  color: var(--accent); cursor: pointer;
+}
+.lc-db .quest-door-toggle[aria-pressed="false"] { color: var(--muted); }
+.lc-db .quest-door-toggle:hover { background: var(--accent-dim); }
+.lc-db .quest-door-toggle:focus-visible { outline: 2px solid var(--accent); }
+.lc-db .quest-legend-row.doors-hidden .quest-lock-name { color: var(--muted); }
+.lc-db .quest-legend-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 4px; border-radius: 3px; font-size: 12px;
+}
+.lc-db .quest-legend-row.active { background: var(--accent-dim); }
+.lc-db .quest-lock-swatch {
+  width: 10px; height: 10px; border-radius: 2px;
+  border: 1px solid var(--swatch-border); flex: none;
+}
+.lc-db .quest-lock-swatch.lock-vas { background: var(--lock-vas); }
+.lc-db .quest-lock-swatch.lock-rez { background: var(--lock-rez); }
+.lc-db .quest-lock-swatch.lock-bronz { background: var(--lock-bronz); }
+.lc-db .quest-lock-swatch.lock-ezust { background: var(--lock-ezust); }
+.lc-db .quest-lock-swatch.lock-arany { background: var(--lock-arany); }
+.lc-db .quest-lock-swatch.lock-platina { background: var(--lock-platina); }
+.lc-db .quest-lock-swatch.lock-tolvaj { background: var(--lock-tolvaj); }
+.lc-db .quest-lock-swatch.lock-cso { background: var(--lock-cso); }
+.lc-db .quest-lock-swatch.lock-varazs { background: var(--lock-varazs); }
+.lc-db .quest-lock-swatch.szel { background: var(--quest-szel); }
+.lc-db .quest-lock-missing { color: var(--muted); font-style: italic; }
+.lc-db .quest-szel-note {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted); margin: 6px 0 0;
+}
+.lc-db .quest-lock-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline; font-size: 12px;
+}
+
+/* Question card (Q&A) — one choice point with colour-coded outcomes */
+.lc-db .quest-question {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px; margin: 8px 0; background: var(--cell-detail-bg);
+}
+.lc-db .quest-question-prompt { font-weight: bold; color: var(--accent); margin-bottom: 6px; }
+.lc-db .quest-choices { list-style: none; margin: 0; padding: 0; }
+.lc-db .quest-choice {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 3px 0; border-top: 1px solid var(--row-border); font-size: 12px;
+}
+.lc-db .quest-choice:first-child { border-top: none; }
+.lc-db .quest-choice-index {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--panel-2); color: var(--muted);
+  text-align: center; font-size: 10px; line-height: 16px;
+}
+.lc-db .quest-choice-text { flex: 1; }
+.lc-db .quest-outcome { flex: none; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+.lc-db .quest-outcome.good { color: var(--good); background: var(--accent-dim); }
+.lc-db .quest-outcome.bad { color: var(--bad); }
+.lc-db .quest-outcome.fatal { color: var(--text); background: var(--bad); }
+.lc-db .quest-outcome.neutral { color: var(--muted); }
+
+/* Cell detail panel — everything about the selected maze cell */
+.lc-db .quest-detail { padding: 10px; color: var(--text); }
+.lc-db .quest-detail h3 { font-size: 13px; margin: 0 0 6px; color: var(--accent); }
+.lc-db .quest-clear-toggle,
+.lc-db .quest-here-toggle {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.lc-db .quest-clear-toggle.active { color: var(--muted); }
+.lc-db .quest-here-toggle.active { color: var(--muted); cursor: default; }
+.lc-db .quest-detail-monster { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.lc-db .quest-detail-sprite { width: 40px; height: 46px; object-fit: contain; }
+.lc-db .quest-monster-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline; font-size: 13px;
+}
+.lc-db .quest-markers { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.lc-db .quest-detail-key, .lc-db .quest-detail-doors { font-size: 12px; margin-bottom: 6px; }
+.lc-db .quest-narration { white-space: pre-line; font-size: 12px; margin: 6px 0; }
+.lc-db .quest-drops { font-size: 12px; color: var(--good); }
+.lc-db .quest-detail .placeholder,
+.lc-db .quest-legend .placeholder { color: var(--muted); font-style: italic; }
+
+.lc-db .quest-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Royal/tavern set toggle, above the chip strip. Same spacing as the strip
+   below it; buttons get the same treatment as an active chip when selected. */
+.lc-db .quest-sets {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px 8px 0; border-bottom: 1px solid var(--border);
+}
+.lc-db .quest-set-btn {
+  padding: 3px 10px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); font-size: 12px; cursor: pointer;
+}
+.lc-db .quest-set-btn:hover { background: var(--panel); }
+.lc-db .quest-set-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+/* Surfaces a rejected changeSet fetch — the switcher stays reachable (it's
+   rendered above the loading/empty states now) so this is the only feedback
+   the user gets that their click did not land. */
+.lc-db .quest-set-error { margin: 4px 8px 0; font-size: 11px; color: var(--bad); }
+/* Number strip — replaces the old left-hand picker column so the maze gets
+   the horizontal space instead. Quests are identified by number only; the
+   description moves to a `title` tooltip and stays visible in the header. */
+.lc-db .quest-strip {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px; border-bottom: 1px solid var(--border);
+}
+.lc-db .quest-chip {
+  min-width: 26px; padding: 3px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); font-size: 12px; cursor: pointer;
+}
+.lc-db .quest-chip:hover { background: var(--panel); }
+.lc-db .quest-chip.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.lc-db .quest-layout { display: flex; flex: 1; min-height: 0; }
+.lc-db .quest-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lc-db .quest-header { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.lc-db .quest-header h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
+.lc-db .quest-description { margin: 0 0 4px; font-size: 12px; }
+/* The collapse is a narrow-viewport affair: at full width there is room for
+   the brief, the reward and the stats, so the control is absent and the
+   `details-collapsed` state the component always carries has nothing to act
+   on. */
+.lc-db .quest-details-toggle { display: none; }
+.lc-db .quest-reward { margin: 0 0 4px; font-size: 12px; color: var(--good); }
+.lc-db .quest-stats { color: var(--muted); font-size: 11px; }
+.lc-db .quest-cleared-count { display: flex; align-items: center; gap: 8px; }
+.lc-db .quest-cleared-reset {
+  padding: 2px 6px;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.lc-db .quest-zoom { margin-top: 6px; }
+.lc-db .quest-grid-wrap { flex: 1; overflow: auto; }
+.lc-db .quest-side {
+  width: 280px; flex: none; overflow: auto;
+  border-left: 1px solid var(--border); padding: 8px;
+}
+
+/* Narrow viewports — mobile and the docked in-game overlay. */
+@media (max-width: 900px) {
+  .lc-db .quest-layout { flex-direction: column; }
+  /* One scroll, not two: stacked under the maze, the cell detail and the key
+     legend flow into the page's own scroll. Capping the height here made this
+     a nested scroller inside that one — the maze itself is not (it grows to
+     its content and only scrolls sideways), so the panel was the odd one out. */
+  .lc-db .quest-side {
+    width: auto; overflow: visible;
+    border-right: none; border-left: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* The brief, the reward and the stats fold away here, so the maze is on
+     screen without scrolling. Colour is set explicitly: a button never
+     inherits it (see the quirks-mode notes above), and this one renders inside
+     the in-game overlay too. */
+  .lc-db .quest-details-toggle {
+    display: flex; align-items: center; gap: 5px;
+    margin: 0 0 4px; padding: 0;
+    background: none; border: none;
+    font: inherit; font-size: 12px; color: var(--muted);
+    cursor: pointer;
+  }
+  .lc-db .quest-details-toggle:hover { color: var(--accent); }
+  .lc-db .quest-details-caret { transition: transform 0.15s ease; }
+  .lc-db .quest-details-toggle[aria-expanded="true"] .quest-details-caret { transform: rotate(90deg); }
+  .lc-db .quest-header.details-collapsed .quest-details { display: none; }
+}
+
+/* Must follow the block above, not join the earlier reduced-motion one: the
+   rules carry equal specificity, so source order is what settles them. */
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .lc-db .quest-details-caret { transition: none; }
+}
+
+/* ===== In-game DB overlay =====
+   Full-screen overlay hosting the ported DatabaseApp over the live game.
+   `.lc-db` (mounted inside) already carries its own theme via the rules
+   above, so this only needs the overlay chrome itself. */
+.lc-db-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  overflow: auto;
+}
+
+/* Minimised: docked into the empty space beside the game rather than covering
+   the page, so the game stays visible and playable. --lc-game-right is the
+   game's measured right edge (791px on the live layout), written at boot by
+   src/desktop/boot.ts; the fallback keeps this sane if it is ever absent. */
+.lc-db-overlay--minimized {
+  left: var(--lc-game-right, 791px);
+  /* Explicit rather than relying on the base rule's `inset: 0`, so the panel
+     provably stretches to the viewport edge and fills the space instead of
+     shrink-wrapping its content. */
+  right: 0;
+  width: auto;
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 16px var(--dock-shadow);
+}
+
+/* In a panel the database's own "Larkinor adatbázis" heading is redundant — the
+   panel's header bar already names it — and dropping it gives the tab row the
+   full width, which matters most when docked beside the game. Standalone, where
+   there is no panel header, the heading stays. */
+.lc-db-overlay .lc-db header.top h1 { display: none; }
+
+/* The five tabs need ~412px and the docked panel is often narrower, which left
+   the last two unreachable. The mobile breakpoint already solves this, but it
+   keys on viewport width — useless for a narrow panel inside a wide window — so
+   the same treatment is repeated for the docked case. */
+.lc-db-overlay--minimized .lc-db .tabs {
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.lc-db-overlay--minimized .lc-db .tab { flex-shrink: 0; }
+
+/* Panel header bar. The window controls live here rather than floating in the
+   corner as position: fixed, which painted over whatever the panel put in its
+   top-right — the market's second column header, for one — and over any panel
+   nested inside this one. */
+.lc-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.lc-panel-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+.lc-panel-controls { display: flex; gap: 6px; flex-shrink: 0; }
+
+.lc-db-overlay-minimize {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lc-db-overlay-minimize:hover,
+.lc-db-overlay-minimize:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.lc-db-overlay-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lc-db-overlay-close:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.lc-db-overlay-body {
+  min-height: 100%;
+}
+
+/* ================================================================
+   Responsive — mobile layout for the DB explorer + map.
+   Ported from lc-database/explorer.html (@media 768px / 400px), scoped
+   under .lc-db so it applies to both the standalone page and the in-game
+   overlay. (legacy `table.grid` → this build's `table.map-grid`.)
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Header, tabs and filters stack; tabs scroll horizontally. */
+  .lc-db header.top { padding: 8px 10px; gap: 6px; }
+  .lc-db header.top h1 { width: 100%; font-size: 15px; margin-bottom: 2px; }
+  .lc-db .tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 2px; }
+  .lc-db .tab { padding: 8px 14px; font-size: 13px; flex-shrink: 0; }
+  .lc-db .counts { padding: 6px 10px; font-size: 11px; }
+
+  .lc-db .filters { padding: 8px 10px; gap: 6px; }
+  .lc-db .field { flex: 1 1 auto; min-width: 0; }
+  .lc-db .field input, .lc-db .field select { width: 100%; min-width: 0; padding: 7px 8px; font-size: 14px; }
+  .lc-db .field.search { flex-basis: 100%; }
+  .lc-db .field.search input { width: 100%; }
+  .lc-db .field.range { flex-wrap: wrap; align-items: stretch; }
+  .lc-db .field.range label { flex-basis: 100%; }
+  .lc-db .field.range input { flex: 1 1 0; width: auto; }
+  .lc-db .filters .clear { width: 100%; padding: 8px 12px; font-size: 13px; }
+
+  /* Explorer: stack — table gets its own scroll area, detail covers as a
+     full-screen overlay (matches the legacy mobile behaviour). */
+  .lc-db .db-view .layout { display: block; flex: none; }
+  .lc-db .table-wrap { height: calc(100vh - 210px); height: calc(100dvh - 210px); }
+  .lc-db .db-view td, .lc-db .db-view th { padding: 8px 10px; }
+  .lc-db aside.db-detail { position: fixed; inset: 0; width: 100%; height: 100%; border-left: 0; padding: 16px; z-index: 50; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* Inside the in-game overlay, the full-screen detail must sit ABOVE the
+     overlay's own close button (z-index 10000) so the ✕ on top closes the
+     detail first — not the whole DB viewer. */
+  .lc-db-overlay .lc-db aside.db-detail { z-index: 10001; }
+  .lc-db .db-view.has-selection .table-wrap { display: none; }
+  .lc-db aside.db-detail .close-detail { top: 14px; right: 14px; width: 36px; height: 36px; line-height: 32px; font-size: 22px; }
+  .lc-db aside.db-detail h2 { font-size: 17px; padding-right: 44px; }
+  .lc-db aside.db-detail .stats { grid-template-columns: 110px 1fr; }
+
+  /* Map: single column (side panel below the grid), smaller cells. */
+  .lc-db .map-view { padding: 12px; }
+  .lc-db .map-view .map-layout { grid-template-columns: 1fr; gap: 14px; }
+  .lc-db .map-view .map-wrap { padding: 8px; }
+  .lc-db .map-view td.cell { width: 40px; height: 50px; }
+  .lc-db .map-view table.map-grid { border-spacing: 1px; }
+  .lc-db .map-view table.map-grid th { min-width: 40px; font-size: 9px; padding-bottom: 2px; }
+  .lc-db .map-view table.map-grid th.rh { min-width: 18px; padding-right: 3px; font-size: 9px; }
+  .lc-db .map-view td.cell .inner { padding: 4px 2px 2px; }
+  .lc-db .map-view .label { font-size: 8px; line-height: 1; }
+  .lc-db .map-view .row-id { font-size: 7px; }
+  .lc-db .map-view .poi { width: 14px; height: 14px; font-size: 10px; }
+  .lc-db .map-view aside.legend h2 { font-size: 12px; margin: 10px 0 6px; }
+  .lc-db .map-view aside.legend li { font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .lc-db .map-view td.cell { width: 32px; height: 40px; }
+  .lc-db .map-view table.map-grid th { min-width: 32px; }
+  .lc-db .map-view .label, .lc-db .map-view .row-id { display: none; }
+  .lc-db .map-view td.cell .inner { padding: 2px; justify-content: center; }
+  .lc-db .map-view .poi { width: 12px; height: 12px; font-size: 9px; }
+}
+
+/* ================================================================
+   Home / inventory page (Otthon)
+   ================================================================ */
+.lc-cap { padding: 0 12px 8px; }
+.lc-cap-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; margin-bottom: 5px; }
+.lc-cap-label { color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-size: 10.5px; }
+.lc-cap-icon { color: var(--accent); margin-right: 6px; }
+.lc-cap-val { font-variant-numeric: tabular-nums; }
+.lc-cap-val b { color: var(--text); }
+.lc-cap-track { height: 8px; border-radius: 5px; background: var(--bg); overflow: hidden; border: 1px solid var(--row-border); }
+.lc-cap-fill { height: 100%; border-radius: 5px; transition: width .3s ease; }
+.lc-cap-fill--ok { background: linear-gradient(90deg, var(--good), var(--accent)); }
+.lc-cap-fill--warn { background: var(--accent); }
+.lc-cap-fill--crit { background: var(--bad); }
+
+/* Tabs */
+/* Split layout — both containers at once, for the desktop docked panel.
+   The base .lc-page caps at 600px and centres, which is right for a phone and
+   strangles two columns in a 700px panel. */
+.lc-page--wide { max-width: none; padding: 10px; gap: 10px; }
+
+/* container-type here rather than on .lc-page so the query measures the panel
+   this is rendered into. A viewport media query would be the wrong tool: the
+   panel can be narrow inside a wide window, which is exactly how the database
+   tab row ended up clipped. */
+.lc-home-split-host { container-type: inline-size; }
+
+.lc-home-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Too narrow for two columns: stack rather than hide one, so both containers
+   stay reachable without a tab. */
+@container (max-width: 560px) {
+  .lc-home-split { grid-template-columns: 1fr; }
+}
+
+.lc-home-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.lc-home-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lc-home-col-head h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+/* Market panel — offerable backpack items and standing offers. Shares the split
+   layout above, since the task is the same shape: move things between two
+   lists. */
+/* A size container, so a row reacts to its own column's width rather than the
+   window's: the panel is half the width when docked beside the game, and the
+   viewport says nothing about that. */
+.lc-mkt-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; container-type: inline-size; }
+
+.lc-mkt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px 74px auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--row-border);
+}
+.lc-mkt-row:last-child { border-bottom: 0; }
+
+/* Docked beside the game a column is only ~290px: name, both fields and the
+   button do not fit on one line, and the name would be squeezed to nothing.
+   The name and its details take the first line, the fields and the button the
+   second — the same three columns, one row lower, placed by grid flow. */
+@container (max-width: 420px) {
+  .lc-mkt-row { grid-template-columns: 58px 74px auto; }
+  .lc-mkt-cell { grid-column: 1 / -1; }
+}
+
+/* Fields and buttons share a bottom edge. A field is taller than a button — it
+   carries its own caption above the input — so centring them in the row left the
+   button's bottom sitting above the input's. */
+.lc-mkt-field, .lc-mkt-offer-btn, .lc-mkt-revoke-btn { align-self: end; }
+
+/* A disabled field reads as inert rather than merely grey. */
+.lc-mkt-field input:disabled { color: var(--muted); cursor: default; opacity: 1; }
+
+.lc-mkt-cell { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* One line: name, then its badges. The name is what shrinks (and ellipsises) when
+   the line runs short — the badges are short and fixed. A narrow column is
+   handled by moving the fields off this row entirely, see the container query
+   below, not by wrapping this line. */
+.lc-mkt-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.lc-mkt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+
+/* Item names open the item's database entry, the same affordance the inventory
+   rows have. Styled here rather than by reusing .lc-inv-name, whose 15px would
+   win on source order and break this row's sizing. */
+.lc-mkt-name--link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  border-bottom: 1px dotted var(--accent-dim);
+  cursor: pointer;
+}
+.lc-mkt-name--link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* What the market pays, as printed in the game's own item list. */
+.lc-mkt-pct {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+/* The market quotes no rate for this item, so the row's own rate has nothing to
+   be judged against — muted so it does not read like a comparable figure. */
+.lc-mkt-pct--unquoted { color: var(--muted); border-color: var(--border); }
+
+/* Already on offer in the other column. Muted rather than accented: it is a note
+   about the offers list, not a figure to price against. */
+.lc-mkt-offered {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+/* Search, sort key and direction on one line, per column. */
+.lc-mkt-toolbar { display: flex; align-items: stretch; gap: 6px; }
+.lc-mkt-toolbar .lc-inv-sort, .lc-mkt-toolbar .lc-inv-dir { flex-shrink: 0; font-size: 12px; padding: 4px 6px; }
+
+/* The search boxes are inputs in their own right, not the inventory's <label>
+   wrapper — .lc-inv-search keeps its text colour on the input inside it, so
+   borrowing that class here left the text at the browser default (black), a form
+   control inheriting no colour. */
+.lc-mkt-search {
+  min-width: 0;
+  flex: 1;
+  padding: 5px 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.lc-mkt-search:focus { outline: none; border-color: var(--accent); }
+
+.lc-mkt-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-mkt-total { color: var(--good); }
+
+.lc-mkt-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lc-mkt-field span { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.lc-mkt-field input {
+  width: 100%;
+  padding: 4px 5px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.lc-mkt-field input:focus { outline: none; border-color: var(--accent); }
+
+.lc-mkt-offer-btn,
+.lc-mkt-revoke-btn {
+  padding: 5px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-mkt-offer-btn:hover:not(:disabled),
+.lc-mkt-revoke-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+.lc-mkt-offer-btn:disabled { color: var(--muted); cursor: not-allowed; }
+.lc-mkt-revoke-btn { border-color: var(--bad); color: var(--bad); }
+
+.lc-mkt-empty { margin: 0; padding: 10px 8px; font-size: 12px; color: var(--muted); }
+
+/* A column of the market: its toolbar and its list. Its own element so the two
+   platforms can place it differently — a split column on the desktop panel, a
+   whole tab on the phone — without either repeating the spacing. */
+.lc-mkt-column { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* Vétel — the buy side. Two halves: find an item, then buy from the offers the
+   game sent back for it. */
+.lc-mkt-buy { display: flex; flex-direction: column; gap: 12px; padding: 10px 0 0; }
+.lc-mkt-buy-find, .lc-mkt-buy-offers { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.lc-mkt-buy-search {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.lc-mkt-buy-search:focus { outline: none; border-color: var(--accent); }
+
+/* The matches. Capped in the component, so this list stays short by
+   construction and needs no scroller of its own. */
+.lc-mkt-cat-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.lc-mkt-cat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--row-border);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-mkt-cat-row:last-child { border-bottom: 0; }
+.lc-mkt-cat-row:hover { background: var(--panel-2); }
+.lc-mkt-more { margin: 0; font-size: 11px; color: var(--muted); }
+
+.lc-mkt-buy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lc-mkt-buy-head h3 { flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+.lc-mkt-buy-btn {
+  align-self: end;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+.lc-mkt-buy-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+/* A total the player cannot cover. Marked rather than blocked: the money is
+   parsed off the page, and a bad parse must not stop a trade the game allows. */
+.lc-mkt-total--short { color: var(--bad); }
+
+/* The market's own buttons (leave, collect earnings, character page, and
+   whatever specTevUrlap offers). A slim wrapping row by default: in the docked
+   panel these sit above both tabs, where a grid of full-width buttons would eat
+   the height the lists need. */
+.lc-mkt-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+/* On the phone they are a tab to themselves, with the room to be the same
+   two-column grid of tap targets as the home page's actions. */
+.lc-mkt-body .lc-mkt-actions { display: grid; grid-template-columns: 1fr 1fr; }
+.lc-mkt-act-icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: 7px; }
+
+/* Money and load, above the tabs on the phone: both apply to every tab, and a
+   purchase is decided against them. */
+.lc-mkt-stats { display: flex; align-items: center; gap: 12px; padding: 8px 10px; }
+/* The phone page's tab body. The rows come from the desktop panel, which
+   supplies its own padding; on a phone the page has none, so without this the
+   lists run to both screen edges. */
+.lc-mkt-body { padding: 10px 10px 16px; }
+.lc-mkt-stats .lc-cap { flex: 1; min-width: 0; }
+.lc-mkt-gold { font-size: 14px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Uncollected earnings. Rendered as a button because it collects on tap, and
+   coloured as a gain rather than as an accent — it is money waiting, not a
+   figure to read past. */
+.lc-mkt-earnings {
+  background: var(--panel);
+  border: 1px solid var(--good);
+  border-radius: 9px;
+  color: var(--good);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+.lc-mkt-earnings:hover { background: var(--panel-2); }
+/* The same badge with no control behind it — nothing to press, so nothing that
+   looks pressable. */
+.lc-mkt-earnings--static { cursor: default; }
+
+/* --- Shops (Vegyesbolt, Fegyverbolt, Templom) ------------------------------
+   The market's row, one field fewer: name and figures, quantity, button. A sell
+   row leads with the bulk-sale tick box, or an empty cell holding its column. */
+.lc-shop-row { grid-template-columns: minmax(0, 1fr) 58px auto; }
+.lc-shop-row--sell { grid-template-columns: 22px minmax(0, 1fr) 58px auto; }
+.lc-shop-row--picked { background: var(--accent-dim); }
+/* An item this shop will not buy: still listed, so the backpack reads whole, but
+   dimmed — its quantity and button are disabled too. */
+.lc-shop-row--inactive .lc-mkt-cell { opacity: 0.45; }
+@container (max-width: 420px) {
+  .lc-shop-row { grid-template-columns: 1fr auto; }
+  .lc-shop-row--sell { grid-template-columns: 22px 1fr auto; }
+  .lc-shop-row .lc-mkt-cell { grid-column: 1 / -1; }
+  .lc-shop-row--sell .lc-mkt-cell { grid-column: 2 / -1; }
+  .lc-shop-row--sell .lc-mkt-field { grid-column: 2; }
+}
+.lc-shop-pick { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.lc-shop-pick--none { cursor: default; }
+/* What the market would pay — the figure that says "not to the shop". */
+.lc-shop-market { color: var(--accent); }
+.lc-shop-title { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* The bulk-sale bar, pinned to the bottom of the scrolling list so the running
+   total stays in view while rows are ticked. */
+.lc-shop-bulk {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.lc-shop-bulk-sum { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lc-shop-bulk-all {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+.lc-shop-bulk-all:disabled { color: var(--muted); cursor: not-allowed; }
+/* Armed: the next press sells every ticked stack. */
+.lc-shop-bulk-sell--armed { border-color: var(--bad); color: var(--bad); }
+
+.lc-shop-ailments { padding: 10px 12px; margin-bottom: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; }
+.lc-shop-ailments h3 { margin: 0 0 4px; font-size: 13px; color: var(--accent); }
+.lc-shop-ailments p { margin: 0; font-size: 13px; white-space: pre-line; }
+
+/* --- Bank, arena, palace quest room ----------------------------------------- */
+.lc-bld-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 10px 10px 0; }
+.lc-bld-figures--inline { padding: 0; }
+.lc-bld-figure { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; }
+.lc-bld-figure span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.lc-bld-figure b { font-size: 15px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.lc-bld-amount { display: flex; align-items: flex-end; gap: 8px; padding: 6px 0; }
+.lc-bld-amount .lc-mkt-field { flex: 1; }
+.lc-bld-section { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); }
+.lc-bld-section h3 { margin: 0; font-size: 14px; color: var(--accent); }
+.lc-bld-text { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text); }
+.lc-bld-reward { margin: 0; font-size: 13px; color: var(--good); }
+.lc-bld-reward b { color: var(--text); }
+.lc-mkt-revoke-btn:disabled { color: var(--muted); border-color: var(--border); cursor: not-allowed; }
+
+/* --- Character page ----------------------------------------------------------- */
+.lc-char-slot { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--row-border); }
+.lc-char-slot:last-child { border-bottom: 0; }
+.lc-char-slot-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.lc-char-pairs { display: flex; flex-direction: column; gap: 4px; }
+.lc-char-pairs > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.lc-char-pairs span { color: var(--muted); }
+.lc-char-pairs b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+/* A curse: the game's own icon carries its meaning, so it leads the name. */
+.lc-char-curse span { display: flex; align-items: center; gap: 6px; }
+.lc-char-curse img { width: 20px; height: 20px; flex: none; }
+/* A backpack item's slot buttons, under its figures. */
+.lc-char-equip { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.lc-char-attrs { display: flex; flex-direction: column; gap: 6px; }
+.lc-char-attr { display: grid; grid-template-columns: minmax(0, 1fr) 44px auto; align-items: center; gap: 8px; font-size: 13.5px; }
+.lc-char-attr b { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+.lc-char-steps { display: flex; gap: 4px; }
+/* A slot's replacements: collapsed behind one button, so five slots of
+   candidates do not bury the rest of the overview. */
+.lc-char-swap { align-self: flex-start; margin-top: 4px; }
+.lc-char-none { font-size: 11px; color: var(--muted); }
+.lc-char-candidate { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 0 0 8px; border-left: 2px solid var(--accent-dim); }
+/* Name and button side by side even in a narrow column, where the market's
+   container rule would otherwise stretch the name across the whole row. */
+.lc-char-candidate .lc-mkt-cell { grid-column: auto; }
+.lc-page > .lc-mkt-body .lc-cap { margin-top: 10px; }
+
+.lc-home-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+.lc-home-tab { flex: 1; text-align: center; padding: 9px 4px 10px; font-size: 14.5px; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+.lc-home-tab .lc-home-count { font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 10px; padding: 0 6px; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.lc-home-tab--active { color: var(--accent); border-bottom-color: var(--accent); }
+.lc-home-tab--active .lc-home-count { background: var(--accent-dim); color: var(--accent); }
+
+/* Toolbar */
+.lc-inv-toolbar { display: flex; gap: 8px; padding: 10px 12px; align-items: center; }
+.lc-inv-search { flex: 1; display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; }
+.lc-inv-search input { flex: 1; background: none; border: none; color: var(--text); font-size: 14px; outline: none; }
+.lc-inv-sort, .lc-inv-dir { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 7px 8px; font-size: 13px; cursor: pointer; }
+
+/* Rows */
+.lc-inv-list { display: flex; flex-direction: column; }
+.lc-inv-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--row-border); }
+.lc-inv-name-line { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.lc-inv-name { color: var(--text); font-size: 15px; background: none; border: none; padding: 0; cursor: pointer; border-bottom: 1px dotted var(--accent-dim); }
+.lc-inv-name:hover { color: var(--accent); }
+.lc-inv-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); }
+.lc-inv-meta { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; display: flex; gap: 12px; }
+.lc-inv-meta b { color: var(--text); }
+.lc-inv-move { display: flex; align-items: center; gap: 5px; }
+.lc-inv-qty { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.lc-inv-qty button { background: none; border: none; color: var(--muted); width: 24px; height: 30px; font-size: 16px; cursor: pointer; }
+.lc-inv-qty input { min-width: 3ch; height: 30px; text-align: center; background: none; border: none; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; outline: none; padding: 0 4px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.lc-inv-move-btn { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); border-radius: 7px; height: 32px; padding: 0 10px; cursor: pointer; font-size: 15px; white-space: nowrap; }
+
+/* General tab */
+.lc-home-general { padding: 12px; display: flex; flex-direction: column; gap: 14px; }
+.lc-home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lc-home-act { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; text-align: left; color: var(--text); cursor: pointer; font-size: 13.5px; }
+.lc-home-act--wide { grid-column: 1 / -1; }
+.lc-home-act:hover:not(:disabled) { border-color: var(--accent); background: var(--panel-2); }
+/* A disabled action must read as inert. Without this it was indistinguishable
+   from a working button — and on a phone, where the explanatory title never
+   appears, appearance is all there is to go on. */
+.lc-home-act:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  /* Dimmed as a whole, not merely recoloured: on a phone this is the only signal
+     there is — the explanatory title never appears on a touch screen. */
+  opacity: 0.55;
+  background: none;
+  border-style: dashed;
+}
+.lc-home-trap { display: flex; align-items: center; gap: 9px; font-size: 13.5px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 11px 12px; }
+.lc-home-trap-str { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+/* Pub quest-offer note. Appended after the game's own narration block on the
+   Kocsma page, so it is not inside `.lc-db` and needs its own scope — but for
+   the same quirks-mode reason as everything else here, the button must set
+   `color` explicitly rather than inherit it from a coloured ancestor. */
+.lc-quest-offer { margin: 6px 0 0; }
+.lc-quest-offer-btn {
+  display: inline-block; padding: 4px 12px; border-radius: 3px;
+  border: 1px solid var(--accent); background: var(--accent-dim);
+  color: var(--accent); font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.lc-quest-offer-btn:hover { background: var(--panel-2); }
+
+/* ================================================================
+   Equipment compare card — the hover/long-press diff against the
+   worn set. Rendered inside the live game page as well as our own
+   UI, so: every selector is .lc-* scoped, colours come from the
+   palette variables, and the table sets `color` inline (quirks mode
+   does not inherit it into table cells).
+
+   Values sit in real bordered cells, left-aligned including the
+   numbers: the columns are read across (current vs new), not summed
+   down, so a shared left edge lines the pairs up where an arrow in
+   one right-aligned cell just crowded them together.
+   ================================================================ */
+.lc-cmp {
+  position: fixed;
+  z-index: 10002; /* above the database overlay's own close button (10001) */
+  /* Sized to its content: a two-hand weapon diff is six columns, and a fixed
+     cap would clip it. */
+  width: max-content;
+  max-width: 92vw;
+  overflow-x: auto;
+  padding: 8px 10px 9px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px var(--quest-badge-bg);
+  color: var(--text);
+  font: 12px/1.35 -apple-system, 'Segoe UI', sans-serif;
+  pointer-events: none; /* never swallows the hover it was opened by */
+}
+/* On touch there is no hover to swallow, and a six-column diff can be wider
+   than the screen — so let the card take events and be scrolled. Tapping it
+   counts as inside the trigger, so scrolling does not dismiss it. */
+@media (pointer: coarse) {
+  .lc-cmp { pointer-events: auto; }
+}
+.lc-cmp-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+.lc-cmp table { border-collapse: collapse; }
+.lc-cmp th,
+.lc-cmp td {
+  padding: 3px 8px;
+  text-align: left;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+/* The corner cells above the field names carry no label and no grid. */
+.lc-cmp thead th:empty { border: 0; }
+.lc-cmp-slot {
+  color: var(--text);
+  font-weight: bold;
+  text-align: center;
+}
+.lc-cmp-sub { color: var(--muted); font-weight: normal; }
+.lc-cmp tbody th { color: var(--muted); font-weight: normal; }
+.lc-cmp-cur { color: var(--muted); }
+.lc-cmp-delta { margin-left: 6px; font-weight: bold; }
+.lc-cmp-better,
+.lc-cmp-better .lc-cmp-delta { color: var(--good); }
+.lc-cmp-worse,
+.lc-cmp-worse .lc-cmp-delta { color: var(--bad); }
+.lc-cmp-blocked,
+.lc-cmp-blocked .lc-cmp-delta { color: var(--bad); }
+.lc-cmp-same { color: var(--text); }
+/* Shown, never judged (a weapon's class) — same weight as an unchanged value. */
+.lc-cmp-info { color: var(--text); }
+
+/* ── Crafting (Erőd / Mágustorony halls) ─────────────────────────────────────
+   One panel for both platforms. Inputs and buttons set `color` themselves:
+   the in-game page is quirks mode and form controls never inherit it. */
+.lc-craft { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 0; min-width: 0; }
+.lc-craft-search, .lc-craft-count {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  box-sizing: border-box;
+}
+.lc-craft-search { width: 100%; }
+.lc-craft-count { width: 64px; }
+.lc-craft-search:focus, .lc-craft-count:focus { outline: none; border-color: var(--accent); }
+.lc-craft-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.lc-craft-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--row-border);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-craft-row:last-child { border-bottom: 0; }
+.lc-craft-row:hover { background: var(--panel-2); }
+.lc-craft-row--active { background: var(--accent-dim); }
+/* Listed but dimmed: knowing the recipe of something you cannot make yet is
+   the other half of why you searched for it. */
+.lc-craft-row--none { color: var(--muted); }
+.lc-craft-name { flex: 1; min-width: 0; }
+.lc-craft-kind { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.lc-craft-max { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lc-craft-row--none .lc-craft-max { color: var(--bad); }
+.lc-craft-more, .lc-craft-empty, .lc-craft-meta, .lc-craft-note { margin: 0; font-size: 12px; color: var(--muted); }
+.lc-craft-error { margin: 0; font-size: 12px; color: var(--bad); }
+
+.lc-craft-detail { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); }
+.lc-craft-detail h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+.lc-craft-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.lc-craft-line { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.lc-craft-line--ok { color: var(--good); }
+.lc-craft-line--short { color: var(--bad); }
+.lc-craft-line-qty { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lc-craft-go { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-craft-count-label { font-size: 12px; color: var(--muted); }
+.lc-craft-of { font-size: 12px; color: var(--muted); }
+.lc-craft-btn {
+  margin-left: auto;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+.lc-craft-btn:disabled { cursor: default; color: var(--muted); border-color: var(--border); background: none; }
+
+.lc-hall-side { margin-top: 12px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); }
+.lc-hall-side > summary { padding: 8px 10px; cursor: pointer; color: var(--accent); font-size: 13px; }
+.lc-hall-side-body { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 10px; }
+.lc-hall-side-label { font-size: 12px; color: var(--muted); }
+.lc-hall-side-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+}
+.lc-hall-side-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-hall-side-price { font-size: 13px; color: var(--accent); }
+.lc-manual-item { flex: 1; min-width: 0; }
+.lc-manual-qty { width: 64px; box-sizing: border-box; }
+</style></head>
+<body background="/egyebk/bg.gif">
+
+<div style="position:absolute; width:791; height:60; z-index:2; left: 0; top: 0px; background-image: url(/img/fejlec_60.jpg); border: 0px none #000000">
+<img src="/img/fejlec_60.jpg" usemap="#indexfejlec" border="0">
+<map name="indexfejlec"> 
+  <area shape="rect" coords="706,1,788,60" href="http://www.tempsoftstudios.com/">
+  <area shape="rect" coords="155,1,615,60" href="/">
+  <area shape="rect" coords="0,0,120,38" href="http://index.hu/">
+</map>
+</div>
+<div style="position:absolute; width:138; height:600; z-index:2; left: 653; top: 60px; border: 0px none #000000">
+<center><font size="2"><br>h i r d e t é s</font></center>
+
+
+</div>
+
+
+<div style="position:absolute; width:633; height:600; z-index:0; left: 0; top: -97px;  border: 0px none">
+
+<div style="position:absolute; width:260; height:370; z-index:1; left: 0; top: 168px; background-color: 7C89BC; border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:20; z-index:1; left: 0; top: 168px; background-image: url(/keret/balfel2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:240; height:20; z-index:1; left: 20; top: 168px; background-image: url(/keret/fel3.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:15; height:20; z-index:1; left: 260; top: 168px; background-image: url(/keret/kozfel.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:342; height:20; z-index:1; left: 275; top: 168px; background-image: url(/keret/fel2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:20; z-index:1; left: 607; top: 168px; background-image: url(/keret/jobbfel2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:350; z-index:1; left: 0; top: 188px; background-image: url(/keret/bal2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:15; height:350; z-index:1; left: 260; top: 188px; background-image: url(/keret/koz.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:350; z-index:1; left: 607; top: 188px; background-image: url(/keret/jobb2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:20; z-index:1; left: 0; top: 538px; background-image: url(/keret/balals2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:240; height:20; z-index:1; left: 20; top: 538px; background-image: url(/keret/als3.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:15; height:20; z-index:1; left: 260; top: 538px; background-image: url(/keret/kozals.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:342; height:20; z-index:1; left: 275; top: 538px; background-image: url(/keret/als2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:20; height:20; z-index:1; left: 607; top: 538px; background-image: url(/keret/jobbals2.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:252; height:343; z-index:2; left: 15; top: 181px; background-image: url(/keret/seged6.gif); border: 0px none #000000">
+</div>
+
+
+<!--cset helye-->
+<div id="mydiv" style="position: absolute; z-index: 10; left: 60px; top: 570px; width: 500px; height: 300px; overflow-y: scroll; overflow-x: hidden; background-color: rgb(170, 194, 204);">
+<form name="uzenetf"><center>Szöveged: <input type="text" style="WIDTH: 80%; HEIGHT: 22px" name="csetszoveg" onblur="document.urlap.par3.value=atalakitas(document.uzenetf.csetszoveg.value);">
+</center>
+<font size="2">
+
+<br>11:14:39 <font color="#FF6600"><b>skullaso:</b></font> Ha valamitől idegbajt kapok ásóként, az a túlterhelés :)<br>05:31:24 <font color="#FF6600"><b>Skullka:</b></font> Mármint az L2 regi az L1 aktiválós oldalára dob be...<br>05:30:51 <font color="#FF6600"><b>Skullka:</b></font> szisztok, ma háromszor próbáltam karit regisztrálni de nem ment, az l2 regi az l1 szerver aktiválós oldalra dob be és azt írja, hogy hiányzik a kari vagy valamit elgépeltem... Gondoltam jobb ha admin tud róla<br>17:20:11 <font color="#FF6600"><b>skullaso:</b></font> egyébként ha arénában hadonászol vele sokat akkor ügyiX1,5 lehet a max szintje<br>17:19:10 <font color="#FF6600"><b>skullaso:</b></font> és ha túl kicsi a fegyver szintjéhez képest  aszaki akkor nem tudod rendesen használni. Ez van sajnos, muszáj valamennyit tenni ügyibe. Amúgy kell majd zúzó is az antianyag bunkóhoz.<br>22:22:41 <font color="#FF6600"><b>SkullArcher:</b></font> Syyn, szúró-vágó szaki kell hozzá amit az erődben tudsz fejleszteni addig amennyi ügyid van.<br>21:20:53 <font color="#FF6600"><b>kisci:</b></font> Sziasztok, hogy lehet elérni az üzemeltőt?<br>08:48:44 <font color="#FF6600"><b>Syyn:</b></font> Srácok, mágusként hogy a csudába lehet a 28. küldit teljesíteni? Debibebra csak atomantium törrel sebezheto, de magusként max 2 szakértelemmel el se tudom találni?<br>21:47:12 <font color="#FF6600"><b>SkullArcher:</b></font> Úgy tudom ez már fix. Az első rendszer azt hiszem 400 alap meg szintenként plusz valamennyi volt. Előzfizi asszem nincs, így tárolóból kattvisszatöltés sincs.<br>09:30:52 <font color="#FF6600"><b>Shovelss:</b></font> Sziasztok, A 800 kattintas/nap limit az tovabbra is fix? Vagy lehet novelni elofizetessel ( ha ez egyaltalan lehetseges meg), vagy esetleg mashogy?<br>10:03:26 <font color="#FF6600"><b>Kutek:</b></font> köszi<br>21:32:38 <font color="#FF6600"><b>skullaso:</b></font> Sziasztok ha az admin olvassa akkor jó lenne ha a bankból fizetés alapértelmezett lenne ha már nincs prémium, mert annyi ezüstöt amennyit a drágább cuccokért kérnek képtelenség elcipelni a piacra mert túlterhelés lesz belőle.<br>13:15:40 <font color="#FF6600"><b>D@rk Wizzard:</b></font> Biztosítást a templomban tudsz kötni a zöld kereszt bal alul a szinted*10 arany az ára, a durex a varázsburok régi neve, ami védelmet ad pluszban! :)<br>11:21:52 <font color="#FF6600"><b>Kutek:</b></font> Csak tévedek, de nem a durex a biztosítás, hogy ha meghalok akkor maradnak a cuccaim? Hiába van rajtam varézsburok mégis mindig vesztem a cuccaimat.<br>16:41:41 <font color="#FF6600"><b>Krumlee:</b></font> kuka<br>16:41:32 <font color="#FF6600"><b>Krumlee:</b></font> A Parszi léghajó segítségével megtaláltad a jutalmat: csigaballasztot<br>16:14:54 <font color="#FF6600"><b>Pitt Bull:</b></font> A Parszi léghajó segítségével megtaláltad a jutalmat: elfacél ballasztot<br>08:40:09 <font color="#FF6600"><b>skullaso:</b></font> Úgy tűnik eltartom egyedül a szerszámgyárost, ma már legalább 20 ásót törtem ripityára :D<br>10:52:09 <font color="#FF6600"><b>BányászMányász:</b></font> Ezt a VIP dolgot akkor itt kell kérni, vagy az nem jár automatikusan?<br>21:38:57 <font color="#FF6600"><b>SkullArcher:</b></font> Amúgy gondolom a régi karik nincsenek meg sehol, nem látok visszaállítás funkciót. De kb mindegy is, hisz szerintem az a mail címem sincs már meg amivel akkor regiztem amikor a larki 2 szerver indult. :)<br>21:23:34 <font color="#FF6600"><b>SkullArcher:</b></font> Meg a gyorsgomb is teljesen haszontalan pedig nem lenne baj ha valahogy lehetne használni<br>21:22:52 <font color="#FF6600"><b>SkullArcher:</b></font> Csak azért kérdem mert emlékeim szerint a közvetlen bankba utalás a régi larkiban nem működött a piacról, túl sok ezüstöt meg a súlya miatt nem lehet cipelni<br>20:05:47 <font color="#FF6600"><b>Mr Green:</b></font> ha az újak közül kell valakinek segítség írjatok bátran.<br>20:01:56 <font color="#FF6600"><b>Mr Green:</b></font> azt hiszem az új regisztráció nem kap VIP-et automatán. csak ha Phoenix ad soron kívül<br>19:03:03 <font color="#FF6600"><b>Shippou:</b></font> Itt mindenki prémium tag, aki ezzel a játékkal pötyög :P<br>13:08:44 <font color="#FF6600"><b>Skullka:</b></font> sziasztok, ki tudja hogyan lehet mostanában prémium tagnak lenni?<br>23:51:53 <font color="#FF6600"><b>Reyam:</b></font> :)<br>01:07:15 <font color="#FF6600"><b>stodal:</b></font> sziasztok! nekem most működik.<br>16:37:15 <font color="#FF6600"><b>Speciaalist:</b></font> Jó lenne életben tartani vagy idővel rendbehozni, ha esetleg szükséged van segítségre vegyük fel a kontaktot :D<br>15:45:05 <font color="#FF6600"><b>Lord Phoenix:</b></font> Ahhaa. Eletbentartas - vegre megcsinaltam a 4 eve szar emailkukdest, meg fizetem a szamlat :D<br>15:15:54 <font color="#FF6600"><b>Speciaalist:</b></font> Larkit te tartod életben egyedül gondolom még mindig<br>15:12:47 <font color="#FF6600"><b>Speciaalist:</b></font> Az nem jó.. :D<br>10:44:29 <font color="#FF6600"><b>Lord Phoenix:</b></font> Elfogyott a tarhely :D<br>21:46:45 <font color="#FF6600"><b>Speciaalist:</b></font> a játékra gondoltam, 2 napig nálam nem volt elérhető, gondolom a szerverrel volt valami<br>12:17:10 <font color="#FF6600"><b>Gregor Man:</b></font> Jó kérdés. Nem igazán tudjuk. Vagy a LarkinorCenterre gondolsz?<br>19:01:01 <font color="#FF6600"><b>Speciaalist:</b></font> Lakival mi volt?<br>22:54:35 <font color="#FF6600"><b>Gregor Man:</b></font> 33 kellett, nem is kellett az összes. Köszönöm mégegyszer...<br>22:48:38 <font color="#FF6600"><b>Gregor Man:</b></font> köszönöm... megyek nézem...<br>17:17:23 <font color="#FF6600"><b>Speciaalist:</b></font> raktam fel 22 db-ot piacra<br>17:16:36 <font color="#FF6600"><b>Speciaalist:</b></font> találtál, vagy kell még ?<br>11:25:16 <font color="#FF6600"><b>Gregor Man:</b></font> unikornisszarvat keresek kb 20 darabot. Köszönöm a segítséget!<br>11:53:59 <font color="#FF6600"><b>Gregor Man:</b></font> :(<br>01:50:14 <font color="#FF6600"><b>Reyam:</b></font> :)<br>07:54:32 <font color="#FF6600"><b>Reyam:</b></font> :)
+</font>
+</form>
+</div>
+
+
+
+<!-- cselekvesek helye!!! -->
+<div id="Layer3" style="position:absolute; width:240; height:50; z-index:3; left: 21; top: 488px; ">
+       <form name="specTevUrlap">
+        <div align="center">
+         <select name="tevFajta">
+
+<option value="kajal">kajálsz</option><option value="imadkozas">imádkozol</option><option value="manaital">megiszod a manaitalt</option><option value="vargyogy">elmondasz egy gyógyvarázst</option><option value="homeport">elmondasz egy hómportot</option><option value="csodaflaska">kiüríted a csodaflaskát</option><option value="extramanaital">megiszod az extra manaitalt</option><option value="regeneracioitala">megiszod a regeneráció italát</option><option value="mobilodiavovino">megiszod a mobilo diavovinót</option><option value="leghajokibe">Léghajó helyzetjelzés</option><option value="fejvkibe">fejvadászat</option><option value="ongyilok">öngyilkos leszel</option><option value="kilep">kilépsz a játékból</option>
+         </select>
+         <input type="image" src="/ikon/ok.gif" onclick="if ( (document.specTevUrlap.tevFajta.value == 'ongyilok') &amp;&amp; !confirm('Tényleg öngyilkos akarsz lenni?!?!') ) return false; document.urlap.par1.value=document.specTevUrlap.tevFajta.value; document.urlap.Submit.value='svSpecTev'; document.urlap.submit(); return false;">
+	</div>
+       </form>
+</div>
+
+
+
+<!-- Tájkép helye!!! -->
+<div id="Layer3" style="position:absolute; width:145px; height:125; z-index:3;  left: 68px; top: 188px">
+
+<img src="/tajk/nagysziget/szig_2-10.gif" width="145" height="125" title="mocsár">
+</div>
+
+
+<!-- Épületgombok helye!!! -->
+<div id="Layer3" style="position:absolute; width:240px; height:30; z-index:3; left: 20px; top:313px">
+
+<input type="image" src="/ikon/kikoto.gif" width="30" height="30" border="0" title="kikötő" onclick="document.urlap.par1.value='otKikoto'; document.urlap.Submit.value='svEnterBuilding'; document.urlap.submit();"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0"><img src="/2/ikon/ikon.gif" width="30" height="30" border="0">
+</div>
+
+
+<!-- Karakterlap helye!!! -->
+<div id="Layer3" style="position:absolute; width:50px; height:31; z-index:3; left: 20px; top: 413px">
+
+<input type="image" src="/2/ikon/klap.gif" width="50" height="30" border="0" title="Beállítások" onclick="document.urlap.Submit.value='svPlayerSettings'; document.urlap.submit();">
+</div>
+
+<!-- pihenes helye!!! -->
+<div id="Layer3" style="position:absolute; width:50px; height:31; z-index:3; left: 211px; top: 413px">
+
+<input type="image" src="/2/ikon/pihen.gif" width="50" height="30" border="0" title="Pihensz egy kicsit" onclick="document.urlap.Submit.value='svRest'; document.urlap.submit();">
+</div>3
+
+<!-- shortcut helye!!! -->
+<div id="Layer3" style="position:absolute; width:50px; height:31; z-index:3; left: 206px; top: 453px">
+
+<input type="image" src="/2/ikon/sc_gyogyvarazs.gif" width="50" height="30" border="0" title="elmondasz egy gyógyvarázst" onclick="document.urlap.Submit.value='svShortcut'; document.urlap.submit();">
+</div>
+
+<!-- mozgás helye!!! -->
+<div id="Layer3" style="position:absolute; width:25px; height:25; z-index:3; left: 127px; top: 413px">
+
+<input type="image" src="/2/ikon/eszak.gif" width="25" height="25" border="0" title="északra nyomulsz - hegység" onclick="document.urlap.Submit.value='svGoNorth'; document.urlap.submit();">
+</div>
+<div id="Layer3" style="position:absolute; width:25px; height:25; z-index:3; left: 102px; top: 438px">
+
+<img src="/2/ikon/tenger.gif" width="25" height="25" title="nyugatra tengerpart">
+</div>
+<div id="Layer3" style="position:absolute; width:25px; height:25; z-index:3; left: 127px; top: 438px">
+
+<input type="image" src="/2/ikon/tamadas.gif" width="25" height="25" border="0" title="Támadás!!!" onclick="document.urlap.Submit.value='svEngageCreature'; document.urlap.submit();">
+</div>
+<div id="Layer3" style="position:absolute; width:25px; height:25; z-index:3; left: 152px; top: 438px">
+
+<input type="image" src="/2/ikon/kelet.gif" width="25" height="25" border="0" title="keletre nyomulsz - erdő" onclick="document.urlap.Submit.value='svGoEast'; document.urlap.submit();">
+</div>
+<div id="Layer3" style="position:absolute; width:25px; height:25; z-index:3; left: 127px; top: 463px">
+
+<input type="image" src="/2/ikon/del.gif" width="25" height="25" border="0" title="délre nyomulsz - erdő" onclick="document.urlap.Submit.value='svGoSouth'; document.urlap.submit();">
+</div>
+
+<form name="urlap" method="post" action="/../cgi-bin/larkinor"><input type="hidden" name="oldalTipus" value="otVilag"><input type="hidden" name="loginname" value="remy"><input type="hidden" name="kulcs" value="JTRHULPPuWbe4"><input type="hidden" name="kulcs2" value="9"><input type="hidden" name="idopont" value="101599"><input type="hidden" name="Submit" value="semmi"><input type="hidden" name="par1" value=""><input type="hidden" name="par2" value=""><input type="hidden" name="par3" value=""></form>
+
+<!-- adatok helye!!! -->
+<div id="Layer3" style="position:absolute; width:240px; height:70; z-index:3; background-color: E6DAC3; left: 20px; top: 343px" ;="">
+</div>
+<div id="Layer3" style="position:absolute; width:235px; height:60; z-index:4; left: 20px; top: 340px" ;="">
+
+<b><a href="http://l2.larkinor.hu:80/cgi-bin/larkinor?oldalTipus=otKarakterlap&amp;melyik=Remy" target="_blank" title="karakterlap"><font color="blue">Remy </font></a>&nbsp;&nbsp;<font color="darkblue" align="left">[5170/800]</font><br>Pénz: 4&nbsp;395&nbsp;&nbsp;&nbsp;&nbsp;<img src="/2/ikon/bizt_van.gif" border="0" width="12" height="12" title=" Van biztosításod :-)">&nbsp;<img src="/2/ikon/durex2.gif" width="32" height="12" border="0" title="Varázsburok! ;-)">&nbsp;<br>Életpont: 596 / 596 <br>Varázspont: 426 / 386 </b>
+</div>
+
+<!-- messages -->
+<div id="Layer3" style="position:absolute; width:342px; height:350; z-index:13; left: 275px; top: 188px; background-color: AAC2CC" ;="">
+<font face="Comic sans MS" size="2.5" data-lc-items="true" data-lc-enhanced="true">
+
+Továbbmész...<br>A lápból áradó bűzös kipárolgás furcsa színeket kölcsönöz a környéknek, a látótávolságot jelentősen lecsökkentve. Ezt kézzelfoghatóan is tapasztalod, amikor majdnem nekiballagsz egy magányosan álldogáló cédrusnak.<br>Egy <b><font color="#DF4B22">Trójai ezüstsas </font></b> van a közelben! Megtámadod vagy gyáván lapítasz?!<br><b><font color="#DF4B22">Trójai ezüstsas </font></b> megijed tőled! Megpróbál elmenekülni...
+</font>
+</div>
+
+<!-- csicsa -->
+<div style="position:absolute; width:40; height:49; z-index:1; left: 18; top: 213px; background-image: url(/keret/kopogtato.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:40; height:49; z-index:1; left: 220; top: 213px; background-image: url(/keret/kopogtato.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:14; height:20; z-index:1; left: 10; top: 178px; background-image: url(/keret/pocok.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:14; height:20; z-index:1; left: 245; top: 178px; background-image: url(/keret/pocok.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:14; height:20; z-index:1; left: 10; top: 533px; background-image: url(/keret/pocok.gif); border: 0px none #000000">
+</div>
+<div style="position:absolute; width:14; height:20; z-index:1; left: 245; top: 533px; background-image: url(/keret/pocok.gif); border: 0px none #000000">
+</div>
+</div>
+
+
+
+
+<div style="position:absolute; width:240; height:30; z-index:4; left: 210; top: 415px; border: 0px none #000000">
+
+</div>
+
+
+
+
+
+</body></html>
