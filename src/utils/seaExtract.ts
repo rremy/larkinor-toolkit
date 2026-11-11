@@ -20,10 +20,10 @@
 //   `/2/epulet/<row><col>kikoto.gif`, row and col written one after the other.
 
 import type { Side } from '@/shared/data';
+import type { SeaSide } from '@/shared/seaChart';
 import { extractNarration } from './domExtract';
 
-/** What one side of a sea or island page shows. */
-export type SeaSide = 'sea' | 'harbour' | 'land' | 'walk' | 'coast';
+export type { SeaSide };
 
 export interface SeaPageObservation {
   place: 'sea' | 'island' | 'other';
