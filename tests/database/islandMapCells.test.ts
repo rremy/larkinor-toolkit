@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { IslandTile } from '@/shared/data';
-import { islandMapCells, DISTRICT_CLASS, POI_EMOJI } from '@/database/map/mapMeta';
+import { islandMapCells, cellWalls, DISTRICT_CLASS, POI_EMOJI } from '@/database/map/mapMeta';
 
 const islands: IslandTile[] = JSON.parse(readFileSync('static/db/islands.json', 'utf-8'));
 const ta = islandMapCells(islands.filter((t) => t.island === 'Thord-Artin'));
@@ -24,4 +24,12 @@ describe('islandMapCells', () => {
   it('gives every island district a city-map colour', () => {
     for (const cell of ta.cells.filter((c) => c.district)) expect(DISTRICT_CLASS[cell.district], cell.district).toBeDefined();
   });
+
+  it('draws no walls inside the island: neighbours are open, the edge is coast', () => {
+    const lapapaly = ta.cells.find((c) => c.imageId === 'nagysziget/szig_2-10')!;
+    expect(cellWalls(lapapaly)).toEqual([]);
+    expect(Object.keys(lapapaly.exits).sort()).toEqual(['E', 'N', 'S']);
+    expect(lapapaly.blockers.W).toMatchObject({ icon: 'tenger.gif', title: 'nyugatra tengerpart' });
+  });
 });
+

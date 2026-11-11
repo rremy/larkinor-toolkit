@@ -216,7 +216,18 @@ export function islandMapCells(tiles: IslandTile[]): IslandMapData {
   const cells: MapCell[] = [];
   const positions = new Map<string, GridPos>();
   const names: Record<string, string> = {};
+  const byPos = new Map(tiles.map((t) => [`${t.row},${t.col}`, t]));
+  const COAST: Record<MapSide, string> = { N: 'északra', E: 'keletre', S: 'délre', W: 'nyugatra' };
   for (const tile of tiles) {
+    // A neighbouring tile is open; anything else is coast, drawn as the city map
+    // draws its own (no island tile has a plain wall in the fan data).
+    const exits: Record<string, string> = {};
+    const blockers: Record<string, { icon: string; title: string }> = {};
+    for (const side of MAP_SIDES) {
+      const next = byPos.get(`${tile.row + STEP[side].row},${tile.col + STEP[side].col}`);
+      if (next) exits[side] = next.district ?? '';
+      else blockers[side] = { icon: 'tenger.gif', title: `${COAST[side]} tengerpart` };
+    }
     cells.push({
       imageId: tile.image,
       imageSrc: `/tajk/${tile.image}.gif`,
@@ -227,8 +238,8 @@ export function islandMapCells(tiles: IslandTile[]): IslandMapData {
         ...(b.ready ? {} : { note: b.note ?? 'nem kész' }),
       })),
       clanHouses: [],
-      exits: {},
-      blockers: {},
+      exits,
+      blockers,
       firstCoords: [tile.row, tile.col],
     });
     positions.set(tile.image, { row: tile.row, col: tile.col });
