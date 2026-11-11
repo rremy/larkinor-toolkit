@@ -4,7 +4,7 @@ import type { DataLoader, QuestSet } from '@/shared/data';
 import type { EntityTab } from './explorer/columns';
 import { TAB_LABEL } from './explorer/labels';
 import { ExplorerView } from './explorer/ExplorerView';
-import { MapTab } from './map/MapTab';
+import { MapTab, SEA_ROUTE_CELL } from './map/MapTab';
 import { QuestView } from './quests/QuestView';
 
 /**
@@ -96,7 +96,7 @@ export interface DatabaseAppProps {
    * entity within a tab) and must still win if somehow supplied alongside
    * this — see the effect below for how that precedence is enforced.
    */
-  initialTab?: 'quests';
+  initialTab?: 'quests' | 'sea';
   /**
    * Nonce accompanying `initialTab`, bumped by the caller on every press.
    *
@@ -317,6 +317,10 @@ export function DatabaseApp(props: DatabaseAppProps) {
     // `initialQuest` for why the remembered one cannot be relied on here.
     if (initialTab === 'quests' && initialQuest) {
       navigate('quests', initialQuest.set, initialQuest.id);
+      return;
+    }
+    if (initialTab === 'sea') {
+      navigate('map', SEA_ROUTE_CELL);
       return;
     }
     navigate(initialTab, null);

@@ -9,6 +9,7 @@ import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { SeaWindow, type SeaWindowSource } from '@/components/SeaWindow';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { findActiveQuest } from '@/utils/activeQuest';
@@ -17,9 +18,11 @@ import { findDirectionHints } from '@/utils/directionHints';
 export interface FreeMoveProps {
   state: FreeMoveState;
   db: MonsterDatabase | null;
+  /** Set at sea and on an island other than the city's: the window replaces the tile picture. */
+  sea?: SeaWindowSource | null;
 }
 
-export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
+export function FreeMove({ state, db, sea = null }: FreeMoveProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
@@ -35,16 +38,23 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
   // nothing to do with quests at all.
   const activeQuest = findActiveQuest(state.narration);
   const [questRoute, setQuestRoute] = useState<{ id: string; seq: number } | null>(null);
+  // The sea window's click opens the whole chart; `seq` as for the quest route.
+  const [seaRoute, setSeaRoute] = useState<{ seq: number } | null>(null);
 
   const { hotkeyActions, buttonActions } = partitionHotkeys(state.actions, enabled);
 
   return (
     <div class="lc-page">
       <div class="lc-hero">
-        {state.locationImageUrl && (
+        {sea ? (
+          <SeaWindow
+            loader={sea.loader} readPref={sea.readPref} atSea={sea.atSea} version={sea.version}
+            onOpenChart={() => { setDbItemId(null); setQuestRoute(null); setSeaRoute((r) => ({ seq: (r?.seq ?? 0) + 1 })); setDbOpen(true); }}
+          />
+        ) : state.locationImageUrl && (
           <img class="lc-hero-img" src={state.locationImageUrl} alt={state.locationName} />
         )}
-        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setQuestRoute(null); setDbOpen(true); }} />
+        <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setQuestRoute(null); setSeaRoute(null); setDbOpen(true); }} />
       </div>
 
       <NavPad directions={state.directions} attack={state.attack} cornerLeft={state.settingsButton} cornerRight={state.restButton} hints={findDirectionHints(state.narration)}>
@@ -72,6 +82,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
               index: activeQuest.index,
               length: activeQuest.length,
               onClick: () => {
+                setSeaRoute(null);
                 setQuestRoute((r) => ({ id: activeQuest.questId, seq: (r?.seq ?? 0) + 1 }));
                 setDbOpen(true);
               },
@@ -92,7 +103,7 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
       <MonsterCard
         monster={selectedMonster}
         onClose={() => setSelectedMonster(null)}
-        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setDbOpen(true); }}
+        onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setSeaRoute(null); setDbOpen(true); }}
       />
 
       {configOpen && (
@@ -102,8 +113,8 @@ export function FreeMove({ state, db }: FreeMoveProps): JSX.Element {
       <DatabaseOverlay
         open={dbOpen}
         initialItemId={dbItemId ?? undefined}
-        initialTab={questRoute ? 'quests' : undefined}
-        initialTabKey={questRoute?.seq}
+        initialTab={questRoute ? 'quests' : seaRoute ? 'sea' : undefined}
+        initialTabKey={questRoute?.seq ?? seaRoute?.seq}
         initialQuest={questRoute ? { set: 'royal', id: questRoute.id } : null}
         onClose={() => setDbOpen(false)}
       />

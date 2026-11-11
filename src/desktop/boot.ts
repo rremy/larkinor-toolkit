@@ -29,7 +29,9 @@ import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosi
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
-import { activateSeaPosition, armSeaMoveTracking, isSeaOrIsland } from '@/utils/activateSeaPosition';
+import { activateSeaPosition, armSeaMoveTracking } from '@/utils/activateSeaPosition';
+import { readSeaPage } from '@/utils/seaExtract';
+import type { SeaWindowSource } from '@/components/SeaWindow';
 import { captureInventory } from '@/utils/captureInventory';
 import { loadItemIndex, mayMentionItems, type ItemRef } from '@/shared/itemMentions';
 import { enhanceItemMentions } from '@/desktop/enhanceItemMentions';
@@ -377,9 +379,17 @@ export function bootDesktop(doc: Document): void {
   // The archipelago position: the sea never names its square, so it is carried
   // from page to page (see activateSeaPosition). Steps are armed synchronously,
   // before the async chart load, so a step taken at once is still recorded.
-  if (isSeaOrIsland(doc)) armSeaMoveTracking(doc, setPref);
-  const seaPositionReady = activateSeaPosition(pageType, doc, createDataLoader(gmSource(), DATA_BASE_URL), getPref, setPref)
+  const seaLoader = createDataLoader(gmSource(), DATA_BASE_URL);
+  const seaPage = readSeaPage(doc);
+  if (seaPage.place !== 'other') armSeaMoveTracking(doc, setPref);
+  const seaPositionReady = activateSeaPosition(pageType, doc, seaLoader, getPref, setPref)
     .catch((err) => { console.warn('[Larkinor UI] Sea position failed:', err); return null; });
+  // The window around the player, at sea and on islands other than the city's.
+  // Bumped once this page's position is stored, so the window reads it again.
+  let seaVersion = 0;
+  const seaSource = (): SeaWindowSource | null => (seaPage.place === 'other' || pageType !== PageType.FreeMove
+    ? null
+    : { loader: seaLoader, readPref: getPref, atSea: seaPage.place === 'sea', version: seaVersion });
 
   // What the player owns, from whichever page lists a location of it (see
   // captureInventory), so the database can say how many of an item they have.
@@ -391,13 +401,18 @@ export function bootDesktop(doc: Document): void {
 
   const renderDock = () => {
     try {
-      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, characterState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, openQuestsSignal, openQuestTarget, openItemSignal, openItemId })), root);
+      render(h(LoadoutContext.Provider, { value: loadout }, h(DesktopDock, { doc, state, db, homeState, marketState, shopState, characterState, crafting, battleMonsterName, fight, exit, dbButtonOnly: state === null, inDungeon: pageType === PageType.Dungeon, sea: seaSource(), openQuestsSignal, openQuestTarget, openItemSignal, openItemId })), root);
     } catch (err) {
       console.warn('[Larkinor UI] Dock render failed:', err);
     }
   };
 
   renderDock();
+  void seaPositionReady.then(() => {
+    if (seaPage.place === 'other') return;
+    seaVersion += 1;
+    renderDock();
+  });
 
   // What the narration says lies in a direction — the labyrinth entrance, a
   // player on the airship, a monster that fled — as icons around the arrows.

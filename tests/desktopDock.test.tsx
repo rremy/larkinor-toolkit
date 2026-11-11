@@ -548,3 +548,35 @@ describe('DesktopDock', () => {
     expect(screen.queryByRole('button', { name: 'Varázstárgyak' })).toBeNull();
   });
 });
+
+describe('DesktopDock — the sea window', () => {
+  const seaLoader = {
+    loadSeaChart: async () => ({ rows: { min: -2, max: 2 }, cols: { min: -2, max: 2 }, squares: [] }),
+    loadIslands: async () => [],
+    loadMap: async () => ({ cells: [], edges: {} }),
+  } as never;
+  const sea = { loader: seaLoader, readPref: () => '{"row":0,"col":0,"source":"move","at":0}', atSea: true, version: 0 };
+
+  beforeEach(() => {
+    GM_setValue(DOCK_COLLAPSED_KEY, '');
+    GM_setValue(DB_OPEN_KEY, '');
+    GM_setValue(DB_ROUTE_KEY, '');
+  });
+
+  it('shows the squares around the ship at sea', async () => {
+    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} sea={sea} />);
+    await vi.waitFor(() => expect(container.querySelector('.lc-sea-window .lc-sea-square.here')).not.toBeNull());
+  });
+
+  it('draws no sea window on a page that is not at sea', () => {
+    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+    expect(container.querySelector('.lc-sea-window')).toBeNull();
+  });
+
+  it('opens the database on the sea chart when the window is clicked', async () => {
+    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} sea={sea} />);
+    await vi.waitFor(() => expect(container.querySelector('.lc-sea-chart')).not.toBeNull());
+    fireEvent.click(container.querySelector('.lc-sea-window .lc-sea-chart')!);
+    await vi.waitFor(() => expect(GM_getValue(DB_ROUTE_KEY, '')).toBe('map/sea'));
+  });
+});

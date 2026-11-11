@@ -277,3 +277,24 @@ describe('FreeMove', () => {
     });
   });
 });
+
+describe('FreeMove — the sea window', () => {
+  const seaLoader = {
+    loadSeaChart: async () => ({ rows: { min: -2, max: 2 }, cols: { min: -2, max: 2 }, squares: [] }),
+    loadIslands: async () => [],
+    loadMap: async () => ({ cells: [], edges: {} }),
+  } as never;
+  const sea = { loader: seaLoader, readPref: () => '{"row":0,"col":0,"source":"move","at":0}', atSea: true, version: 0 };
+
+  it('shows the sea window in place of the tile picture at sea', async () => {
+    const { container } = render(<FreeMove state={buildState({ locationImageUrl: '/tajk/hajotengeren.gif' })} db={null} sea={sea} />);
+    await waitFor(() => expect(container.querySelector('.lc-sea-window .lc-sea-square.here')).not.toBeNull());
+    expect(container.querySelector('.lc-hero-img')).toBeNull();
+  });
+
+  it('keeps the tile picture in the city', () => {
+    const { container } = render(<FreeMove state={buildState({ locationImageUrl: '/tajk/13.gif' })} db={null} />);
+    expect(container.querySelector('.lc-sea-window')).toBeNull();
+    expect(container.querySelector('.lc-hero-img')).not.toBeNull();
+  });
+});

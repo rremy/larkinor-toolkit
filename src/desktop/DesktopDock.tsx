@@ -9,6 +9,7 @@ import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardSh
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
+import { SeaWindow, type SeaWindowSource } from '@/components/SeaWindow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { hasBlockingPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
@@ -68,6 +69,8 @@ export interface DesktopDockProps {
    * and nothing about the dock changes.
    */
   inDungeon?: boolean;
+  /** Set at sea and on an island other than the city's: the window around the player. */
+  sea?: SeaWindowSource | null;
   /**
    * Nonce that opens the database on the quests view when it increases.
    *
@@ -109,7 +112,7 @@ export interface DesktopDockProps {
  * It also owns every desktop modal, because the narration links added by
  * enhanceNarration and the keyboard shortcuts both open them.
  */
-export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, openQuestsSignal = 0, openQuestTarget = null, openItemSignal = 0, openItemId = null }: DesktopDockProps): JSX.Element {
+export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, sea = null, openQuestsSignal = 0, openQuestTarget = null, openItemSignal = 0, openItemId = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   // Persisted: every action reloads the game page, which would otherwise close
@@ -128,7 +131,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // 'quests' would be a no-op state update (same value in, same value out) —
   // exactly the bug where pressing the dungeon shortcut a second time after
   // navigating away inside the overlay did nothing.
-  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
+  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests' | 'sea'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const [craftingOpen, setCraftingOpen] = useState(() => getPanelOpen(CRAFTING_OPEN_KEY));
@@ -195,6 +198,14 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // `quest` names a specific target when the caller has one (the pub's
   // quest-offer note); null keeps the dungeon button's "restore whatever was
   // last open" behaviour.
+  // The sea window's click: open the database on the whole chart. `seq` as for
+  // the quests below, so a second click re-navigates after browsing elsewhere.
+  const openSeaChart = () => {
+    setDbItemId(null);
+    setDbInitialTab((prev) => ({ tab: 'sea', seq: (prev?.seq ?? 0) + 1, quest: null }));
+    setDatabase(true);
+  };
+
   const openQuests = (quest: { set: QuestSet; id: string } | null = null) => {
     setDbItemId(null);
     setDbInitialTab((prev) => ({ tab: 'quests', seq: (prev?.seq ?? 0) + 1, quest }));
@@ -314,6 +325,12 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
       {!collapsed && (
         <>
+          {sea && (
+            <div class="lc-dock-row lc-dock-sea">
+              <SeaWindow loader={sea.loader} readPref={sea.readPref} atSea={sea.atSea} version={sea.version} onOpenChart={openSeaChart} />
+            </div>
+          )}
+
           {hotkeyActions.length > 0 && (
             <div class="lc-dock-row">
               <HotkeyRow actions={hotkeyActions} keyFor={keyFor} />

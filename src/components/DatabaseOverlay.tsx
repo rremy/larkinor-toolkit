@@ -28,7 +28,7 @@ export interface DatabaseOverlayProps {
    * "Küldetések" button. See DatabaseApp's `initialTab` for the precedence
    * rules against `initialItemId`/`initialItemName`.
    */
-  initialTab?: 'quests';
+  initialTab?: 'quests' | 'sea';
   /**
    * Nonce accompanying `initialTab`, bumped by the caller on every press —
    * see DatabaseApp's `initialTabKey` for why `initialTab` alone can't drive
