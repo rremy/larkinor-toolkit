@@ -70,6 +70,26 @@ export const QUEST_POSITION_PREF_KEY = 'lc-quest-position';
 export const MAP_POSITION_PREF_KEY = 'lc-map-position';
 
 /**
+ * PrefStore key holding the serialised `SeaPosition` (src/shared/seaPosition.ts):
+ * the player's square in the archipelago — at sea, on an island, or the city
+ * tile last seen. The sea never names its square, so it is carried from page to
+ * page and cleared (written empty) when a page contradicts it. Per character.
+ */
+export const SEA_POSITION_PREF_KEY = 'lc-sea-position';
+
+/**
+ * PrefStore key holding the direction of the last step clicked on a sea or
+ * island page, taken and cleared by the next page. Per character.
+ */
+export const SEA_MOVE_PREF_KEY = 'lc-sea-move';
+
+/**
+ * PrefStore key holding the island pictures learned against their squares
+ * (`LearnedTiles`, src/shared/learnedTiles.ts). Shared: a fact about the game.
+ */
+export const SEA_LEARNED_TILES_PREF_KEY = 'lc-sea-learned-tiles';
+
+/**
  * PrefStore key holding the serialised `Inventory` (src/shared/inventory.ts) —
  * what the player owns, by location, as last listed by each page. Read by the
  * hosted database to show ownership; written only by the boots' capture.

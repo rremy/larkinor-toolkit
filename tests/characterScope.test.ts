@@ -38,6 +38,9 @@ import {
   QUEST_POSITION_PREF_KEY,
   QUEST_SET_PREF_KEY,
   QUEST_TILE_PREF_KEY,
+  SEA_LEARNED_TILES_PREF_KEY,
+  SEA_MOVE_PREF_KEY,
+  SEA_POSITION_PREF_KEY,
   craftSelectedKey,
   explorerFiltersKey,
   explorerSortKey,
@@ -76,6 +79,8 @@ describe('isCharacterKey', () => {
     QUEST_MOVE_PREF_KEY,
     QUEST_SET_PREF_KEY,
     MAP_POSITION_PREF_KEY,
+    SEA_POSITION_PREF_KEY,
+    SEA_MOVE_PREF_KEY,
     INVENTORY_PREF_KEY,
     questSelectedKey('royal'),
     questSelectedKey('tavern'),
@@ -110,6 +115,7 @@ describe('isCharacterKey', () => {
     explorerSortKey('weapons'),
     sortPrefKey('shop-sell'),
     LEGACY_OWNER_KEY,
+    SEA_LEARNED_TILES_PREF_KEY,
   ])('shares %s between characters', (key) => {
     expect(isCharacterKey(key)).toBe(false);
   });

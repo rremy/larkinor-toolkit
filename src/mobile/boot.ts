@@ -7,6 +7,7 @@ import { activateDungeonPosition, advancePositionThroughBattle, clearDungeonPosi
 import { armDungeonMoveTracking } from '@/utils/trackDungeonMove';
 import { captureLoadout } from '@/utils/captureLoadout';
 import { captureMapPosition } from '@/utils/captureMapPosition';
+import { activateSeaPosition, armSeaMoveTracking, isSeaOrIsland } from '@/utils/activateSeaPosition';
 import { captureInventory } from '@/utils/captureInventory';
 import { loadItemIndex, mayMentionItems, type ItemIndex } from '@/shared/itemMentions';
 import { ItemIndexContext } from '@/components/ItemIndexContext';
@@ -174,6 +175,13 @@ export function bootMobile(doc: Document): void {
   // tile last walked onto. Captured before anything renders, so a database
   // already open on the map reads this page's tile rather than the last one.
   if (pageType === PageType.FreeMove) captureMapPosition(doc, setPref);
+
+  // The archipelago position: the sea never names its square, so it is carried
+  // from page to page (see activateSeaPosition). Steps are armed synchronously,
+  // before the async chart load, so a step taken at once is still recorded.
+  if (isSeaOrIsland(doc)) armSeaMoveTracking(doc, setPref);
+  const seaPositionReady = activateSeaPosition(pageType, doc, createDataLoader(gmSource(), DATA_BASE_URL), getPref, setPref)
+    .catch((err) => { console.warn('[Larkinor UI] Sea position failed:', err); return null; });
 
   // What the player owns, from whichever page lists a location of it (see
   // captureInventory), so the database can say how many of an item they have.
