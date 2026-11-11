@@ -9,7 +9,7 @@ import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardSh
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
-import { SeaWindow, type SeaWindowSource } from '@/components/SeaWindow';
+import { SeaWindow, useMinimapHidden, type SeaWindowSource } from '@/components/SeaWindow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { hasBlockingPanel } from '@/components/DockedPanel';
 import { enhanceNarration } from '@/desktop/enhanceNarration';
@@ -131,7 +131,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // 'quests' would be a no-op state update (same value in, same value out) —
   // exactly the bug where pressing the dungeon shortcut a second time after
   // navigating away inside the overlay did nothing.
-  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests' | 'sea'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
+  const [dbInitialTab, setDbInitialTab] = useState<{ tab: 'quests' | 'map'; seq: number; quest: { set: QuestSet; id: string } | null } | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(() => getPanelOpen(INVENTORY_OPEN_KEY));
   const [marketOpen, setMarketOpen] = useState(() => getPanelOpen(MARKET_OPEN_KEY));
   const [craftingOpen, setCraftingOpen] = useState(() => getPanelOpen(CRAFTING_OPEN_KEY));
@@ -139,6 +139,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   const [characterOpen, setCharacterOpen] = useState(() => getPanelOpen(CHARACTER_OPEN_KEY));
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
   const [shortcutsOn, setShortcutsOn] = useState(() => getKeyboardShortcuts());
+  const [mapHidden, toggleMap] = useMinimapHidden(sea);
   const toggleShortcuts = () => {
     setShortcutsOn(!shortcutsOn);
     setKeyboardShortcuts(!shortcutsOn);
@@ -202,7 +203,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // the quests below, so a second click re-navigates after browsing elsewhere.
   const openSeaChart = () => {
     setDbItemId(null);
-    setDbInitialTab((prev) => ({ tab: 'sea', seq: (prev?.seq ?? 0) + 1, quest: null }));
+    setDbInitialTab((prev) => ({ tab: 'map', seq: (prev?.seq ?? 0) + 1, quest: null }));
     setDatabase(true);
   };
 
@@ -327,7 +328,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         <>
           {sea && (
             <div class="lc-dock-row lc-dock-sea">
-              <SeaWindow loader={sea.loader} readPref={sea.readPref} atSea={sea.atSea} version={sea.version} onOpenChart={openSeaChart} />
+              <SeaWindow loader={sea.loader} readPref={sea.readPref} atSea={sea.atSea} version={sea.version} onOpenChart={openSeaChart} hidden={mapHidden} onToggleHidden={toggleMap} />
             </div>
           )}
 

@@ -95,6 +95,9 @@ export const SEA_LEARNED_TILES_PREF_KEY = 'lc-sea-learned-tiles';
  */
 export const MAP_MODE_PREF_KEY = 'lc-map-mode';
 
+/** PrefStore key holding whether the minimap is hidden (`'1'`). Shared, like the panels' minimised flags. */
+export const MINIMAP_HIDDEN_PREF_KEY = 'lc-minimap-hidden';
+
 /**
  * PrefStore key holding the serialised `Inventory` (src/shared/inventory.ts) —
  * what the player owns, by location, as last listed by each page. Read by the

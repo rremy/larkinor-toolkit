@@ -297,4 +297,21 @@ describe('FreeMove — the sea window', () => {
     expect(container.querySelector('.lc-sea-window')).toBeNull();
     expect(container.querySelector('.lc-hero-img')).not.toBeNull();
   });
+
+  it('shows the minimap in town too', async () => {
+    const town = { ...sea, readPref: (key: string) => (key === 'lc-sea-position' ? '{"row":4,"col":4,"source":"city","at":0}' : null), atSea: false };
+    const { container } = render(<FreeMove state={buildState({ locationImageUrl: '/tajk/44.gif' })} db={null} sea={town} />);
+    await waitFor(() => expect(container.querySelector('.lc-sea-window .lc-sea-square.here')).not.toBeNull());
+  });
+
+  it('brings the tile picture back when the minimap is hidden, and remembers it', async () => {
+    const written: Record<string, string> = {};
+    const withStore = { ...sea, writePref: (k: string, v: string) => { written[k] = v; } };
+    const { container } = render(<FreeMove state={buildState({ locationImageUrl: '/tajk/hajotengeren.gif' })} db={null} sea={withStore} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Térkép elrejtése' }));
+    expect(container.querySelector('.lc-hero-img')).not.toBeNull();
+    expect(container.querySelector('.lc-sea-chart')).toBeNull();
+    expect(written['lc-minimap-hidden']).toBe('1');
+  });
 });
+

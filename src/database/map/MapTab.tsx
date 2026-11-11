@@ -2,18 +2,20 @@ import { h, type VNode } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, MapData } from '@/shared/data';
 import { indexChart, type ChartIndex } from '@/shared/seaChart';
-import { isInCity, isOnCityMap, parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
+import { parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
+import { placeOf, parseWorldMap, THORD_ARTIN, WORLD_MAPS, WORLD_MAP_LABEL, type WorldMap } from '@/shared/worldMap';
 import { MAP_MODE_PREF_KEY, SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { MapView } from './MapView';
-import { SeaChartView } from './SeaChartView';
+import { SeaChartView, type ChartBounds } from './SeaChartView';
 import { SeaDetail } from './SeaDetail';
 import { layoutCells } from './mapMeta';
 
 /** The route segment that asks the map tab for the sea chart: `#map/sea`. */
 export const SEA_ROUTE_CELL = 'sea';
 
-type Mode = 'city' | 'sea';
+/** Thord-Artin's squares are large enough to carry their names. */
+const ISLAND_CELL = 64;
 
 interface MapTabProps {
   loader: DataLoader;
@@ -23,102 +25,30 @@ interface MapTabProps {
   /** In-game only: the player's square can be set by hand. */
   tracksPosition?: boolean;
   /**
-   * A one-shot request for the sea chart (the sea window's click), bumped on
-   * every request. Unlike the `#map/sea` route it is never stored, so the next
-   * plain open of the tab is decided by the player's whereabouts again.
+   * Bumped by the minimap's click: show the map of where the player is,
+   * dropping any map picked by hand. Never stored as a route, so it cannot
+   * outrank the player's whereabouts on a later open.
    */
-  seaRequest?: number;
+  placeRequest?: number;
+}
+
+/** The map a route asks for, which holds for this open like a pick. */
+function routedMap(targetCellId: string | null): WorldMap | null {
+  if (targetCellId === SEA_ROUTE_CELL) return 'sea';
+  return targetCellId ? 'larkinor' : null;
 }
 
 /**
- * Picks the view to open on: a routed request first, then the player's own
- * whereabouts (off the city island means the sea chart), then the view last
- * chosen with the switch.
+ * The Térkép tab: Larkinor (the city map), Thord-Artin, or the sea chart.
+ * It shows the map of where the player is — and follows them to another as
+ * they move — until they pick one by hand.
  */
-function initialMode(targetCellId: string | null, here: SeaPosition | null, prefStore?: PrefStore, seaRequest?: number): Mode {
-  if (seaRequest || targetCellId === SEA_ROUTE_CELL) return 'sea';
-  if (targetCellId) return 'city';
-  if (here) return isOnCityMap(here) ? 'city' : 'sea';
-  return prefStore?.read(MAP_MODE_PREF_KEY) === 'sea' ? 'sea' : 'city';
-}
-
-/** The Térkép tab: the city map, or the sea chart of the whole archipelago. */
 export function MapTab(props: MapTabProps): VNode {
-  const { loader, targetCellId = null, prefStore, tracksPosition = false, seaRequest } = props;
+  const { loader, targetCellId = null, prefStore, tracksPosition = false, placeRequest } = props;
   const [here, setHere] = useState(() => parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null));
-  const [mode, setMode] = useState<Mode>(() => initialMode(targetCellId, here, prefStore, seaRequest));
-  // Once the player picks a view, a position arriving later no longer moves them.
-  const chosen = useRef(Boolean(seaRequest));
-
-  useEffect(() => {
-    if (!seaRequest) return;
-    chosen.current = true;
-    setMode('sea');
-  }, [seaRequest]);
-
-  // The page stores its position after the chart loads, which can be after this
-  // tab opened (a database left open across a step): follow it when it lands.
-  useEffect(() => {
-    const onPosition = () => {
-      const next = parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null);
-      setHere(next);
-      if (!chosen.current && !targetCellId && next) setMode(isOnCityMap(next) ? 'city' : 'sea');
-    };
-    document.addEventListener(SEA_POSITION_EVENT, onPosition);
-    return () => document.removeEventListener(SEA_POSITION_EVENT, onPosition);
-  }, [prefStore, targetCellId]);
-
-  useEffect(() => {
-    if (targetCellId === SEA_ROUTE_CELL) setMode('sea');
-    else if (targetCellId) setMode('city');
-  }, [targetCellId]);
-
-  const choose = (next: Mode) => {
-    chosen.current = true;
-    setMode(next);
-    prefStore?.write(MAP_MODE_PREF_KEY, next);
-  };
-
-  const setHereByHand = (row: number, col: number) => {
-    const position: SeaPosition = { row, col, source: 'manual', at: Date.now() };
-    prefStore?.write(SEA_POSITION_PREF_KEY, serializeSeaPosition(position));
-    setHere(position);
-    // The sea window beside the game reads the same store; tell it.
-    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
-  };
-
-  return (
-    <div class="map-tab">
-      <div class="map-mode-switch">
-        <button type="button" aria-pressed={mode === 'city'} class={mode === 'city' ? 'active' : ''} onClick={() => choose('city')}>Város</button>
-        <button type="button" aria-pressed={mode === 'sea'} class={mode === 'sea' ? 'active' : ''} onClick={() => choose('sea')}>Tenger</button>
-      </div>
-      {mode === 'city' ? (
-        <MapView loader={loader} targetCellId={targetCellId === SEA_ROUTE_CELL ? null : targetCellId} prefStore={prefStore} />
-      ) : (
-        <SeaView loader={loader} here={here} onSetHere={tracksPosition ? setHereByHand : undefined} />
-      )}
-    </div>
-  );
-}
-
-interface SeaViewProps {
-  loader: DataLoader;
-  here: SeaPosition | null;
-  onSetHere?: (row: number, col: number) => void;
-}
-
-function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
   const [data, setData] = useState<{ index: ChartIndex; city: MapData } | null>(null);
   const [failed, setFailed] = useState(false);
-  const [selected, setSelected] = useState<{ row: number; col: number } | null>(here ? { row: here.row, col: here.col } : null);
-  // The detail panel follows the player until a square is picked by hand.
-  const picked = useRef(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (here && !picked.current) setSelected({ row: here.row, col: here.col });
-  }, [here?.row, here?.col]);
+  const [picked, setPicked] = useState<WorldMap | null>(() => routedMap(targetCellId));
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +61,109 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
     return () => { cancelled = true; };
   }, [loader]);
 
+  const firstRoute = useRef(true);
+  useEffect(() => {
+    if (firstRoute.current) { firstRoute.current = false; return; }
+    setPicked(routedMap(targetCellId));
+  }, [targetCellId]);
+
+  useEffect(() => {
+    if (placeRequest) setPicked(null);
+  }, [placeRequest]);
+
+  // The page stores its position after the chart loads, which can be after this
+  // tab opened (a database left open across a step): follow it when it lands.
+  useEffect(() => {
+    const onPosition = () => setHere(parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null));
+    document.addEventListener(SEA_POSITION_EVENT, onPosition);
+    return () => document.removeEventListener(SEA_POSITION_EVENT, onPosition);
+  }, [prefStore]);
+
+  const auto = placeOf(here, data?.index ?? null);
+  const view: WorldMap = picked ?? auto ?? parseWorldMap(prefStore?.read(MAP_MODE_PREF_KEY) ?? null) ?? 'larkinor';
+
+  const choose = (next: WorldMap) => {
+    setPicked(next);
+    prefStore?.write(MAP_MODE_PREF_KEY, next);
+  };
+
+  const setHereByHand = (row: number, col: number) => {
+    const position: SeaPosition = { row, col, source: 'manual', at: Date.now() };
+    prefStore?.write(SEA_POSITION_PREF_KEY, serializeSeaPosition(position));
+    setHere(position);
+    // The minimap beside the game reads the same store; tell it.
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
+  };
+
+  let body: VNode;
+  if (view === 'larkinor') {
+    body = <MapView loader={loader} targetCellId={targetCellId === SEA_ROUTE_CELL ? null : targetCellId} prefStore={prefStore} />;
+  } else if (failed) {
+    body = <div class="map-view"><div class="map-stats">Nem sikerült betölteni a tengeri térképet.</div></div>;
+  } else if (!data) {
+    body = <div class="map-view"><div class="map-stats">Betöltés…</div></div>;
+  } else {
+    body = (
+      <ChartPane
+        key={view}
+        view={view}
+        index={data.index}
+        city={data.city}
+        here={here}
+        atSea={auto === 'sea' && here !== null && data.index.squareAt(here.row, here.col) === null}
+        onSetHere={tracksPosition ? setHereByHand : undefined}
+      />
+    );
+  }
+
+  return (
+    <div class="map-tab">
+      <div class="map-mode-switch">
+        {WORLD_MAPS.map((m) => (
+          <button key={m} type="button" aria-pressed={view === m} class={view === m ? 'active' : ''} onClick={() => choose(m)}>
+            {WORLD_MAP_LABEL[m]}
+          </button>
+        ))}
+      </div>
+      {body}
+    </div>
+  );
+}
+
+/** Thord-Artin's tiles and a one-square margin of sea around them. */
+function islandBounds(index: ChartIndex): ChartBounds {
+  const tiles = index.tiles.filter((t) => t.island === THORD_ARTIN);
+  return {
+    minRow: Math.min(...tiles.map((t) => t.row)) - 1,
+    maxRow: Math.max(...tiles.map((t) => t.row)) + 1,
+    minCol: Math.min(...tiles.map((t) => t.col)) - 1,
+    maxCol: Math.max(...tiles.map((t) => t.col)) + 1,
+  };
+}
+
+interface ChartPaneProps {
+  view: 'thord-artin' | 'sea';
+  index: ChartIndex;
+  city: MapData;
+  here: SeaPosition | null;
+  atSea: boolean;
+  onSetHere?: (row: number, col: number) => void;
+}
+
+/** One chart-drawn map (Thord-Artin or the sea) with its detail panel. */
+function ChartPane({ view, index, city, here, atSea, onSetHere }: ChartPaneProps): VNode {
+  const bounds = useMemo(() => (view === 'thord-artin' ? islandBounds(index) : undefined), [view, index]);
+  const inView = (p: { row: number; col: number } | null): p is { row: number; col: number } =>
+    p !== null && (!bounds || (p.row >= bounds.minRow && p.row <= bounds.maxRow && p.col >= bounds.minCol && p.col <= bounds.maxCol));
+  const [selected, setSelected] = useState<{ row: number; col: number } | null>(inView(here) ? { row: here.row, col: here.col } : null);
+  // The detail panel follows the player until a square is picked by hand.
+  const picked = useRef(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (inView(here) && !picked.current) setSelected({ row: here.row, col: here.col });
+  }, [here?.row, here?.col]);
+
   const scrollToHere = () => {
     const el = wrapRef.current?.querySelector('.lc-sea-square.here');
     // Guarded: jsdom ships no scrollIntoView, and a missing scroll must not break the view.
@@ -138,32 +171,28 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
   };
 
   // Opens on the player, without a glide: the game reloads on every step.
-  useEffect(() => {
-    if (data) requestAnimationFrame(scrollToHere);
-  }, [data]);
+  useEffect(() => { requestAnimationFrame(scrollToHere); }, [here?.row, here?.col]);
 
   const cityCells = useMemo(() => {
     const out = new Map<string, { cell: MapData['cells'][number]; pos: { row: number; col: number } }>();
-    if (!data) return out;
-    const positions = layoutCells(data.city.cells, data.city.edges ?? {});
-    for (const cell of data.city.cells) {
+    const positions = layoutCells(city.cells, city.edges ?? {});
+    for (const cell of city.cells) {
       const pos = positions.get(cell.imageId);
       if (pos) out.set(`${pos.row},${pos.col}`, { cell, pos });
     }
     return out;
-  }, [data]);
+  }, [city]);
 
-  if (failed) return <div class="map-view"><div class="map-stats">Nem sikerült betölteni a tengeri térképet.</div></div>;
-  if (!data) return <div class="map-view"><div class="map-stats">Betöltés…</div></div>;
-
-  const { index } = data;
-  const city = selected ? cityCells.get(`${selected.row},${selected.col}`) ?? null : null;
+  const cityCell = selected ? cityCells.get(`${selected.row},${selected.col}`) ?? null : null;
+  const shownHere = inView(here) ? here : null;
   return (
     <div class="map-view sea-view">
       <div class="map-stats">
-        {index.harbours.length} kikötő · a rajongói térkép (larkinorcenter.hu) alapján
-        {here && (
-          <button type="button" class="map-here-btn" onClick={() => { setSelected({ row: here.row, col: here.col }); scrollToHere(); }}>
+        {view === 'sea'
+          ? `${index.harbours.length} kikötő · a rajongói térkép (larkinorcenter.hu) alapján`
+          : 'Thord-Artin · a rajongói térkép (larkinorcenter.hu) alapján'}
+        {shownHere && (
+          <button type="button" class="map-here-btn" onClick={() => { setSelected({ row: shownHere.row, col: shownHere.col }); scrollToHere(); }}>
             📍 Ugrás a helyemre
           </button>
         )}
@@ -172,9 +201,12 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
         <div class="map-wrap" ref={wrapRef}>
           <SeaChartView
             index={index}
-            city={data.city}
-            here={here}
-            atSea={here !== null && !isInCity(here) && index.squareAt(here.row, here.col) === null}
+            city={city}
+            here={shownHere}
+            atSea={atSea}
+            bounds={bounds}
+            detail={view === 'thord-artin' ? 'names' : 'none'}
+            cellSize={view === 'thord-artin' ? ISLAND_CELL : undefined}
             selected={selected}
             onSelect={(row, col) => { picked.current = true; setSelected({ row, col }); }}
           />
@@ -186,8 +218,8 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
               col={selected.col}
               square={index.squareAt(selected.row, selected.col)}
               tile={index.tileAt(selected.row, selected.col)}
-              cityCell={city?.cell ?? null}
-              cityPosition={city?.pos ?? null}
+              cityCell={cityCell?.cell ?? null}
+              cityPosition={cityCell?.pos ?? null}
               isHere={here !== null && here.row === selected.row && here.col === selected.col}
               onSetHere={onSetHere ? () => onSetHere(selected.row, selected.col) : undefined}
             />

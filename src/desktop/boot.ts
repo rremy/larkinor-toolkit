@@ -389,9 +389,10 @@ export function bootDesktop(doc: Document): void {
   // The window around the player, at sea and on islands other than the city's.
   // Bumped once this page's position is stored, so the window reads it again.
   let seaVersion = 0;
-  const seaSource = (): SeaWindowSource | null => (seaPage.place === 'other' || pageType !== PageType.FreeMove
+  // The minimap shows on every free-move page — town, island and sea alike.
+  const seaSource = (): SeaWindowSource | null => (pageType !== PageType.FreeMove
     ? null
-    : { loader: seaLoader, readPref: getPref, atSea: seaPage.place === 'sea', version: seaVersion });
+    : { loader: seaLoader, readPref: getPref, writePref: setPref, atSea: seaPage.place === 'sea', version: seaVersion });
 
   // What the player owns, from whichever page lists a location of it (see
   // captureInventory), so the database can say how many of an item they have.
@@ -411,7 +412,7 @@ export function bootDesktop(doc: Document): void {
 
   renderDock();
   void seaPositionReady.then(() => {
-    if (seaPage.place === 'other') return;
+    if (pageType !== PageType.FreeMove) return;
     seaVersion += 1;
     renderDock();
   });

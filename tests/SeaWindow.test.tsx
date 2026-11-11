@@ -80,5 +80,35 @@ describe('SeaWindow', () => {
     document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
     await waitFor(() => expect(document.querySelector('.lc-sea-window .lc-sea-square.here')).not.toBeNull());
   });
+
+  it('shows the town around the player in Larkinor, with its buildings', async () => {
+    const read = (key: string) => (key === SEA_POSITION_PREF_KEY ? serializeSeaPosition({ row: 4, col: 4, source: 'city', at: 0 }) : null);
+    const { container } = render(h(SeaWindow, { loader: makeLoader(), readPref: read, atSea: false, onOpenChart: vi.fn() }));
+    await waitFor(() => expect(container.querySelector('.lc-sea-chart--icons')).not.toBeNull());
+    expect(container.querySelector('.lc-sea-window-title')?.textContent).toBe('Larkinor');
+    expect(container.querySelectorAll('.lc-sea-square')).toHaveLength(35);
+    expect(container.querySelector('.lc-sea-square.here')?.getAttribute('data-row')).toBe('4');
+  });
+
+  it('shows Thord-Artin around the player on the island', async () => {
+    const read = (key: string) => (key === SEA_POSITION_PREF_KEY
+      ? serializeSeaPosition({ row: -22, col: 24, source: 'tile', at: 0, image: 'nagysziget/szig_2-10' }) : null);
+    const { container } = render(h(SeaWindow, { loader: makeLoader(), readPref: read, atSea: false, onOpenChart: vi.fn() }));
+    await waitFor(() => expect(container.querySelector('.lc-sea-window-title')?.textContent).toBe('Thord-Artin'));
+    const here = container.querySelector('.lc-sea-square.here')!;
+    expect(here.textContent).toContain('📍');
+    expect(here.textContent).toContain('⚓');
+  });
+
+  it('can be hidden, leaving only its header', async () => {
+    const onToggleHidden = vi.fn();
+    const { container, rerender } = render(h(SeaWindow, { loader: makeLoader(), readPref: readAt(-7, -3), atSea: true, onOpenChart: vi.fn(), onToggleHidden }));
+    await waitFor(() => expect(container.querySelector('.lc-sea-chart')).not.toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: 'Térkép elrejtése' }));
+    expect(onToggleHidden).toHaveBeenCalledTimes(1);
+    rerender(h(SeaWindow, { loader: makeLoader(), readPref: readAt(-7, -3), atSea: true, onOpenChart: vi.fn(), onToggleHidden, hidden: true }));
+    expect(container.querySelector('.lc-sea-chart')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Térkép megjelenítése' })).toBeTruthy();
+  });
 });
 

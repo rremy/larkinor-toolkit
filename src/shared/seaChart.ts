@@ -17,6 +17,8 @@ export interface ChartIndex {
   tileByImage(image: string): IslandTile | null;
   tileAt(row: number, col: number): IslandTile | null;
   harbours: SeaSquare[];
+  /** Every island tile with a known square. */
+  tiles: IslandTile[];
   /** Whether a position lies on the chart at all. */
   contains(row: number, col: number): boolean;
 }
@@ -42,6 +44,7 @@ export function indexChart(chart: SeaChart, islands: IslandTile[]): ChartIndex {
     tileByImage: (image) => byImage.get(image) ?? null,
     tileAt: (row, col) => byPos.get(key(row, col)) ?? null,
     harbours: chart.squares.filter((s) => s.harbour),
+    tiles: islands,
     contains: (row, col) =>
       row >= chart.rows.min && row <= chart.rows.max && col >= chart.cols.min && col <= chart.cols.max,
   };

@@ -9,7 +9,7 @@ import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
-import { SeaWindow, type SeaWindowSource } from '@/components/SeaWindow';
+import { SeaWindow, useMinimapHidden, type SeaWindowSource } from '@/components/SeaWindow';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { findActiveQuest } from '@/utils/activeQuest';
@@ -42,16 +42,19 @@ export function FreeMove({ state, db, sea = null }: FreeMoveProps): JSX.Element 
   const [seaRoute, setSeaRoute] = useState<{ seq: number } | null>(null);
 
   const { hotkeyActions, buttonActions } = partitionHotkeys(state.actions, enabled);
+  const [mapHidden, toggleMap] = useMinimapHidden(sea);
 
   return (
     <div class="lc-page">
       <div class="lc-hero">
-        {sea ? (
+        {sea && (
           <SeaWindow
             loader={sea.loader} readPref={sea.readPref} atSea={sea.atSea} version={sea.version}
+            hidden={mapHidden} onToggleHidden={toggleMap}
             onOpenChart={() => { setDbItemId(null); setQuestRoute(null); setSeaRoute((r) => ({ seq: (r?.seq ?? 0) + 1 })); setDbOpen(true); }}
           />
-        ) : state.locationImageUrl && (
+        )}
+        {(!sea || mapHidden) && state.locationImageUrl && (
           <img class="lc-hero-img" src={state.locationImageUrl} alt={state.locationName} />
         )}
         <StatBar hp={state.hp} hpMax={state.hpMax} mp={state.mp} mpMax={state.mpMax} gold={state.gold} statusIcons={state.statusIcons} onConfig={openConfig} onDatabase={() => { setDbItemId(null); setQuestRoute(null); setSeaRoute(null); setDbOpen(true); }} />
@@ -113,7 +116,7 @@ export function FreeMove({ state, db, sea = null }: FreeMoveProps): JSX.Element 
       <DatabaseOverlay
         open={dbOpen}
         initialItemId={dbItemId ?? undefined}
-        initialTab={questRoute ? 'quests' : seaRoute ? 'sea' : undefined}
+        initialTab={questRoute ? 'quests' : seaRoute ? 'map' : undefined}
         initialTabKey={questRoute?.seq ?? seaRoute?.seq}
         initialQuest={questRoute ? { set: 'royal', id: questRoute.id } : null}
         onClose={() => setDbOpen(false)}

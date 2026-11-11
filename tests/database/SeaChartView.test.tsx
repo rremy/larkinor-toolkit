@@ -83,6 +83,49 @@ describe('SeaChartView', () => {
   });
 });
 
+describe('SeaChartView — detailed squares', () => {
+  const cityWithShop: MapData = {
+    cells: [{
+      imageId: '44', imageSrc: '/tajk/44.gif', district: 'városközpont',
+      buildings: [{ name: 'templom', icon: 'templom.gif' }], clanHouses: [], exits: {}, blockers: {}, firstCoords: [0, 0],
+    }],
+    edges: {},
+  };
+  const taIslands: IslandTile[] = [{
+    image: 'nagysziget/szig_2-10', row: 0, col: 2, island: 'Thord-Artin', name: 'Lápapály', district: 'mocsár',
+    buildings: [{ name: 'Kikötő', ready: true }, { name: 'Kocsma', ready: false, note: '1 építőkő szükséges' }],
+  }];
+
+  it('draws the buildings of a city cell and an island tile as icons', () => {
+    const index = indexChart({ ...chart, squares: [...chart.squares, { row: 4, col: 4, kind: 'land' }] }, taIslands);
+    const { container } = render(h(SeaChartView, {
+      index, city: cityWithShop, here: null, atSea: false, detail: 'icons',
+      bounds: { minRow: 0, maxRow: 4, minCol: 0, maxCol: 4 },
+    }));
+    expect(squareAt(container, 4, 4)!.textContent).toContain('⛪');
+    const lapapaly = squareAt(container, 0, 2)!;
+    expect(lapapaly.textContent).toContain('⚓');
+    expect(lapapaly.querySelector('.lc-sea-poi.unbuilt')?.textContent).toBe('🍺');
+  });
+
+  it('writes the tile names on the full island map', () => {
+    const index = indexChart(chart, taIslands);
+    const { container } = render(h(SeaChartView, { index, city, here: null, atSea: false, detail: 'names' }));
+    expect(squareAt(container, 0, 2)!.querySelector('.lc-sea-name')?.textContent).toBe('Lápapály');
+  });
+
+  it('keeps the player visible on a square full of icons', () => {
+    const index = indexChart(chart, taIslands);
+    const { container } = render(h(SeaChartView, { index, city, here: { ...here, row: 0, col: 2 }, atSea: false, detail: 'names' }));
+    expect(squareAt(container, 0, 2)!.textContent).toContain('📍');
+  });
+
+  it('sizes its squares as asked', () => {
+    const { container } = render(h(SeaChartView, { index: idx, city, here: null, atSea: false, cellSize: 40 }));
+    expect((container.querySelector('.lc-sea-chart') as HTMLElement).style.getPropertyValue('--sea-cell')).toBe('40px');
+  });
+});
+
 describe('nearestHarbourDirection', () => {
   it('is null when a harbour is in view', () => {
     expect(nearestHarbourDirection(idx, { row: 0, col: 0 }, { minRow: -1, maxRow: 1, minCol: -1, maxCol: 2 })).toBeNull();

@@ -573,11 +573,22 @@ describe('DesktopDock — the sea window', () => {
     expect(container.querySelector('.lc-sea-window')).toBeNull();
   });
 
-  it('opens the database on the sea chart when the window is clicked', async () => {
+  it('opens the database on the map of where you are when the window is clicked', async () => {
+    GM_setValue('lc-sea-position', '{"row":-7,"col":-3,"source":"move","at":0}');
     const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} sea={sea} />);
     await vi.waitFor(() => expect(container.querySelector('.lc-sea-chart')).not.toBeNull());
     fireEvent.click(container.querySelector('.lc-sea-window .lc-sea-chart')!);
     await vi.waitFor(() => expect(GM_getValue(DB_ROUTE_KEY, '')).toBe('map'));
     await vi.waitFor(() => expect(document.querySelector('.map-mode-switch button[aria-pressed="true"]')?.textContent).toBe('Tenger'));
   });
+
+  it('hides the minimap and remembers it', async () => {
+    const written: Record<string, string> = {};
+    const withStore = { ...sea, writePref: (k: string, v: string) => { written[k] = v; } };
+    const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} sea={withStore} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Térkép elrejtése' }));
+    expect(container.querySelector('.lc-sea-window .lc-sea-chart')).toBeNull();
+    expect(written['lc-minimap-hidden']).toBe('1');
+  });
 });
+
