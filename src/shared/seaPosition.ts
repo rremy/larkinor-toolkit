@@ -3,6 +3,13 @@
 // read by the sea window and the database's sea chart — which also ships in
 // the standalone bundle, hence a module of its own with no GM_* in reach.
 
+/**
+ * Dispatched on the document once a page has stored a new position. The
+ * position needs the chart, which loads after the page renders, so a database
+ * already open on the map would otherwise show the previous square.
+ */
+export const SEA_POSITION_EVENT = 'lc-sea-position-changed';
+
 /** How the position was arrived at. */
 export type SeaPositionSource = 'city' | 'harbour' | 'departure' | 'move' | 'tile' | 'manual';
 

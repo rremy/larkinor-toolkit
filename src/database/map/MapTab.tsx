@@ -2,7 +2,7 @@ import { h, type VNode } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { DataLoader, MapData } from '@/shared/data';
 import { indexChart, type ChartIndex } from '@/shared/seaChart';
-import { isInCity, parseSeaPosition, serializeSeaPosition, type SeaPosition } from '@/shared/seaPosition';
+import { isInCity, parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
 import { MAP_MODE_PREF_KEY, SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
 import { MapView } from './MapView';
@@ -41,6 +41,20 @@ export function MapTab(props: MapTabProps): VNode {
   const { loader, targetCellId = null, prefStore, tracksPosition = false } = props;
   const [here, setHere] = useState(() => parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null));
   const [mode, setMode] = useState<Mode>(() => initialMode(targetCellId, here, prefStore));
+  // Once the player picks a view, a position arriving later no longer moves them.
+  const chosen = useRef(false);
+
+  // The page stores its position after the chart loads, which can be after this
+  // tab opened (a database left open across a step): follow it when it lands.
+  useEffect(() => {
+    const onPosition = () => {
+      const next = parseSeaPosition(prefStore?.read(SEA_POSITION_PREF_KEY) ?? null);
+      setHere(next);
+      if (!chosen.current && !targetCellId && next) setMode(isInCity(next) ? 'city' : 'sea');
+    };
+    document.addEventListener(SEA_POSITION_EVENT, onPosition);
+    return () => document.removeEventListener(SEA_POSITION_EVENT, onPosition);
+  }, [prefStore, targetCellId]);
 
   useEffect(() => {
     if (targetCellId === SEA_ROUTE_CELL) setMode('sea');
@@ -48,6 +62,7 @@ export function MapTab(props: MapTabProps): VNode {
   }, [targetCellId]);
 
   const choose = (next: Mode) => {
+    chosen.current = true;
     setMode(next);
     prefStore?.write(MAP_MODE_PREF_KEY, next);
   };

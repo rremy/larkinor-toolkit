@@ -6,7 +6,7 @@ import { MapTab } from '@/database/map/MapTab';
 import type { DataLoader, IslandTile, MapData, SeaChart } from '@/shared/data';
 import type { PrefStore } from '@/database/DatabaseApp';
 import { MAP_MODE_PREF_KEY, SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
-import { parseSeaPosition, serializeSeaPosition } from '@/shared/seaPosition';
+import { parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT } from '@/shared/seaPosition';
 
 const chart: SeaChart = JSON.parse(readFileSync('static/db/sea-chart.json', 'utf-8'));
 const islands: IslandTile[] = JSON.parse(readFileSync('static/db/islands.json', 'utf-8'));
@@ -117,5 +117,24 @@ describe('MapTab', () => {
   it('says so when the sea chart cannot be loaded', async () => {
     render(h(MapTab, { loader: makeLoader(true), targetCellId: 'sea', prefStore: storeWith({}) }));
     expect(await screen.findByText('Nem sikerült betölteni a tengeri térképet.')).toBeTruthy();
+  });
+
+  it('follows a position stored after it opened, switching to the sea chart', async () => {
+    const store = storeWith({ [SEA_POSITION_PREF_KEY]: at(1, 3) });
+    render(h(MapTab, { loader: makeLoader(), prefStore: store }));
+    expect(screen.getByRole('button', { name: 'Város' }).getAttribute('aria-pressed')).toBe('true');
+    store.values[SEA_POSITION_PREF_KEY] = at(-22, 25);
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
+    await waitFor(() => expect(square(-22, 25)?.classList.contains('here')).toBe(true));
+  });
+
+  it('keeps the view the player chose when the position changes', async () => {
+    const store = storeWith({ [SEA_POSITION_PREF_KEY]: at(1, 3) });
+    render(h(MapTab, { loader: makeLoader(), prefStore: store }));
+    fireEvent.click(screen.getByRole('button', { name: 'Város' }));
+    store.values[SEA_POSITION_PREF_KEY] = at(-22, 25);
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByRole('button', { name: 'Város' }).getAttribute('aria-pressed')).toBe('true');
   });
 });

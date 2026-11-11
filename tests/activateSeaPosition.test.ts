@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { DataLoader, IslandTile, SeaChart } from '@/shared/data';
 import { SEA_LEARNED_TILES_PREF_KEY, SEA_MOVE_PREF_KEY, SEA_POSITION_PREF_KEY } from '@/shared/prefKeys';
-import { parseSeaPosition, serializeSeaPosition } from '@/shared/seaPosition';
+import { parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT } from '@/shared/seaPosition';
 import { parseLearnedTiles } from '@/shared/learnedTiles';
 import { activateSeaPosition, armSeaMoveTracking, isSeaOrIsland } from '@/utils/activateSeaPosition';
 import { PageType } from '@/utils/pageDetector';
@@ -116,5 +116,25 @@ describe('activateSeaPosition', () => {
       <img src="/2/ikon/szarazfold.gif" title="északra szárazföld">`);
     await activateSeaPosition(PageType.FreeMove, landAround, makeLoader(), t.read, t.write, 5);
     expect(t.prefs.get(SEA_POSITION_PREF_KEY)).toBe('');
+  });
+});
+
+describe('activateSeaPosition — telling open views', () => {
+  it('announces a newly stored position on the document', async () => {
+    const s = store({ [SEA_POSITION_PREF_KEY]: pos(1, 3, 'harbour') });
+    const doc = fixture('sea-departed-13');
+    const heard = vi.fn();
+    doc.addEventListener(SEA_POSITION_EVENT, heard);
+    await activateSeaPosition(PageType.FreeMove, doc, makeLoader(), s.read, s.write, 5);
+    expect(heard).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces nothing when the stored value is kept', async () => {
+    const s = store();
+    const doc = docWith('');
+    const heard = vi.fn();
+    doc.addEventListener(SEA_POSITION_EVENT, heard);
+    await activateSeaPosition(PageType.Shop, doc, makeLoader(), s.read, s.write, 5);
+    expect(heard).not.toHaveBeenCalled();
   });
 });

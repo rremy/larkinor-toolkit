@@ -16,7 +16,7 @@ import {
   type ReadPref, type WritePref,
 } from '@/shared/prefKeys';
 import { indexChart, type ChartIndex } from '@/shared/seaChart';
-import { parseSeaPosition, serializeSeaPosition, type SeaPosition } from '@/shared/seaPosition';
+import { parseSeaPosition, serializeSeaPosition, SEA_POSITION_EVENT, type SeaPosition } from '@/shared/seaPosition';
 import { parseLearnedTiles, recordTile, serializeLearnedTiles } from '@/shared/learnedTiles';
 import { parseMapPosition } from '@/shared/mapPosition';
 import { parseId } from '@/database/map/mapMeta';
@@ -110,5 +110,8 @@ export async function activateSeaPosition(
     const { image, row, col } = result.learn;
     writePref(SEA_LEARNED_TILES_PREF_KEY, serializeLearnedTiles(recordTile(learned, image, row, col)));
   }
+  // The page's own CustomEvent: a sandbox-made event may not cross into the page's realm.
+  const Custom = doc.defaultView?.CustomEvent ?? CustomEvent;
+  doc.dispatchEvent(new Custom(SEA_POSITION_EVENT));
   return result.position;
 }
