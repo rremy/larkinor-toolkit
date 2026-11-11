@@ -47,7 +47,8 @@ const OWN_UI = '#lc-root, #lc-dock-root, .lc-db';
 /** The island picture directories: `szig…` and Thord-Artin's `nagysziget`. */
 const ISLAND_PICTURE = /\/tajk\/((?:szig[^/]*|nagysziget)\/[^/?#]+)\.gif/;
 const SEA_PICTURE = /\/tajk\/hajotengeren\.gif/;
-const HARBOUR_PICTURE = /\/2\/epulet\/(-?\d+)kikoto\.gif/;
+// The column may be negative too: the harbour at (−20, −3) is `-20-3kikoto.gif`.
+const HARBOUR_PICTURE = /\/2\/epulet\/(-?\d+(?:-\d+)?)kikoto\.gif/;
 
 function isOwn(el: Element): boolean {
   return el.closest(OWN_UI) !== null;

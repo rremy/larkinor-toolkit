@@ -32,6 +32,21 @@ describe('resolveSeaPosition', () => {
     expect(r(null, null, { kind: 'city', row: 1, col: 3 }).position).toMatchObject({ row: 1, col: 3, source: 'city' });
   });
 
+  it('takes the harbour sailed into when its picture cannot be read', () => {
+    expect(r(at(-19, -3), 'N', { kind: 'harbour', harbourId: null }).position).toMatchObject({ row: -20, col: -3, source: 'harbour' });
+    expect(r(at(-19, -3), 'N', { kind: 'harbour', harbourId: '9999' }).position).toMatchObject({ row: -20, col: -3 });
+  });
+
+  it('keeps the old square when an unreadable harbour page follows no step into a harbour', () => {
+    expect(r(at(-19, -3), 'W', { kind: 'harbour', harbourId: null })).toMatchObject({ keep: true });
+  });
+
+  it('learns the island tile a harbour building lets out onto', () => {
+    const res = r(at(-20, -3, 'harbour'), null, island('szigmag/szigmag_2-1', { N: 'coast', E: 'walk' }));
+    expect(res.position).toMatchObject({ row: -20, col: -3, image: 'szigmag/szigmag_2-1' });
+    expect(res.learn).toEqual({ image: 'szigmag/szigmag_2-1', row: -20, col: -3 });
+  });
+
   it('sets the harbour square from the harbour picture', () => {
     expect(r(null, null, { kind: 'harbour', harbourId: '-2224' }).position).toMatchObject({ row: -22, col: 24, source: 'harbour' });
   });

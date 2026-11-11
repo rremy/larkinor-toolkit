@@ -76,6 +76,7 @@ describe('readHarbourPicture', () => {
     expect(readHarbourPicture(docWith('<img src="/2/epulet/-241kikoto.gif" title="kikötő">'))).toBe('-241');
     expect(readHarbourPicture(docWith('<img src="/2/epulet/-2224kikoto.gif">'))).toBe('-2224');
     expect(readHarbourPicture(docWith('<img src="/2/epulet/13kikoto.gif">'))).toBe('13');
+    expect(readHarbourPicture(docWith('<img src="/2/epulet/-20-3kikoto.gif">'))).toBe('-20-3');
   });
 
   it('is null on a page without one', () => {

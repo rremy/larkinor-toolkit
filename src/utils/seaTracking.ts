@@ -93,9 +93,16 @@ export function resolveSeaPosition(
     case 'city':
       return stored(make(page.row, page.col, 'city', now));
     case 'harbour': {
-      if (!index || !page.harbourId) return KEEP;
-      const harbour = harbourById(index, page.harbourId);
-      return harbour ? stored(make(harbour.row, harbour.col, 'harbour', now)) : KEEP;
+      if (!index) return KEEP;
+      const named = page.harbourId ? harbourById(index, page.harbourId) : null;
+      if (named) return stored(make(named.row, named.col, 'harbour', now));
+      // A picture we cannot read: docking is a step, so the harbour is the square sailed into.
+      if (prev && step) {
+        const row = prev.row + STEP[step].row;
+        const col = prev.col + STEP[step].col;
+        if (index.squareAt(row, col)?.harbour) return stored(make(row, col, 'harbour', now));
+      }
+      return KEEP;
     }
     case 'battle':
       // The fight is in the square sailed into; the next sea page checks it.
@@ -144,6 +151,9 @@ export function resolveSeaPosition(
     learnable = obs.place === 'island' && image !== null && confirmedStart;
   } else if (prev) {
     next = { ...prev };
+    // Leaving a harbour building onto its island: the harbour picture vouched for
+    // the square, so an unknown tile picture there can be learned.
+    learnable = obs.place === 'island' && image !== null && prev.source === 'harbour' && prev.image === undefined;
   } else {
     return KEEP;
   }

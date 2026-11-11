@@ -60,7 +60,7 @@ export function harbourById(index: ChartIndex, id: string): SeaSquare | null {
   for (let cut = 1; cut < id.length; cut += 1) {
     const rowText = id.slice(0, cut);
     const colText = id.slice(cut);
-    if (!/^-?\d+$/.test(rowText) || !/^\d+$/.test(colText)) continue;
+    if (!/^-?\d+$/.test(rowText) || !/^-?\d+$/.test(colText)) continue;
     const square = index.squareAt(Number(rowText), Number(colText));
     if (square?.harbour && !matches.includes(square)) matches.push(square);
   }

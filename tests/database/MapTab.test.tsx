@@ -55,6 +55,19 @@ describe('MapTab — the map of where you are', () => {
     await waitFor(() => expect(pressed()).toBe('Larkinor'));
   });
 
+  it('pins no stale city tile on the Larkinor map when the player is not in town', async () => {
+    const store = storeWith({ 'lc-map-position': '13', [MAP_MODE_PREF_KEY]: 'larkinor' });
+    render(h(MapTab, { loader: makeLoader(), prefStore: store }));
+    await waitFor(() => expect(cell('13')).not.toBeNull());
+    expect(cell('13')!.classList.contains('here')).toBe(false);
+  });
+
+  it('pins the city tile in town', async () => {
+    const store = storeWith({ 'lc-map-position': '13', [SEA_POSITION_PREF_KEY]: at(1, 3, 'city') });
+    render(h(MapTab, { loader: makeLoader(), prefStore: store }));
+    await waitFor(() => expect(cell('13')?.classList.contains('here')).toBe(true));
+  });
+
   it('opens on Larkinor on the strip north of row 0', async () => {
     render(h(MapTab, { loader: makeLoader(), prefStore: storeWith({ [SEA_POSITION_PREF_KEY]: at(-1, 4, 'city') }) }));
     await waitFor(() => expect(pressed()).toBe('Larkinor'));

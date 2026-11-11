@@ -105,7 +105,7 @@ export function MapTab(props: MapTabProps): VNode {
 
   let body: VNode;
   if (view === 'larkinor') {
-    body = <MapView loader={loader} targetCellId={targetCellId === SEA_ROUTE_CELL ? null : targetCellId} prefStore={prefStore} />;
+    body = <MapView loader={loader} targetCellId={targetCellId === SEA_ROUTE_CELL ? null : targetCellId} prefStore={prefStore} showHere={auto === 'larkinor'} />;
   } else if (failed) {
     body = <div class="map-view"><div class="map-stats">Nem sikerült betölteni a tengeri térképet.</div></div>;
   } else if (!data) {

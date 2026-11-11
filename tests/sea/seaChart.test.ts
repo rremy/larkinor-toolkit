@@ -30,6 +30,10 @@ describe('harbourById', () => {
     expect(harbourById(idx, '13')).toMatchObject({ row: 1, col: 3 });
   });
 
+  it('reads a harbour whose column is negative', () => {
+    expect(harbourById(idx, '-20-3')).toMatchObject({ row: -20, col: -3 });
+  });
+
   it('is null for an id naming no harbour', () => {
     expect(harbourById(idx, '999')).toBeNull();
     expect(harbourById(idx, '44')).toBeNull();

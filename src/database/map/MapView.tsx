@@ -34,6 +34,12 @@ interface MapViewProps {
    */
   island?: IslandMapData;
   hereCellId?: string | null;
+  /**
+   * Whether to pin the player's city tile. The tile is only ever the last one
+   * walked in town, so away from town (at sea, on another island, or lost)
+   * pinning it would show a stale square as the player's own.
+   */
+  showHere?: boolean;
 }
 
 /** A cell to select and scroll to; `animate` glides there and flashes it. */
@@ -69,10 +75,10 @@ function span(values: number[], cityBlock: boolean): [number, number] {
  * `renderGrid`/`showCellDetail`/`applyFilter` (explorer.html:786-936).
  */
 export function MapView(props: MapViewProps): VNode {
-  const { loader, targetCellId = null, prefStore, island, hereCellId = null } = props;
+  const { loader, targetCellId = null, prefStore, island, hereCellId = null, showHere = true } = props;
   // Read once: the game reloads the page on every step, remounting the view.
   const [cityHereId] = useState(() => parseMapPosition(prefStore?.read(MAP_POSITION_PREF_KEY) ?? null));
-  const hereId = island ? hereCellId : cityHereId;
+  const hereId = island ? hereCellId : showHere ? cityHereId : null;
   const [map, setMap] = useState<MapData | null>(() => (island ? { cells: island.cells, edges: {} } : null));
   const [owners, setOwners] = useState<ShopOwners>({});
   const [selectedId, setSelectedId] = useState<string | null>(targetCellId ?? hereId);
