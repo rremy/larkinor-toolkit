@@ -137,4 +137,14 @@ describe('MapTab', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.getByRole('button', { name: 'Város' }).getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('moves the detail panel along with the player until a square is picked', async () => {
+    const store = storeWith({ [SEA_POSITION_PREF_KEY]: at(-22, 25) });
+    render(h(MapTab, { loader: makeLoader(), prefStore: store }));
+    expect(await screen.findByRole('heading', { name: /Kígyófa/ })).toBeTruthy();
+    store.values[SEA_POSITION_PREF_KEY] = at(-22, 24);
+    document.dispatchEvent(new CustomEvent(SEA_POSITION_EVENT));
+    expect(await screen.findByRole('heading', { name: /Lápapály/ })).toBeTruthy();
+  });
 });
+

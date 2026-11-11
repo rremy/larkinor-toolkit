@@ -98,7 +98,13 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
   const [data, setData] = useState<{ index: ChartIndex; city: MapData } | null>(null);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(here ? { row: here.row, col: here.col } : null);
+  // The detail panel follows the player until a square is picked by hand.
+  const picked = useRef(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (here && !picked.current) setSelected({ row: here.row, col: here.col });
+  }, [here?.row, here?.col]);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,7 +162,7 @@ function SeaView({ loader, here, onSetHere }: SeaViewProps): VNode {
             here={here}
             atSea={here !== null && !isInCity(here) && index.squareAt(here.row, here.col) === null}
             selected={selected}
-            onSelect={(row, col) => setSelected({ row, col })}
+            onSelect={(row, col) => { picked.current = true; setSelected({ row, col }); }}
           />
         </div>
         <div class="map-side">
