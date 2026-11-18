@@ -14,8 +14,8 @@ location, so visiting the island replaced Larkinor's prices with the island's
   apart is the building picture: `54piac.gif` (Larkinor, tile 54) and
   `-1627piac.gif` (Thord-Artin, grid square (−16, 27)) — `<grid id>piac.gif`,
   the harbours' naming. `piacvesz.gif` must not match.
-- Larkinor quotes 1425 items, Thord-Artin 44, three of them island-only
-  (bőrpajzs, bőrsisak, kithrill). Shared items differ wildly (gyémánt 236% vs
+- Larkinor quotes 1425 items, Thord-Artin 44, two of them island-only
+  (bőrpajzs, bőrsisak). Shared items differ wildly (gyémánt 236% vs
   2900%, hidracél gigapallos 1933% vs 100%).
 
 ## Goals

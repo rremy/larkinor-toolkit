@@ -895,7 +895,7 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     building picture names them, `<grid id>piac.gif` like the harbours — `54piac.gif` (tile 54),
     `-1627piac.gif` (square (−16, 27)). `marketIdOf` reads it, and **a page without one records
     nothing**, rates or offers, rather than being guessed into Larkinor. The two quote very
-    different sets (Larkinor 1425 items, the island 44, three of them island-only) at wildly
+    different sets (Larkinor 1425 items, the island 44, two of them island-only) at wildly
     different rates (gyémánt 236% vs 2900%), so rates and offers are both stored per market.
     A row's `marketPrice` is the **cheapest** market's; `marketPrices` lists each, Larkinor
     first, and the detail panel prints them as `Piaci ár (Larkinor)`. The scraped static
