@@ -203,6 +203,22 @@ function parseCatalogueLabel(text: string): { name: string; pricePercent: number
   return { name: match[1].trim(), pricePercent: Number(match[2]) };
 }
 
+/** A market's building picture: `54piac.gif`, `-1627piac.gif` (not `piacvesz.gif`). */
+const MARKET_PICTURE = /^(-?\d+(?:-\d+)?)piac$/;
+
+/**
+ * Which market this page is, by the grid id in its building picture (see
+ * src/shared/markets.ts), or null when the page draws no such picture — in
+ * which case nothing about it may be recorded against any market.
+ */
+export function marketIdOf(doc: Document): string | null {
+  for (const img of doc.querySelectorAll('img[src]')) {
+    const match = MARKET_PICTURE.exec(basename(img.getAttribute('src') ?? ''));
+    if (match) return match[1];
+  }
+  return null;
+}
+
 /** Every item the market can be searched for, in the page's own order. */
 export function extractCatalogue(doc: Document): MarketCatalogueEntry[] {
   const select = selectIn(doc, 'vetelUrlap', 'melyik');
