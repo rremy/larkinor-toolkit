@@ -202,7 +202,7 @@ export function bootMobile(doc: Document): void {
 
   // The market's buy form quotes the current rate of every item it trades, and
   // the rates drift — so each visit refreshes the database's market prices.
-  if (pageType === PageType.Market) captureMarketRates(doc, setPref);
+  if (pageType === PageType.Market) captureMarketRates(doc, getPref, setPref);
 
   // Runs on every page, like the pub and dungeon activations above: the
   // active-quest line is not tied to a page type we render, and the link the

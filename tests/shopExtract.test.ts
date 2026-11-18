@@ -73,7 +73,7 @@ const CHURCH_HTML = `
 
 const page = (html: string) => new JSDOM(`<html><head><title>Vegyesbolt</title></head><body>${html}</body></html>`).window.document;
 
-const rates: MarketRates = { version: 1, capturedAt: 0, rates: { 252: 3000, 1: 50 } };
+const rates: MarketRates = { version: 2, markets: { 54: { capturedAt: 0, rates: { 252: 3000, 1: 50 } } } };
 
 describe('extractShop — reading', () => {
   it('reads the buy list with its prices and ids', () => {

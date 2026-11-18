@@ -63,6 +63,7 @@ describe('bootMobile', () => {
         <input type="text" name="mennyiseg" value="1"><input type="text" name="ar" value="1">
         <select name="felkinalt"></select>
       </form>
+      <img src="/2/epulet/54piac.gif" title="piac">
       <form name="vetelUrlap"><select name="melyik"><option value="37">jáspis (170%)</option></select></form>
       <script>hatizsakTargyak[0] = "Név: jáspis\\nSúly: 0.04 kg.\\nÁr: 50 ezüst\\nMennyiség: 19\\n";</script>
     </body></html>`).window.document;
@@ -73,7 +74,7 @@ describe('bootMobile', () => {
     expect(doc.querySelector('#lc-root .lc-mkt-row')).not.toBeNull();
     // ...and the visit refreshed the database's market rates.
     const stored = vi.mocked(GM_setValue).mock.calls.find(([key]) => key === MARKET_RATES_PREF_KEY);
-    expect(parseMarketRates(stored![1] as string)!.rates).toEqual({ 37: 170 });
+    expect(parseMarketRates(stored![1] as string)!.markets['54'].rates).toEqual({ 37: 170 });
   });
 
   it('takes over a shop, a bank, the arena and both palace rooms', () => {

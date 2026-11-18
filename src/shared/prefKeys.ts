@@ -122,7 +122,8 @@ export const LOADOUT_PREF_KEY = 'lc-loadout';
 
 /**
  * PrefStore key holding the serialised `MarketRates` — the percentage of shop
- * price the market pays per item, captured on every market visit. Read by the
+ * price each market pays per item, keyed by market, captured on every market
+ * visit. Read by the
  * hosted database to keep `marketPrice` current; written only by the boots'
  * market capture.
  */

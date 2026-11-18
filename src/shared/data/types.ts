@@ -37,7 +37,22 @@ export interface Holding {
   capturedAt: number;
 }
 
-export interface Weapon extends Ownership {
+/** An item's price at one market (src/shared/marketRates.ts). */
+export interface MarketPrice {
+  /** The market's name as the UI prints it (`Larkinor`, `Thord-Artin`). */
+  market: string;
+  price: number;
+}
+
+/**
+ * Filled in by `withMarketRates`: the price at each market quoting the item,
+ * Larkinor first. Absent on the standalone site, which sees no captured rates.
+ */
+export interface MarketPricing {
+  marketPrices?: MarketPrice[];
+}
+
+export interface Weapon extends Ownership, MarketPricing {
   id: number;
   name: string;
   weight: number;
@@ -59,7 +74,7 @@ export interface Weapon extends Ownership {
   shops: ShopRef[];
 }
 
-export interface Armor extends Ownership {
+export interface Armor extends Ownership, MarketPricing {
   id: number;
   name: string;
   weight: number;
@@ -77,7 +92,7 @@ export interface Armor extends Ownership {
   shops?: ShopRef[];
 }
 
-export interface Item extends Ownership {
+export interface Item extends Ownership, MarketPricing {
   id: number;
   name: string;
   weight: number;

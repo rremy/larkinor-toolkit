@@ -464,7 +464,7 @@ export function bootDesktop(doc: Document): void {
 
   // The market's buy form quotes the current rate of every item it trades, and
   // the rates drift — so each visit refreshes the database's market prices.
-  if (pageType === PageType.Market) captureMarketRates(doc, setPref);
+  if (pageType === PageType.Market) captureMarketRates(doc, getPref, setPref);
 
   // Inside a labyrinth, work out which maze cell the player is standing in and
   // store it, so the quests tab marks it. Anywhere else, forget it — a position

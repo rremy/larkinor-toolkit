@@ -88,7 +88,7 @@ describe('extractCharacterPage — reading', () => {
   });
 
   it('prices backpack items at the market from the captured rates, by item id', () => {
-    const s = extractCharacterPage(page(), { version: 1, capturedAt: 0, rates: { 4: 2500 } });
+    const s = extractCharacterPage(page(), { version: 2, markets: { 54: { capturedAt: 0, rates: { 4: 2500 } } } });
     const prices = Object.fromEntries(s.backpack.map((i) => [i.name, i.marketPrice]));
     // bot: 6 ezüst × 2500%; the rest are unquoted, and silver has no Ár at all.
     expect(prices).toEqual({ ezüst: null, bot: 150, bőrsisak: null, bőrpajzs: null });
