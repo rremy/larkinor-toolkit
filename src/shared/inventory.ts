@@ -4,18 +4,20 @@
 //
 // The game has no page that lists everything at once, so each location is a
 // snapshot of the last page that listed it in full, replaced whole on every
-// visit: the backpack (character sheet, home, market, shops, crafting halls),
-// the house (home), the market's standing offers (market). What is worn comes
-// from the stored loadout, which the character sheet already keeps current.
+// visit: the backpack (character sheet, home, shops, crafting halls), the house
+// (home), and each market's standing offers (that market's page — every market
+// keeps its own, src/shared/markets.ts). What is worn comes from the stored
+// loadout, which the character sheet already keeps current.
 // Stored per character (see "Per-character storage" in src/utils/config.ts).
 
 import type { DataLoader, Holding, HoldingLocation, Ownership } from '@/shared/data';
 import { SLOT_ORDER, type Loadout } from '@/shared/loadout';
+import { LARKINOR_MARKET_ID, marketLabel } from '@/shared/markets';
 
-/** The locations a page can list, i.e. every holding but what is worn. */
-export type InventoryLocation = Exclude<HoldingLocation, 'worn'>;
+/** The single locations a page can list: every holding but what is worn and the markets. */
+export type InventoryLocation = Exclude<HoldingLocation, 'worn' | 'market'>;
 
-const LOCATIONS: readonly InventoryLocation[] = ['backpack', 'house', 'market'];
+const LOCATIONS: readonly InventoryLocation[] = ['backpack', 'house'];
 
 /** One stack as a page lists it. */
 export interface InventoryEntry {
@@ -36,10 +38,14 @@ export interface InventorySnapshot {
 export interface Inventory {
   version: 1;
   locations: Partial<Record<InventoryLocation, InventorySnapshot>>;
+  /** Each market's standing offers, keyed by the market's picture id. */
+  markets: Record<string, InventorySnapshot>;
 }
 
-/** What one page lists, by location. */
-export type PageInventory = Partial<Record<InventoryLocation, InventoryEntry[]>>;
+/** What one page lists, by location; a market page lists its own market's offers. */
+export type PageInventory = Partial<Record<InventoryLocation, InventoryEntry[]>> & {
+  market?: { id: string; items: InventoryEntry[] };
+};
 
 /** PrefStore key holding the serialised Inventory. */
 export { INVENTORY_PREF_KEY } from '@/shared/prefKeys';
@@ -56,25 +62,38 @@ function parseEntry(raw: unknown): InventoryEntry | null {
   return { id, name, quantity };
 }
 
+function parseSnapshot(raw: unknown): InventorySnapshot | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const { capturedAt, items } = raw as { capturedAt?: unknown; items?: unknown };
+  if (typeof capturedAt !== 'number' || !Array.isArray(items)) return null;
+  return { capturedAt, items: items.map(parseEntry).filter((e): e is InventoryEntry => e !== null) };
+}
+
 /**
  * The stored inventory, or null when nothing usable is stored. A malformed
  * entry or unknown location is dropped on its own, so one bad value never
- * costs the rest.
+ * costs the rest — including the single `market` location stored before
+ * markets were told apart, which cannot say which market it lists.
  */
 export function parseInventory(raw: string | null): Inventory | null {
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as { version?: unknown; locations?: unknown };
+    const parsed = JSON.parse(raw) as { version?: unknown; locations?: unknown; markets?: unknown };
     if (parsed?.version !== 1 || parsed.locations === null || typeof parsed.locations !== 'object') return null;
-    const stored = parsed.locations as Record<string, { capturedAt?: unknown; items?: unknown }>;
+    const stored = parsed.locations as Record<string, unknown>;
     const locations: Inventory['locations'] = {};
     for (const location of LOCATIONS) {
-      const snapshot = stored[location];
-      if (!snapshot || typeof snapshot.capturedAt !== 'number' || !Array.isArray(snapshot.items)) continue;
-      const items = snapshot.items.map(parseEntry).filter((e): e is InventoryEntry => e !== null);
-      locations[location] = { capturedAt: snapshot.capturedAt, items };
+      const snapshot = parseSnapshot(stored[location]);
+      if (snapshot) locations[location] = snapshot;
     }
-    return { version: 1, locations };
+    const markets: Inventory['markets'] = {};
+    if (parsed.markets !== null && typeof parsed.markets === 'object') {
+      for (const [id, value] of Object.entries(parsed.markets)) {
+        const snapshot = parseSnapshot(value);
+        if (snapshot) markets[id] = snapshot;
+      }
+    }
+    return { version: 1, locations, markets };
   } catch {
     return null;
   }
@@ -91,12 +110,20 @@ export function recordLocations(previous: Inventory | null, page: PageInventory,
     const items = page[location];
     if (items) locations[location] = { capturedAt: now, items };
   }
-  return { version: 1, locations };
+  const markets = { ...(previous?.markets ?? {}) };
+  if (page.market) markets[page.market.id] = { capturedAt: now, items: page.market.items };
+  return { version: 1, locations, markets };
 }
 
 /** Names compare case- and spacing-insensitively; pages and data disagree on both. */
 function nameKey(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/** The markets holding a listing, Larkinor first, then by id. */
+function marketOrder(inventory: Inventory | null): string[] {
+  const ids = Object.keys(inventory?.markets ?? {});
+  return [...ids.filter((id) => id === LARKINOR_MARKET_ID), ...ids.filter((id) => id !== LARKINOR_MARKET_ID).sort()];
 }
 
 /** A database row, as far as ownership needs one. */
@@ -124,14 +151,21 @@ export function holdingsOf(row: OwnableRow, inventory: Inventory | null, loadout
     if (worn > 0) holdings.push({ location: 'worn', quantity: worn, capturedAt: loadout.capturedAt });
   }
 
+  const held = (snapshot: InventorySnapshot): number => snapshot.items.reduce(
+    (sum, entry) => (entry.id !== null ? entry.id === id : nameKey(entry.name) === name) ? sum + entry.quantity : sum,
+    0,
+  );
   for (const location of LOCATIONS) {
     const snapshot = inventory?.locations[location];
-    if (!snapshot) continue;
-    let quantity = 0;
-    for (const entry of snapshot.items) {
-      if (entry.id !== null ? entry.id === id : nameKey(entry.name) === name) quantity += entry.quantity;
+    const quantity = snapshot ? held(snapshot) : 0;
+    if (snapshot && quantity > 0) holdings.push({ location, quantity, capturedAt: snapshot.capturedAt });
+  }
+  for (const marketId of marketOrder(inventory)) {
+    const snapshot = inventory!.markets[marketId];
+    const quantity = held(snapshot);
+    if (quantity > 0) {
+      holdings.push({ location: 'market', market: marketLabel(marketId), quantity, capturedAt: snapshot.capturedAt });
     }
-    if (quantity > 0) holdings.push({ location, quantity, capturedAt: snapshot.capturedAt });
   }
   return holdings;
 }

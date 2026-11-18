@@ -14,7 +14,7 @@
 import { PageType } from '@/utils/pageDetector';
 import { extractCharacterPage } from '@/utils/characterPageExtract';
 import { extractHome } from '@/utils/homeExtract';
-import { extractMarket } from '@/utils/marketExtract';
+import { extractMarket, marketIdOf } from '@/utils/marketExtract';
 import { extractShop } from '@/utils/shopExtract';
 import { extractCraftingHall } from '@/utils/craftingExtract';
 import { INVENTORY_PREF_KEY } from '@/shared/prefKeys';
@@ -51,11 +51,14 @@ export function readPageInventory(pageType: PageType, doc: Document): PageInvent
       };
     }
     case PageType.Market: {
+      // Each market keeps its own offers; a page not saying which records nothing.
+      const marketId = marketIdOf(doc);
+      if (marketId === null) return null;
       const offers = extractMarket(doc).listings.flatMap((listing) => {
         const name = listing.detail?.name ?? OFFER_NAME.exec(listing.label)?.[1];
         return name && listing.quantity !== null ? [{ name, quantity: listing.quantity }] : [];
       });
-      return { market: entries(offers) };
+      return { market: { id: marketId, items: entries(offers) } };
     }
     case PageType.Shop:
       return { backpack: entries(extractShop(doc).sell.map((i) => ({ id: i.id, name: i.name, quantity: i.amount }))) };

@@ -32,6 +32,8 @@ export type HoldingLocation = 'worn' | 'backpack' | 'house' | 'market';
 
 export interface Holding {
   location: HoldingLocation;
+  /** Which market, by name (`Larkinor`), for a `market` holding. */
+  market?: string;
   quantity: number;
   /** When that location was last read off a page. */
   capturedAt: number;

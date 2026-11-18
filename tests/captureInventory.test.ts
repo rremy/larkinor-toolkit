@@ -40,6 +40,7 @@ function locations(store: Record<string, string>) {
 }
 
 beforeEach(() => {
+  document.body.innerHTML = '';
   pages.character = { backpack: [] };
   pages.home = { house: { items: [] }, backpack: { items: [] } };
   pages.market = { listings: [] };
@@ -72,12 +73,19 @@ describe('captureInventory', () => {
       { label: '6 db. agyar 700 ezüst/db. áron', detail: { name: 'agyar' }, quantity: 6 },
       { label: '2 db. vörös kő 50 ezüst/db. áron', detail: null, quantity: 2 },
     ];
-    expect(locations(run(PageType.Market))).toEqual({
-      market: {
+    document.body.innerHTML = '<img src="/2/epulet/-1627piac.gif">';
+    const inv = parseInventory(run(PageType.Market)[INVENTORY_PREF_KEY]);
+    expect(inv?.markets).toEqual({
+      '-1627': {
         capturedAt: NOW,
         items: [{ id: null, name: 'agyar', quantity: 6 }, { id: null, name: 'vörös kő', quantity: 2 }],
       },
     });
+  });
+
+  it('records nothing off a market page that does not say which market it is', () => {
+    pages.market.listings = [{ label: '6 db. agyar 700 ezüst/db. áron', detail: { name: 'agyar' }, quantity: 6 }];
+    expect(run(PageType.Market)).toEqual({});
   });
 
   it('reads the backpack off a shop’s sell list', () => {
@@ -97,6 +105,7 @@ describe('captureInventory', () => {
     const stored = { [INVENTORY_PREF_KEY]: serializeInventory({
       version: 1,
       locations: { house: { capturedAt: 1, items: [{ id: null, name: 'kard', quantity: 1 }] } },
+      markets: {},
     }) };
     pages.character.backpack = [{ id: '4', name: 'bot', amount: 1 }];
     expect(locations(run(PageType.Character, stored))?.house?.items).toEqual([{ id: null, name: 'kard', quantity: 1 }]);

@@ -13,8 +13,8 @@ import type { DataLoader, Item, Weapon } from '@/shared/data';
 
 const NOW = Date.UTC(2026, 10, 3, 12, 0);
 
-function inventory(locations: Inventory['locations']): Inventory {
-  return { version: 1, locations };
+function inventory(locations: Inventory['locations'], markets: Inventory['markets'] = {}): Inventory {
+  return { version: 1, locations, markets };
 }
 
 const item = (id: number, name: string): Item => ({
@@ -56,6 +56,25 @@ describe('parseInventory / serializeInventory', () => {
       backpack: { capturedAt: NOW, items: [{ id: null, name: 'opál', quantity: 2 }] },
     }));
   });
+
+  it('drops the single market listing from before markets were told apart', () => {
+    const raw = JSON.stringify({
+      version: 1,
+      locations: {
+        house: { capturedAt: NOW, items: [] },
+        market: { capturedAt: NOW, items: [{ id: null, name: 'opál', quantity: 5 }] },
+      },
+    });
+    expect(parseInventory(raw)).toEqual(inventory({ house: { capturedAt: NOW, items: [] } }));
+  });
+
+  it('round-trips a listing per market', () => {
+    const inv = inventory({}, {
+      54: { capturedAt: NOW, items: [{ id: null, name: 'opál', quantity: 2 }] },
+      '-1627': { capturedAt: NOW, items: [] },
+    });
+    expect(parseInventory(serializeInventory(inv))).toEqual(inv);
+  });
 });
 
 describe('recordLocations', () => {
@@ -70,7 +89,17 @@ describe('recordLocations', () => {
   });
 
   it('starts a store from nothing, and records an empty container as empty', () => {
-    expect(recordLocations(null, { market: [] }, NOW)).toEqual(inventory({ market: { capturedAt: NOW, items: [] } }));
+    expect(recordLocations(null, { market: { id: '54', items: [] } }, NOW))
+      .toEqual(inventory({}, { 54: { capturedAt: NOW, items: [] } }));
+  });
+
+  it("replaces only the visited market's listing", () => {
+    const before = inventory({}, { 54: { capturedAt: 1, items: [{ id: null, name: 'opál', quantity: 2 }] } });
+    const after = recordLocations(before, { market: { id: '-1627', items: [{ id: null, name: 'rubin', quantity: 1 }] } }, NOW);
+    expect(after.markets).toEqual({
+      54: before.markets['54'],
+      '-1627': { capturedAt: NOW, items: [{ id: null, name: 'rubin', quantity: 1 }] },
+    });
   });
 });
 
@@ -78,7 +107,9 @@ describe('holdingsOf', () => {
   const inv = inventory({
     backpack: { capturedAt: NOW, items: [{ id: '338', name: '1 hetes kenyér', quantity: 3 }, { id: null, name: 'Opál', quantity: 2 }] },
     house: { capturedAt: NOW - 60_000, items: [{ id: null, name: 'opál', quantity: 10 }, { id: null, name: '1 hetes kenyér', quantity: 1 }] },
-    market: { capturedAt: NOW, items: [{ id: null, name: 'opál', quantity: 5 }] },
+  }, {
+    54: { capturedAt: NOW, items: [{ id: null, name: 'opál', quantity: 5 }] },
+    '-1627': { capturedAt: NOW - 1, items: [{ id: null, name: 'opál', quantity: 7 }] },
   });
 
   it('matches by game id where the page gave one, by name otherwise, per location', () => {
@@ -89,8 +120,10 @@ describe('holdingsOf', () => {
     expect(holdingsOf({ id: 50, name: 'opál' }, inv, null)).toEqual([
       { location: 'backpack', quantity: 2, capturedAt: NOW },
       { location: 'house', quantity: 10, capturedAt: NOW - 60_000 },
-      { location: 'market', quantity: 5, capturedAt: NOW },
+      { location: 'market', market: 'Larkinor', quantity: 5, capturedAt: NOW },
+      { location: 'market', market: 'Thord-Artin', quantity: 7, capturedAt: NOW - 1 },
     ]);
+    expect(applyInventory([item(50, 'opál')], inv, null)[0].owned).toBe(24);
   });
 
   it('never matches an entry carrying another id by its name', () => {
