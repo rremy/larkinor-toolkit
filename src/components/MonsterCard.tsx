@@ -1,6 +1,9 @@
 import { h } from 'preact';
 import type { Monster } from '@/shared/data/monsters';
 import { backdropClass, type DrawerVariant } from '@/components/drawer';
+import { FavouriteButton } from '@/components/FavouriteButton';
+import { isFavourite } from '@/shared/favouriteMonsters';
+import type { FavouriteMonsters } from '@/hooks/useFavouriteMonsters';
 
 export interface MonsterCardProps {
   monster: Monster | null;
@@ -9,6 +12,8 @@ export interface MonsterCardProps {
   onItemClick?: (id: number) => void;
   /** 'sheet' (mobile bottom drawer) or 'modal' (desktop centered dialog). */
   variant?: DrawerVariant;
+  /** The favourite monsters; without them (or without a store) the card shows no heart. */
+  favourites?: FavouriteMonsters;
 }
 
 const ASSET_BASE = 'https://l2.larkinor.hu';
@@ -24,7 +29,9 @@ export function monsterImageUrl(image: string): string {
   return `${ASSET_BASE}${image.replace(/^\/pic\//, '/')}`;
 }
 
-export function MonsterCard({ monster, onClose, onItemClick, variant = 'sheet' }: MonsterCardProps) {
+export function MonsterCard({
+  monster, onClose, onItemClick, variant = 'sheet', favourites,
+}: MonsterCardProps) {
   if (!monster) return null;
 
   const imgUrl = monsterImageUrl(monster.image);
@@ -48,7 +55,16 @@ export function MonsterCard({ monster, onClose, onItemClick, variant = 'sheet' }
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
           <div>
-            <h2 class="lc-mc-name">{monster.name}</h2>
+            {/* Beside the heading, not in it, so the heading stays the name alone. */}
+            <div class="lc-fav-title">
+              <h2 class="lc-mc-name">{monster.name}</h2>
+              {favourites?.enabled && (
+                <FavouriteButton
+                  on={isFavourite(favourites.favourites, monster.name)}
+                  onToggle={() => favourites.toggle(monster.name)}
+                />
+              )}
+            </div>
             <span class="lc-mc-level">Szint {monster.level}</span>
             {monster.location && <span class="lc-mc-location"> — {monster.location}</span>}
           </div>

@@ -108,7 +108,7 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     the database route (one tab plays one character, so this also stops tab A's open panel
     reappearing in tab B).
   - **Shared:** market rates, data caches, platform/keyboard/dock choices, panels' minimised
-    flags, sort orders, quest zoom and details, and the remembered login name.
+    flags, sort orders, quest zoom and details, favourite monsters, and the remembered login name.
   - **A new key must be classified**: add it to `CHARACTER_KEYS` or `CHARACTER_KEY_PREFIXES`
     if it describes the character, and to `tests/characterScope.test.ts` either way. All GM
     access goes through `config.ts` except the login name and the data cache, both shared.
@@ -669,6 +669,14 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
 - Monster (battle): `img[title*="letpontja"]` → name before the comma, HP after `életpontja:`.
 - Narration: the `font[face="Comic sans MS"]` block; `<br>` is converted to newlines (rendered with `white-space: pre-line`).
 - **Monster detection uses narration sentence templates** (`utils/narration.ts` → `ENCOUNTER_PATTERNS`), each capturing the monster name, resolved against the DB. Add new templates as single-capture-group regexes to that array (there are unit tests per template).
+- **Favourite monsters stand out in the narration** (`src/shared/favouriteMonsters.ts`,
+  `lc-monster-favourites`, shared). A ♥ on the monster card and in the database's monster
+  detail toggles one; the Szörnyek tab gets a ♥ column and a *Kedvenc* filter. A favourite's
+  name is drawn red and larger — mobile in `NarrationPanel`, desktop by
+  `markFavouriteMonsters` over the links `enhanceNarration` made. **Keyed by lower-cased
+  name, not id**: the narration prints only a name, and 94 names are shared by several
+  monsters (five `kék lándzsás`, thirteen `ködhínár`). Every view listens through
+  `subscribeFavourites`, so a heart toggled in an open card restyles the narration under it.
 - **Items and silver the narration counts out are highlighted, and named items link to the
   database** (`src/shared/itemMentions.ts`; mobile in `NarrationPanel` through `ItemIndexContext`,
   desktop by `enhanceItemMentions` through the same splice as the monster links). The game prints

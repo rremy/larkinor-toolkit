@@ -10,9 +10,12 @@ Object.assign(globalThis, {
   GM_xmlhttpRequest: vi.fn(),
 });
 
-// Every sortable list remembers its sort (see useStoredSort). Those keys are
-// written by whichever list a test happens to touch, so they are cleared before
-// each test rather than left for every list test to remember to reset.
+// Every sortable list remembers its sort (see useStoredSort), and the favourite
+// monsters restyle every narration and monster card. Those keys are written by
+// whichever test happens to touch them, so they are cleared before each test
+// rather than left for every such test to remember to reset.
 beforeEach(() => {
-  for (const key of Object.keys(gmStore)) if (key.startsWith('lc-sort-')) delete gmStore[key];
+  for (const key of Object.keys(gmStore)) {
+    if (key.startsWith('lc-sort-') || key === 'lc-monster-favourites') delete gmStore[key];
+  }
 });

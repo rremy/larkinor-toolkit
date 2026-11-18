@@ -5,14 +5,14 @@ import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { QuestSet } from '@/shared/data';
 import { partitionHotkeys } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
-import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY, CHARACTER_OPEN_KEY } from '@/utils/config';
+import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY, CHARACTER_OPEN_KEY, gmPrefStore } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { MonsterCard } from '@/components/MonsterCard';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { SeaWindow, useMinimapHidden, type SeaWindowSource } from '@/components/SeaWindow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { hasBlockingPanel } from '@/components/DockedPanel';
-import { enhanceNarration } from '@/desktop/enhanceNarration';
+import { enhanceNarration, markFavouriteMonsters } from '@/desktop/enhanceNarration';
 import { shortcutDigit, useKeyboardShortcuts } from '@/desktop/useKeyboardShortcuts';
 import { InventoryPanel } from '@/desktop/InventoryPanel';
 import { MarketPanel } from '@/desktop/MarketPanel';
@@ -25,6 +25,7 @@ import type { MarketState } from '@/utils/marketExtract';
 import { CraftingDockPanel, CRAFTING_TITLE } from '@/desktop/CraftingDockPanel';
 import type { CraftingHallState } from '@/utils/craftingExtract';
 import type { DataLoader } from '@/shared/data';
+import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
 
 /**
  * The part of a page's state the dock acts on: quick actions, plus the
@@ -115,6 +116,7 @@ export interface DesktopDockProps {
 export function DesktopDock({ doc, state, db, homeState = null, marketState = null, shopState = null, characterState = null, crafting = null, battleMonsterName = null, fight = null, exit = null, dbButtonOnly = false, inDungeon = false, sea = null, openQuestsSignal = 0, openQuestTarget = null, openItemSignal = 0, openItemId = null }: DesktopDockProps): JSX.Element {
   const [collapsed, setCollapsed] = useState(() => getDockCollapsed());
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const favouriteMonsters = useFavouriteMonsters(gmPrefStore);
   // Persisted: every action reloads the game page, which would otherwise close
   // the panel the action was taken from. The database keeps its route too — see
   // DatabaseOverlay — so a reload restores the tab that was showing.
@@ -257,14 +259,17 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
   // external document rather than something Preact renders. enhanceNarration is
   // idempotent (data-lc-enhanced), so re-running on a db change is harmless.
   // A failure here must cost only the links, never the game page.
+  // Re-run when the favourites change, too: the links stay, only their marking
+  // follows the hearts.
   useEffect(() => {
     if (!db) return;
     try {
       enhanceNarration(doc, db, setSelectedMonster);
+      markFavouriteMonsters(doc, favouriteMonsters.favourites);
     } catch (err) {
       console.warn('[Larkinor UI] Narration enhancement failed:', err);
     }
-  }, [doc, db]);
+  }, [doc, db, favouriteMonsters.favourites]);
 
   // The dock's own drawers. The panels (database, inventory, market, crafting)
   // answer for themselves through `hasBlockingPanel`, which counts only one
@@ -412,6 +417,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
 
       <MonsterCard
         monster={selectedMonster}
+        favourites={favouriteMonsters}
         variant="modal"
         onClose={() => setSelectedMonster(null)}
         onItemClick={openItem}

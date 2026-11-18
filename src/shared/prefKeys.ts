@@ -99,6 +99,14 @@ export const MAP_MODE_PREF_KEY = 'lc-map-mode';
 export const MINIMAP_HIDDEN_PREF_KEY = 'lc-minimap-hidden';
 
 /**
+ * PrefStore key holding the favourite monsters (`favouriteMonsters.ts`): a JSON
+ * array of lower-cased names. Shared between characters — it is the player's
+ * taste — and keyed by name, not id, because the narration only prints a name and
+ * many monsters share one across levels (five `kék lándzsás`, thirteen `ködhínár`).
+ */
+export const FAVOURITE_MONSTERS_PREF_KEY = 'lc-monster-favourites';
+
+/**
  * PrefStore key holding the serialised `Inventory` (src/shared/inventory.ts) —
  * what the player owns, by location, as last listed by each page. Read by the
  * hosted database to show ownership; written only by the boots' capture.

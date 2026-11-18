@@ -10,12 +10,19 @@
 
 import { findMonsterMentions, type MonsterMention } from '@/utils/narration';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
+import { favouriteKey } from '@/shared/favouriteMonsters';
 import {
   flattenNarration, isInsideAnchor, narrationBlock, segmentFor, spliceIntoTextNode,
 } from './narrationSplice';
 
 /** Marker attribute making a second call a no-op. */
 const ENHANCED_ATTR = 'data-lc-enhanced';
+
+/** The monster a link names, in `favouriteKey` form — what `markFavouriteMonsters` reads. */
+const MONSTER_ATTR = 'data-lc-monster';
+
+/** The class that makes a favourite's name stand out. */
+const FAVOURITE_CLASS = 'lc-narr-link--fav';
 
 interface ResolvedMention {
   mention: MonsterMention;
@@ -32,6 +39,7 @@ function buildLink(
   link.className = 'lc-narr-link';
   link.textContent = label;
   link.title = `${monster.name} — szint ${monster.level}`;
+  link.setAttribute(MONSTER_ATTR, favouriteKey(monster.name));
   // No href, so the link is a mouse-only affordance by default — this feature's
   // headline is keyboard control, so it must also be focusable and operable
   // from the keyboard and by a screen reader (role="button", not a navigation
@@ -109,4 +117,16 @@ export function enhanceNarration(
   }
 
   block.setAttribute(ENHANCED_ATTR, 'true');
+}
+
+/**
+ * Marks the monster links `enhanceNarration` made whose monster is a favourite,
+ * and unmarks the rest. Separate from it, and safe to repeat, because the links
+ * are made once per page while the favourites can change under them — a heart
+ * toggled in the monster card restyles the narration it was opened from.
+ */
+export function markFavouriteMonsters(doc: Document, favourites: ReadonlySet<string>): void {
+  for (const link of doc.querySelectorAll<HTMLElement>(`a.lc-narr-link[${MONSTER_ATTR}]`)) {
+    link.classList.toggle(FAVOURITE_CLASS, favourites.has(link.getAttribute(MONSTER_ATTR) ?? ''));
+  }
 }

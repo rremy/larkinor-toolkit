@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { enhanceNarration } from '../src/desktop/enhanceNarration';
+import { enhanceNarration, markFavouriteMonsters } from '../src/desktop/enhanceNarration';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 
 function makeDoc(bodyHtml: string): Document {
@@ -186,5 +186,26 @@ describe('enhanceNarration', () => {
     const doc = narrationDoc('<b>Valami Sírrabló csámborog a közelben!</b>');
     enhanceNarration(doc, DB, vi.fn());
     expect(doc.querySelector('b a.lc-narr-link')?.textContent).toBe('Sírrabló');
+  });
+});
+
+describe('markFavouriteMonsters', () => {
+  it('marks a favourite’s link, and unmarks it once it is no longer one', () => {
+    const doc = narrationDoc('Valami <b><font color="#DF4B22">Sírrabló </font></b> csámborog a közelben!');
+    enhanceNarration(doc, DB, vi.fn());
+    const link = doc.querySelector('a.lc-narr-link')!;
+
+    markFavouriteMonsters(doc, new Set(['sírrabló']));
+    expect(link.classList.contains('lc-narr-link--fav')).toBe(true);
+
+    markFavouriteMonsters(doc, new Set());
+    expect(link.classList.contains('lc-narr-link--fav')).toBe(false);
+  });
+
+  it('leaves the game’s own links alone', () => {
+    const doc = narrationDoc('<a href="#">Sírrabló</a> Valami Sírrabló csámborog a közelben!');
+    enhanceNarration(doc, DB, vi.fn());
+    markFavouriteMonsters(doc, new Set(['sírrabló']));
+    expect(doc.querySelector('a[href="#"]')!.className).toBe('');
   });
 });

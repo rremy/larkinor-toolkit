@@ -117,5 +117,6 @@ export const FILTERS: Record<EntityTab, FilterDef[]> = {
     { type: 'range', key: 'hp', label: 'ÉP' },
     { type: 'range', key: 'mp', label: 'TP' },
     { type: 'tri', key: 'magicWeapon', label: 'Mág. fegyver' },
+    { type: 'tri', key: 'favourite', label: 'Kedvenc' },
   ],
 };

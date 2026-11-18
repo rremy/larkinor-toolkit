@@ -29,6 +29,7 @@ import {
 import { readLoginName } from '../src/utils/domExtract';
 import {
   ACTIVE_ROYAL_QUEST_PREF_KEY,
+  FAVOURITE_MONSTERS_PREF_KEY,
   INVENTORY_PREF_KEY,
   LOADOUT_PREF_KEY,
   MAP_MODE_PREF_KEY,
@@ -120,6 +121,7 @@ describe('isCharacterKey', () => {
     SEA_LEARNED_TILES_PREF_KEY,
     MAP_MODE_PREF_KEY,
     MINIMAP_HIDDEN_PREF_KEY,
+    FAVOURITE_MONSTERS_PREF_KEY,
   ])('shares %s between characters', (key) => {
     expect(isCharacterKey(key)).toBe(false);
   });

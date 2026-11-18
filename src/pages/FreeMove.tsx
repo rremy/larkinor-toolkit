@@ -6,6 +6,8 @@ import { StatBar } from '@/components/StatBar';
 import { NavPad } from '@/components/NavPad';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';
+import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
+import { gmPrefStore } from '@/utils/config';
 import { ConfigDrawer } from '@/components/ConfigDrawer';
 import { HotkeyRow } from '@/components/HotkeyRow';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
@@ -24,6 +26,7 @@ export interface FreeMoveProps {
 
 export function FreeMove({ state, db, sea = null }: FreeMoveProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const favouriteMonsters = useFavouriteMonsters(gmPrefStore);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
   const { enabled, configOpen, openConfig, closeConfig, toggleHotkey } = useHotkeyConfig();
@@ -105,6 +108,7 @@ export function FreeMove({ state, db, sea = null }: FreeMoveProps): JSX.Element 
 
       <MonsterCard
         monster={selectedMonster}
+        favourites={favouriteMonsters}
         onClose={() => setSelectedMonster(null)}
         onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setSeaRoute(null); setDbOpen(true); }}
       />

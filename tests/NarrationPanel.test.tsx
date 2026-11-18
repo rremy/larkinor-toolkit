@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/preact';
+import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
+import { toggleFavourite } from '../src/shared/favouriteMonsters';
+import { gmPrefStore } from '../src/utils/config';
 import { NarrationPanel } from '../src/components/NarrationPanel';
 import { buildMonsterDatabase, type Monster } from '../src/shared/data/monsters';
 
@@ -120,5 +122,32 @@ describe('NarrationPanel', () => {
         questLink={{ index: 40, length: 5, onClick: vi.fn() }} />
     );
     expect(container.querySelector('.lc-quest-link')).toBeNull();
+  });
+});
+
+describe('NarrationPanel favourite monsters', () => {
+  const TEXT = 'Valami Vérszomjas moszkitóraj csámborog a közelben!';
+
+  it('leaves an ordinary monster unmarked', () => {
+    const { container } = render(
+      <NarrationPanel text={TEXT} db={buildMonsterDatabase(MONSTERS)} onMonsterClick={vi.fn()} />,
+    );
+    expect(container.querySelector('.lc-monster-link--fav')).toBeNull();
+  });
+
+  it('marks a favourite’s name', () => {
+    toggleFavourite(gmPrefStore, 'Vérszomjas moszkitóraj');
+    const { container } = render(
+      <NarrationPanel text={TEXT} db={buildMonsterDatabase(MONSTERS)} onMonsterClick={vi.fn()} />,
+    );
+    expect(container.querySelector('.lc-monster-link--fav')?.textContent).toBe('Vérszomjas moszkitóraj');
+  });
+
+  it('follows a heart toggled while the narration is on screen', async () => {
+    const { container } = render(
+      <NarrationPanel text={TEXT} db={buildMonsterDatabase(MONSTERS)} onMonsterClick={vi.fn()} />,
+    );
+    toggleFavourite(gmPrefStore, 'vérszomjas moszkitóraj');
+    await waitFor(() => expect(container.querySelector('.lc-monster-link--fav')).not.toBeNull());
   });
 });

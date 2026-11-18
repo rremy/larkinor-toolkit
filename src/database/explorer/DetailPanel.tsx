@@ -2,6 +2,9 @@ import { h, type VNode } from 'preact';
 import type { Weapon, Armor, Item, Holding, HoldingLocation } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import { monsterImageUrl } from '@/components/MonsterCard';
+import { FavouriteButton } from '@/components/FavouriteButton';
+import { isFavourite } from '@/shared/favouriteMonsters';
+import type { FavouriteMonsters } from '@/hooks/useFavouriteMonsters';
 import type { EntityTab } from './columns';
 import { DETAIL_FIELDS } from './labels';
 import { OWNER_TYPE_LABEL, sortUsedIn, type DetailLookups } from './lookups';
@@ -17,6 +20,8 @@ interface DetailPanelProps {
   onShowCell: (cellId: string) => void;
   /** Cross-dataset lookups for the usedIn / droppedBy sections (once loaded). */
   lookups?: DetailLookups;
+  /** The favourite monsters, on the monster tab only; draws the heart beside the name. */
+  favourites?: FavouriteMonsters;
 }
 
 /** Where an owned item is, as the detail panel names it. */
@@ -44,7 +49,7 @@ function renderValue(value: unknown): VNode | string {
 }
 
 export function DetailPanel(props: DetailPanelProps): VNode | null {
-  const { tab, entity, onClose, onJump, onShowCell, lookups } = props;
+  const { tab, entity, onClose, onJump, onShowCell, lookups, favourites } = props;
   if (!entity) {
     return (
       <aside class="db-detail">
@@ -86,7 +91,15 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
   return (
     <aside class="db-detail">
       <button type="button" class="close-detail" title="Bezárás" onClick={onClose}>×</button>
-      <h2>{String(rec.name)}</h2>
+      {favourites ? (
+        <div class="lc-fav-title">
+          <h2>{String(rec.name)}</h2>
+          <FavouriteButton
+            on={isFavourite(favourites.favourites, String(rec.name))}
+            onToggle={() => favourites.toggle(String(rec.name))}
+          />
+        </div>
+      ) : <h2>{String(rec.name)}</h2>}
       <div class="meta">
         {tab} · ID {String(rec.id)}
         {image && (

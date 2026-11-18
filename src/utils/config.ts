@@ -367,6 +367,12 @@ export function setPref(key: string, value: string): void {
 }
 
 /**
+ * `getPref`/`setPref` as one store, for shared modules that take a store rather
+ * than calling GM themselves (so the standalone database can hand them its own).
+ */
+export const gmPrefStore = { read: getPref, write: setPref };
+
+/**
  * The stored loadout, or null when nothing usable is stored. The read side of
  * `captureLoadout` — every compare surface goes through this.
  */

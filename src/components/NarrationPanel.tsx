@@ -7,6 +7,9 @@ import { findMonsterMentions } from '@/utils/narration';
 import { findItemMentions } from '@/shared/itemMentions';
 import { ItemIndexContext } from '@/components/ItemIndexContext';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
+import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
+import { isFavourite } from '@/shared/favouriteMonsters';
+import { gmPrefStore } from '@/utils/config';
 
 export interface NarrationPanelProps {
   text: string;
@@ -36,6 +39,9 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink
   // The item a counted-out mention was tapped on, opened in a database overlay
   // of the panel's own, so every page that shows narration gets it alike.
   const [openItemId, setOpenItemId] = useState<number | null>(null);
+  // A favourite's name stands out (red, larger), so a sought-after monster is
+  // not missed in a long block of text.
+  const { favourites } = useFavouriteMonsters(gmPrefStore);
 
   if (!text) {
     return <div class="lc-narration lc-section">{text}</div>;
@@ -70,7 +76,10 @@ export function NarrationPanel({ text, db, onMonsterClick, links = [], questLink
         index: mention.index,
         length: mention.length,
         node: (
-          <span class="lc-monster-link" onClick={() => onMonsterClick(monster)}>
+          <span
+            class={`lc-monster-link${isFavourite(favourites, monster.name) ? ' lc-monster-link--fav' : ''}`}
+            onClick={() => onMonsterClick(monster)}
+          >
             {nameText}
           </span>
         ),

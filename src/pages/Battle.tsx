@@ -5,6 +5,8 @@ import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import { StatBar } from '@/components/StatBar';
 import { NarrationPanel } from '@/components/NarrationPanel';
 import { MonsterCard } from '@/components/MonsterCard';
+import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
+import { gmPrefStore } from '@/utils/config';
 import { DatabaseOverlay } from '@/components/DatabaseOverlay';
 import { findActiveQuest } from '@/utils/activeQuest';
 
@@ -15,6 +17,7 @@ export interface BattleProps {
 
 export function Battle({ state, db }: BattleProps): JSX.Element {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const favouriteMonsters = useFavouriteMonsters(gmPrefStore);
   const [dbOpen, setDbOpen] = useState(false);
   const [dbItemId, setDbItemId] = useState<number | null>(null);
   // The game names the active royal quest in the narration; make the sentence
@@ -124,6 +127,7 @@ export function Battle({ state, db }: BattleProps): JSX.Element {
 
       <MonsterCard
         monster={selectedMonster}
+        favourites={favouriteMonsters}
         onClose={() => setSelectedMonster(null)}
         onItemClick={(id) => { setSelectedMonster(null); setDbItemId(id); setQuestRoute(null); setDbOpen(true); }}
       />

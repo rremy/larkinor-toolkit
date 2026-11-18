@@ -15,6 +15,9 @@
   --accent-dim: rgba(212, 162, 89, 0.18);
   --bad: #c46161;
   --good: #6fb56f;
+  /* A favourite monster: its heart, and its name in the narration. A purer red
+     than --bad, and than the orange-red the game itself prints monster names in. */
+  --fav-monster: #ff3b3b;
   --mp: #4a7acc;
   --sea: #2c4a6e;
   --dock-shadow: rgba(0, 0, 0, 0.5);
@@ -194,6 +197,14 @@
   font-weight: 600;
 }
 
+/* A favourite monster's name stands out from the narration around it (mobile
+   here, desktop's live narration as .lc-narr-link--fav). */
+.lc-monster-link--fav {
+  color: var(--fav-monster);
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
 /* Action/quest link embedded in narration text */
 .lc-narration-link {
   color: var(--accent);
@@ -292,6 +303,35 @@
   border-bottom: 1px dotted var(--accent);
   cursor: pointer;
 }
+
+/* A favourite monster's name. The game wraps every name in its own
+   <font color>, which this link sits inside, so the link's colour wins. */
+.lc-narr-link--fav {
+  color: var(--fav-monster);
+  border-bottom-color: var(--fav-monster);
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
+/* A heading with the favourite heart beside it. */
+.lc-fav-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+/* The heart marking a favourite monster (monster card, database detail). Set
+   its colour itself: form controls never inherit it. */
+.lc-fav-btn {
+  flex: none;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.1em;
+  line-height: 1;
+  vertical-align: baseline;
+  cursor: pointer;
+}
+.lc-fav-btn:hover,
+.lc-fav-btn--on { color: var(--fav-monster); }
 
 .lc-drawer-close {
   position: absolute;
@@ -814,6 +854,12 @@
 }
 .lc-db .badge.yes { color: var(--good); border-color: var(--good); }
 .lc-db .badge.no  { color: var(--bad); border-color: var(--bad); }
+.lc-db .db-fav-heart { color: var(--fav-monster); }
+/* The database's quirks-mode fix sets every button's colour to inherit, which
+   outranks the heart's own rule; restate it at the database's specificity. */
+.lc-db .lc-fav-btn { color: var(--muted); }
+.lc-db .lc-fav-btn:hover,
+.lc-db .lc-fav-btn--on { color: var(--fav-monster); }
 
 /* ---- Detail panel ---- */
 .lc-db aside.db-detail {
@@ -829,6 +875,9 @@
 .lc-db .db-view.has-selection aside.db-detail { display: block; }
 .lc-db .db-view.has-selection .table-wrap { flex: 1 1 75%; }
 .lc-db aside.db-detail h2 { margin: 0 0 4px 0; font-size: 18px; color: var(--accent); padding-right: 28px; }
+/* The close button's room moves to the row, so the heart sits right after the name. */
+.lc-db aside.db-detail .lc-fav-title { padding-right: 28px; margin-bottom: 4px; }
+.lc-db aside.db-detail .lc-fav-title h2 { padding-right: 0; margin: 0; }
 .lc-db aside.db-detail .close-detail {
   position: absolute;
   top: 10px;

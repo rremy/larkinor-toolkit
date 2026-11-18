@@ -28,6 +28,9 @@ const ROW_CAP = 2000;
 
 /** Render a single cell value following the legacy `fmt` rules. */
 function formatCell(value: unknown, col: ColumnDef): VNode | string {
+  // Before the empty check: a non-favourite is blank, not "—", so the hearts
+  // stand out in an otherwise empty column.
+  if (col.heart) return value ? <span class="db-fav-heart" title="Kedvenc">♥</span> : '';
   if (value == null || value === '') return <span class="dim">—</span>;
   if (col.bool) {
     return value

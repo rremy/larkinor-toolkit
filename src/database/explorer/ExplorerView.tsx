@@ -1,9 +1,9 @@
 import { h, type VNode } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { DataLoader, Weapon, Armor, Item } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import type { EntityTab } from './columns';
-import { COLS, OWNED_KEY, parseSortState, serialiseSortState } from './columns';
+import { COLS, FAVOURITE_KEY, OWNED_KEY, parseSortState, serialiseSortState } from './columns';
 import { FILTERS, applyFilters, parseFilterState, serialiseFilterState, type FilterState } from './filters';
 import { DataTable } from './DataTable';
 import { Filters } from './FilterBar';
@@ -12,6 +12,8 @@ import { buildLookups, type DetailLookups } from './lookups';
 import { fromArmor, fromWeapon, type CompareSubject } from '@/shared/compare';
 import { explorerFiltersKey, explorerSortKey } from '@/shared/prefKeys';
 import type { PrefStore } from '../DatabaseApp';
+import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
+import { isFavourite } from '@/shared/favouriteMonsters';
 
 type Row = Record<string, unknown>;
 type Entity = Weapon | Armor | Item | Monster;
@@ -51,6 +53,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
     parseFilterState(prefStore?.read(explorerFiltersKey(forTab)) ?? null, FILTERS[forTab]);
   const [filterState, setFilterState] = useState<FilterState>(() => storedFilters(tab));
   const [lookups, setLookups] = useState<DetailLookups | null>(null);
+  const favouriteMonsters = useFavouriteMonsters(prefStore);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,14 +92,27 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
   };
 
   // Ownership is laid over the rows in-game only; without it the column and
-  // the filter would only ever say "—", so they go.
+  // the filter would only ever say "—", so they go. Favourites likewise need a
+  // store to live in.
   const tracksOwnership = rows.some((row) => OWNED_KEY in row);
-  const columns = tracksOwnership ? COLS[tab] : COLS[tab].filter((c) => c.key !== OWNED_KEY);
-  const filterDefs = tracksOwnership ? FILTERS[tab] : FILTERS[tab].filter((f) => f.key !== OWNED_KEY);
+  const tracksFavourites = tab === 'monsters' && favouriteMonsters.enabled;
+  const dropped = new Set<string>([
+    ...(tracksOwnership ? [] : [OWNED_KEY]),
+    ...(tracksFavourites ? [] : [FAVOURITE_KEY]),
+  ]);
+  const columns = COLS[tab].filter((c) => !dropped.has(c.key));
+  const filterDefs = FILTERS[tab].filter((f) => !dropped.has(f.key));
 
-  const visible = applyFilters(rows, filterDefs, filterState);
+  const shownRows = useMemo<Row[]>(
+    () => (tracksFavourites
+      ? rows.map((row) => ({ ...row, [FAVOURITE_KEY]: isFavourite(favouriteMonsters.favourites, String(row.name)) }))
+      : rows),
+    [rows, tracksFavourites, favouriteMonsters.favourites],
+  );
+
+  const visible = applyFilters(shownRows, filterDefs, filterState);
   const selected = selectedId != null
-    ? rows.find((r) => r.id === selectedId) ?? null
+    ? shownRows.find((r) => r.id === selectedId) ?? null
     : null;
 
   // Only weapons and armours have a worn counterpart to diff against; items
@@ -136,6 +152,7 @@ export function ExplorerView(props: ExplorerViewProps): VNode {
           onJump={onJump}
           onShowCell={onShowCell}
           lookups={lookups ?? undefined}
+          favourites={tracksFavourites ? favouriteMonsters : undefined}
         />
       </div>
     </div>

@@ -5,6 +5,8 @@ export interface ColumnDef {
   label: string;
   num?: boolean;
   bool?: boolean;
+  /** Drawn as a heart when true and left blank otherwise (the favourite column). */
+  heart?: boolean;
   cls?: string;
 }
 
@@ -51,6 +53,7 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
   ],
   monsters: [
     { key: 'id', label: 'ID', num: true, cls: 'right dim' },
+    { key: 'favourite', label: '♥', num: true, heart: true, cls: 'center fav' },
     { key: 'name', label: 'Név', cls: 'name' },
     { key: 'level', label: 'Szint', num: true, cls: 'right' },
     { key: 'hp', label: 'ÉP', num: true, cls: 'right' },
@@ -68,6 +71,13 @@ export const COLS: Record<EntityTab, ColumnDef[]> = {
  * carries it — always, on the standalone site.
  */
 export const OWNED_KEY = 'owned';
+
+/**
+ * The favourite column and filter key, laid over the monster rows from the
+ * favourites store. Without a store there is nowhere to keep a heart, so the
+ * explorer drops both, as it does the ownership column.
+ */
+export const FAVOURITE_KEY = 'favourite';
 
 export interface SortState {
   key: string;

@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/preact';
+import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import { MonsterCard, monsterImageUrl } from '../src/components/MonsterCard';
+import { useFavouriteMonsters } from '../src/hooks/useFavouriteMonsters';
+import { isFavourite, readFavourites } from '../src/shared/favouriteMonsters';
+import { gmPrefStore } from '../src/utils/config';
 import type { Monster } from '../src/shared/data/monsters';
 
 const MONSTER: Monster = {
@@ -107,5 +110,32 @@ describe('MonsterCard', () => {
     );
     fireEvent.click(container.querySelector('.lc-drawer-backdrop')!);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('MonsterCard favourites', () => {
+  function Card() {
+    const favourites = useFavouriteMonsters(gmPrefStore);
+    return <MonsterCard monster={MONSTER} onClose={vi.fn()} favourites={favourites} />;
+  }
+
+  it('shows no heart without the favourites', () => {
+    const { container } = render(<MonsterCard monster={MONSTER} onClose={vi.fn()} />);
+    expect(container.querySelector('.lc-fav-btn')).toBeNull();
+  });
+
+  it('marks the monster as a favourite and back', async () => {
+    const { container } = render(<Card />);
+    const heart = () => container.querySelector<HTMLButtonElement>('.lc-fav-btn')!;
+    expect(heart().getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(heart());
+    await waitFor(() => expect(heart().getAttribute('aria-pressed')).toBe('true'));
+    expect(heart().textContent).toBe('♥');
+    expect(isFavourite(readFavourites(gmPrefStore), MONSTER.name)).toBe(true);
+
+    fireEvent.click(heart());
+    await waitFor(() => expect(heart().getAttribute('aria-pressed')).toBe('false'));
+    expect(readFavourites(gmPrefStore).size).toBe(0);
   });
 });
