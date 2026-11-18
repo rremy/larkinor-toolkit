@@ -25,3 +25,39 @@ describe('DetailPanel shop links', () => {
     expect(onShowCell).toHaveBeenCalledWith('44');
   });
 });
+
+describe('DetailPanel markets', () => {
+  const show = (entity: Weapon) => render(
+    <DetailPanel tab="weapons" entity={entity} onClose={() => {}} onJump={() => {}} onShowCell={() => {}} />,
+  );
+
+  it('prices the item at every market quoting it', () => {
+    const { container } = show({
+      ...weapon,
+      marketPrice: 260,
+      marketPrices: [{ market: 'Larkinor', price: 780 }, { market: 'Thord-Artin', price: 260 }],
+    });
+    const stats = [...container.querySelectorAll('.stats dt')].map((dt) => [dt.textContent, dt.nextElementSibling?.textContent]);
+    expect(stats).toContainEqual(['Piaci ár (Larkinor)', '780']);
+    expect(stats).toContainEqual(['Piaci ár (Thord-Artin)', '260']);
+    expect(screen.queryByText('Piaci ár (ezüst)')).toBeNull();
+  });
+
+  it('keeps the single market price where no market was captured — the standalone site', () => {
+    show({ ...weapon, marketPrice: 50 });
+    expect(screen.getByText('Piaci ár (ezüst)')).toBeTruthy();
+  });
+
+  it('names the market an offer stands at', () => {
+    show({
+      ...weapon,
+      owned: 7,
+      holdings: [
+        { location: 'market', market: 'Larkinor', quantity: 2, capturedAt: 0 },
+        { location: 'market', market: 'Thord-Artin', quantity: 5, capturedAt: 0 },
+      ],
+    });
+    expect(screen.getByText(/piac \(Larkinor\): 2/)).toBeTruthy();
+    expect(screen.getByText(/piac \(Thord-Artin\): 5/)).toBeTruthy();
+  });
+});

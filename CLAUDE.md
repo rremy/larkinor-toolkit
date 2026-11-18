@@ -803,8 +803,9 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
   No page lists everything, so each **location** is a snapshot of the last page that listed it,
   replaced whole on every visit and stamped with its time, under the per-character
   `lc-inventory`: the **backpack** from the character sheet, home, a shop's sell list or a
-  crafting hall's ingredient list; the **house** from home; the **market** (standing offers) from
-  the market. What is **worn** is read from the stored loadout instead of being stored twice.
+  crafting hall's ingredient list; the **house** from home; **each market's** standing offers
+  from that market (`markets`, keyed by market id — see *there is more than one market* below;
+  the detail panel prints `piac (Larkinor): 2`). What is **worn** is read from the stored loadout instead of being stored twice.
   Facts and choices that matter:
   - **Only a page that lists a location whole may write it**, because a capture replaces it: a
     partial list reads as having sold the rest. That is why the market's *Felkínálható* list —
@@ -889,10 +890,22 @@ The synthetic assumptions in the original plan were wrong; the real DOM is:
     is a state the page states outright, and a missing line means the page was not
     recognised. `earnings` is therefore `number | null`: zero disables the collect
     button, null never does.
+  - **There is more than one market** (`src/shared/markets.ts`; measured 2026-11-18). Larkinor's
+    and Thord-Artin's pages are identical in type and title (`otPiac`, `Piac`); only the
+    building picture names them, `<grid id>piac.gif` like the harbours — `54piac.gif` (tile 54),
+    `-1627piac.gif` (square (−16, 27)). `marketIdOf` reads it, and **a page without one records
+    nothing**, rates or offers, rather than being guessed into Larkinor. The two quote very
+    different sets (Larkinor 1425 items, the island 44, three of them island-only) at wildly
+    different rates (gyémánt 236% vs 2900%), so rates and offers are both stored per market.
+    A row's `marketPrice` is the **cheapest** market's; `marketPrices` lists each, Larkinor
+    first, and the detail panel prints them as `Piaci ár (Larkinor)`. The scraped static
+    figure describes Larkinor and stands in for its line only. The single-market stores from
+    before this (rates version 1, the inventory's `locations.market`) are dropped on read:
+    the last visit may have been the island, and nothing in them says which.
   - **Every visit refreshes the database's `marketPrice`.** The catalogue's
     `(3000%)` is the rate the market pays on the item's shop price, and the option
     `value` is the database's own item id (338 = *1 hetes kenyér*, 26 ezüst → 780).
-    `captureMarketRates` stores `{id → %}` under `lc-market-rates`, and
+    `captureMarketRates` stores `{id → %}` per market under `lc-market-rates`, and
     `DatabaseOverlay` wraps its loader in `withMarketRates`
     (`src/shared/marketRates.ts`), so the explorer shows `price × % / 100`, falling
     back to the scraped static figure for an unquoted item or a null `price` (274

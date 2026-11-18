@@ -1,5 +1,5 @@
 import { h, type VNode } from 'preact';
-import type { Weapon, Armor, Item, Holding, HoldingLocation } from '@/shared/data';
+import type { Weapon, Armor, Item, Holding, HoldingLocation, MarketPrice } from '@/shared/data';
 import type { Monster } from '@/shared/data/monsters';
 import { monsterImageUrl } from '@/components/MonsterCard';
 import { FavouriteButton } from '@/components/FavouriteButton';
@@ -29,8 +29,14 @@ const HOLDING_LABEL: Record<HoldingLocation, string> = {
   worn: 'rajtad',
   backpack: 'hátizsák',
   house: 'ház',
-  market: 'piacon',
+  market: 'piac',
 };
+
+/** A holding's label; a market holding names its market, `piac (Larkinor)`. */
+function holdingLabel(held: Holding): string {
+  const label = HOLDING_LABEL[held.location];
+  return held.market ? `${label} (${held.market})` : label;
+}
 
 /** When a location was last read off a page, e.g. `11. 03. 14:20`. */
 function capturedLabel(at: number): string {
@@ -73,6 +79,9 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
     ? (rec.droppedBy as { monsterId: number; qty: number }[])
     : [];
   const holdings = Array.isArray(rec.holdings) ? (rec.holdings as Holding[]) : [];
+  // Present once captured rates are laid over the row (in-game only): then each
+  // market gets its own line in place of the single, cheapest `marketPrice`.
+  const marketPrices = Array.isArray(rec.marketPrices) ? (rec.marketPrices as MarketPrice[]) : null;
   const drops = Array.isArray(rec.drops)
     ? (rec.drops as { name: string; qty: number; id: number }[])
     : [];
@@ -109,6 +118,12 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
 
       <dl class="stats">
         {fields.map(([key, label]) => {
+          if (key === 'marketPrice' && marketPrices) {
+            return marketPrices.flatMap(({ market, price }) => [
+              <dt key={`market-${market}-dt`}>Piaci ár ({market})</dt>,
+              <dd key={`market-${market}-dd`}>{renderValue(price)}</dd>,
+            ]);
+          }
           const value = rec[key];
           if (value == null || value === '') return null;
           return [
@@ -123,8 +138,8 @@ export function DetailPanel(props: DetailPanelProps): VNode | null {
           <h3>Nálad ({Number(rec.owned).toLocaleString('hu')})</h3>
           <ul>
             {holdings.map((held) => (
-              <li key={held.location}>
-                {HOLDING_LABEL[held.location]}: {held.quantity.toLocaleString('hu')}
+              <li key={`${held.location}-${held.market ?? ''}`}>
+                {holdingLabel(held)}: {held.quantity.toLocaleString('hu')}
                 <span class="qty"> · {capturedLabel(held.capturedAt)}</span>
               </li>
             ))}
