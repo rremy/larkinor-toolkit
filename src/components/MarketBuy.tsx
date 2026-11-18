@@ -21,6 +21,16 @@ const MAX_MATCHES = 20;
 /** Characters before the catalogue is searched at all. */
 const MIN_QUERY = 2;
 
+/**
+ * The most units of one offer the money on hand pays for, capped at the offer's
+ * stock — or 0 when not even one is affordable, or the asking price could not be
+ * read (there is then nothing to divide the money by).
+ */
+export function maxAffordable(gold: number, unitPrice: number | null, stock: number): number {
+  if (unitPrice === null || unitPrice <= 0) return 0;
+  return Math.max(0, Math.min(Math.floor(gold / unitPrice), stock));
+}
+
 interface PurchaseRowProps {
   purchase: MarketPurchase;
   /** The player's money, for flagging a total they cannot cover. */
@@ -43,6 +53,7 @@ function PurchaseRow({ purchase, gold, onOpenDetail }: PurchaseRowProps): JSX.El
   // market's quoted rate (the header shows it), so only the asking price's rate
   // tells the offers apart.
   const rowPercent = askPercent(purchase.unitPrice, purchase.shopPrice);
+  const affordable = maxAffordable(gold, purchase.unitPrice, stock);
 
   return (
     <div class="lc-mkt-row">
@@ -74,6 +85,19 @@ function PurchaseRow({ purchase, gold, onOpenDetail }: PurchaseRowProps): JSX.El
       </div>
 
       <NumberField label="Db" value={qty} min={1} max={stock} onInput={(n) => setQty(clampQty(n))} />
+
+      {/* Fills the quantity only, never buys: the purchase still takes its own
+          press, so the figure can be checked first. Disabled when not even one
+          unit is affordable — withholding a convenience, not the trade, which
+          the buy button still allows on a misread balance. */}
+      <button
+        class="lc-mkt-max-btn"
+        title={affordable > 0 ? `Annyi, amennyire futja (${affordable} db)` : 'Egyre sem futja a pénzedből'}
+        disabled={affordable === 0}
+        onClick={() => setQty(affordable)}
+      >
+        Max
+      </button>
 
       {/* Not disabled when the total exceeds the money on hand: the figure is
           parsed off the page, and a bad parse must not block a trade the game

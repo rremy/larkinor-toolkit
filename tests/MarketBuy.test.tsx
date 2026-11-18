@@ -201,6 +201,63 @@ describe('MarketBuy — offers', () => {
     expect(row.querySelector<HTMLButtonElement>('.lc-mkt-buy-btn')!.disabled).toBe(false);
   });
 
+  it('fills the quantity with as many as the money covers', () => {
+    const s = makeMarketState({
+      gold: 250,
+      searchedName: 'jáspis',
+      purchases: [purchase('jáspis', 0, { quantity: 7, unitPrice: 80, shopPrice: 50 })],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+    const row = container.querySelector('.lc-mkt-row')!;
+
+    fireEvent.click(row.querySelector('.lc-mkt-max-btn')!);
+
+    // 250 / 80 = 3.125 — three whole units, and the total stays affordable.
+    expect(row.querySelector<HTMLInputElement>('input[type="number"]')!.value).toBe('3');
+    expect(row.querySelector('.lc-mkt-total--short')).toBeNull();
+    fireEvent.click(row.querySelector('.lc-mkt-buy-btn')!);
+    expect(s.purchases[0].buy).toHaveBeenCalledWith(3);
+  });
+
+  it('caps the max at the offer’s stock when the money covers more', () => {
+    const s = makeMarketState({
+      gold: 100_000,
+      searchedName: 'jáspis',
+      purchases: [purchase('jáspis', 0, { quantity: 7, unitPrice: 80, shopPrice: 50 })],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+    const row = container.querySelector('.lc-mkt-row')!;
+
+    fireEvent.click(row.querySelector('.lc-mkt-max-btn')!);
+
+    expect(row.querySelector<HTMLInputElement>('input[type="number"]')!.value).toBe('7');
+  });
+
+  it('offers no max when not even one unit is affordable', () => {
+    const s = makeMarketState({
+      gold: 50,
+      searchedName: 'jáspis',
+      purchases: [purchase('jáspis', 0, { quantity: 7, unitPrice: 80, shopPrice: 50 })],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+    const row = container.querySelector('.lc-mkt-row')!;
+
+    expect(row.querySelector<HTMLButtonElement>('.lc-mkt-max-btn')!.disabled).toBe(true);
+    // Only the convenience is withheld; the purchase itself stays possible.
+    expect(row.querySelector<HTMLButtonElement>('.lc-mkt-buy-btn')!.disabled).toBe(false);
+  });
+
+  it('offers no max for an offer whose price could not be read', () => {
+    const s = makeMarketState({
+      gold: 100_000,
+      searchedName: 'jáspis',
+      purchases: [{ ...purchase('jáspis', 0, { quantity: 7 }), unitPrice: null }],
+    });
+    const { container } = render(<MarketBuy state={s} onOpenDetail={vi.fn()} />);
+
+    expect(container.querySelector<HTMLButtonElement>('.lc-mkt-max-btn')!.disabled).toBe(true);
+  });
+
   it('opens the database on an offered item', () => {
     const onOpenDetail = vi.fn();
     const { container } = render(<MarketBuy state={state()} onOpenDetail={onOpenDetail} />);

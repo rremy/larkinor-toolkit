@@ -1888,6 +1888,24 @@
 }
 .lc-mkt-buy-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
 
+/* Sets the quantity to what the money covers. It takes the row's third column,
+   between the quantity field and the buy button, sharing their bottom edge. */
+.lc-mkt-max-btn {
+  align-self: end;
+  justify-self: start;
+  padding: 5px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-mkt-max-btn:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent); }
+.lc-mkt-max-btn:disabled { color: var(--muted); cursor: not-allowed; }
+
 /* A total the player cannot cover. Marked rather than blocked: the money is
    parsed off the page, and a bad parse must not stop a trade the game allows. */
 .lc-mkt-total--short { color: var(--bad); }
