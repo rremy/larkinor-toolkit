@@ -603,6 +603,27 @@ describe('QuestView', () => {
       expect(details.querySelector('.quest-stats')).not.toBeNull();
     });
 
+    it('shows a quest\'s notes inside the fold, one paragraph each', async () => {
+      const noted: Quest[] = [{ ...quests[0], notes: ['Első megjegyzés.', 'Második megjegyzés.'] }];
+      const { container } = render(
+        <QuestView loader={makeLoader({ loadQuests: vi.fn(async () => noted) })} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      const notes = container.querySelector('.quest-details .quest-notes')!;
+      expect([...notes.querySelectorAll('p')].map((p) => p.textContent))
+        .toEqual(['Első megjegyzés.', 'Második megjegyzés.']);
+    });
+
+    it('draws no notes box for a quest without notes', async () => {
+      const { container } = render(
+        <QuestView loader={makeLoader()} questSet={null} questId="1"
+                   onSelectQuest={() => {}} onJumpToMonster={() => {}} />,
+      );
+      await screen.findAllByText(/Gründen borospincéje/);
+      expect(container.querySelector('.quest-notes')).toBeNull();
+    });
+
     it('keeps the zoom control out of the fold, so the maze stays resizable while collapsed', async () => {
       const { container } = render(
         <QuestView loader={makeLoader()} questSet={null} questId="1"

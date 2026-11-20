@@ -357,6 +357,9 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
       2951 cells, 147 question tiles (132 with parsed options — the other 15 keep the marker
       but yield no card, same as the royal set), 0 unresolved sprites, every quest rectangular
       (`cells.length === rows * cols`).
+  - **Players' notes** (what to prepare before walking in — royal 47's boss is hurt only by
+    Parcillió kelyhe) live in `scripts/quests/questNotes.mjs`, which every scraper merges in as
+    `Quest.notes`, so a re-scrape keeps them. Never write a note straight into the JSON.
   - **Persistence is per set.** The quest tab remembers which set was shown last
     (`lc-quest-set`) and, separately, the last selected quest **within each set**
     (`lc-quest-selected-royal` / `lc-quest-selected-tavern`, built by `questSelectedKey(set)`

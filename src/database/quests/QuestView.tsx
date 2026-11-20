@@ -573,6 +573,11 @@ export function QuestView(props: QuestViewProps): VNode {
             <div id="quest-details" class="quest-details">
               <p class="quest-description">{quest.description}</p>
               <p class="quest-reward"><strong>Jutalom:</strong> {quest.reward}</p>
+              {quest.notes && quest.notes.length > 0 && (
+                <div class="quest-notes" role="note" aria-label="Megjegyzés">
+                  {quest.notes.map((note, i) => <p key={i}>{note}</p>)}
+                </div>
+              )}
               <div class="quest-stats">
                 {quest.rows}×{quest.cols} · {monsterCount} szörny · {keyCount} kulcs ·{' '}
                 {lockCount} zártípus · {questionCount} kérdés · {trapCount} csapda

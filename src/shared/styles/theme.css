@@ -1467,6 +1467,15 @@
    on. */
 .lc-db .quest-details-toggle { display: none; }
 .lc-db .quest-reward { margin: 0 0 4px; font-size: 12px; color: var(--good); }
+.lc-db .quest-notes {
+  margin: 0 0 4px;
+  padding: 4px 8px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel);
+  font-size: 12px;
+}
+.lc-db .quest-notes p { margin: 0; }
+.lc-db .quest-notes p + p { margin-top: 2px; }
 .lc-db .quest-stats { color: var(--muted); font-size: 11px; }
 .lc-db .quest-cleared-count { display: flex; align-items: center; gap: 8px; }
 .lc-db .quest-cleared-reset {

@@ -15,6 +15,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { decodePage, parseArchiveQuestPage } from './parseArchiveQuest.mjs';
+import { withNotes } from './questNotes.mjs';
 
 const OUT = 'static/db/quests.json';
 const DIR = 'scripts/quests/archive';
@@ -113,7 +114,7 @@ if (unresolved.size > 0) {
 
 const ids = new Set(parsed.map((q) => q.id));
 const kept = JSON.parse(readFileSync(OUT, 'utf-8')).filter((q) => !ids.has(q.id));
-const quests = [...kept, ...parsed];
+const quests = [...kept, ...parsed].map(withNotes);
 
 process.stdout.write(
   `\n${parsed.length} mazes from ${Object.keys(SNAPSHOTS).length} pages, ${cells.length} cells, ` +

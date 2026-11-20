@@ -304,4 +304,10 @@ export interface Quest {
    * sharing the title, and the ground floor keeps the plain id.
    */
   floor?: string;
+  /**
+   * Players' notes no source page records (what to prepare before walking
+   * in), one paragraph each. Hand-written in `scripts/quests/questNotes.mjs`
+   * and merged in by the scrapers, so a re-scrape keeps them.
+   */
+  notes?: string[];
 }

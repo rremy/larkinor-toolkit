@@ -205,6 +205,14 @@ describe('the archived royal quests 46–63', () => {
     expect(archived.reduce((n, q) => n + q.cells.length, 0)).toBe(2114);
   });
 
+  it('carries the players\' note on what quest 47\'s boss can be hurt with', () => {
+    const quest = quests.find((q) => q.id === '47')!;
+    expect(quest.notes).toEqual([
+      'Parcillió kelyhét össze kell rakni: 9 rubin gemma, 2 ezüstkígyó, 2 ezüsttál (Erődben).',
+      'Csak ezzel lehet a főszörnyet megsebezni.',
+    ]);
+  });
+
   it('gives each floor of 59 its own grid, but one brief', () => {
     const floors = quests.filter((q) => q.title === '59');
     expect(floors.map((q) => `${q.rows}x${q.cols}`)).toEqual(['10x10', '10x10', '10x10', '10x10']);
