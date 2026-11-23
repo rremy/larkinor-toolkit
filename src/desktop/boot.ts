@@ -69,8 +69,8 @@ function extractDockState(pageType: PageType, doc: Document): DockState | null {
   if (pageType !== PageType.FreeMove && pageType !== PageType.Dungeon) return null;
   try {
     if (pageType === PageType.FreeMove) return extractFreeMove(doc);
-    const { directions, actions } = extractDungeon(doc);
-    return { directions, actions, attack: null };
+    const { directions, actions, restButton } = extractDungeon(doc);
+    return { directions, actions, attack: null, restButton };
   } catch (err) {
     console.warn('[Larkinor UI] Page extraction failed; dock degraded:', err);
     return null;

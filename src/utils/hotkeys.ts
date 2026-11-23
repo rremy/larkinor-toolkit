@@ -7,8 +7,10 @@
 // name does not). Probe a candidate against the live host before adding it —
 // a wrong name renders a broken image with no other symptom.
 
+import type { Action } from '@/utils/domExtract';
+
 export interface Hotkey {
-  /** The tevFajta <option> value on the free-move screen. */
+  /** The tevFajta <option> value on the free-move screen (`pihen` for the rest, see REST_HOTKEY). */
   key: string;
   /** Short human label for the config list. */
   label: string;
@@ -32,8 +34,19 @@ export const HOTKEY_CATALOG: Hotkey[] = [
   { key: 'kilep', label: 'Kilépés', icon: 'sc_kilep' },
 ];
 
+/**
+ * Resting is not a tevFajta option: the page draws it as its own `pihen.gif`
+ * image control (`svRest`), served from the same icon directory without the
+ * `sc_` prefix. Only the desktop dock offers it as a quick action — mobile
+ * already draws it in the NavPad corner — so it lives outside HOTKEY_CATALOG.
+ */
+export const REST_HOTKEY: Hotkey = { key: 'pihen', label: 'Pihensz', icon: 'pihen' };
+
+/** What the desktop dock's config lists: the rest first, as the dock draws it. */
+export const DOCK_HOTKEY_CATALOG: Hotkey[] = [REST_HOTKEY, ...HOTKEY_CATALOG];
+
 const BY_KEY: Record<string, Hotkey> = Object.fromEntries(
-  HOTKEY_CATALOG.map(h => [h.key, h])
+  DOCK_HOTKEY_CATALOG.map(h => [h.key, h])
 );
 
 export function getHotkey(key: string): Hotkey | undefined {
@@ -58,4 +71,19 @@ export function partitionHotkeys<T extends { actionKey?: string }>(
     hotkeyActions: actions.filter(isHotkey),
     buttonActions: actions.filter(a => !isHotkey(a)),
   };
+}
+
+/**
+ * Puts the page's rest control at the head of the quick actions when the user
+ * has enabled it, so partitionHotkeys keeps it the first icon (key 1). Left out
+ * entirely otherwise: the game page already shows it as a single click, so an
+ * unrequested text button would only duplicate it.
+ */
+export function withRestAction(
+  actions: Action[],
+  rest: { label: string; trigger: () => void } | null,
+  enabled: string[],
+): Action[] {
+  if (!rest || !enabled.includes(REST_HOTKEY.key)) return actions;
+  return [{ label: rest.label, trigger: rest.trigger, actionKey: REST_HOTKEY.key }, ...actions];
 }

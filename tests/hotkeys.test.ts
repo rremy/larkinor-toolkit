@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { HOTKEY_CATALOG, getHotkey, hotkeyIconUrl, partitionHotkeys } from '../src/utils/hotkeys';
+import { DOCK_HOTKEY_CATALOG, HOTKEY_CATALOG, REST_HOTKEY, getHotkey, hotkeyIconUrl, partitionHotkeys, withRestAction } from '../src/utils/hotkeys';
 import type { Action } from '../src/utils/domExtract';
 
 const act = (label: string, actionKey?: string): Action => ({ label, actionKey, trigger: vi.fn() });
@@ -67,5 +67,34 @@ describe('partitionHotkeys', () => {
     const { hotkeyActions, buttonActions } = partitionHotkeys(actions, []);
     expect(hotkeyActions).toEqual([]);
     expect(buttonActions.length).toBe(1);
+  });
+});
+
+describe('the rest quick action', () => {
+  const rest = { label: 'Pihensz egy kicsit', trigger: vi.fn() };
+
+  it('uses the page\'s own rest icon, which carries no sc_ prefix', () => {
+    // The fixtures' rest control: <input type="image" src="/2/ikon/pihen.gif">.
+    expect(hotkeyIconUrl(REST_HOTKEY)).toBe('https://l2.larkinor.hu/2/ikon/pihen.gif');
+  });
+
+  it('is offered by the dock config only, and first', () => {
+    expect(DOCK_HOTKEY_CATALOG[0]).toBe(REST_HOTKEY);
+    expect(HOTKEY_CATALOG).not.toContain(REST_HOTKEY);
+  });
+
+  it('leads the actions when enabled and on the page', () => {
+    const actions = withRestAction([act('kajálsz', 'kajal')], rest, ['kajal', 'pihen']);
+    expect(actions.map(a => a.actionKey)).toEqual(['pihen', 'kajal']);
+    const { hotkeyActions } = partitionHotkeys(actions, ['kajal', 'pihen']);
+    expect(hotkeyActions.map(a => a.actionKey)).toEqual(['pihen', 'kajal']);
+    actions[0].trigger();
+    expect(rest.trigger).toHaveBeenCalledTimes(1);
+  });
+
+  it('is left out when not enabled, or when the page has no rest control', () => {
+    const actions = [act('kajálsz', 'kajal')];
+    expect(withRestAction(actions, rest, ['kajal'])).toBe(actions);
+    expect(withRestAction(actions, null, ['pihen'])).toBe(actions);
   });
 });

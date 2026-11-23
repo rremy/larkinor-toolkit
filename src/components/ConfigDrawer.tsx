@@ -1,6 +1,6 @@
 import { h, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import { HOTKEY_CATALOG, hotkeyIconUrl } from '@/utils/hotkeys';
+import { HOTKEY_CATALOG, hotkeyIconUrl, type Hotkey } from '@/utils/hotkeys';
 import { backdropClass, type DrawerVariant } from '@/components/drawer';
 import { getPlatformOverride, setPlatformOverride } from '@/utils/config';
 import type { Platform } from '@/utils/platform';
@@ -16,6 +16,8 @@ export interface ConfigDrawerProps {
    * keys — so the section is left out when this is absent.
    */
   shortcuts?: { on: boolean; onToggle: () => void };
+  /** The hotkeys to offer; the desktop dock adds the rest (DOCK_HOTKEY_CATALOG). */
+  catalog?: Hotkey[];
   /** 'sheet' (mobile bottom drawer) or 'modal' (desktop centered dialog). */
   variant?: DrawerVariant;
 }
@@ -47,7 +49,7 @@ const PLATFORM_CHOICES: { value: PlatformChoice; label: string }[] = [
  * the enabled free-move hotkeys. Toggling a row is expected to persist and to
  * update the free-move icon row immediately.
  */
-export function ConfigDrawer({ enabled, onToggle, onClose, shortcuts, variant = 'sheet' }: ConfigDrawerProps): JSX.Element {
+export function ConfigDrawer({ enabled, onToggle, onClose, shortcuts, catalog = HOTKEY_CATALOG, variant = 'sheet' }: ConfigDrawerProps): JSX.Element {
   const [platform, setPlatform] = useState<PlatformChoice>(() => getPlatformOverride() ?? 'auto');
 
   const choosePlatform = (choice: PlatformChoice) => {
@@ -66,7 +68,7 @@ export function ConfigDrawer({ enabled, onToggle, onClose, shortcuts, variant = 
 
         <h2 class="lc-config-title">Engedélyezett gyorsgombok</h2>
         <div class="lc-config-hotkeys">
-          {HOTKEY_CATALOG.map(hk => {
+          {catalog.map(hk => {
             const on = enabled.includes(hk.key);
             return (
               <button

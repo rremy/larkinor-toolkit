@@ -155,6 +155,45 @@ describe('DesktopDock', () => {
     });
   });
 
+  describe('rest', () => {
+    const rest = () => ({ label: 'Pihensz egy kicsit', iconUrl: 'https://l2.larkinor.hu/2/ikon/pihen.gif', trigger: vi.fn() });
+
+    it('is the first quick action when enabled, on key 1', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['kajal', 'pihen']));
+      const state = makeState({ restButton: rest() });
+      const { container } = render(<DesktopDock doc={document} state={state} db={null} />);
+      const first = container.querySelector('.lc-hotkey')!;
+      expect(first.querySelector('img')?.getAttribute('src')).toBe('https://l2.larkinor.hu/2/ikon/pihen.gif');
+      expect(first.getAttribute('aria-keyshortcuts')).toBe('1');
+      fireEvent.keyDown(document.body, { code: 'Digit1' });
+      expect(state.restButton!.trigger).toHaveBeenCalledTimes(1);
+      expect(state.actions[0].trigger).not.toHaveBeenCalled();
+    });
+
+    it('is not drawn when not enabled', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['kajal']));
+      const { container } = render(<DesktopDock doc={document} state={makeState({ restButton: rest() })} db={null} />);
+      expect(container.querySelector('img[src*="pihen"]')).toBeNull();
+      const labels = Array.from(container.querySelectorAll('.lc-dock-btn')).map(b => b.textContent);
+      expect(labels).not.toContain('Pihensz egy kicsit');
+    });
+
+    it('is not drawn on a page without a rest control', () => {
+      GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['pihen']));
+      const { container } = render(<DesktopDock doc={document} state={makeState()} db={null} />);
+      expect(container.querySelector('.lc-hotkey')).toBeNull();
+    });
+
+    it('can be enabled from the config, where it is listed first', () => {
+      const { container } = render(<DesktopDock doc={document} state={makeState({ restButton: rest() })} db={null} />);
+      fireEvent.click(container.querySelector('.lc-dock-config')!);
+      const first = document.querySelector('.lc-config-hotkey')!;
+      expect(first.getAttribute('data-key')).toBe('pihen');
+      fireEvent.click(first);
+      expect(container.querySelector('.lc-hotkey img')?.getAttribute('src')).toContain('pihen.gif');
+    });
+  });
+
   it('fires the original action trigger when a hotkey is clicked', () => {
     GM_setValue(ENABLED_HOTKEYS_KEY, JSON.stringify(['kajal']));
     const state = makeState();

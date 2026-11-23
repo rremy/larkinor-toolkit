@@ -3,7 +3,7 @@ import { useState, useEffect } from 'preact/hooks';
 import type { Action, FightControls, FreeMoveState } from '@/utils/domExtract';
 import type { MonsterDatabase, Monster } from '@/shared/data/monsters';
 import type { QuestSet } from '@/shared/data';
-import { partitionHotkeys } from '@/utils/hotkeys';
+import { DOCK_HOTKEY_CATALOG, partitionHotkeys, withRestAction } from '@/utils/hotkeys';
 import { useHotkeyConfig } from '@/hooks/useHotkeyConfig';
 import { getDockCollapsed, setDockCollapsed, getKeyboardShortcuts, setKeyboardShortcuts, getPanelOpen, setPanelOpen, DB_OPEN_KEY, INVENTORY_OPEN_KEY, MARKET_OPEN_KEY, CRAFTING_OPEN_KEY, SHOP_OPEN_KEY, CHARACTER_OPEN_KEY, gmPrefStore } from '@/utils/config';
 import { HotkeyRow } from '@/components/HotkeyRow';
@@ -28,12 +28,12 @@ import type { DataLoader } from '@/shared/data';
 import { useFavouriteMonsters } from '@/hooks/useFavouriteMonsters';
 
 /**
- * The part of a page's state the dock acts on: quick actions, plus the
- * directions and encounter attack the keyboard shortcuts drive. Free move and
- * the labyrinth both supply it — a labyrinth just never has an attack, since
- * its monsters attack on entry.
+ * The part of a page's state the dock acts on: quick actions and the rest
+ * control, plus the directions and encounter attack the keyboard shortcuts
+ * drive. Free move and the labyrinth both supply it — a labyrinth just never
+ * has an attack, since its monsters attack on entry.
  */
-export type DockState = Pick<FreeMoveState, 'directions' | 'actions' | 'attack'>;
+export type DockState = Pick<FreeMoveState, 'directions' | 'actions' | 'attack' | 'restButton'>;
 
 export interface DesktopDockProps {
   /** The live game document — narration enhancement and key bindings target it. */
@@ -147,12 +147,14 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
     setKeyboardShortcuts(!shortcutsOn);
   };
 
+  // The rest leads the quick actions when enabled and on the page.
+  const actions = state ? withRestAction(state.actions, state.restButton, enabled) : [];
   // No actions to offer means nothing but the DB button is useful: either the
   // page genuinely has none, or the game markup changed under us.
-  const minimal = dbButtonOnly || !state || state.actions.length === 0;
+  const minimal = dbButtonOnly || !state || actions.length === 0;
   const { hotkeyActions, buttonActions } = minimal
     ? { hotkeyActions: [], buttonActions: [] }
-    : partitionHotkeys(state.actions, enabled);
+    : partitionHotkeys(actions, enabled);
   const attack = minimal ? null : state.attack;
 
   // The monster we are fighting, once the database has arrived. Its stats and
@@ -427,6 +429,7 @@ export function DesktopDock({ doc, state, db, homeState = null, marketState = nu
         <ConfigDrawer
           enabled={enabled}
           variant="modal"
+          catalog={DOCK_HOTKEY_CATALOG}
           onToggle={toggleHotkey}
           shortcuts={{ on: shortcutsOn, onToggle: toggleShortcuts }}
           onClose={closeConfig}

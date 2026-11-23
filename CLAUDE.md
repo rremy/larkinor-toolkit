@@ -146,7 +146,10 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     suppressed while the event target is a form control, so typing in chat can't move the
     character). Each numbered quick action shows its
     key as a corner badge, drawn by CSS from the button's `aria-keyshortcuts` so the label text
-    stays the action's own (tests read it). In a fight A/D and ←/→ attack
+    stays the action's own (tests read it). The page's rest control (`pihen.gif`, not a
+    `tevFajta` option) can be enabled in ⚙ as a quick action of its own — dock only, since
+    mobile draws it in the NavPad corner — and when the page has it, it leads the icon row
+    (key 1); `REST_HOTKEY` / `withRestAction` in `src/utils/hotkeys.ts`. In a fight A/D and ←/→ attack
     with the left/right hand (`balk`/`jobbk`) — a battle page draws no direction buttons, so
     they never compete with movement — Esc flees (`menekul`), and anywhere else Esc presses the
     page's `vissza.gif` exit (shops, market, home, crafting halls, character sheet); an open
