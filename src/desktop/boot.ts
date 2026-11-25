@@ -36,6 +36,7 @@ import { captureInventory } from '@/utils/captureInventory';
 import { loadItemIndex, mayMentionItems, type ItemRef } from '@/shared/itemMentions';
 import { enhanceItemMentions } from '@/desktop/enhanceItemMentions';
 import { renderDirectionIndicators } from '@/desktop/directionIndicators';
+import { releaseControlWrappers } from '@/desktop/controlWrappers';
 import { findDirectionHints } from '@/utils/directionHints';
 import { captureMarketRates } from '@/utils/captureMarketRates';
 import { LoadoutContext } from '@/components/LoadoutContext';
@@ -353,6 +354,15 @@ export function bootDesktop(doc: Document): void {
   const fight = extractFightControls(doc);
   // Every building marks its way out with the same `vissza.gif` control.
   const exit = extractImageControl(doc, 'vissza');
+
+  // The game's own control wrappers are far wider than their buttons and sit
+  // over the narration, where they swallow clicks on a long riddle's answers.
+  // Fixed before the dock mounts: it changes nothing the dock reads.
+  try {
+    releaseControlWrappers(doc);
+  } catch (err) {
+    console.warn('[Larkinor UI] Releasing control wrappers failed:', err);
+  }
 
   const root = mountDockRoot(doc);
   if (!root) return;

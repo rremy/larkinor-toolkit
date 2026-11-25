@@ -169,6 +169,13 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
     them dead after any click in the dock. Now a docked panel leaves the keys and Esc to the
     game (its ✕ closes it), and a focused dock control keeps only Space, which presses it. The dock renders on every page,
     including ones we don't recognise; only free-move gets the full action set.
+  - **The game's control wrappers swallow clicks over the narration.** Each image control sits
+    in an absolutely positioned div far wider than itself — the labyrinth's `klap`/`pihen`
+    buttons are 50px wide in 300px divs at y 410, z-index 6, over the narration box (z-index 3,
+    from x 275) — so a long riddle's lower answers and *Válasz* button could not be clicked
+    though nothing visibly covered them (saved live 2026-11-25). The desktop boot makes every
+    div holding only controls click-through, its controls still clickable
+    (`src/desktop/controlWrappers.ts`).
   - Because the game page stays visible on desktop, **no CSS may use an unscoped element
     selector** — everything stays under `#lc-root`, `#lc-dock-root` or a `.lc-*` class.
 
