@@ -230,6 +230,12 @@ export interface QuestChoice {
   index: number;
   text: string;
   outcome: string;
+  /**
+   * The right answer, as players recorded it — no source page says which
+   * choice is right. Hand-written in `scripts/quests/questAnswers.mjs` and
+   * merged in by the scrapers; absent on every other choice.
+   */
+  correct?: true;
 }
 
 export interface QuestQuestion {

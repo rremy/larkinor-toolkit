@@ -107,13 +107,14 @@ describe('static/db/tavern-quests.json', () => {
     }
   });
 
-  // Image-derived, so it must not track parse success. 15 of the 147 tiles
+  // Image-derived, so it must not track parse success. 14 of the 147 tiles
   // have a title too short to yield options; they keep the marker and show
-  // no card, exactly as the royal set does.
-  it('marks 147 question tiles, of which 132 carry parsed options', () => {
+  // no card, exactly as the royal set does. One more (miniatur_hanghordozo
+  // 3,1) lost its options on the source page and has them by hand.
+  it('marks 147 question tiles, of which 133 carry options', () => {
     const cells = quests.flatMap((q) => q.cells);
     expect(cells.filter((c) => c.hasQuestion)).toHaveLength(147);
-    expect(cells.filter((c) => c.question)).toHaveLength(132);
+    expect(cells.filter((c) => c.question)).toHaveLength(133);
     for (const c of cells) {
       if (c.question) expect(c.hasQuestion).toBe(true);
     }
@@ -147,6 +148,29 @@ describe('static/db/tavern-quests.json', () => {
         }
       }
     }
+  });
+});
+
+describe('players\' answers in static/db/tavern-quests.json', () => {
+  it('marks the right choice of every Miniatűr hanghordozó question', () => {
+    const quest = quests.find((q) => q.id === 'miniatur_hanghordozo')!;
+    const answers = quest.cells
+      .filter((c) => c.question)
+      .map((c) => {
+        const right = c.question!.choices.filter((choice) => choice.correct);
+        return `${c.row},${c.col}: ${right.map((choice) => choice.text).join(' | ')}`;
+      });
+    expect(answers).toEqual([
+      '1,1: Kék',
+      '1,6: A hold fényében előugranak az aranyvörös betűk',
+      '3,1: Nilrem',
+      '3,5: Elbújsz egy sarokba. és betakarózol a lim-lommal.',
+    ]);
+  });
+
+  it('restores the options the source page lost on the morse-code tile', () => {
+    const cell = quests.find((q) => q.id === 'miniatur_hanghordozo')!.cells.find((c) => c.row === 3 && c.col === 1)!;
+    expect(cell.question?.choices.map((c) => c.text)).toEqual(['Rombovan', 'Nilrem', 'Rianon']);
   });
 });
 

@@ -42,6 +42,24 @@ describe('QuestQuestionCard', () => {
     expect(container.querySelector('.quest-outcome')).toBeNull();
   });
 
+  it('marks the right answer and only that one', () => {
+    const { container } = render(
+      <QuestQuestionCard
+        question={{
+          prompt: 'Milyen színű?',
+          choices: [
+            { index: 1, text: 'Piros', outcome: '' },
+            { index: 2, text: 'Kék', outcome: '', correct: true },
+          ],
+        }}
+      />,
+    );
+    const marked = container.querySelectorAll('.quest-choice.correct');
+    expect(marked).toHaveLength(1);
+    expect(marked[0].textContent).toContain('Kék');
+    expect(container.querySelectorAll('.quest-choice-correct')).toHaveLength(1);
+  });
+
   it('omits the prompt line when the question has no prompt', () => {
     // The source sometimes asks the question only in narration prose and
     // jumps straight to VÁLASZ/VÁLASZOK — there is no separate prompt text.

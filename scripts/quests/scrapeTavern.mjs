@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parseTavernQuestPage, decodeEntities } from './parseTavernQuest.mjs';
 import { withNotes } from './questNotes.mjs';
+import { withAnswers } from './questAnswers.mjs';
 
 const BASE = 'https://www.larkinorcenter.hu/kocskuld';
 const OUT = 'static/db/tavern-quests.json';
@@ -86,7 +87,7 @@ for (const link of links) {
   const res = await fetch(`${BASE}/${link.href}`);
   if (!res.ok) throw new Error(`quest ${link.id}: HTTP ${res.status}`);
   const quest = parseTavernQuestPage(await res.text(), link, resolveMonster);
-  quests.push(withNotes(quest));
+  quests.push(withAnswers(withNotes(quest)));
   process.stdout.write(`${link.id}: ${quest.rows}x${quest.cols}, ${quest.cells.length} cells\n`);
 }
 

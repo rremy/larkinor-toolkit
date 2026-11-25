@@ -6,7 +6,7 @@ interface QuestQuestionCardProps {
   question: QuestQuestion;
 }
 
-/** A choice point, one row per answer with its outcome colour-coded. */
+/** A choice point, one row per answer with its outcome colour-coded and the right one marked. */
 export function QuestQuestionCard(props: QuestQuestionCardProps): VNode {
   const { question } = props;
   return (
@@ -18,9 +18,10 @@ export function QuestQuestionCard(props: QuestQuestionCardProps): VNode {
       {question.prompt && <div class="quest-question-prompt">{question.prompt}</div>}
       <ul class="quest-choices">
         {question.choices.map((choice) => (
-          <li key={choice.index} class="quest-choice">
+          <li key={choice.index} class={choice.correct ? 'quest-choice correct' : 'quest-choice'}>
             <span class="quest-choice-index">{choice.index}</span>
             <span class="quest-choice-text">{choice.text}</span>
+            {choice.correct && <span class="quest-choice-correct">✓ helyes</span>}
             {choice.outcome && (
               <span class={`quest-outcome ${outcomeValence(choice.outcome)}`}>{choice.outcome}</span>
             )}

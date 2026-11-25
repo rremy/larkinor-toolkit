@@ -363,6 +363,13 @@ One Vite + Preact + TypeScript project delivering both an **in-game UI replaceme
   - **Players' notes** (what to prepare before walking in — royal 47's boss is hurt only by
     Parcillió kelyhe) live in `scripts/quests/questNotes.mjs`, which every scraper merges in as
     `Quest.notes`, so a re-scrape keeps them. Never write a note straight into the JSON.
+  - **Players' answers** to question tiles live the same way in `scripts/quests/questAnswers.mjs`
+    (keyed by set, id and `"row,col"`), merged as `QuestChoice.correct` and drawn as *✓ helyes* on
+    the question card. An entry may carry the whole question for a tile whose source lost it —
+    `miniatur_hanghordozo` 3,1, where the served page's title has an unescaped `"` and the options
+    survive only as lower-cased attribute names. The merge aborts the scrape when an answered tile
+    stops being a question, the right choice disappears, or the source starts yielding a question
+    kept by hand.
   - **Persistence is per set.** The quest tab remembers which set was shown last
     (`lc-quest-set`) and, separately, the last selected quest **within each set**
     (`lc-quest-selected-royal` / `lc-quest-selected-tavern`, built by `questSelectedKey(set)`

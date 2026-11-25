@@ -1388,6 +1388,9 @@
   text-align: center; font-size: 10px; line-height: 16px;
 }
 .lc-db .quest-choice-text { flex: 1; }
+.lc-db .quest-choice.correct .quest-choice-index { background: var(--good); color: var(--bg); }
+.lc-db .quest-choice.correct .quest-choice-text { color: var(--good); font-weight: bold; }
+.lc-db .quest-choice-correct { flex: none; color: var(--good); font-size: 11px; }
 .lc-db .quest-outcome { flex: none; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
 .lc-db .quest-outcome.good { color: var(--good); background: var(--accent-dim); }
 .lc-db .quest-outcome.bad { color: var(--bad); }
